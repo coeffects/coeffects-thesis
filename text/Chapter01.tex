@@ -1,0 +1,148 @@
+\chapter{Introduction} 
+\label{ch:introduction} 
+
+%----------------------------------------------------------------------------------------
+
+Some intro
+
+\section{How lambda works}
+The key difference - how lambda works
+
+Effect systems, introduced by Gifford and Lucassen
+\cite{effects-gifford}, track \emph{effects} of computations, such as
+memory access or message-based
+communication~\cite{effects-messagepassing}. Their approach augments
+typing judgments with effect information: $\Gamma \vdash e :
+\tau, F$.  Wadler and Thiemann explain how this shapes
+effect analysis of lambda abstraction~\cite{monads-effects-marriage}:
+%
+\begin{quote}
+\emph{In the rule for abstraction, the effect is empty because evaluation immediately
+returns the function, with no side effects. The effect on the function arrow
+is the same as the effect for the function body, because applying the function will
+have the same side effects as evaluating the body.}
+\end{quote}
+%
+In contrast to the static analysis of \emph{effects}, the analysis of \emph{context-dependence} 
+does not match this pattern. In the systems we consider, lambda abstraction places 
+requirements on both the \emph{call-site} (latent requirements) and the \emph{declaration-site} 
+(immediate requirements), resulting in different syntactic properties. 
+We informally discuss three examples first that demonstrate how contextual
+requirements propagate. Section ? then unifies these 
+in a single calculus.
+
+Also \cite{effects-producer-semantics}
+
+\begin{quote}
+\emph{We will define an effect as a producer effect if all computations with that effect 
+can be thunked as "pure" computations for a domain-specific notion of purity.}
+\end{quote}
+
+
+Demonstrate using distributed computations
+
+Demonstrate using dataflow/liveness
+
+Perhaps mention LINQ as a motivation for cross-compilation..
+\cite{app-linq}
+
+
+\section{Associating with context}
+
+-> Type providers make this important
+
+%---------------------------------------------------------------------------------------------------
+
+\section{Flat coeffect system}
+~
+
+resources?
+
+%---------------------------------------------------------------------------------------------------
+
+\section{Structural coeffect system}
+\label{sec:structural}
+
+The \emph{flat coeffect system} presented in the previous sections has a number of uses, but often
+we need to track context-dependence in a more fine-grained way. To track neededness or security, 
+we need to associate information with individual \emph{variables} of the context. 
+
+At the same time, we want to avoid developing multiple variants of coeffect systems -- indeed, 
+our motivation is to develop a \emph{single unified mechanism} for tracking context-dependence.
+In this section, we present a more powerful \emph{structural coeffect calculus}, which is a 
+generalization of the flat calculus. 
+
+%We show that \clflt~can be obtained as a special case of \clstr. The
+%structural version of our system is also where our work differs more significantly from well-known
+%effect systems. 
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Motivation: Tracking array accesses}
+\label{sec:structural-motivation}
+\newcommand{\pastval}[2]{\ident{#1}_{[#2]}}
+\newcommand{\dnat}{\ident{D}_\ident{nat}}
+\newcommand{\cprd}{\times}
+\newcommand{\cvop}{~\ident{max}~}
+
+Similarly to the flat version, the \emph{structural coeffect calculus} works with contexts and
+functions annotated with a coeffectt tags, written $\ctyp{r}{\Gamma}$ and $\ctyp{r}{\tau_1} \rightarrow \tau_2$, 
+respectively, but we use richer tag structure.
+
+As an example, consider a language that allows us to get a value of a variable (representing
+some changing data-source) \ident{x} versions back using the syntax $\pastval{a}{x}$. 
+To track information about individual variables, we use a product-like operation $\cprd$ on tags 
+to mirrors the product structure of variables. For example:
+%
+\begin{equation*}
+\begin{array}{l}
+\ctyp{5 \cprd 10}{(\ident{a}:\dnat, \ident{b}:\dnat)}
+  \vdash
+    \pastval{a}{5}+\pastval{b}{10}: \ident{nat}
+\end{array}
+\end{equation*}
+%
+The coeffect tag $5 \cprd 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
+that we need at most 5 and 10 past values of \ident{a} and \ident{b}. If we substitute \ident{c}
+for both \ident{a} and \ident{b}, we need another operation to combine multiple tags associated with 
+a single variable:
+%
+\begin{equation*}
+\begin{array}{l}
+\ctyp{5 \cvop 10}{(\ident{c}:\dnat)}
+  \vdash
+    \pastval{c}{5}+\pastval{c}{10}: \ident{nat}
+\end{array}
+\end{equation*}
+%
+In this example, the operation $\cvop$ would be the \emph{max} function and so $5 \cvop 10 = 10$.
+Before looking at the formal definition, consider the typing of let bindings:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{c} = \kvd{if}~\ident{test}()~\kvd{then}~\ident{a}~\kvd{else}~\ident{b}\\
+\pastval{a}{15}+\pastval{c}{10}
+\end{array}
+\end{equation*}
+%
+The expression has free variables \ident{a} and \ident{b} (we ignore \ident{test}, which
+is not a data source). It defines \ident{c}, which may be assigned either \ident{a} or \ident{b}.
+The variable \ident{a} may be used directly (second line) or indirectly via \ident{c}.
+
+The expression assigned to \ident{c} uses variables \ident{a} and \ident{b}, so its typing
+context is $\ctyp{0 \cprd 0}{(\ident{a}, \ident{b})}$. The value $0$ is the unit
+of $\cvop$ and it denotes empty coeffect. The typing context of the
+body is $\ctyp{15 \cprd 10}{(\ident{a}, \ident{c})}$.
+
+To combine the tags, we take the coeffect associated with \ident{c} and apply it to the tags
+of the context in which \ident{c} was defined using the $\cvop$ operation. This is then combined 
+with the remaining tags from the body yielding the overall context:
+$\ctyp{15 \cprd (10 \cvop (0 \cprd 0))}{(\ident{a}, (\ident{a}, \ident{b}))}$. Using a simple
+normalization mechanism (described later), this can be further reduced to
+$\ctyp{(15 \cvop 10) \cprd 10}{(\ident{a}, \ident{b})}$. This gives us the required information --
+we need at most $\emph{max}(15,10)$ past values of \ident{a} and at most $10$ past values of 
+\ident{b}.
+
+%===================================================================================================
+
+\section{Contributions}

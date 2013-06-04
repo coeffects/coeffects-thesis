@@ -1,0 +1,8 @@
+*.aux
+*.bbl
+*.blg
+*.out
+*.log
+*.synctex.gz
+*.toc
+\[all-templates\]/*

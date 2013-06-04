@@ -1,0 +1,1015 @@
+@comment{===========================================================================================
+
+Structure of the file
+  1. Effect systems
+  2. Monads 
+  3. Comonads & applications
+  4. Applications & examples
+  5. Logic, types and semantics
+  6. Substructural, linear, bunched
+  7. Other and tools
+  
+===================================================================================================}
+
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{  1. Effect systems                                                                       }
+@comment{------------------------------------------------------------------------------------------}
+
+@inproceedings{effects-gifford,
+ author = {Gifford, David K. and Lucassen, John M.},
+ title = {Integrating functional and imperative programming},
+ booktitle = {Proceedings of Conference on LISP and func. prog.},
+ series = {LFP '86},
+ year = {1986},
+ isbn = {0-89791-200-4},
+ location = {Cambridge, Massachusetts, United States},
+ numpages = {11}
+} 
+
+@inproceedings{effects-polymorphic,
+ author = {Lucassen, J. M. and Gifford, D. K.},
+ title = {Polymorphic effect systems},
+ booktitle = {Proceedings of the 15th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+ series = {POPL '88},
+ year = {1988},
+ isbn = {0-89791-252-7},
+ location = {San Diego, California, USA},
+ pages = {47--57},
+ numpages = {11},
+ url = {http://doi.acm.org/10.1145/73560.73564},
+ doi = {10.1145/73560.73564},
+ acmid = {73564},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+@inproceedings{effects-talpin-et-al,
+  title={The type and effect discipline},
+  author={Talpin, J.P. and Jouvelot, P.},
+  booktitle={Logic in Computer Science, 1992. LICS'92.},
+  pages={162--173},
+  year={1994},
+}
+
+	
+@inproceedings{effects-atomicity,
+  author = {Flanagan, Cormac and Qadeer, Shaz},
+  title = {A type and effect system for atomicity},
+  booktitle = {Proceedings of Conference on Programming Language Design and Implementation},
+  series = {PLDI '03},
+} 
+	
+@TechReport{effects-messagepassing,
+  author = {Jouvelot, P. and Gifford, David K.},
+  title = {Communication {E}ffects for {M}essage-{B}ased {C}oncurrency},
+  institution = {Massachusetts Institute of Technology},
+  year = {1989},
+  key = {LCS/TM-386}
+} 
+
+@inproceedings{effects-comprehensive,
+ author = {Filinski, Andrzej},
+ title = {Towards a comprehensive theory of monadic effects},
+ booktitle = {Proceeding of the 16th ACM SIGPLAN international conference on Functional programming},
+ series = {ICFP '11},
+ year = {2011},
+ isbn = {978-1-4503-0865-6},
+ location = {Tokyo, Japan},
+ pages = {1--1},
+} 
+
+@inproceedings{effects-producer-semantics,
+ author = {Tate, Ross},
+ title = {The sequential semantics of producer effect systems},
+ booktitle = {Proceedings of the 40th annual ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+ series = {POPL '13},
+ year = {2013},
+ isbn = {978-1-4503-1832-7},
+ location = {Rome, Italy},
+ pages = {15--26},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2429069.2429074},
+ doi = {10.1145/2429069.2429074},
+ acmid = {2429074},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {effectors, effects, monads, productors, thunks},
+} 
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{  2. Monads
+@comment{------------------------------------------------------------------------------------------}
+
+@article{monad-notions,
+ author = {Moggi, Eugenio},
+ title = {Notions of computation and monads},
+ journal = {Inf. Comput.},
+ volume = {93},
+ issue = {1},
+ month = {July},
+ year = {1991},
+ issn = {0890-5401},
+ pages = {55--92},
+ numpages = {38},
+} 
+
+@article{monads-effects-marriage,
+ author = {Wadler, Philip and Thiemann, Peter},
+ title = {The marriage of effects and monads},
+ journal = {ACM Trans. Comput. Logic},
+ volume = {4},
+ issue = {1},
+ month = {January},
+ year = {2003},
+ pages = {1--32},
+ numpages = {32}
+}
+
+@article{monads-parameterised-notions,
+ author = {Atkey, Robert},
+ title = {Parameterised notions of computation},
+ journal = {J. Funct. Program.},
+ issue_date = {July 2009},
+ volume = {19},
+ issue = {3-4},
+ year = {2009},
+} 
+
+@inproceedings{monad-secure-flow,
+ author = {Russo, Alejandro and Claessen, Koen and Hughes, John},
+ title = {A library for light-weight information-flow security in haskell},
+ booktitle = {Proceedings of the first ACM SIGPLAN symposium on Haskell},
+ series = {Haskell '08},
+ year = {2008},
+ isbn = {978-1-60558-064-7},
+ location = {Victoria, BC, Canada},
+ pages = {13--24},
+ numpages = {12},
+} 
+
+@inproceedings{monads-lightweight-ml,
+ author = {Swamy, Nikhil and Guts, Nataliya and Leijen, Daan and Hicks, Michael},
+ title = {Lightweight monadic programming in ML},
+ booktitle = {Proceedings of the 16th ACM SIGPLAN international conference on Functional programming},
+ series = {ICFP '11},
+ year = {2011},
+ isbn = {978-1-4503-0865-6},
+ location = {Tokyo, Japan},
+ pages = {15--27},
+ numpages = {13},
+ url = {http://doi.acm.org/10.1145/2034773.2034778},
+ doi = {10.1145/2034773.2034778},
+ acmid = {2034778},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {coercion, coherence, monad, rewriting, type},
+} 
+
+@inproceedings{monads-relative,
+ author = {Altenkirch, Thorsten and Chapman, James and Uustalu, Tarmo},
+ title = {Monads need not be endofunctors},
+ booktitle = {Proceedings of the 13th international conference on Foundations of Software Science and Computational Structures},
+ series = {FOSSACS'10},
+ year = {2010},
+ isbn = {3-642-12031-8, 978-3-642-12031-2},
+ location = {Paphos, Cyprus},
+ pages = {297--311},
+ numpages = {15},
+ url = {http://dx.doi.org/10.1007/978-3-642-12032-9_21},
+ doi = {10.1007/978-3-642-12032-9_21},
+ acmid = {2175547},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+} 
+
+@inproceedings{monads-inaction,
+ author = {Filinski, Andrzej},
+ title = {Monads in action},
+ booktitle = {Proceedings of POPL},
+ _series = {POPL '10},
+ year = {2010},
+ isbn = {978-1-60558-479-9},
+ location = {Madrid, Spain},
+ _pages = {483--494},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/1706299.1706354},
+ doi = {10.1145/1706299.1706354},
+ acmid = {1706354},
+ _publisher = {ACM},
+ _address = {New York, NY, USA},
+ keywords = {computational effects, modular semantics, monads},
+} 
+
+@Unpublished{monads-outrageous,
+author = {McBride, Conor},
+title = {Kleisli arrows of outrageous fortune},
+note = {J. Funct. Program. (to appear)},
+url = {http://personal.cis.strath.ac.uk/~conor/Kleisli.pdf},
+year = {2011}
+}
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{  3. Comonads & applications 
+@comment{------------------------------------------------------------------------------------------}
+
+@thesis{comonads-dom-thesis,
+author = {Dominic Orchard},
+title = {Programming contextual computations},
+type = {PhD thesis},
+institution = {University of Cambridge},
+date = {2013},
+}
+
+@article{comonads-notions,
+ author = {Uustalu, Tarmo and Vene, Varmo},
+ title = {Comonadic {N}otions of {C}omputation},
+ journal = {Electron. Notes Theor. Comput. Sci.},
+ volume = {203},
+ issue = {5},
+ month = {June},
+ year = {2008},
+ issn = {1571-0661},
+ pages = {263--284},
+ numpages = {22}
+} 
+
+@incollection{comonads-codo,
+  title = "A Notation for Comonads",
+  author = "Orchard, Dominic and Mycroft, Alan",
+  year = "2012",
+  booktitle = "Post-Proceedings of IFL'12 (to appear)",
+  publisher = "Springer Berlin / Heidelberg",
+  series = "LNCS"
+}
+
+
+@inproceedings{comonads-ypnos,
+ author = {Orchard, Dominic and Bolingbroke, Max and Mycroft, Alan},
+ title = {Ypnos: {D}eclarative, {P}arallel {S}tructured {G}rid {P}rogramming},
+ booktitle = {DAMP '10},
+ year = {2010},
+ isbn = {978-1-60558-859-9},
+ pages = {15--24},
+ }
+
+@article{comonads-dataflow,
+   title = {The {E}ssence of {D}ataflow {P}rogramming},
+   journal = {Lecture Notes in Computer Science},
+   publisher = {Springer Berlin / Heidelberg},
+   volume = {4164}, 
+   year = {Nov 2006},
+   pages = {135-167},
+   author = {Tarmo Uustalu and Varmo Vene}
+}
+
+
+@Unpublished{comonads-vs-monads,
+author = {Dominic Orchard},
+title = {Should {I} use a {M}onad or a {C}omonad?},
+note = {Unpublished draft},
+url = {http://www.cl.cam.ac.uk/~dao29/drafts/monad-or-comonad-orchard11-draft.pdf},
+year = {2012}
+}
+
+@MISC{comonads-and-codata,
+    author = {Richard B. Kieburtz},
+    title = {Codata and {C}omonads in {H}askell},
+    year = {1999}
+}
+
+
+@inproceedings{comonads-computational,
+  editor = {M. P. Fourman, P. T. Johnstone, and A. M. Pitts},
+  title = {Computational comonads and intensional semantics},
+  author = {Stephen Brookes and Shai Geva},     
+  series = {Applications of Categories in Computer Science},
+  year = {1992},  
+  volum = {177},
+  publisher = {London Mathematical Society Lecture Note Series, Cambridge University Press}
+}
+
+@inproceedings{comonads-containers,
+ author = {Ahman, Danel and Chapman, James and Uustalu, Tarmo},
+ title = {When is a container a comonad?},
+ booktitle = {Proceedings of the 15th international conference on Foundations of Software Science and Computational Structures},
+ series = {FOSSACS'12},
+ year = {2012},
+ isbn = {978-3-642-28728-2},
+ location = {Tallinn, Estonia},
+ pages = {74--88},
+ numpages = {15},
+ url = {http://dx.doi.org/10.1007/978-3-642-28729-9_5},
+ doi = {10.1007/978-3-642-28729-9_5},
+ acmid = {2259329},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+} 
+
+
+@inproceedings{comonads-malias,
+    author    = {Petricek, Tomas},
+    title     = {Evaluations strategies for monadic computations},
+    booktitle = {Proceedings of Mathematically Structured Functional Programming},
+    series    = {MSFP 2012},
+    location  = {Tallinn, Estonia},
+} 
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{  4. Applications & examples
+@comment{------------------------------------------------------------------------------------------}
+
+@book{app-modern-compiler,
+  title={Modern compiler implementation in ML},
+  author={Appel, Andrew W},
+  year={1998},
+  publisher={Cambridge University Press}
+}
+
+@inproceedings{app-strictness-absecnce,
+  title={Strictness analysis aids time analysis},
+  author={Wadler, Philip},
+  booktitle={Proceedings of the 15th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+  pages={119--132},
+  year={1988},
+  organization={ACM}
+}
+
+@inproceedings{app-linq,
+ author = {Meijer, Erik and Beckman, Brian and Bierman, Gavin},
+ title = {LINQ: reconciling object, relations and XML in the .NET framework},
+ booktitle = {Proceedings of the 2006 ACM SIGMOD international conference on Management of data},
+ series = {SIGMOD '06},
+ year = {2006},
+ isbn = {1-59593-434-0},
+ location = {Chicago, IL, USA},
+ pages = {706--706},
+ numpages = {1},
+ url = {http://doi.acm.org/10.1145/1142473.1142552},
+ doi = {10.1145/1142473.1142552},
+ acmid = {1142552},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+@thesis{app-fsharp-webtools,
+author = {Tomas Petricek},
+title = {Client-side scripting using meta-programming},
+type = {Bachelor thesis},
+institution = {Charles University in Prague},
+date = {2007},
+url = {http://www.cl.cam.ac.uk/~tp322/theses/webtools.pdf},
+urldate = {2013},
+}
+
+@article{app-ocaml-js,
+  title={From bytecode to JavasSript: the js\_of\_ocaml compiler},
+  author={Vouillon, J{\'e}r{\^o}me and Balat, Vincent},
+  journal={Software: Practice and Experience},
+  year={2013},
+  publisher={Wiley Online Library}
+}
+
+@incollection{app-fsharp-webapps,
+  title={Building Mobile Web Applications},
+  author={Syme, Don and Granicz, Adam and Cisternino, Antonio},
+  booktitle={Expert F\# 3.0},
+  pages={391--426},
+  year={2012},
+  publisher={Springer}
+}
+
+@article{app-hop-lang,
+  title={Hop client-side compilation},
+  author={Loitsch, Florian and Serrano, Manuel},
+  journal={Trends in Functional Programming, TFP},
+  pages={141--158},
+  year={2007}
+}
+
+@inproceedings{app-capabilities,
+ author = {Crary, Karl and Walker, David and Morrisett, Greg},
+ title = {Typed memory management in a calculus of capabilities},
+ series = {POPL '99},
+ year = {1999},
+} 
+
+@article{app-secure-flow,
+ author = {Volpano, Dennis and Irvine, Cynthia and Smith, Geoffrey},
+ title = {A sound type system for secure flow analysis},
+ journal = {J. Comput. Secur.},
+ volume = {4},
+ issue = {2-3},
+ month = {January},
+ year = {1996},
+ pages = {167--187}
+} 
+
+@article{app-slicing-survey,
+  title={A survey of program slicing techniques},
+  author={Tip, Frank},
+  journal={Journal of programming languages},
+  volume={3},
+  number={3},
+  pages={121--189},
+  year={1995}
+}
+
+@InProceedings{app-distributed-qwesst,
+  title        = "{QWeSST for {T}ype-{S}afe {W}eb {P}rogramming}",
+  author       = "Thierry Sans and Iliano Cervesato",
+  booktitle    = "Third International Workshop on Logics, Agents, and  Mobility",
+  series       = "LAM'10",
+  year         = "2010"
+}
+
+@INPROCEEDINGS{app-implicit-parameters,
+    author = {Jeffrey R. Lewis and Mark B. Shields and Erik Meijert and John Launchbury},
+    title = {Implicit parameters: dynamic scoping with static types},
+    booktitle = {Proceedings of POPL},
+    series = {POPL '00},
+    year = {2000}
+}
+
+@inproceedings{app-security-models,
+  author    = {Joseph A. Goguen and
+               Jos{\'e} Meseguer},
+  title     = {Security Policies and Security Models},
+  booktitle = {IEEE Symposium on Security and Privacy},
+  year      = {1982},
+  pages     = {11-20},
+}
+
+@article{app-secure-information-flow,
+ author = {Sabelfeld, A. and Myers, A. C.},
+ title = {Language-based information-flow security},
+ journal = {IEEE J.Sel. A. Commun.},
+ issue_date = {September 2006},
+ volume = {21},
+ number = {1},
+ month = sep,
+ year = {2006},
+ issn = {0733-8716},
+ pages = {5--19},
+ numpages = {15},
+ url = {http://dx.doi.org/10.1109/JSAC.2002.806121},
+ doi = {10.1109/JSAC.2002.806121},
+ acmid = {2314769},
+ publisher = {IEEE Press},
+ address = {Piscataway, NJ, USA},
+} 
+
+@INPROCEEDINGS{app-security-flowcaml,
+    author = {Vincent Simonet},
+    title = {Flow Caml in a Nutshell},
+    booktitle = {Proceedings of the first APPSEM-II workshop},
+    year = {2003},
+    pages = {152--165}
+}
+
+@inproceedings{app-distributed-ml5,
+ author = {Murphy,VII., Tom and Crary, Karl and Harper, Robert},
+ title = {Type-safe distributed programming with {ML5}},
+ series = {TGC'07},
+ year = {2008},
+ location = {Sophia-Antipolis, France},
+ pages = {108--123},
+ numpages = {16}
+} 
+
+@inproceedings{app-safe-locking,
+ author = {Flanagan, Cormac and Abadi, Mart\'{\i}n},
+ title = {Types for {S}afe {L}ocking},
+ series = {ESOP '99},
+ year = {1999}
+} 
+
+@article{app-distributed-acute,
+ author = {Sewell, Peter and Leifer, James J. and Wansbrough, Keith and Nardelli, Francesco Zappa 
+           and Allen-Williams, Mair and Habouzit, Pierre and Vafeiadis, Viktor},
+ title = {Acute: High-level programming language design for distributed computation},
+ journal = {J. Funct. Program.},
+ issue_date = {July 2007},
+ volume = {17},
+ number = {4-5},
+ month = jul,
+ year = {2007},
+ issn = {0956-7968},
+ pages = {547--612},
+ numpages = {66},
+ doi = {10.1017/S0956796807006442},
+} 
+
+@inproceedings{app-distributed-rebinding,
+ author = {Bierman, Gavin and Hicks, Michael and Sewell, Peter and Stoyle, Gareth and Wansbrough, Keith},
+ title = {Dynamic rebinding for marshalling and update, with destruct-time ?},
+ booktitle = {Proceedings of the eighth ACM SIGPLAN international conference on Functional programming},
+ series = {ICFP '03},
+ year = {2003},
+ isbn = {1-58113-756-7},
+ location = {Uppsala, Sweden},
+ pages = {99--110},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/944705.944715},
+ doi = {10.1145/944705.944715},
+ acmid = {944715},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {distributed programming, dynamic binding, dynamic update, lambda calculus, marshalling, programming languages, serialisation},
+} 
+
+@article{app-tainting-wasp,
+ author = {Halfond, William and Orso, Alex and Manolios, Pete},
+ title = {WASP: Protecting Web Applications Using Positive Tainting and Syntax-Aware Evaluation},
+ journal = {IEEE Trans. Softw. Eng.},
+ issue_date = {January 2008},
+ volume = {34},
+ number = {1},
+ month = jan,
+ year = {2008},
+ issn = {0098-5589},
+ pages = {65--81},
+ numpages = {17},
+ url = {http://dx.doi.org/10.1109/TSE.2007.70748},
+ doi = {10.1109/TSE.2007.70748},
+ acmid = {1340714},
+ publisher = {IEEE Press},
+ address = {Piscataway, NJ, USA},
+ keywords = {Protection mechanisms, Protection mechanisms, Security and Protection, Security and Protection},
+} 
+
+@inproceedings{app-tainting-xss,
+  title={Cross site scripting prevention with dynamic data tainting and static analysis},
+  author={Vogt, Philipp and Nentwich, Florian and Jovanovic, Nenad and Kirda, Engin and Kruegel, Christopher and Vigna, Giovanni},
+  booktitle={Proceeding of the Network and Distributed System Security Symposium (NDSS)},
+  volume={42},
+  year={2007}
+}
+
+@inproceedings{app-tainting-sql,
+  title={Using positive tainting and syntax-aware evaluation to counter SQL injection attacks},
+  author={Halfond, William GJ and Orso, Alessandro and Manolios, Panagiotis},
+  booktitle={Proceedings of the 14th ACM SIGSOFT international symposium on Foundations of software engineering},
+  pages={175--185},
+  year={2006},
+  organization={ACM}
+}
+
+@inproceedings{app-provenance-db,
+ author = {Cheney, James and Ahmed, Amal and Acar, Umut A.},
+ title = {Provenance as dependency analysis},
+ booktitle = {Proceedings of the 11th international conference on Database programming languages},
+ series = {DBPL'07},
+ year = {2007},
+ isbn = {3-540-75986-7, 978-3-540-75986-7},
+ location = {Vienna, Austria},
+ pages = {138--152},
+ numpages = {15},
+ url = {http://dl.acm.org/citation.cfm?id=1783534.1783549},
+ acmid = {1783549},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+} 
+
+@INPROCEEDINGS{app-distributed-links,
+    author = {Ezra Cooper and Sam Lindley and Philip Wadler and Jeremy Yallop},
+    title = {Links: {W}eb programming without tiers},
+    series = {FMCO '00},
+    year = {2006}
+}
+
+
+@inproceedings{app-type-classes,
+ author = {Wadler, P. and Blott, S.},
+ title = {How to make ad-hoc polymorphism less ad hoc},
+ booktitle = {Proceedings of the 16th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+ series = {POPL '89},
+ year = {1989},
+ isbn = {0-89791-294-2},
+ location = {Austin, Texas, USA},
+ pages = {60--76},
+ numpages = {17},
+ url = {http://doi.acm.org/10.1145/75277.75283},
+ doi = {10.1145/75277.75283},
+ acmid = {75283},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+@inproceedings{app-dcc,
+ author = {Abadi, Mart\'{\i}n and Banerjee, Anindya and Heintze, Nevin and Riecke, Jon G.},
+ title = {A core calculus of dependency},
+ booktitle = {Proceedings of POPL},
+ _series = {POPL '99},
+ year = {1999},
+} 
+
+@incollection{app-binding-time-analysis,
+  title={A unified framework for binding-time analysis},
+  author={Thiemann, Peter},
+  booktitle={TAPSOFT'97: Theory and Practice of Software Development},
+  pages={742--756},
+  year={1997},
+  publisher={Springer}
+}
+@article{app-cop-method,
+  title={Context-oriented programming},
+  author={Hirschfeld, Robert and Costanza, Pascal and Nierstrasz, Oscar},
+  journal={Journal of Object Technology},
+  volume={7},
+  number={3},
+  year={2008},
+  publisher={Citeseer}
+}
+
+@inproceedings{app-cop-contextl,
+ author = {Costanza, Pascal and Hirschfeld, Robert},
+ title = {Language constructs for context-oriented programming: an overview of ContextL},
+ booktitle = {Proceedings of the 2005 symposium on Dynamic languages},
+ series = {DLS '05},
+ year = {2005},
+ location = {San Diego, California},
+ pages = {1--10},
+ numpages = {10},
+ url = {http://doi.acm.org/10.1145/1146841.1146842},
+ doi = {10.1145/1146841.1146842},
+ acmid = {1146842},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Context-oriented Programming, dynamic scope, layers, views},
+} 
+
+@inproceedings{app-cop-mobile2,
+ author = {Du, Weichang and Wang, Lei},
+ title = {Context-aware application programming for mobile devices},
+ booktitle = {Proceedings of the 2008 C3S2E conference},
+ series = {C3S2E '08},
+ year = {2008},
+ isbn = {978-1-60558-101-9},
+ location = {Montreal, Quebec, Canada},
+ pages = {215--227},
+ numpages = {13},
+ url = {http://doi.acm.org/10.1145/1370256.1370292},
+ doi = {10.1145/1370256.1370292},
+ acmid = {1370292},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {emerging computing technologies, mobile computing context aware computing, mobile device programming and applications, programming systems},
+} 
+
+@inproceedings{app-cop-mobile,
+  title={A framework for developing mobile, context-aware applications},
+  author={Biegel, Gregory and Cahill, Vinny},
+  booktitle={Pervasive Computing and Communications, 2004. PerCom 2004. Proceedings of the Second IEEE Annual Conference on},
+  pages={361--365},
+  year={2004},
+  organization={IEEE}
+}
+
+@incollection{app-cop-javafwk,
+  title={The Java Context Awareness Framework (JCAF)--a service infrastructure and programming framework for context-aware applications},
+  author={Bardram, Jakob E},
+  booktitle={Pervasive Computing},
+  pages={98--115},
+  year={2005},
+  publisher={Springer}
+}
+
+@misc{app-android-multitarget,
+author = {{Developers (Android)}},
+howpublished = "\url{http://developer.android.com/training/multiple-apks/api.html}",
+year = {2013},
+title = {{Creating multiple APKs for different API levels}},
+}
+
+@inproceedings{app-dsu-mutatis,
+  title={Mutatis mutandis: safe and predictable dynamic software updating},
+  author={Stoyle, Gareth and Hicks, Michael and Bierman, Gavin and Sewell, Peter and Neamtiu, Iulian},
+  booktitle={ACM SIGPLAN Notices},
+  volume={40},
+  number={1},
+  pages={183--194},
+  year={2005},
+  organization={ACM}
+}
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{   5. Logic and semantics
+@comment{------------------------------------------------------------------------------------------}
+
+@article{logic-modal-linear,
+  title={A modal view of linear logic},
+  author={Martini, S. and Masini, A.},
+  journal={Journal of Symbolic Logic},
+  pages={888--899},
+  year={1994},
+  publisher={JSTOR}
+}
+
+@article{semantics-storage,
+  title={! and?--{S}torage as tensorial strength},
+  author={Blute, RF and Cockett, J.R.B. and Seely, RAG},
+  journal={Mathematical Structures in Computer Science},
+  volume={6},
+  number={04},
+  pages={313--351},
+  year={1996},
+  publisher={Cambridge Univ Press}
+}
+
+@inproceedings{logic-modal-linear-distrib,
+  title={A modal linear logic for distribution and mobility},
+  author={Biri, N. and Galmiche, D. and Poincar, H.},
+  booktitle={FLOC’02 Workshop on Linear Logic},
+  year={2002},
+}
+
+@article{logic-modal-staged,
+ author = {Davies, Rowan and Pfenning, Frank},
+ title = {A modal analysis of staged computation},
+ journal = {J. ACM},
+ issue_date = {May 2001},
+ volume = {48},
+ number = {3},
+ month = may,
+ year = {2001},
+ issn = {0004-5411},
+ pages = {555--604},
+ numpages = {50},
+ url = {http://doi.acm.org/10.1145/382780.382785},
+ doi = {10.1145/382780.382785},
+ acmid = {382785},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {binding times, run-time code generation, staged computation},
+} 
+
+@article{logic-modal-reconstruction,
+ author = {Pfenning, Frank and Davies, Rowan},
+ title = {A judgmental reconstruction of modal logic},
+ journal = {Mathematical. Structures in Comp. Sci.},
+ issue_date = {August 2001},
+ volume = {11},
+ number = {4},
+ month = aug,
+ year = {2001},
+ issn = {0960-1295},
+ pages = {511--540},
+ numpages = {30},
+} 
+
+@inproceedings{logic-distributed-calculus,
+ author = {Murphy VII, Tom and Crary, Karl and Harper, Robert and Pfenning, Frank},
+ title = {A Symmetric Modal Lambda Calculus for Distributed Computing},
+ series = {LICS '04},
+ year = {2004},
+ isbn = {0-7695-2192-4},
+ pages = {286--295},
+ numpages = {10},
+} 
+
+@inproceedings{logic-distributed-modal,
+ author = {Murphy VII, Tom and Crary, Karl and Harper, Robert},
+ title = {Distributed control flow with classical modal logic},
+ booktitle = {Proceedings of the 19th international conference on Computer Science Logic},
+ series = {CSL'05},
+ year = {2005},
+ isbn = {3-540-28231-9, 978-3-540-28231-0},
+ location = {Oxford, UK},
+ pages = {51--69},
+ numpages = {19},
+ url = {http://dx.doi.org/10.1007/11538363_6},
+ doi = {10.1007/11538363_6},
+ acmid = {2156267},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+} 
+
+@article{logic-modal-s41,
+  title={On a {M}odal $\lambda$-{C}alculus for {S}4},
+  author={Pfenning, F. and Wong, H.C.},
+  journal={Electronic Notes in Theoretical Computer Science},
+  volume={1},
+  pages={515--534},
+  year={1995},
+  publisher={Elsevier}
+}
+
+@ARTICLE{logic-intuitionistic-modal,
+    author = {G M Bierman and V C V de Paiva},
+    title = {On an Intuitionistic Modal Logic},
+    journal = {Studia Logica},
+    year = {2001},
+    volume = {65},
+    pages = {2000}
+}
+
+@article{logic-modal-safety,
+  title={A modal language for the safety of mobile values},
+  author={Park, S.},
+  journal={Programming Languages and Systems},
+  pages={217--233},
+  year={2006},
+  publisher={Springer}
+}
+
+@unpublished{semantics-operational-modal-effects,
+    author = {Sungwoo Park and Robert Harper},
+    title = {A Modal Language for Effects},
+    year = {2004},
+    note = {(Manuscript)}
+}
+
+
+@article{types-hoare-theory,
+  author    = {Aleksandar Nanevski and Gregory Morrisett and Lars Birkedal},
+  title     = {Hoare type theory, polymorphism and separation},
+  journal   = {J. Funct. Program.},
+  volume    = {18},
+  number    = {5-6},
+  year      = {2008},
+  pages     = {865-911}
+}
+
+@article{logic-cmtt,
+ author = {Nanevski, Aleksandar and Pfenning, Frank and Pientka, Brigitte},
+ title = {Contextual modal type theory},
+ journal = {ACM Trans. Comput. Logic},
+ issue_date = {June 2008},
+ volume = {9},
+ number = {3},
+ month = jun,
+ year = {2008},
+ issn = {1529-3785},
+ pages = {23:1--23:49},
+ articleno = {23},
+ numpages = {49},
+ url = {http://doi.acm.org/10.1145/1352582.1352591},
+ doi = {10.1145/1352582.1352591},
+ acmid = {1352591},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Type theory, intuitionistic modal logic, logical frameworks},
+} 
+
+@article{logic-cmtt-semantics,
+  author    = {Murdoch Gabbay and
+               Aleksandar Nanevski},
+  title     = {Denotation of syntax and metaprogramming in contextual modal
+               type theory (CMTT)},
+  journal   = {CoRR},
+  volume    = {abs/1202.0904},
+  year      = {2012},
+  ee        = {http://arxiv.org/abs/1202.0904},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+@inproceedings{logic-modal-dynbinding,
+ author = {Nanevski, Aleksandar},
+ title = {From dynamic binding to state via modal possibility},
+ booktitle = {Proceedings of PPDP'03},
+ _series = {PPDP '03},
+ year = {2003},
+ isbn = {1-58113-705-2},
+ location = {Uppsala, Sweden},
+ pages = {207--218},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/888251.888271},
+ doi = {10.1145/888251.888271},
+ acmid = {888271},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {dynamic binding, effect systems, modal lambda-calculus, state},
+} 
+
+@PhdThesis{logic-modal-fp,
+author = {Aleksandar Nanevski},
+title = {Functional Programming with Names and Necessity},
+school = {Carnegie Mellon University},
+year = {2004},
+}
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{  6. Substructural, linear, bunched
+@comment{------------------------------------------------------------------------------------------}
+
+@inproceedings{substruct-separation-logic,
+ author = {O'Hearn, Peter W. and Reynolds, John C. and Yang, Hongseok},
+ title = {Local Reasoning about Programs that Alter Data Structures},
+ booktitle = {Proceedings of the 15th International Workshop on Computer Science Logic},
+ series = {CSL '01},
+ year = {2001},
+ isbn = {3-540-42554-3},
+ pages = {1--19},
+ numpages = {19},
+ url = {http://dl.acm.org/citation.cfm?id=647851.737404},
+ acmid = {737404},
+ publisher = {Springer-Verlag},
+ address = {London, UK, UK},
+} 
+
+@inbook{substruct-attpl-intro,
+  author = {David Walker},
+  title = {Substructural Type Systems},
+  booktitle = {Advanced Topics in Types and Programming Languages},
+  date = {2002},
+  bookauthor = {Benjamin C. Pierce},
+  publisher = {MIT Press},
+  isbn = {0-262-16228-8},
+  pages = {3-43},
+}
+
+
+@INPROCEEDINGS{substruct-linear-change,
+    author = {Philip Wadler},
+    title = {Linear Types Can Change the World!},
+    booktitle = {Programming Concepts and Methods},
+    year = {1990},
+    publisher = {North}
+}
+
+@article{substruct-bunched,
+ author = {O'Hearn, Peter},
+ title = {On bunched typing},
+ journal = {J. Funct. Program.},
+ issue_date = {July 2003},
+ volume = {13},
+ number = {4},
+ month = jul,
+ year = {2003},
+ issn = {0956-7968},
+ pages = {747--796},
+ numpages = {50},
+ publisher = {Cambridge University Press},
+ address = {New York, NY, USA},
+} 
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{  7. Data-flow
+@comment{------------------------------------------------------------------------------------------}
+
+@article{app-synchronous-lang,
+  title={The synchronous languages 12 years later},
+  author={Benveniste, Albert and Caspi, Paul and Edwards, Stephen A. and Halbwachs, Nicolas and Le Guernic, Paul and De Simone, Robert},
+  journal={Proceedings of the IEEE},
+  volume={91},
+  number={1},
+  pages={64--83},
+  year={2003},
+  publisher={IEEE}
+}
+
+@article{app-synchronous-lustre,
+  title={The synchronous data flow programming language LUSTRE},
+  author={Halbwachs, Nicholas and Caspi, Paul and Raymond, Pascal and Pilaud, Daniel},
+  journal={Proceedings of the IEEE},
+  volume={79},
+  number={9},
+  pages={1305--1320},
+  year={1991},
+  publisher={IEEE}
+}
+
+@inproceedings{app-dataflow-essence,
+ author = {Uustalu, Tarmo and Vene, Varmo},
+ title = {The essence of dataflow programming},
+ booktitle = {Proceedings of the Third Asian conference on Programming Languages and Systems},
+ series = {APLAS'05},
+ year = {2005},
+ isbn = {3-540-29735-9, 978-3-540-29735-2},
+ location = {Tsukuba, Japan},
+ pages = {2--18},
+ numpages = {17},
+ url = {http://dx.doi.org/10.1007/11575467_2},
+ doi = {10.1007/11575467_2},
+ acmid = {2099712},
+ publisher = {Springer-Verlag},
+ address = {Berlin, Heidelberg},
+} 
+
+@book{app-lucid,
+ author = {Wadge, William W. and Ashcroft, Edward A.},
+ title = {LUCID, the dataflow programming language},
+ year = {1985},
+ isbn = {0-12-729650-6},
+ publisher = {Academic Press Professional, Inc.},
+ address = {San Diego, CA, USA},
+} 
+
+@inproceedings{app-lucid-monads,
+  title={Monads and intensionality},
+  author={Wadge, Bill},
+  booktitle={International Symposium on Lucid and Intensional Programming},
+  volume={95},
+  year={1995}
+}
+
+@comment{------------------------------------------------------------------------------------------}
+@comment{   8. Other and tools
+@comment{------------------------------------------------------------------------------------------}
+
+@unpublished{ other-prover9-mace4,
+    author = "W. McCune",
+    title = "Prover9 and Mace4",
+    note = "\verb|http://www.cs.unm.edu/~mccune/prover9/|",
+    year = "2005--2012"
+}

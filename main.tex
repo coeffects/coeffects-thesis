@@ -1,0 +1,140 @@
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[
+		twoside,openright,titlepage,numbers=noenddot,headinclude,%1headlines,
+                footinclude=true,cleardoublepage=empty,
+                BCOR=10mm,paper=a4,fontsize=10pt, % Binding correction, paper type and font size
+                ngerman,american, % Languages
+                ]{scrreprt} 
+                
+% Includes the file which contains all the document configurations and packages - make sure to edit this file
+\input{classicthesis-config}
+\usepackage{semantic}
+\usepackage{paralist}
+\usepackage{etoolbox}
+\usepackage{stmaryrd}
+\usepackage{amssymb}
+
+\newtheorem{definition}{Definition}
+
+% source code & types
+\newcommand{\sep}[0]{\;\; | \;\;}
+\newcommand{\kvd}[1]{\textnormal{\bfseries\sffamily #1}} %
+\newcommand{\str}[1]{\textnormal{\ttfamily #1}} %
+\newcommand{\ident}[1]{\textnormal{\sffamily #1}}
+\newcommand{\ctyp}[2]{C^{#1}#2}
+\newcommand{\mtyp}[2]{M^{#1}#2}
+\newcommand{\subst}[3]{#1[#2 \leftarrow #3]}
+
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\catc}{\mathcal{C}}
+\newcommand{\idf}[1]{ {\textnormal{\sffamily id}}_{#1} }
+
+\newcommand{\codesnip}[0]{\renewcommand{\baselinestretch}{0.9}\normalsize}
+\newcommand{\codesnipout}[0]{\renewcommand{\baselinestretch}{1.0}\normalsize}
+
+% Half line spacing around align
+\newcommand{\zerodisplayskips}{%
+  \setlength{\abovedisplayskip}{0.5em}
+  \setlength{\belowdisplayskip}{0.5em}
+  \setlength{\abovedisplayshortskip}{0.5em}
+  \setlength{\belowdisplayshortskip}{0.5em}}
+\appto{\normalsize}{\zerodisplayskips}
+\appto{\small}{\zerodisplayskips}
+\appto{\footnotesize}{\zerodisplayskips}
+
+% half line spacing around compactitem
+\setlength{\pltopsep}{0.5em}
+\setlength{\plitemsep}{0.3em}
+
+
+\begin{document}
+
+\frenchspacing % Reduces space after periods to make text more compact
+
+\raggedbottom % Makes all pages the height of the text on that page
+
+\selectlanguage{american} % Select your default language - e.g. american or ngerman
+
+%\renewcommand*{\bibname}{new name} % Uncomment to change the name of the bibliography
+%\setbibpreamble{} % Uncomment to include a preamble to the bibliography - some text before the reference list starts
+
+\pagenumbering{roman} % Roman page numbering prior to the start of the thesis content (i, ii, iii, etc)
+
+\pagestyle{plain} % Suppress headers for the pre-content pages
+
+%----------------------------------------------------------------------------------------
+%	PRE-CONTENT THESIS PAGES
+%----------------------------------------------------------------------------------------
+
+% \include{FrontBackMatter/Titlepage} % Main title page
+
+% \include{FrontBackMatter/Titleback} % Back of the title page
+
+% \cleardoublepage\include{FrontBackMatter/Dedication} % Dedication page
+
+%\cleardoublepage\include{FrontBackMatter/Foreword} % Uncomment and create a Foreword.tex to include a foreword
+
+% \cleardoublepage\include{FrontBackMatter/Abstract} % Abstract page
+
+% \cleardoublepage\include{FrontBackMatter/Publication} % Publications from the thesis page
+
+% \cleardoublepage\include{FrontBackMatter/Acknowledgments} % Acknowledgements page
+
+\pagestyle{scrheadings} % Show chapter titles as headings
+
+\cleardoublepage\include{text/Contents} % Contents, list of figures/tables/listings and acronyms
+
+\pagenumbering{arabic} % Arabic page numbering for thesis content (1, 2, 3, etc)
+%\setcounter{page}{90} % Uncomment to manually start the page counter at an arbitrary value (for example if you wish to count the pre-content pages in the page count)
+
+\cleardoublepage % Avoids problems with pdfbookmark
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - CHAPTERS
+%----------------------------------------------------------------------------------------
+
+% \ctparttext{You can put some informational part preamble text here. Illo principalmente su nos. Non message \emph{occidental} angloromanic da. Debitas effortio simplificate sia se, auxiliar summarios da que, se avantiate publicationes via. Pan in terra summarios, capital interlingua se que. Al via multo esser specimen, campo responder que da. Le usate medical addresses pro, europa origine sanctificate nos se.} % Text on the Part 1 page describing  the content in Part 1
+
+% \part{Some Kind of Manual} % First part of the thesis
+
+% \include{Chapters/Chapter01} % Chapter 1
+
+% \cleardoublepage % Empty page before the start of the next part
+
+%------------------------------------------------
+
+% \ctparttext{You can put some informational part preamble text here. Illo principalmente su nos. Non message \emph{occidental} angloromanic da. Debitas effortio simplificate sia se, auxiliar summarios da que, se avantiate publicationes via. Pan in terra summarios, capital interlingua se que. Al via multo esser specimen, campo responder que da. Le usate medical addresses pro, europa origine sanctificate nos se.} % Text on the Part 2 page describing the content in Part 2
+
+% \part{The Showcase} % Second part of the thesis
+
+\include{text/Chapter01} % Chapter 1
+\include{text/Chapter02} % Chapter 2
+
+% \include{Chapters/Chapter03} % Chapter 3
+%\include{Chapters/Chapter04} % Chapter 4 - empty template
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - APPENDICES
+%----------------------------------------------------------------------------------------
+
+% \appendix
+
+% \part{Appendix} % New part of the thesis for the appendix
+
+% \include{Chapters/Chapter0A} % Appendix A
+%\include{Chapters/Chapter0B} % Appendix B - empty template
+
+%----------------------------------------------------------------------------------------
+%	POST-CONTENT THESIS PAGES
+%----------------------------------------------------------------------------------------
+
+\cleardoublepage\include{Bibliography} % Bibliography
+% \cleardoublepage\include{FrontBackMatter/Colophon} % Colophon
+% \cleardoublepage\include{FrontBackMatter/Declaration} % Declaration
+
+%----------------------------------------------------------------------------------------
+
+\end{document}
