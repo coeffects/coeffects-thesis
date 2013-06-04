@@ -441,13 +441,74 @@ parts of programs that contribute to the output of an expression.
 	
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Beyond contextual information}
+\subsection{Beyond passive contexts}
 
-In the systems discussed 
+In the systems discussed so far, the context provides additional data (resources, implicit 
+parameters, historical values) or meta-data (security, provenance). However, it is impossible to
+write a function that modifies the context. We use the term \emph{passive} context for such 
+applications. 
+
+However, there is a number of systems where the context may be changed -- not just be evaluating
+certain code block in a different scope (e.g. by wrapping it in $\ident{prev}$ in data-flow), but
+also by calling a function that, for example, acquires new capabilities. While this thesis focuses
+on systems with passive context, we quickly look at the most important examples of the 
+\emph{active} variant.
+
+% --------------------------------------------------------------------------------------------------
 
 \paragraph{Calculus of capabilities}
+Crary et al. \cite{app-capabilities} introduced the Calculus of Capabilities to provide 
+a sound system with region-based memory management for low-level code that can be easily 
+compiled to assembly language. They build on the work of Tofte and Talpin \cite{app-region-memory}
+who developed an \emph{effect system} (discussed in Section~\ref{sec:path-sem-effects}) that uses
+lexically scoped \emph{memory regions} to provide an efficient and controlled memory management.
 
-a
+In the work of Tofte and Talpin, the context is \emph{passive}. They extend a simple functional language
+with the \kvd{letrgn} construct that defines a new memory region, evaluates an expression (possibly)
+using memory in that region and then deallocates the memory of the region:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\
+\quad\kvd{letrgn}~\rho~\kvd{in}\\
+\quad\kvd{let}~\ident{x} = \kvd{ref}_\rho \ident{input}~\kvd{in}~!\ident{x}
+\end{array}
+\end{equation*}
+%
+The memory region $\rho$ is a part of the context, but only in the scope of the body of 
+\kvd{letrgn}. It is only available to the last line which allocates a memory cell in the region
+and reads it (before the region is deallocated). There is no way to allocate a region inside a 
+function and pass it back to the caller.
+
+Calculus of capabilities differs in two ways. First, it allows explicit allocation and deallocation
+of memory regions (and so region lifetimes do not follow strict LIFO ordering). Second, it
+uses continuation-passing style. We ignore the latter aspect and so the following example:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\
+\quad \kvd{letrgn}~\rho~\kvd{in}\\
+\quad \kvd{let}~\ident{x} = \kvd{ref}_\rho \ident{input}~\kvd{in}~\ident{x}
+\end{array}
+\end{equation*}
+%
+The example is almost identical to the previous one, except that it does not return the value
+of reference \ident{x}. Instead, it returns the reference, which is located in a newly allocated
+region. Together with the value, the function returns a \emph{capability} to access the region
+$\rho$.
+
+This is where systems with active context differ. To type check such programs, we do not only need
+to know what context is required to call \ident{calculate}. We also need to know what effects it
+has on the context when it evaluates and the current context meeds to be appropriately adjusted
+after a function call. We briefly consider this problem in Section~X. % future work
+
+% --------------------------------------------------------------------------------------------------
+
+% \paragraph{Safe locking}
+% Flanagan and Abadi \cite{app-safe-locking}
+%
+% => This has coeffect style judgments, but it has effect-style lambda
+%
 
 % --------------------------------------------------------------------------------------------------
 
@@ -457,10 +518,6 @@ Dynamic software updating (DSU) is the ability to update programs at runtime wit
 Stoyle et al. \cite{app-dsu-mutatis}.
 
 % --------------------------------------------------------------------------------------------------
-
-\paragraph{Safe locking}
-
-\cite{app-safe-locking}
 
 \paragraph{Thesis perspective}
 ?
@@ -719,6 +776,7 @@ general framework for reasoning about languages with context-dependent propertie
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Marriage of effects and monads}
+\label{sec:path-sem-effects}
 
 The work on effect systems and monads both tackle the same problem -- representing and tracking of 
 computational effects. The two lines of research have been joined by Wadler and Thiemann
