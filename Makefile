@@ -18,6 +18,7 @@ clean:
 	rm -f text/*.aux
 	
 thesis: clean
-	latex -interaction=nonstopmode main.tex
+	-latex -interaction=nonstopmode main.tex
 	bibtex main
-	pdflatex -interaction=nonstopmode main.tex
+	
+#	pdflatex -interaction=nonstopmode main.tex

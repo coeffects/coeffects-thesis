@@ -189,7 +189,7 @@ We demonstrate the problem by looking at input validation. In distributed applic
 that communicate over unsecured HTTP channel, user input needs to be validated interactively
 on the client-side (to provide immediate response) and then again on the server-side (to 
 guarantee safety). For example:
-%
+
 \begin{equation*}
 \begin{array}{l}
 \kvd{let}~\ident{validateInput} = \lambda \ident{name} \rightarrow\\
@@ -218,6 +218,44 @@ also presented as effects (use of some API required only in certain environment 
 effect). We discuss the difference in Section~X. Furthermore, the theoretical foundations of
 distributed languages like ML5 \cite{app-distributed-ml5} suggest that a contextual treatment
 is more appropriate. We return to ML5 when discussing semantics in Section~\ref{sec:path-sem-contextdep}.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Safe locking}
+In the previous examples, the context provides additional values or functions that may be accessed
+at runtime. However, it may also track \emph{permissions} to perform some operation. This is done
+in the type system for safe locking of Flanagan and Abadi \cite{app-safe-locking}.
+
+The system prevents race conditions (by only allowing access to mutable state under a lock)
+and avoids deadlocks (by imposing strict partial order on locks). The following 
+program uses a mutable state under a lock:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{newlock}~l:\rho~\kvd{in}\\
+\kvd{let}~\ident{state}~=~\ident{ref}_\rho~10~\kvd{in}\\
+\kvd{sync}~l~(!\ident{state})
+\end{array}
+\end{equation*}
+%
+The declaration \kvd{newlock} creates a lock $l$ protecting memory region $\rho$. We can than
+allocate mutable variables in that memory region (second line). An access to mutable variable
+is only allowed in scope that is protected by a lock. This is done using the \kvd{sync} keyword,
+which locks a lock and evaluates an expression in a context that contains permission to access
+memory region of the lock ($\rho$ in the above example).
+
+The type system for safe locking associates the list of permission with the variable context.
+It uses judgements of a form $\Gamma, m \vdash e : \alpha$ specifying that an expression has a
+type in context $\Gamma$, given permissions (a list of locked regions) $m$. However, the treatment
+of lambda abstraction differs from the one for implicit parameters or rebindable resources.
+In the system for locking, code inside lambda function cannot use permissions from the scope
+where the function is declared. This is a necessary requirement -- a lambda function created 
+under a lock cannot access protected memory, because it will be executed later. We discuss how
+this restriction fits into our general coeffect framework in Section~X.Y.
+
+%
+% => This has coeffect style judgments, but it has effect-style lambda
+%
 
 %---------------------------------------------------------------------------------------------------
 
@@ -504,25 +542,58 @@ after a function call. We briefly consider this problem in Section~X. % future w
 
 % --------------------------------------------------------------------------------------------------
 
-% \paragraph{Safe locking}
-% Flanagan and Abadi \cite{app-safe-locking}
-%
-% => This has coeffect style judgments, but it has effect-style lambda
-%
-
-% --------------------------------------------------------------------------------------------------
-
 \paragraph{Software updating}
-Dynamic software updating (DSU) is the ability to update programs at runtime without stopping them.
+Dynamic software updating (DSU) \cite{app-dsu-programs,app-dsu} is the ability to update programs at
+runtime without stopping them. The Proteus system developed by Stoyle et al. \cite{app-dsu-mutatis} 
+investigates what language support is needed to enable safe dynamic software updating in C-like 
+languages. The system is based on the idea of capabilities.
 
-Stoyle et al. \cite{app-dsu-mutatis}.
+The system distinguishes between \emph{concrete} uses and \emph{abstract} uses of a value. When
+a value is used concretely, the program examines its representation (and so it is not safe to
+change the representation during an update). An abstract use of a value does not need to examine
+the representation and so updating the value does not break the program.
+
+The Proteus system uses capabilities to restrict what types may be used concretely after any point
+in the program. All other types, not listed in the capability, can be dynamically updated as this
+will not change concrete representation of types accessed later in the evaluation.
+
+Similarly to Capability Calculus, capabilities in DSU can be changed by a function call. For 
+example, calling a function that may update certain types makes it impossible to use those types
+concretely following the function call. This means that DSU uses the context \emph{actively}
+and not just \emph{passively}.
 
 % --------------------------------------------------------------------------------------------------
 
 \paragraph{Thesis perspective}
-?
 
-\newpage
+As demonstrated in this section, there is a huge number of systems and applications that exhibit
+a form of context-dependence. The range includes different static analyses (liveness, provenance), 
+well-known programming language features (implicit parameters and type classes) as well as features
+not widely available (e.g. for distributed programming).
+
+It is impossible to cover all of these topics in a single coherent thesis and so we focus on 
+two key aspects:
+
+\begin{compactitem}
+\item \textbf{Flat vs. structural.} We look at both flat coeffects (single value for entire context) and 
+  structural coeffects (single value per variable). We use liveness, implicit parameters and 
+  data-flow to introduce flat coeffects (Section~X) and liveness, refined data-flow and tainting
+  to talk about structural coeffects (Section~Y).
+  
+\item \textbf{Analysis vs. restriction.} Some of the discussed examples can be viewed as static
+  analyses that obtain some information about programs (i.e.~the number of required past values
+  in data-flow). Other examples provide type system that rules out certain invalid programs 
+  (e.g.~safe locking). We cover this topic when discussing \emph{partial coeffects} in Section~Z.
+  
+\item \textbf{May vs. must analysis.} When discussing liveness, we observed that we can obtain 
+  two different analyses depending on how conditionals are treated. We discuss this topic in 
+  Section~X. % TBD - could be a chapter
+\end{compactitem}
+
+Although we also looked at examples of \emph{active} contextual computations (where developers can
+write functions that modify the context), we do not consider these applications, to keep the 
+material presented in this thesis focused. We briefly discuss them as future work in Section~X.
+
 %===================================================================================================
 
 \section{Through type and effect systems}
@@ -1177,7 +1248,23 @@ structure of variable contexts.
 %===================================================================================================
 
 \section{Summary}
-Oops!
+
+This chapter presented four different pathways leading to the idea of coeffects. We also 
+introduced the most important related work, although presenting related work was not the
+main goal of the chapter. The main goal was to show the idea of coeffects as a logical follow up
+to a number of research directions. For this reason, we highlighted only certain aspects of 
+related work -- the remaining aspects as well as important technical details are covered 
+in later chapters.
+
+The first pathway looks at applications and systems that involve notion of \emph{context}.
+The two coeffect calculi we present aim to unify some of these systems. The second pathway
+follows as a dualization of well-known effect systems. However, this is not simply a syntactic
+transformation, because coeffect systems treat lambda abstraction differently. The third 
+pathway follows by extending comonadic semantics of context-dependent computations with 
+indexing and building a type system analogous to effect system from the ``marriage of effects
+and monads''. Finally, the fourth pathway starts with sub-structural type systems. Coeffect
+systems naturally arise by annotating bunches in bunched logics with additional information.
+
 
 % \section{Missing}
 % ~
