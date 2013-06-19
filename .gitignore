@@ -6,3 +6,7 @@
 *.synctex.gz
 *.toc
 \[all-templates\]/*
+rules/*.out
+rules/*.aux
+rules/*.log
+rules/*.synctex.gz

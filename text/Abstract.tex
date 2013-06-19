@@ -1,0 +1,35 @@
+% Abstract
+
+\pdfbookmark[1]{Abstract}{Abstract} % Bookmark name visible in a PDF viewer
+
+\begingroup
+\let\clearpage\relax
+\let\cleardoublepage\relax
+\let\cleardoublepage\relax
+
+\chapter*{Abstract} % Abstract name
+
+Static type systems are the most common form of program verification. In their most basic form, type
+systems guarantee that a computation always returns a value of some type. The work on monads
+and effect systems extends type systems to guarantee properties about \emph{effectful 
+computations} that perform side-effects like non-termination, I/O operations or exceptions.
+
+In this thesis we extend type systems to guarantee properties about \emph{context-dependent
+computations}. Such computations are increasingly common in modern software. For example, applications
+accessing data need to guarantee that the right data is available and distributed systems need to 
+guarantee that resources are available on specific nodes.
+
+We develop three \emph{coeffect} type systems that are capable of capturing different context-dependent
+properties. All three systems are based on the unifying semantic structure called \emph{indexed
+comonads}, but they use it differently. 
+
+Our \emph{flat coeffect calculus} tracks one annotation about the entire context. It can be used to
+keep a set of required resources or a set of supported platforms. Our \emph{structural coeffect 
+calculus} tracks one annotation for each variable. It can be used to track liveness of variables
+or number of past values needed in data-flow computations. Finally, our \emph{coeffect meta-language}
+embeds contextual values directly into a language. It can be used to capture context-dependent 
+properties of meta-programming languages and mobile values in distributed computation.
+
+\endgroup			
+
+\vfill

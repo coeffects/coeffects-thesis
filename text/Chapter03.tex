@@ -1,4 +1,4 @@
-\chapter{Flat coeffects} 
+\chapter{Flat coeffect language} 
 \label{ch:flat-coeffects} 
 
 %---------------------------------------------------------------------------------------------------
@@ -24,7 +24,12 @@
 
 %---------------------------------------------------------------------------------------------------
 
-TODO: Change this
+\todo{Update the introduction \& edit the whole chapter -- currently, this is just a direct copy
+from the accepted ICALP paper on flat coeffects.}
+
+\todo{Other extensions -- add more examples of indexed comonoads, consider recursion and 
+fixed-point operator, possibly also consider partially defined operations, which lets us
+express type systems that rule out some computations (rather than just static analyses). }
 
 Understanding how programs affect their environment is a well studied area: \emph{effect 
 systems}~\cite{effects-talpin-et-al} provide a static analysis of effects and 
@@ -970,6 +975,9 @@ To obtain a pure lambda abstraction
 for coeffects, we need to restrict the $\cmerge_{r, s}$ 
 operation of indexed comonads, so that the first parameter is annotated with $\iunit$ (meaning
 no effects): $\iftor \iunit A \times \iftor r B \rightarrow \iftor{r}(A \times B)$.
+
+\newcommand{\cprd}{\times}
+\newcommand{\cvop}{\oplus}
 
 \vspace{-1em}
 \paragraph{Structural coeffects.} To make the liveness analysis practical, we need to associate

@@ -1,8 +1,11 @@
-\chapter{Structural coeffects} 
-\label{ch:structural} 
+\chapter{Structural coeffect language} 
+\label{ch:structural-coeffects} 
 
 \newcommand{\ctimes}{ \hat{\times} }
 \newcommand{\cdupl}[0]{ \Delta } %{ \Upsilon }
+
+\newcommand{\csprd}[0]{ \times }
+\newcommand{\csvop}[0]{ \vee }
 
 % alculus names and rule names
 \newcommand{\clflt}{$\lambda_{\textnormal{\sffamily Cf}}$}
@@ -16,195 +19,15 @@
 
 %---------------------------------------------------------------------------------------------------
 
-Introduction
-
-%===================================================================================================
-
-\section{Introduction}
-\label{sec:structural-intro}
-
-We already talked about tainting in pathways to coeffects... here is more stuff!
-
-~
-
-~
-
-Our second motivating example is the use of \emph{tainting} for the prevention of SQL injection 
-attacks \cite{app-secure-tainting}. The idea is to (statically) check that SQL commands cannot be 
-directly constructed from, potentially dangerous, inputs provided by the user. Consider the type
-checking of the following expression in a context containing variables \ident{id} and \ident{msg}:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{name} = \ident{query}~(\str{"SELECT Name WHERE Id = "}~+~\ident{id})~\kvd{in}\\
-\ident{msg}~+~\ident{name}
-\end{array}
-\end{equation*}
-%
-We say that a variable is \emph{tainted} if it may come from untrusted input. In the above example,
-\ident{id} must not be tainted. Otherwise, the attacker could specify values such as 
-\str{"1; DROP TABLE Users"}. The variable \ident{msg} may or may not be tainted, because it is not
-used in protected context (i.e.~to construct an SQL query). Using the coeffect calculus, security
-information can be naturally attached to the context. We use tag \ident T for tainted and 
-\ident N for not tainted:
-%
-\begin{equation*}
-\ctyp{\ident T \times \ident N}{(\ident{id}:\ident{string}, \ident{msg}:\ident{string})} 
-  \vdash (\ldots) : \ident{string}
-\end{equation*}
-%
-The tags \ident T and \ident N correspond to variables \ident{id} and \ident{msg}, respectively.
-The checking of tainting is a special case of checking of \emph{non-interference} in 
-\emph{secure information flow} \cite{app-secure-information-flow}. Languages such as FlowCaml 
-\cite{app-security-flowcaml} can check such properties statically, but it is also possible to 
-embed such checking in a monadic library \cite{monad-secure-flow}.
- 
-Assuming the monadic type $\mtyp{s}{\tau}$ represents a value of type $\tau$ 
-in a security context $s$ (either \ident T or \ident N): 
-%
-\begin{equation*}
-\ident{id} : \mtyp{\ident T}{\ident{string}}, \ident{msg} : \mtyp{\ident N}{\ident{string}} 
-  \vdash (\ldots) : \mtyp{\ident T}{\ident{string}}
-\end{equation*}
-%
-In this example, the result is tagged with \ident T to denote that it may be tainted.
-If the result was tagged with \ident N, the first parameter would also have to be \ident N
-(and we would get fewer information about the function).
-
-The monadic encoding has an unfortunate property from the semantic perspective. 
-The function has monadic structure over the \emph{domain} as well as over the \emph{codomain}
-and thus it does not match the desirable Kleisli model of expressions $\tau_1 \times \ldots \tau_n \rightarrow \mtyp{}{\tau}$. 
-This makes the it difficult to give standard composable semantics of the library.
-
-In coeffect calculus, expressions are modelled using the coKleisli form 
-$\ctyp{r_1 \times \ldots \times r_n}{(\tau_1 \times \ldots \tau_n)} \rightarrow \tau$ with a tags 
-$r_n$ that specify taintedness of inputs. As discussed in detail in Section~\ref{sec:structural-tainting}, 
-this model gives a simple comonadic semantics of language-based security using  tainting.
-
-%---------------------------------------------------------------------------------------------------
-%===================================================================================================
-
-% ==================================================================================================
-\newcommand{\ctxtrans}[2]{#1 \Rightarrow_c #2}
-\begin{figure*}[t]
-% Constants, if we wanted them, would look like this
-%
-% \inference[]
-%   {c : \tau \in \Phi}
-%   {\ctyp{1}{()} \vdash c : \tau}&
-% \textnormal{\rulest{const}}
-% \\[1.6em]
-
-%\paragraph{Typing rules}
-\begin{equation*}
-\boxed{\ctyp{r}{\Gamma} \vdash e : \tau }
-\end{equation*}
-
-\begin{equation*}
-\begin{array}{cl}
-
-\inference[]
-  {}
-  {\ctyp{0}{(v:\tau)} \vdash v : \tau }&
-\textnormal{\rulest{var}}
-\\[1.8em]
-\inference
-  {\ctyp{r \cprd s}{(\Gamma, v:\tau_1)} \vdash e : \tau_2 & v \notin \Gamma}
-  {\ctyp{r}{\Gamma} \vdash \lambda v.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }&
-\textnormal{\rulest{fun}}
-\\[1.8em]
-\inference
-  {\ctyp{s}{\Gamma_1} \vdash e_1 : \ctyp{r}{\tau_1} \rightarrow \tau_2 &
-   \ctyp{t}{\Gamma_2} \vdash e_2 : \tau_1 }
-  {\ctyp{s \cprd (r \cvop t)}{(\Gamma_1, \Gamma_2)} \vdash e_1~e_2 : \tau_2}&
-\textnormal{\rulest{app}}
-\\[1.8em]
-\inference
-  {\ctyp{r \cprd s}{(\Gamma_1, v:\tau_1)} \vdash e_1 : \tau_2 &
-  \ctyp{t}{\Gamma_2} \vdash e_2 : \tau_1}
-  {\ctyp{r \cprd (s \cvop t)}{(\Gamma_1, \Gamma_2)} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}&
-\textnormal{\rulest{let}}
-\\[1.8em]
-\inference
-  {\ctyp{r}{\Gamma} \vdash e : \tau &
-   \ctxtrans{\ctyp{r'}{\Gamma'}}{\ctyp{r}{\Gamma}}}
-  {\ctyp{r'}{\Gamma'} \vdash e : \tau}&
-\textnormal{\rulest{ctx}}
-\end{array}
-\end{equation*}
-
-%
-% Empty variable context corresponds to unit, but things get messy
-%
-
-%\paragraph{Context rules}
-\begin{equation*}
-\boxed{\ctxtrans{\ctyp{r}{\Gamma}}{\ctyp{r}{\Gamma}} }
-\end{equation*}
-
-\begin{equation*}
-\begin{array}{rcll}
-\multicolumn{3}{c}{
-  \inference
-    {  \ctxtrans{\ctyp{r'}{\Gamma_1'}}{\ctyp{r}{\Gamma_1}} }
-    {  \ctxtrans{\ctyp{r'\cprd s}{(\Gamma_1', \Gamma_2)}}{\ctyp{r\cprd s}{(\Gamma_1, \Gamma_2)}} }
-}&
-\textnormal{\rulest{nest}}
-\\[2.0em]
-  \ctxtrans{\ctyp{r\cprd s}{(\Gamma_1, \Gamma_2)} &}{& \ctyp{s\cprd r}{(\Gamma_2, \Gamma_1)}}&
-\textnormal{\rulest{exch}}
-\\[0.8em]
-  \ctxtrans{ \ctyp{r \cprd 1}{(\Gamma, ())} &}{&
-    \ctyp{r}{\Gamma}}&
-\textnormal{\rulest{empty}}
-\\[0.8em]
-  \ctxtrans{\ctyp{r\cprd 0}{(\Gamma, x:\tau_1)} &}{& \ctyp{r}{\Gamma}}&
-\textnormal{\rulest{weak}}
-\\[0.8em]
-  \ctxtrans{\ctyp{r \cvop s}{(x:\tau)} &}{&
-    \ctyp{r \cprd s}{(x:\tau, x:\tau)}}&
-\textnormal{\rulest{contr}}
-\\[0.8em]
-  \ctxtrans{\ctyp{r\cprd (s\cprd t)}{(\Gamma_1, (\Gamma_2, \Gamma_3))} &}{&
-    \ctyp{(r\cprd s)\cprd t}{((\Gamma_1, \Gamma_2), \Gamma_3)}}\;&
-\textnormal{\rulest{assoc}}
-\\[0.8em]
-\multicolumn{3}{c}{
-  \ctxtrans{\ctyp{r}{\Gamma}}{\ctyp{s}{\Gamma}}\quad(\textnormal{when}~s \cvop r = s)
-}&
-\textnormal{\rulest{sub}}
-\end{array}
-\end{equation*}
-
-% We do not need this rule (can be expressed in terms of the other one)
-%
-% \inference
-%  {  \ctxtrans{\ctyp{s}{\Gamma_2}}{\ctyp{s'}{\Gamma_2'}} }
-%  {  \ctxtrans{\ctyp{r\cprd s}{(\Gamma_1, \Gamma_2)}}{\ctyp{r\cprd s'}{(\Gamma_1, \Gamma_2')}} }&
-% \textnormal{\rulest{right}}
-
-
-\caption{Type system for \clstr}
-\label{fig:structural-coeffect-typing}
-\end{figure*}
-
-\newpage
-
-% --------------------------------------------------------------------------------------------------
-
-\section{Structural coeffect system}
-\label{sec:structural}
-
 The \emph{flat coeffect system} presented in the previous sections has a number of uses, but often
 we need to track context-dependence in a more fine-grained way. To track neededness or security, 
 we need to associate information with individual \emph{variables} of the context. 
 
-At the same time, we want to avoid developing multiple variants of coeffect systems -- indeed, 
-our motivation is to develop a \emph{single unified mechanism} for tracking context-dependence.
-In this section, we present a more powerful \emph{structural coeffect calculus} \clstr, which is a 
-generalization of \clflt. We show that \clflt~can be obtained as a special case of \clstr. The
-structural version of our system is also where our work differs more significantly from well-known
-effect systems. 
+
+%===================================================================================================
+
+\section{Introduction}
+
 
 % --------------------------------------------------------------------------------------------------
 
@@ -219,31 +42,31 @@ respectively, but we use richer tag structure.
 
 As an example, consider a language that allows us to get a value of a variable (representing
 some changing data-source) \ident{x} versions back using the syntax $\pastval{a}{x}$. 
-To track information about individual variables, we use a product-like operation $\cprd$ on tags 
+To track information about individual variables, we use a product-like operation $\csprd$ on tags 
 to mirrors the product structure of variables. For example:
 %
 \begin{equation*}
 \begin{array}{l}
-\ctyp{5 \cprd 10}{(\ident{a}:\dnat, \ident{b}:\dnat)}
+\ctyp{5 \csprd 10}{(\ident{a}:\dnat, \ident{b}:\dnat)}
   \vdash
     \pastval{a}{5}+\pastval{b}{10}: \ident{nat}
 \end{array}
 \end{equation*}
 %
-The coeffect tag $5 \cprd 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
+The coeffect tag $5 \csprd 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
 that we need at most 5 and 10 past values of \ident{a} and \ident{b}. If we substitute \ident{c}
 for both \ident{a} and \ident{b}, we need another operation to combine multiple tags associated with 
 a single variable:
 %
 \begin{equation*}
 \begin{array}{l}
-\ctyp{5 \cvop 10}{(\ident{c}:\dnat)}
+\ctyp{5 \csvop 10}{(\ident{c}:\dnat)}
   \vdash
     \pastval{c}{5}+\pastval{c}{10}: \ident{nat}
 \end{array}
 \end{equation*}
 %
-In this example, the operation $\cvop$ would be the \emph{max} function and so $5 \cvop 10 = 10$.
+In this example, the operation $\csvop$ would be the \emph{max} function and so $5 \csvop 10 = 10$.
 Before looking at the formal definition, consider the typing of let bindings:
 %
 \begin{equation*}
@@ -258,47 +81,47 @@ is not a data source). It defines \ident{c}, which may be assigned either \ident
 The variable \ident{a} may be used directly (second line) or indirectly via \ident{c}.
 
 The expression assigned to \ident{c} uses variables \ident{a} and \ident{b}, so its typing
-context is $\ctyp{0 \cprd 0}{(\ident{a}, \ident{b})}$. The value $0$ is the unit
-of $\cvop$ and it denotes empty coeffect. The typing context of the
-body is $\ctyp{15 \cprd 10}{(\ident{a}, \ident{c})}$.
+context is $\ctyp{0 \csprd 0}{(\ident{a}, \ident{b})}$. The value $0$ is the unit
+of $\csvop$ and it denotes empty coeffect. The typing context of the
+body is $\ctyp{15 \csprd 10}{(\ident{a}, \ident{c})}$.
 
 To combine the tags, we take the coeffect associated with \ident{c} and apply it to the tags
-of the context in which \ident{c} was defined using the $\cvop$ operation. This is then combined 
+of the context in which \ident{c} was defined using the $\csvop$ operation. This is then combined 
 with the remaining tags from the body yielding the overall context:
-$\ctyp{15 \cprd (10 \cvop (0 \cprd 0))}{(\ident{a}, (\ident{a}, \ident{b}))}$. Using a simple
+$\ctyp{15 \csprd (10 \csvop (0 \csprd 0))}{(\ident{a}, (\ident{a}, \ident{b}))}$. Using a simple
 normalization mechanism (described later), this can be further reduced to
-$\ctyp{(15 \cvop 10) \cprd 10}{(\ident{a}, \ident{b})}$. This gives us the required information --
+$\ctyp{(15 \csvop 10) \csprd 10}{(\ident{a}, \ident{b})}$. This gives us the required information --
 we need at most $\emph{max}(15,10)$ past values of \ident{a} and at most $10$ past values of 
 \ident{b}.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Structural coeffect tags}
-In the previous section, the $\cvop$ operation behaves similarly to the flat $\vee$ operation.
+In the previous section, the $\csvop$ operation behaves similarly to the flat $\vee$ operation.
 However, the type system does not require some of the semilattice properties, because some uses
-are replaced with the $\cprd$ operation. We do not require any properties about the $\cprd$ operation.
-For example, in the previous example cannot be commutative (since a tag $15 \cprd 10$ has different 
-meaning than $10 \cprd 15$). However, we relate the operations using distributivity laws to allow 
+are replaced with the $\csprd$ operation. We do not require any properties about the $\csprd$ operation.
+For example, in the previous example cannot be commutative (since a tag $15 \csprd 10$ has different 
+meaning than $10 \csprd 15$). However, we relate the operations using distributivity laws to allow 
 normalization that was hinted above.
 
 \begin{definition}
-A \emph{structural coeffect tag structure} $(S, \cprd, \cvop, 0, 1)$ is a tuple where 
-$(S, \cvop)$ is a lattice-like structure with unit $0$. The additional structure is formed
-by a binary operation $\cprd$ and element $1\in S$ such that
+A \emph{structural coeffect tag structure} $(S, \csprd, \csvop, 0, 1)$ is a tuple where 
+$(S, \csvop)$ is a lattice-like structure with unit $0$. The additional structure is formed
+by a binary operation $\csprd$ and element $1\in S$ such that
 for all $r,s,t\in S$, the following equalities hold: 
 %
 \begin{subequations}
 \begin{align}
 \tag{associativity}
-r \cvop (s \cvop t) &= (r \cvop s) \cvop t\\
+r \csvop (s \csvop t) &= (r \csvop s) \csvop t\\
 \tag{commutativity}
-r \cvop s &= s \cvop r\\
+r \csvop s &= s \csvop r\\
 \tag{lower bound}
-r \cvop 0 &= r\\
+r \csvop 0 &= r\\
 \tag{distributivity}
-r \cvop (s \cprd t) &= (r \cvop s) \cprd (r \cvop t)\\
+r \csvop (s \csprd t) &= (r \csvop s) \csprd (r \csvop t)\\
 \tag{upper bound}
-1 \cvop r &= 1
+1 \csvop r &= 1
 \end{align}
 \end{subequations}
 %
@@ -346,7 +169,7 @@ structure.
 
 The simply typed system for \clstr~uses the same syntax of types as the system for \clflt. 
 The rules are of a form $\ctyp{r}{\Gamma}\vdash e : \tau$ where $r$ is a tag provided by 
-a \emph{structural coeffect tag structure} $(S,\cprd, \cvop, 0)$.
+a \emph{structural coeffect tag structure} $(S,\csprd, \csvop, 0)$.
 
 The system differs from \clflt~in a significant aspect. It contains explicit 
 structural rules that manipulate with the context. Such rules allow reordering, duplicating
@@ -364,7 +187,7 @@ bunched types than to linear or affine systems):
 \end{equation*}
 %
 The syntax $()$ represents an empty context, so the structure defines a binary trees where
-leaves are either variables or empty. Contexts such as $\ctyp{1\cprd(r \cprd 1)}{((), (x, ()))}$ 
+leaves are either variables or empty. Contexts such as $\ctyp{1\csprd(r \csprd 1)}{((), (x, ()))}$ 
 contain unnecessary number of empty contexts $()$. However, we need to construct them
 temporarily, because certain rules require splitting a context and, by our 
 definition, the context $(x:\tau)$ is not splitable.
@@ -383,7 +206,7 @@ The \rulest{app} rule combines coeffects $s, t, r$ associated with the function-
 expression, argument and the function type respectively. 
 The result of evaluating the argument in the context $t$ is passed to the function that
 requires context $r$, so the variables used in the context $\Gamma_2$ are annotated with
-the combination of coeffects $r \cvop t$. The variable context required to evaluate the 
+the combination of coeffects $r \csvop t$. The variable context required to evaluate the 
 function value is independent and so it is annotated just with coeffects $s$.
 Finally, the \rulest{let} rule is derived from let binding and application, but we show
 it separately to aid the understanding.
@@ -408,6 +231,9 @@ it can be reduced to a single occurrence. The rule is needed to satisfy the side
 of \rulest{fun} when the body uses the argument repeatedly. The two associativity rules
 together with \rulest{exch} provide ways to rearrange variables. Finally, \rulest{sub} represents
 sub-coeffecting -- in \clstr~the rule operates on coeffects of individual variables.
+
+\ExecuteMetaData[rules/rules.tex]{scl-types}
+
 
 % --------------------------------------------------------------------------------------------------
 
@@ -444,10 +270,10 @@ correspond with the typing rule \rulest{let}:
 \begin{equation*}
 \inference[]
   {\inference
-    {\ctyp{r \cprd s}{(\Gamma_1, v:\tau_1)} \vdash e_2 : \tau_2 & v \notin \Gamma_1}
+    {\ctyp{r \csprd s}{(\Gamma_1, v:\tau_1)} \vdash e_2 : \tau_2 & v \notin \Gamma_1}
     {\ctyp{r}{\Gamma_1} \vdash \lambda v.e_2 : \ctyp{s}{\tau_1} \rightarrow \tau_2 } &
    \ctyp{t}{\Gamma_2} \vdash e_1 : \tau_1 }
-  {\ctyp{r \cprd (s \cvop t)}{(\Gamma_1, \Gamma_2)} \vdash (\lambda v.e_2)~e_1 : \tau_2}\qedhere
+  {\ctyp{r \csprd (s \csvop t)}{(\Gamma_1, \Gamma_2)} \vdash (\lambda v.e_2)~e_1 : \tau_2}\qedhere
 \end{equation*}
 \end{proof}
 
@@ -455,7 +281,7 @@ The term $e_2$ which is substituted in $e_1$ is checked in a different variable
 and coeffect context $\ctyp{t}{\Gamma_2}$. This is common in sub-structural systems where
 a variable cannot be freely used repeatedly. The context $\Gamma_2$ is used in place of 
 the variable that we are substituting for. The let binding captures substitution for a 
-specific variable (the context is of a form $\ctyp{r \cprd s}{\Gamma, v:\tau}$).
+specific variable (the context is of a form $\ctyp{r \csprd s}{\Gamma, v:\tau}$).
 For a general substitution, we need to define the notion of context with a hole.
 
 \newcommand{\chole}[4]{\ctyp{#1}{#2}[#3|#4]}
@@ -471,7 +297,7 @@ in the free variable context and in a corresponding part of the coeffect tag:
 \Delta[-] &::=& \ctyp{1}{()} \\
        & \sep & \ctyp{r}{(x:\tau)}\\
        & \sep & \ctyp{-}{(-)} \\
-       & \sep & \ctyp{r_1 \cprd r_2}{(\Gamma_1, \Gamma_2)}\quad~~(\textnormal{where}~\ctyp{r_i}{\Gamma_i} \in \Delta[-])\\
+       & \sep & \ctyp{r_1 \csprd r_2}{(\Gamma_1, \Gamma_2)}\quad~~(\textnormal{where}~\ctyp{r_i}{\Gamma_i} \in \Delta[-])\\
 \end{array}
 \end{equation*}
 %
@@ -488,7 +314,7 @@ general substitution lemma for \clstr.
                               \chole{1}{()}{r'}{\Gamma'} &=& \ctyp{1}{()}\\
                         \chole{r}{(x:\tau)}{r'}{\Gamma'} &=& \ctyp{r}{(x:\tau)}\\
                              \chole{-}{(-)}{r'}{\Gamma'} &=& \ctyp{r'}{\Gamma'}\\
-\chole{r_1 \cprd r_2}{(\Gamma_1, \Gamma_2)}{r'}{\Gamma'} &=& \ctyp{r_1' \cprd r_2'}{(\Gamma_1', \Gamma_2')}\\
+\chole{r_1 \csprd r_2}{(\Gamma_1, \Gamma_2)}{r'}{\Gamma'} &=& \ctyp{r_1' \csprd r_2'}{(\Gamma_1', \Gamma_2')}\\
 &\multicolumn{2}{l} {
   \textnormal{where}~~\ctyp{r_i'}{\Gamma_i'} = \chole{r_i}{\Gamma_i}{r'}{\Gamma'}
 }
@@ -502,11 +328,11 @@ general substitution lemma for \clstr.
 \begin{lemma}[Substitution Lemma]
 \label{thm:structural-subst}
 If $\chole{r}{\Gamma}{R}{v:\tau'} \vdash e : \tau$ and $\ctyp{S}{\Gamma'} \vdash e' : \tau'$
-then $\chole{r}{\Gamma}{R \cvop S}{\Gamma'} \vdash \subst{e}{v}{e'} : \tau$.
+then $\chole{r}{\Gamma}{R \csvop S}{\Gamma'} \vdash \subst{e}{v}{e'} : \tau$.
 \end{lemma} 
 \begin{proof}
 Proceeds by rule induction over $\vdash$ using the properties of structural coeffect tag structure
-$(S, \cvop, 0, \cprd, 1)$ (see Appendix~\ref{app:structural-substitution}).
+$(S, \csvop, 0, \csprd, 1)$ (see Appendix~\ref{app:structural-substitution}).
 \end{proof}
 
 \begin{theorem}[Subject reduction]
@@ -544,22 +370,22 @@ $\ctyp{r}{\Gamma} \vdash \lambda x.f x : \ctyp{s}{\tau_1} \rightarrow \tau_2$.
   {\inference
      {\ctyp{r}{\Gamma} \vdash f : \ctyp{s}{\tau_1} \rightarrow \tau_2 &
       \ctyp{0}{(x:\tau_1)} \vdash x : \tau_1 }
-     {\ctyp{r \cprd (s \cvop 0)}{(\Gamma, x:\tau_1)} \vdash f~x : \tau_2}}
+     {\ctyp{r \csprd (s \csvop 0)}{(\Gamma, x:\tau_1)} \vdash f~x : \tau_2}}
   {\ctyp{r}{\Gamma} \vdash \lambda x.f x : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
 \qedhere
 \end{equation*}
 \end{proof}
 %
 In the last step, we use the \emph{lower bound} property of structural coeffect tag, which
-guarantees that $s\cvop0 = s$. Recall that in \clflt, the typing derivation for
+guarantees that $s\csvop0 = s$. Recall that in \clflt, the typing derivation for
 $\lambda x.f x$ required for local completeness was not the only possible derivation.
 In the last step, it was possible to split the coeffect tag arbitrarily between the 
 context and the function type. 
 
-In the \clstr~calculus, this is not, in general, the case. The $\cprd$ operator is not required 
+In the \clstr~calculus, this is not, in general, the case. The $\csprd$ operator is not required 
 to be associative and to have units and so a unique splitting may exist.  For example, if we
-define $\cprd$ as the operator of a \emph{free magma}, then it is invertible and for a given
-$t$, there are unique $r$ and $s$ such that $t = r \cprd s$. However, if the $\cprd$ operation 
+define $\csprd$ as the operator of a \emph{free magma}, then it is invertible and for a given
+$t$, there are unique $r$ and $s$ such that $t = r \csprd s$. However, if the $\csprd$ operation 
 has additional properties, then there may be other possible derivation.
 
 % ==================================================================================================
@@ -568,8 +394,8 @@ has additional properties, then there may be other possible derivation.
 \begin{figure*}[t]
 \newcommand{\uu}[1]{\overline{#1}}
 \begin{equation*}
-\cosem{\ctyp{r_1 \cprd \ldots \cprd r_n}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
-  \ctyp{r_1 \cprd \ldots \cprd r_n}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau
+\cosem{\ctyp{r_1 \csprd \ldots \csprd r_n}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
+  \ctyp{r_1 \csprd \ldots \csprd r_n}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau
 \end{equation*}
 \begin{equation*}
 \begin{array}{rcll}
@@ -577,9 +403,9 @@ has additional properties, then there may be other possible derivation.
     \epsilon_0                                                                   &\quad$\ruless{var}$
 \\[0.32em]
 \cosem{\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2} &=& 
-    \Lambda (\cosem{\ctyp{r \cprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    &\quad$\ruless{fun}$
+    \Lambda (\cosem{\ctyp{r \csprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    &\quad$\ruless{fun}$
 \\[0.32em]
-\cosem{\ctyp{s \cprd (r \cvop t)}{(\Gamma_1, \Gamma_2)} \vdash e_1~e_2 : \tau} &=& 
+\cosem{\ctyp{s \csprd (r \csvop t)}{(\Gamma_1, \Gamma_2)} \vdash e_1~e_2 : \tau} &=& 
     (\lambda (\gamma_1, \gamma_2) \rightarrow
     \cosem{\ctyp{s}{\Gamma_1} \vdash e_1 : \ctyp{r}{\tau_1} \rightarrow \tau_2}~\gamma_1~
     (\cobind{\cosem{\ctyp{t}{\Gamma_2}\vdash e_2 : \tau_1}}{t,r}~\gamma_2)) \circ \csplit_{s,(r \vee t)}  &\quad$\ruless{app}$
@@ -591,31 +417,31 @@ has additional properties, then there may be other possible derivation.
 
 \begin{equation*}
 \begin{array}{rclll}
-\cosem{\ctxtrans{\ctyp{r'\cprd s}{(\Gamma_1', \Gamma_2)}}{\ctyp{r \cprd s}{(\Gamma_1, \Gamma_2)}}}
+\cosem{\ctxtrans{\ctyp{r'\csprd s}{(\Gamma_1', \Gamma_2)}}{\ctyp{r \csprd s}{(\Gamma_1, \Gamma_2)}}}
 &=& \cmerge_{r, s} \circ (\cosem{\ctxtrans{\ctyp{r'}{\Gamma_1'}}{\ctyp{r}{\Gamma_1}}} \times \ident{id})~\circ \csplit_{r', s}\quad&\quad\quad\quad& % spaces to align
 \textnormal{\rulessc{nest}}
 \\[0.8em]
-\cosem{\ctxtrans{\ctyp{r\cprd s}{(\Gamma_1, \Gamma_2)} }{ \ctyp{s\cprd r}{(\Gamma_2, \Gamma_1)}}}
+\cosem{\ctxtrans{\ctyp{r\csprd s}{(\Gamma_1, \Gamma_2)} }{ \ctyp{s\csprd r}{(\Gamma_2, \Gamma_1)}}}
 &=& \cmerge_{s, r} \circ \ident{swap} \circ \csplit_{r, s}&&
 \textnormal{\rulessc{exch}}
 \\[0.8em]
-\cosem{\ctxtrans{\ctyp{r \cprd 1}{(\Gamma, ())}}{\ctyp{r}{\Gamma}}}
+\cosem{\ctxtrans{\ctyp{r \csprd 1}{(\Gamma, ())}}{\ctyp{r}{\Gamma}}}
 &=&\ident{fst} \circ \csplit_{r, 1}&&
 \textnormal{\rulessc{empty}}
 \\[0.8em]
-\cosem{\ctxtrans{ \ctyp{r\cprd 0}{(\Gamma, x:\tau)} }{ \ctyp{r}{\Gamma}}}
+\cosem{\ctxtrans{ \ctyp{r\csprd 0}{(\Gamma, x:\tau)} }{ \ctyp{r}{\Gamma}}}
 &=&\ident{fst} \circ \csplit_{r, 0}&&
 \textnormal{\rulessc{weak}}
 \\[0.8em]
-\cosem{\ctxtrans{\ctyp{r \cvop s}{(x:\tau)}}{
-    \ctyp{r \cprd s}{(x:\tau, x:\tau)}}}
+\cosem{\ctxtrans{\ctyp{r \csvop s}{(x:\tau)}}{
+    \ctyp{r \csprd s}{(x:\tau, x:\tau)}}}
 &=&\cmerge_{r, s} \circ \cdupl_{r, s}&&
 \textnormal{\rulessc{contr}}
 \\[0.8em]
-\cosem{\ctxtrans{\ctyp{r\cprd (s\cprd t)}{(\Gamma_1, (\Gamma_2, \Gamma_3))}}{
-    \ctyp{(r\cprd s)\cprd t}{((\Gamma_1, \Gamma_2), \Gamma_3)}}}\;
-&=& \cmerge_{r \cprd s, t} \circ (\cmerge_{r, s} \times \ident{id}) \circ \ident{assoc}_1 \circ
-        (\ident{id} \times \csplit_{s, t}) \circ \csplit_{r, s \cprd t}&&
+\cosem{\ctxtrans{\ctyp{r\csprd (s\csprd t)}{(\Gamma_1, (\Gamma_2, \Gamma_3))}}{
+    \ctyp{(r\csprd s)\csprd t}{((\Gamma_1, \Gamma_2), \Gamma_3)}}}\;
+&=& \cmerge_{r \csprd s, t} \circ (\cmerge_{r, s} \times \ident{id}) \circ \ident{assoc}_1 \circ
+        (\ident{id} \times \csplit_{s, t}) \circ \csplit_{r, s \csprd t}&&
 \textnormal{\rulessc{assoc}}
 \\[0.8em]
 \cosem{\ctxtrans{\ctyp{r}{\Gamma}}{\ctyp{s}{\Gamma}}}
@@ -640,8 +466,8 @@ has additional properties, then there may be other possible derivation.
 
 The semantics of structural coeffect calculus \clstr~can be defined similarly to the semantics of
 \clflt. The most notable difference is that the structure of coeffect tag now mirrors the structure
-of the variable context. Thus an expression $\ctyp{r \cprd s}{(\Gamma_1, \Gamma_2)} \vdash e : \tau$ 
-is modelled as a function $\ctyp{r \cprd s}{(\Gamma_1 \ctimes \Gamma_2)} \rightarrow \tau$. 
+of the variable context. Thus an expression $\ctyp{r \csprd s}{(\Gamma_1, \Gamma_2)} \vdash e : \tau$ 
+is modelled as a function $\ctyp{r \csprd s}{(\Gamma_1 \ctimes \Gamma_2)} \rightarrow \tau$. 
 
 As discussed in \ref{sec:structural-types}, the variable context $\Gamma$ in structural coeffect
 system is not a simple finite product, but instead a binary tree. To model this, we do not use
@@ -655,7 +481,7 @@ the tag structure.
 To model composition of functions, we reuse the definition of \emph{tagged comonads} from 
 Section~\ref{sec:tagged-comonads} without any change. This means that composing morphisms
 $T^r \tau_1 \rightarrow \tau_2$ with $T^s \tau_2 \rightarrow \tau_3$ still gives us a morphism
-$T^{r \cvop s} \tau_1 \rightarrow \tau_3$ and we use the $\cvop$ operation to combine the 
+$T^{r \csvop s} \tau_1 \rightarrow \tau_3$ and we use the $\csvop$ operation to combine the 
 context-requirements.
 
 However, functions that do not exist in context have only a single input variable (with a 
@@ -664,20 +490,20 @@ operations that allow manipulation with the variable context. Similarly to the m
 we also require operations that model duplication and sub-coeffecting:
 
 \begin{definition}[Structural tagged comonad]
-Given a structural coeffect tag structure $(S, \cprd, \cvop, 0, 1)$ a \emph{structural tagged comonad} is a 
-tagged comonad over $(S, \cvop, 0)$ comprising of $T^r$, $\epsilon_0$ and
+Given a structural coeffect tag structure $(S, \csprd, \csvop, 0, 1)$ a \emph{structural tagged comonad} is a 
+tagged comonad over $(S, \csvop, 0)$ comprising of $T^r$, $\epsilon_0$ and
 $\cobind{(-)}{r, s}$ together with a mapping $- \ctimes -$ from a pair of objects 
 $\obj{\ccat} \times \obj{\ccat}$ to an object $\obj{\ccat}$ and families of mappings:
 %
 \begin{equation*}
 \begin{array}{rcl}
-\cmerge_{r, s} &:& T^r A \times T^s B \rightarrow T^{(r \cprd s)}(A \ctimes B)\\
-\csplit_{r, s} &:& T^{(r \cprd s)}(A \ctimes B) \rightarrow T^r A \times T^s N\\
+\cmerge_{r, s} &:& T^r A \times T^s B \rightarrow T^{(r \csprd s)}(A \ctimes B)\\
+\csplit_{r, s} &:& T^{(r \csprd s)}(A \ctimes B) \rightarrow T^r A \times T^s N\\
 \end{array}
 \end{equation*}
 %
 % Delta is still defineable
-% ?? \cdupl_{r, s}  &:& T^{(r \cvop s)}A \rightarrow T^r A \times T^s A\\
+% ?? \cdupl_{r, s}  &:& T^{(r \csvop s)}A \rightarrow T^r A \times T^s A\\
 %
 And with a family of mappings $\iota_{r, s} : T^r A \rightarrow T^s A$ for all $r, s \in S$ such that $r \vee s = r$.
 %
@@ -697,7 +523,7 @@ of variables while splitting the additional coeffect tags:
 \end{equation*}
 %
 The type of the $\cmerge_{r,s}$ operation looks similar to the one used for \emph{flat} coeffects,
-but with two differences. Firstly, it combines tags using $\cprd$ instead of $\vee$, 
+but with two differences. Firstly, it combines tags using $\csprd$ instead of $\vee$, 
 which corresponds to the fact that the variable context now consists of two parts (a tree node).
 Secondly, to model the tree node, the resulting context is modelled as $A \ctimes B$
 (instead of $A \times B$ as previously).
@@ -707,7 +533,7 @@ of $\cmerge_{r, s}$. It represents \emph{splitting} of context containing multip
 variables. The operation was not needed for \clflt, because there \emph{splitting} could
 be defined in terms of \emph{duplication} provided by $\cdupl_{r, s}$. For \clstr,
 the situation is different. The $\csplit_{r, s}$ operation takes a context annotated
-with $r \cprd s$ that carries $A \ctimes B$.
+with $r \csprd s$ that carries $A \ctimes B$.
 
 Examples of \emph{structural tagged comonads} are shown in Section~\ref{sec:structural-tainting}.
 Before looking at them, we finish our discussion of categorical semantics.
@@ -715,13 +541,13 @@ Before looking at them, we finish our discussion of categorical semantics.
 \paragraph{Categorical notes.}
 The mapping $T^r$ can be extended to an endo-functor $\hat{T}^r$ in the same way as in
 Section~\ref{sec:tagged-comonads}. However, we still cannot freely manipulate the 
-variables in the context. Given a context modelled as $T^{r \cprd s}(A \ctimes B)$,
-we can lift a morphism $f$ to $\hat{T}^{r \cprd s}(f)$, but we cannot manipulate the
+variables in the context. Given a context modelled as $T^{r \csprd s}(A \ctimes B)$,
+we can lift a morphism $f$ to $\hat{T}^{r \csprd s}(f)$, but we cannot manipulate the
 variables, because $A \ctimes B$ is not a product and does not have projections $\pi_i$.
 
 This also explains why $\csplit$ cannot be defined in terms of $\cdupl$. Even if we 
-could apply $\cdupl_{r, s}$ on the input (if the tag $r \cprd s$ coincided
-with tag $r \cvop s$) we would still not be able to obtain $T^r A$ from $T^r (A \ctimes B)$.
+could apply $\cdupl_{r, s}$ on the input (if the tag $r \csprd s$ coincided
+with tag $r \csvop s$) we would still not be able to obtain $T^r A$ from $T^r (A \ctimes B)$.
 
 This restriction is intentional -- at the semantic level, it prevents manipulations
 with the context that would break the correspondence between tag structure and the
@@ -744,13 +570,13 @@ When compared with the semantics of \clflt (Figure~\ref{fig:flat-semantics}), th
 notable differences. Firstly, the rule \ruless{var} is now interpreted as $\epsilon_0$ without 
 the need for projection $\pi_i$. When accessing a variable, the context contains only the accessed
 variable. The \ruless{fun} rule has the same structure -- the only difference is that we use the
-$\cprd$ operator for combining context tags instead of $\vee$ (which is a result of the change of
+$\csprd$ operator for combining context tags instead of $\vee$ (which is a result of the change of
 type signature in $\cmerge_{r, s}$).
 
-The rule \ruless{app} now uses the operation $\csplit_{s, (r \cvop t)}$ instead of $\cdupl_{s, (r \cvop t)}$,
+The rule \ruless{app} now uses the operation $\csplit_{s, (r \csvop t)}$ instead of $\cdupl_{s, (r \csvop t)}$,
 which means that it splits the context instead of duplicating it. This makes the system more 
 structural -- the expressions use disjunctive parts of the context -- and also explains why the
-composed coeffect tag is $s \cprd (r \cvop t)$.
+composed coeffect tag is $s \csprd (r \csvop t)$.
 
 The only rule from \clflt~that was not syntax-directed (\rulefs{sub}) is now generalized to a number
 of non-syntax-directed rules \rulessc{} that perform various manipulations with the context. The semantics
@@ -767,12 +593,12 @@ The context manipulation rules work as follows:
 \item The \rulessc{empty} and \rulessc{weak} rules have the same semantics. They both split the context
   and discard one part (containing either an unused variable or an empty context).
 
-\item If we interpreted \rulessc{contr} by applying functor $T^{r\cvop s}$ to a function that duplicates
-  a variable, the resulting context would be $\ctyp{r \cvop s}(x:\tau, x:\tau)$, which would break the
+\item If we interpreted \rulessc{contr} by applying functor $T^{r\csvop s}$ to a function that duplicates
+  a variable, the resulting context would be $\ctyp{r \csvop s}(x:\tau, x:\tau)$, which would break the
   correspondence between coeffect tag and context variable structure. However, that interpretation would be
   incorrect, because we use $\ctimes$ instead of normal product for variable contexts. As a result, the
   rule has to be interpreted as a composition of $\cdupl_{r, s}$ and $\cmerge_{r, s}$, which also turns
-  a tag $r \cvop s$ into $r \cprd s$.
+  a tag $r \csvop s$ into $r \csprd s$.
 
 \item The \rulessc{assoc} rule is similar to \rulessc{exch} in the sense that it de-constructs the context,
   manipulates it (using \ident{assoc}) and then re-constructs it.
@@ -783,7 +609,7 @@ The context manipulation rules work as follows:
 
 \paragraph{Alternative: Separate variables.} As an alternative, we could model an expression by
 attaching the context separately to individual variables. This an expression
-$\ctyp{r \cprd s}{(\Gamma_1, \Gamma_2)} \vdash e : \tau$ would be modelled as 
+$\ctyp{r \csprd s}{(\Gamma_1, \Gamma_2)} \vdash e : \tau$ would be modelled as 
 $\ctyp{r}{\Gamma_1} \times \ctyp{s}{\Gamma_2} \rightarrow \tau$. However, this 
 approach largely complicates the definition of application (where tag of all 
 variables in a context is affected). Moreover, it makes it impossible to express
@@ -811,11 +637,15 @@ affine type systems (where a variable can be used at most once) and linear type 
 
 \section{Examples of structural coeffects}
 
-\subsection{Example: Neededness analysis}
+\subsection{Example: Liveness analysis}
 \label{sec:structural-neededness}
 
-\subsection{Example: Tracking tainting}
+\subsection{Example: Data-flow (revisited) }
 \label{sec:structural-tainting}
 
-\section{Summary}
-Oops!
+\todo{Also, consider additional language features that we consider for flat coeffects
+  (mainly recursion and possibly conditionals)}
+  
+\section{Conclusions}
+
+\todo{ (...) }

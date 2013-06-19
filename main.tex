@@ -8,7 +8,7 @@
                 BCOR=10mm,paper=a4,fontsize=10pt, % Binding correction, paper type and font size
                 ngerman,american, % Languages
                 ]{scrreprt} 
-                
+
 % Includes the file which contains all the document configurations and packages - make sure to edit this file
 \input{classicthesis-config}
 \usepackage{semantic}
@@ -17,26 +17,23 @@
 \usepackage{stmaryrd}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{catchfilebetweentags}
 
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}{Lemma}
 
 % source code & types
-\newcommand{\sep}[0]{\;\; | \;\;}
-\newcommand{\kvd}[1]{\textnormal{\bfseries\sffamily #1}} %
-\newcommand{\str}[1]{\textnormal{\ttfamily #1}} %
-\newcommand{\ident}[1]{\textnormal{\sffamily #1}}
-\newcommand{\ctyp}[2]{C^{#1}#2}
-\newcommand{\mtyp}[2]{M^{#1}#2}
-\newcommand{\subst}[3]{#1[#2 \leftarrow #3]}
+
+\ExecuteMetaData[rules/rules.tex]{rule-definitions}
+
+\definecolor{todoclr}{rgb}{0.8,0,0.5}
+\newcommand{\todo}[1]{\textcolor{todoclr}{ \begin{quotation} \noindent\textbf{TODO:} #1 \end{quotation} }}
 
 \newcommand{\sem}[1]{\llbracket #1 \rrbracket}
 \newcommand{\catc}{\mathcal{C}}
 \newcommand{\idf}[1]{ {\textnormal{\sffamily id}}_{#1} }
 
-\newcommand{\codesnip}[0]{\renewcommand{\baselinestretch}{0.9}\normalsize}
-\newcommand{\codesnipout}[0]{\renewcommand{\baselinestretch}{1.0}\normalsize}
 
 % Half line spacing around align
 \newcommand{\zerodisplayskips}{%
@@ -80,7 +77,7 @@
 
 %\cleardoublepage\include{FrontBackMatter/Foreword} % Uncomment and create a Foreword.tex to include a foreword
 
-% \cleardoublepage\include{FrontBackMatter/Abstract} % Abstract page
+\cleardoublepage\include{text/Abstract} % Abstract page
 
 % \cleardoublepage\include{FrontBackMatter/Publication} % Publications from the thesis page
 
@@ -117,6 +114,7 @@
 \include{text/Chapter02} % Chapter 2
 \include{text/Chapter03} % Chapter 3
 \include{text/Chapter04} % Chapter 4
+\include{text/Chapter05} % Chapter 4
 
 % \include{Chapters/Chapter03} % Chapter 3
 %\include{Chapters/Chapter04} % Chapter 4 - empty template

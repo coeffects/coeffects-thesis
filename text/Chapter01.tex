@@ -3,146 +3,207 @@
 
 %----------------------------------------------------------------------------------------
 
-Some intro
+Modern software applications behave differently depending on the environment or context 
+in which they execute. They often run in increasingly rich environments that provide 
+resources (e.g. database or GPS sensor) and are gradually more diverse (e.g. multiple 
+versions of different mobile platforms). Web applications are split between client, server 
+and mobile components; mobile applications must be aware of the context and of the platform 
+while the ``internet of things'' makes the environments even more heterogeneous; 
+applications that access rich data sources need to propagate security policies and provenance 
+information about the data.
 
-\section{How lambda works}
-The key difference - how lambda works
+Writing such context-aware applications is a fundamental problem of modern software 
+engineering. The state of the art relies on ad-hoc approaches -- using hand-written conditions 
+or pre-processors for conditional compilation. Common problems that developers face include: 
 
-Effect systems, introduced by Gifford and Lucassen
-\cite{effects-gifford}, track \emph{effects} of computations, such as
-memory access or message-based
-communication~\cite{effects-messagepassing}. Their approach augments
-typing judgments with effect information: $\Gamma \vdash e :
-\tau, F$.  Wadler and Thiemann explain how this shapes
-effect analysis of lambda abstraction~\cite{monads-effects-marriage}:
+\begin{itemize}
+\item \textbf{System capabilities.} When writing code that is cross-compiled to multiple 
+  targets (e.g. SQL, CUDA or JavaScript) the compilation often occurs at runtime and developers 
+  have no guarantee that it will succeed until the program is executed.
+  
+\item \textbf{Platform versioning.} When developing application for multiple versions of a 
+  system (e.g. Android), developers rely on lazy loading at runtime or use conditional compilation 
+  using \ident{\#if}. The former delays errors to runtime, while the latter requires building all 
+  possible configurations to discover simple compile-time errors.
+  
+\item \textbf{Resources \& data availability.} When programming applications that access 
+  resources or data provided by the environment (e.g. specific database table, GPS sensor), 
+  the program typically performs dynamic check for the resource availability. However, this 
+  is not checked in any way -- we have no easy way to tell what happens when the resource is 
+  not available (e.g. is there a fallback strategy or not?)
+
+\item \textbf{Meta-programming.} In distributed client-server programming, we often need to 
+  manipulate code using meta-programming techniques on the server and then pass a closed 
+  expression to client, translated to another language (JavaScript). We need to be able to 
+  guarantee that such expressions are well-formed before they are translated.
+\end{itemize}
+
+The issues discussed above pose an important problem to current and future state of computing.
+In this thesis, we develop a unifying mathematical model that allows us to capture the properties
+discussed above. We use the model in three different ways to capture different notions of 
+context-dependence.
+
+In the rest of the chapter, we first look at the distinguishing factor of two of the presented
+coeffect systems (how they differ from other existing work). Then we look at a number of concrete 
+problems that are discussed in greater details in later chapters. We use the examples to demonstrate 
+the real-world problems that motivate our work. (Theoretical and other motivations are discussed 
+later in Chapter~\ref{ch:related-work}).
+
+%===================================================================================================
+
+\section{Context and lambda abstraction}
+
+Our work on context-aware programming languages connects two directions in existing research on the 
+theory of programming languages. On one side, effect systems \cite{effects-gifford} and monadic 
+computations \cite{monad-notions,monads-effects-marriage} provide a detailed and established method 
+for tracking what effects programs have -- that is, how they affect the environment where they execute. 
+On the other side, the work on comonadic notions of computations \cite{comonads-notions} shows how 
+to use the mathematical dual of monads -- comonads -- to give categorical semantics of 
+context-dependent computations.
+
+Effect systems introduced track actions such as memory operations or communication. They are described 
+by typing judgments of a form $\Gamma \vdash e : \alpha, \sigma$ where $\Gamma$ is the context of a 
+program (typically available variables), $e$ is the expression (program) itself, $\alpha$ is the type of 
+values returned by the program (e.g. integer or boolean) and $\sigma$ is a set of possible effects. The 
+judgment states that, given the context $\Gamma$, an expression has a type $\alpha$ and can only perform 
+effects specified by the set $\sigma$. Wadler and Thiemann \cite{monads-effects-marriage} explain how 
+this shapes effect analysis of a lambda abstraction -- that is, how effect systems analyze the effects 
+associated with a definition of a function:
 %
-\begin{quote}
+\begin{quote} 
 \emph{In the rule for abstraction, the effect is empty because evaluation immediately
 returns the function, with no side effects. The effect on the function arrow
 is the same as the effect for the function body, because applying the function will
 have the same side effects as evaluating the body.}
 \end{quote}
 %
-In contrast to the static analysis of \emph{effects}, the analysis of \emph{context-dependence} 
-does not match this pattern. In the systems we consider, lambda abstraction places 
-requirements on both the \emph{call-site} (latent requirements) and the \emph{declaration-site} 
-(immediate requirements), resulting in different syntactic properties. 
-We informally discuss three examples first that demonstrate how contextual
-requirements propagate. Section ? then unifies these 
-in a single calculus.
-
-Also \cite{effects-producer-semantics}
-
+This means that, when a programmer defines a function, the system records that executing the 
+function will perform the effects of the body of the function. However, simply defining a function
+is an effect-free computation. Tate \cite{effects-producer-semantics} calls such effect systems
+\emph{producer} effect systems and generalizes the idea of function to more general ``thunking'':
+%
 \begin{quote}
 \emph{We will define an effect as a producer effect if all computations with that effect 
 can be thunked as "pure" computations for a domain-specific notion of purity.}
 \end{quote}
+%
+In contrast to the static analysis of (producer) effect systems, the analysis of 
+\emph{context-dependence} does not match this pattern. In the systems we consider, lambda 
+abstraction places requirements on both the \emph{call-site} (latent requirements) and the 
+\emph{declaration-site} (immediate requirements), resulting in different syntactic properties. 
+We informally discuss three examples first that demonstrate how contextual requirements propagate. 
 
+%===================================================================================================
 
-Demonstrate using distributed computations
+\section{Why coeffects matter}
 
-Demonstrate using dataflow/liveness
-
-Perhaps mention LINQ as a motivation for cross-compilation..
-\cite{app-linq}
-
-
-\section{Associating with context}
-
--> Type providers make this important
-
-%---------------------------------------------------------------------------------------------------
-
-\section{Flat coeffect system}
-~
-
-resources?
+This section gives three examples of context-dependent computations whose properties can be captured
+by the tree calculi presented in this thesis. We look at an example of the \emph{flat coeffect calculus} 
+(Chapter~\ref{ch:flat-coeffects}), \emph{structural coeffect calculus} (Chapter~\ref{ch:structural-coeffects})
+and \emph{coeffect meta-language} (Chapter~\ref{ch:coeffect-metalanguage}).
 
 %---------------------------------------------------------------------------------------------------
 
-\section{Structural coeffect system}
-\label{sec:structural}
+\subsection{Flat coeffect calculus}
 
-The \emph{flat coeffect system} presented in the previous sections has a number of uses, but often
-we need to track context-dependence in a more fine-grained way. To track neededness or security, 
-we need to associate information with individual \emph{variables} of the context. 
+The flat coeffect calculus associates a single piece of information with the context. As an example,
+we look at a simple distributed programming language that includes the concept of \emph{resources}.
+A resource may be accessed using a special construct $\kvd{access}~\ident{Res}$. The following 
+example shows a function taht lists recent events -- it accesses the resource \ident{News} 
+(representing a database) and a resource \ident{Clock} (with the current time):
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{recentEvents} = \lambda () \rightarrow\\
+\quad\kvd{let}~\ident{db} = \kvd{access}~\ident{News}~\kvd{in}\\
+\quad\ident{query}~\ident{db}~\str{"SELECT * WHERE Date > \%1"}~(\kvd{access}~\ident{Clock})
+\end{array}
+\end{equation*}
+%
+Consider a scenario where the function is \emph{declared} on the server-side and then
+transferred and \emph{executed} on the client-side. The resource \ident{News} represents a 
+database that is only available on the server-side and so the function needs to keep a remote
+reference to the server. However, the \ident{Clock} resource may (or may not) be available on the
+client-side. If the resource is available on the client, then it may be re-bound and the function
+will use the current client's data -- for example, to accommodate for time-zone changes.
 
-At the same time, we want to avoid developing multiple variants of coeffect systems -- indeed, 
-our motivation is to develop a \emph{single unified mechanism} for tracking context-dependence.
-In this section, we present a more powerful \emph{structural coeffect calculus}, which is a 
-generalization of the flat calculus. 
+This example demonstrates how lambda abstraction behaves for context-dependent computations. The 
+context requirement of the function body is a set of resources $\{\ident{Clock}, \ident{News}\}$.
+The context requirements are split between the \emph{declaration-site} and \emph{call-site}.
+However, there are multiple possible splittings. The splitting $\{\ident{News}\} \cup \{\ident{Clock}\}$
+models the case when the database is accessed from the server, but time is taken from the client,
+while the splitting $\{\ident{Clock}, \ident{News}\} \cup \{\}$ corresponds to the case when both
+resources are accessed from the server.
 
-%We show that \clflt~can be obtained as a special case of \clstr. The
-%structural version of our system is also where our work differs more significantly from well-known
-%effect systems. 
+%---------------------------------------------------------------------------------------------------
 
-% --------------------------------------------------------------------------------------------------
+\subsection{Structural coeffect calculus}
 
-\subsection{Motivation: Tracking array accesses}
-\label{sec:structural-motivation}
 \newcommand{\pastval}[2]{\ident{#1}_{[#2]}}
-\newcommand{\dnat}{\ident{D}_\ident{nat}}
-\newcommand{\cprd}{\times}
-\newcommand{\cvop}{~\ident{max}~}
+\newcommand{\dnat}{\ident{stream}}
 
-Similarly to the flat version, the \emph{structural coeffect calculus} works with contexts and
-functions annotated with a coeffectt tags, written $\ctyp{r}{\Gamma}$ and $\ctyp{r}{\tau_1} \rightarrow \tau_2$, 
-respectively, but we use richer tag structure.
+The calculus used in the previous section annotates the entire context with a single value --  such
+as the set of required resources. However, sometimes it is desirable to annotate not the entire 
+context, but individual variables of the context.
 
 As an example, consider a language that allows us to get a value of a variable (representing
 some changing data-source) \ident{x} versions back using the syntax $\pastval{a}{x}$. 
-To track information about individual variables, we use a product-like operation $\cprd$ on tags 
+To track information about individual variables, we use a product-like operation $\times$ on tags 
 to mirrors the product structure of variables. For example:
 %
 \begin{equation*}
 \begin{array}{l}
-\ctyp{5 \cprd 10}{(\ident{a}:\dnat, \ident{b}:\dnat)}
+(\ident{a}:\dnat, \ident{b}:\dnat) ~@~ 5 \times 10
   \vdash
     \pastval{a}{5}+\pastval{b}{10}: \ident{nat}
 \end{array}
 \end{equation*}
 %
-The coeffect tag $5 \cprd 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
-that we need at most 5 and 10 past values of \ident{a} and \ident{b}. If we substitute \ident{c}
-for both \ident{a} and \ident{b}, we need another operation to combine multiple tags associated with 
-a single variable:
+The annotations $5 \times 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
+that we need at most 5 and 10 past values of \ident{a} and \ident{b}, respectively. If we substitute 
+\ident{c} for both \ident{a} and \ident{b}, we need to combine the context-requirements and take the
+maximum of the requirements of the individual variables:
 %
 \begin{equation*}
 \begin{array}{l}
-\ctyp{5 \cvop 10}{(\ident{c}:\dnat)}
+(\ident{c}:\dnat) ~@~ \ident{max}(5, 10)
   \vdash
     \pastval{c}{5}+\pastval{c}{10}: \ident{nat}
 \end{array}
 \end{equation*}
 %
-In this example, the operation $\cvop$ would be the \emph{max} function and so $5 \cvop 10 = 10$.
-Before looking at the formal definition, consider the typing of let bindings:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{c} = \kvd{if}~\ident{test}()~\kvd{then}~\ident{a}~\kvd{else}~\ident{b}\\
-\pastval{a}{15}+\pastval{c}{10}
-\end{array}
-\end{equation*}
-%
-The expression has free variables \ident{a} and \ident{b} (we ignore \ident{test}, which
-is not a data source). It defines \ident{c}, which may be assigned either \ident{a} or \ident{b}.
-The variable \ident{a} may be used directly (second line) or indirectly via \ident{c}.
+This version of the calculus removes the non-determinism of the lambda abstraction from the previous
+version. As we associate information with individual variables, lambda abstraction creates a function
+that requires the context requirements associated with the variable that is being abstracted over.
 
-The expression assigned to \ident{c} uses variables \ident{a} and \ident{b}, so its typing
-context is $\ctyp{0 \cprd 0}{(\ident{a}, \ident{b})}$. The value $0$ is the unit
-of $\cvop$ and it denotes empty coeffect. The typing context of the
-body is $\ctyp{15 \cprd 10}{(\ident{a}, \ident{c})}$.
+For example, if we wrapped the earlier example above in a function taking \ident{a} (and using 
+\ident{b} from the declaration-site) then the function would have context requirements $5$ -- that
+is the number associated with the variable \ident{a}.
 
-To combine the tags, we take the coeffect associated with \ident{c} and apply it to the tags
-of the context in which \ident{c} was defined using the $\cvop$ operation. This is then combined 
-with the remaining tags from the body yielding the overall context:
-$\ctyp{15 \cprd (10 \cvop (0 \cprd 0))}{(\ident{a}, (\ident{a}, \ident{b}))}$. Using a simple
-normalization mechanism (described later), this can be further reduced to
-$\ctyp{(15 \cvop 10) \cprd 10}{(\ident{a}, \ident{b})}$. This gives us the required information --
-we need at most $\emph{max}(15,10)$ past values of \ident{a} and at most $10$ past values of 
-\ident{b}.
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Coeffect meta-language}
+
+\todo{Give some example that uses the coeffects metalanguage style. This will probably be 
+meta-programming with open expressions (similarly to what Pfenning and Nanevski do with 
+contextual modal type theory).}
+
+%---------------------------------------------------------------------------------------------------
+
+\section{Why context matters}
+
+We claimed earlier that context-dependent comptuations are becoming increasingly common and our
+work is focused on annotating the (free-variable) context with additional information.
+The importance of context can be also demonstrated by looking at a technology that focuses 
+solely on making the context richer -- F\# type providers.
+
+\todo{Say more about type providers -- they extend the context $\Gamma$ so that it can be 
+lazily loaded and it can be huge. Potentially, it could be also annotated with additional
+meta-data...}
 
 %===================================================================================================
 
 \section{Contributions}
+
+\todo{We present three calculi that model common notions of context-dependence and can be used
+as basis for developing context-aware programming langauges with static type systems.}
