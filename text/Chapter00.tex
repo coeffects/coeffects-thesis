@@ -1,0 +1,458 @@
+\chapter{Why context-aware programming matters} 
+\label{ch:introduction1} 
+
+\todo{This chapter is currently copy \& paste of a \texttt{}popular'' introduction to coeffects
+that I wrote online (\url{http://tomasp.net/blog/2014/why-coeffects-matter}). It needs to be
+rewritten in academic style - but hopefully it has the right structure for an intro chapter? }
+
+% ==================================================================================================
+
+Many advances in programming language design are driven by some practical motivations.
+Sometimes, the practical motivations are easy to see - for example, when they come from
+some external change such as the rise of multi-core processors. Sometimes, discovering 
+the practical motivations is a tricky task - perhaps because everyone is used to a 
+certain way of doing things that we do not even \emph{see} how poor our current solution is. 
+
+The following two examples are related to the work done in F\# (because this is what
+I'm the most familiar with), but you can surely find similar examples in other languages:
+
+\begin{itemize}
+\item \textbf{Multi-core} is an easy to see challenge caused by an external development. 
+   It led to the popularity of \emph{immutable} data structures (and functional programming,
+   in general) and it was also partly motivation for asynchronous workflows \cite{xx}.
+
+\item \textbf{Data access} is a more subtle challenge. Technologies like LINQ \cite{xx} make it
+   significantly easier, but it was not easy to see that inline SQL was a poor solution.
+   This is even more the case for F\# \emph{type providers}. You will not realize how poor the
+   established data access story is until you \emph{see} something like 
+   the WorldBank and R provider \cite{xx} or CSV type provider \cite{xx}.
+\end{itemize}
+
+I believe that the next important practical challenge for programming language designers
+is of the kind that is not easy to see -- because we are so used to doing things in 
+certain ways that we cannot see how poor they are. The problem is designing languages
+that are better at working with (and understanding) the \emph{context} in which programs are
+executed.
+
+% ==================================================================================================
+
+\section{Context-aware programming matters}
+
+The phrase \emph{context in which programs are executed} sounds quite abstract and generic.
+What are some concrete examples of such \emph{context}? For example: 
+
+\begin{itemize}
+\item When writing a cross-platform application, different platforms (and even different 
+   versions of the same platform) provide different contexts - the API functions that are 
+   available.
+      
+\item When creating a mobile app, the different capabilities that you may (or may not) have
+   access to are context (GPS sensor, accelerometer, battery status).
+
+\item When working with data (be it sensitive database or social network data from Facebook),
+   you have permissions to access only some of the data (depending on your identity) and
+   you may want to track \emph{provenance} information. This is another example of a context.
+\end{itemize}
+ 
+These are all fairly standard problems that developers deal with today. As the number of 
+devices where programs need to run increases, dealing with diverse contexts will be becoming
+more and more important (and I'm not even talking about \emph{ubiquitous computing} where you need
+to compile your code to a coffee machine).
+
+We do not preceive the above things as problems (at best, annoyances that we just have to 
+deal with), because we do not realize that there should be a better way. Let me digg into
+four examples in a bit more detail.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Context awareness \#1: Platform versioning}
+
+The number of different platform versions that you need to target is increasing, no matter what 
+platform are you using. For Android, there is a number called API Level 
+\footnote{\url{http://developer.android.com/guide/topics/manifest/uses-sdk-element.html}}
+with mostly additive changes (\emph{mostly} sounds very reassuring). In the .NET world, there are multiple
+versions, mobile editions, multiple versions of Silverlight etc. So, code that targets multiple
+frameworks easily ends up looking as the following sample from the Http module in F\# Data\footnote{
+\url{https://github.com/fsharp/FSharp.Data/blob/master/src/Net/Http.fs}}:
+
+\begin{verbatim}
+for header, value in headers do
+  match header with
+  | StringEquals "accept" -> req.Accept <- value
+#if FX_NO_WEBREQUEST_USERAGENT
+  | StringEquals "user-agent" -> 
+      req.Headers.[HttpRequestHeader.UserAgent] <- value
+#else
+  | StringEquals "user-agent" -> req.UserAgent <- value
+#endif
+#if FX_NO_WEBREQUEST_REFERER
+  | StringEquals "referer" -> 
+      req.Headers.[HttpRequestHeader.Referer] <- value
+#else
+  | StringEquals "referer" -> req.Referer <- value
+#endif
+  | _ -> req.Headers.[header] <- value
+\end{verbatim}
+
+This is difficult to write (you won't know if the code even compiles until you try building all 
+combinations) and maintaining such code is not particularly nice (try adding another platform version).
+Maybe we could refactor the code in F\# Data to improve it, but that's not really my point - supporting
+multiple platforms should be a lot easier.
+
+On Android, you can access API from higher level platform dynamically using techniques like 
+reflection and writing wrappers 
+\footnote{\url{http://android-developers.blogspot.cz/2009/04/backward-compatibility-for-android.html}}
+Again, this sounds very error prone - to quote the linked article 
+\emph{``Remember the mantra: if you haven't tried it, it doesn't work''}.
+Testing is no doubt important. But at least in statically typed langauges, we
+should not need to worry about calling a method that does not exist when writing
+multi-platform applications!
+
+% --------------------------------------------------------------------------------------------------
+
+\subsubsection{Context awareness \#2: System capabilities}
+
+Another example related to the previous one is when you're using something like LINQ or 
+FunScript (\url{http://funscript.info/}) to translate code written in a sub-set of C\# or F\#
+to some other language - such as SQL or JavaScript. This is another important area, because
+you can use this technique to target JavaScript, GPUs, SQL, Erlang runtime or other components 
+that use a particular programming language.
+
+For example, take a look at the following LINQ query that selects product names where the
+first upper case letter is "C":
+
+\begin{verbatim}
+var db = new NorthwindDataContext();
+
+from p in db.Products
+where p.ProductName.First(c => Char.IsUpper(c)) == "C"
+select p.ProductName;
+\end{verbatim}
+
+This looks like a perfectly fine piece of code and it compiles fine. But when you try running
+it, you get the following error:
+
+\begin{quote}
+Unhandled Exception: \texttt{System.NotSupportedException}: Sequence operators 
+not supported for type \texttt{System.String}.
+\end{quote}
+
+The problem is that LINQ can only translate a \emph{subset} of normal C\# code. Here, we are using
+the \texttt{First} method to iterate over characters of a string and that's not supported. This is
+not a technical limitation of LINQ, but a fundamental problem of the approach. If we target a 
+limited language, we simply cannot support the full source language. Is this an important 
+problem? If you search on Google for ``has no supported translation to SQL'' 
+(which is a part of a similar error message that you get in another case), you get some 26900
+links. So yes - this is an issue that people are hitting all the time.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsubsection{Context awareness \#3: Confidentiality and provenance}
+
+The previous two examples were mainly related to the (non-)existence of some API functions
+or to their behaviour. However, this is not the only case of context-awarness that is important
+in every day programming.
+
+Most readers of this blog will immediately see what is wrong with the following code, but that
+does not change the fact that it can be compiled and deployed (and that there is a large number
+of systems that contain something similar):
+
+\begin{verbatim}
+let query = sprintf "SELECT * FROM Products WHERE ProductName = '%s'" name
+use cmd = new SqlCommand(query)
+use reader = cmd.ExecuteReader()
+\end{verbatim}
+
+The problem is obviously SQL Injenction \footnote{\url{http://en.wikipedia.org/wiki/SQL_injection}}. 
+Concatenating strings to build an SQL command is a bad practice, but it is an example of a more general problem.
+
+Sometimes, we have special kinds of variables that should have some contextual meta-data associated
+with them. Such meta-data can dictate how the variable can be used. Here, \texttt{name} comes from the user
+input and this \emph{provenance} information should propagate to \texttt{query} and we should get an error when
+we try passing this - potentially unsafe - input to \texttt{SqlCommand}. Similarly, if you have \texttt{password} or
+\texttt{creditCard}, it should be annotated with meta-data saying that this is a sensitive piece of data and
+should not, for example, be sent over an unsecured network connection.
+As a side note - this idea is related to a technique called taint checking \cite{xx}.
+
+In another context, if you are working with data (e.g. in some data jouranlism application), it would be
+great if your sources were annotated with meta-data about the quality and source of the data (e.g.
+can it be trusted? how up-to-date is it?) The meta-data could propagate to the result and tell you how
+accurate and trustworthy your result is.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsubsection{Context-awareness \#4: Resource \& data availability}
+
+A vast majority of applications accesses some data sources (like database) or resources
+(like GPS sensor on a phone). This is more tricky for client/server applications where a part
+of program runs on the server-side and another part runs on the client-side. I believe that 
+these two parts should be written as a single program that is cross-compiled to two parts 
+(and I tried to make that possible with F\# Web Tools \cite{xx})
+a long time ago; more recently [WebSharper](http://websharper.com/) implemented a similar idea).
+
+So, say we have a function \texttt{validateInput}, \texttt{readData} and \texttt{displayMessage} in my prorgam.
+I want to look at their types and see what resources (or \emph{context}) they require. For example,
+\texttt{readData} requires \emph{database} (or perhaps a database with a specific name), \texttt{displayMessage} 
+requires access to \emph{user interface} and \texttt{validateInput} has no special requirements.
+
+This means that I can call \texttt{validateInput} from both server-side and client-side code - it is
+safe to share this piece of code, because it has no special requirements. However, when I write
+a code that calls all three functions without any remote calls, it will only run on a thick
+client that has access to a database as well as user interface.
+
+I'll demonstrate this idea with a sample (pseudo-)code in a later section, so do not worry if
+it sounds a bit abstract at first.
+
+% ==================================================================================================
+
+
+\section{Coeffects: Towards context-aware languages}
+
+The above examples cover a couple of different scenarios, but they share a common theme - 
+they all talk about some \emph{context} in which an expression is evaluated. The context has 
+essentially two aspects:
+
+\begin{itemize}
+\item \textbf{Flat context} represents additional data, resources and meta-data that are 
+   available in the execution environment (regardless of where in the program you 
+   access them). Examples include resources like GPS sensors or databases, battery status,
+   framework version and similar. 
+
+\item \textbf{Structural context} contains additional meta-data related to variables. This can include
+   provenance (source of the variable value), usage information (how often is the value
+   accessed) or security information (does it contain sensitive data). 
+\end{itemize}
+
+As a proponent of statically typed functional languages I believe that a context-aware 
+programming language should capture such context information in the type system and make
+sure that basic errors (like the ones demonstrated in the four examples above) are ruled
+out at compile time.  
+
+This is essentially the idea behind \emph{coeffects}. Let's look at an example showing the
+idea in (a very simplified) practice and then I'll say a few words about the theory
+(which is the main topic of this thesis).
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Case study: Coeffects in action}
+
+So, how should a context-aware language look? Surely, there is a wide range of options, but I hope
+I convinced you that it needs to be \emph{context-aware} in some way! I'll write my pseudo-example in a
+language that looks like F\#, is fully statically typed and uses type inference.
+
+I think that type inference is particularly important here - we want to check quite a few properties
+that should not that difficult to infer (If I call a function that needs GPS, I need to have GPS access!)
+Writing all such information by hand would be very cumbersome.
+
+So, let's say that we want to write a client/server news reader where the news are stored in a 
+database on a server. When a client (iPhone or Windows phone) runs, we get GPS location from the
+phone and query the server that needs to connect to the "News" database using a password defined
+somewhere earlier (perhaps loaded from a server-side config file):
+
+\begin{verbatim}
+let lookupNews(location) =
+  let db = query("News", password)
+  selectNews(db, location)  
+
+let readNews() =
+  let loc = gpsLocation()       
+  remote { 
+    lookupNews(loc) 
+  } 
+
+let iPhoneMain() =
+  createCocoaWidget(readNews)
+
+let windowsMain() =    
+  createMetroWidget(readNews)
+\end{verbatim}
+
+The idea is that \texttt{lookupNews} is a server-side function that queries the "News" database based on 
+the specified \texttt{location}. This is called from the client-side by \texttt{readNews} which get the current GPS
+position and uses a \texttt{remote \{ .. \}} block to invoke the \texttt{lookupNews} function remotely (how exactly would
+this be written is a separate question - but imagine a simple REST request here).
+
+Then, we have two main functions, \texttt{iPhoneMain} and \texttt{windowsMain} that will serve as two entry points
+for iPhone and Windows build of the client-side application. They are both using a corresponding
+platform-specific function to build the user interface, which takes a function for reading news as an
+argument.
+
+If you wanted to write and compile something like this today, you could use F\# in Xamarin 
+Studio to target iPhone and Window phone, but you'd either need two separate end-application projects 
+or a large number of unmaintainable \texttt{\#if} constructs. Why not just use a single project, if 
+the application is fairly simple?
+
+I imagine that a context-aware statically typed language would let you write the above code and 
+if you inspected the types of the functions, you would see something like this:
+
+\begin{verbatim}
+password      :   string { sensitive }
+lookupNews    :   Location -{ database }-> list<News> 
+
+gpsLocation   :   unit -{ gps }-> Location 
+readNews      :   unit -{ rpc, gps }-> Async<list<News>> 
+
+iPhoneMain    :   unit -{ cocoa, gps, rpc }-> unit 
+windowsMain   :   unit -{ metro, gps, rpc }-> unit 
+\end{verbatim}
+
+The syntax is something that I just made up for the purpose of this article - it could
+look different. Some information could even be mapped to other visual representations
+(e.g. blueish background for the function body in your editor). The key thing is that
+we can learn quite a lot about the context usage:
+
+ - \texttt{password} is available in the context, but is sensitive and so we cannot return it
+   as a result from a function that is called via an RPC call.
+ - \texttt{lookupNews} requires database access and so it can only run on the server-side
+   or on a thick client with local copy of the database.
+ - \texttt{gpsLocation} accesses GPS and since we call it in \texttt{readNews}, this function
+   also requires GPS (the requirement is propagated automatically).
+ - We can compile the program for two client-side platforms - the entry points require
+   GPS, the ability to make RPC calls and Cocoa or Metro UI platform, respectively.
+
+When writing the application, I want to be always able to see this information (perhaps
+similarly to how you can see type information in the various F\# editors). I want to be
+able to reference multiple versions of base libraries - one for iPhone and another for
+Windows and see all the API functions at the same time, with appropriate annotations.
+When a function is available on both platforms, I want to be able to reuse the code that
+calls it. When some function is available on only one platform, I want to solve this by
+designing my own abstraction, rather than resorting to ugly \texttt{\#if} pragmas.
+
+Then, I want to take this single program (again, strutured using whatever abstractions
+I find appropriate) and compile it. As a result, I want to get a component (containing
+\texttt{lookupNews}) that I can deploy to the server-side and two packages for iPhone and 
+Windows respectively, that reference only one or the other platform.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Coeffects: Theory of context dependence}
+
+If you're expecting a "Download!" button or (even better) a "Buy now!" button at the end of this article,
+then I'll disappoint you. I have no implementation that would let you do all of this.
+My work in this area has been (so far) on the theoretical side. This is a great way to 
+understand what is \emph{actually} going on and what does the \emph{context} mean. And if you made
+it this far, then it probably worked, because I understood the problem well enough to be 
+write a readable article about it!
+
+\subsubsection{Brief introduction to type systems}
+
+I won't try to reproduce the entire content of the thesis in this introduction -- but I will
+try to give you some background in case you are interested (that should make it easier to
+look at the papers above). We'll start from the basics, so readers familiar with theory of 
+programming languages can skip to the next section.
+
+Type systems are usually described in the form of \emph{typing judgement} that have the following form:
+
+\begin{equation}
+\Gamma \vdash e : \tau
+\end{equation}
+
+The judgement means that, given some variables described by $\Gamma$, the expression or program $e$
+has a type $\tau$. What does this mean? For example, what is a type of the expression \texttt{x + y}?
+Well, this depends - in F\# it could be some numeric type or even a string, depending on the types
+of \texttt{x} and \texttt{y}. That's why we need the variable context $\Gamma$ which specifies the types of variables.
+So, for example, we can have:
+
+\begin{equation}
+x:int, y:int \vdash x+y : int
+\end{equation}
+
+Here, we assume that the types of \texttt{x} and \texttt{y} (on the left hand side) are both \texttt{int} and as a result,
+we derive that the type of \texttt{x + y} is also an \texttt{int}. This is a valid typing, for the expression, but
+not the only one possible - if \texttt{x} and \texttt{y} were of type \texttt{string}, then the result would also be 
+ \texttt{string}.
+
+\subsubsection{Checking what program does with effect systems}
+
+Type systems can be extended in various interesting ways. Essentially, they give us an approximation
+of the possible values that we can get as a result. For example refinement types \cite{xx}
+can estimate numerical values more precisely (e.g. less than 100). However, it is also possible to 
+track what a program does - how it \emph{affects} the world. For example, let's look at the following
+expression that prints a number:
+
+\begin{equation}
+x:int \vdash print~x : unit
+\end{equation}
+
+This is a reasonable typing in F\# (and ML languages), but it ingores the important fact that the 
+expression has a \emph{side-effect} and prints the number to the console. In Haskell, this would not be
+a valid typing, because \texttt{print} would return an \texttt{IO} computation rather than just plain \texttt{unit} (for
+more information see IO in Haskell \footnote{\url{http://www.haskell.org/haskellwiki/IO_inside}}.
+
+However, monads are not the only way to be more precise about side-effects. Another option is
+to use effect system \cite{xx} which essentially annotates the 
+result of the typing judgement with more information about the \emph{effects} that occur as part of
+evaluation of the expression:
+
+\begin{equation}
+x:int \vdash print~x : unit \& \{ IO \}
+\end{equation}
+
+The effect annotation is now part of the type - so, the expression has a type \texttt{unit \& \{ io \}} meaning
+that it does not return anything useful, but it performs some I/O operation. Note that we do not track
+what \emph{exactly} it does - just some useful over-approximation. How do we infer the information?
+The compiler needs to know about certain language primitives (or basic library functions). Here, 
+\texttt{print} is a function that performs I/O operation.
+
+The main role of the type system is dealing with composition - so, if we have a function \texttt{read} that
+reads from the console (I/O operation) and a function \texttt{send} that sends data over network, the type
+system will tell us that the type and effects of \texttt{send (read ())} are \texttt{unit \& {io, network}}.
+
+Effect systems are a fairly established idea - and they are a nice way to add better purity checking
+to ML-like languages like F\#. However, they are not that widely adopted (interestingly, checked
+exceptions in Java are probably the most major use of effect system). However, effect systems are
+also a good example of general approach that we can use for tracking contextual information...
+
+\subsubsection{Checking what program requires with coeffect systems}
+
+How could we use the same idea of \emph{annotating} the types to capture information about the context?
+Let's look at a part of the program from the case study that I described earlier:
+
+\begin{equation}
+pass : string \vdash query("News", pass) : NewsDb
+\end{equation}
+
+The expression queries a database and gets back a value of the \texttt{NewsDb} type (for now, let's say
+that \texttt{"News"} is a constant string and \texttt{query} behaves like the SQL type provider in F\# \footnote{\url{http://www.pinksquirrellabs.com/post/2013/12/09/The-Erasing-SQL-type-provider.aspx}}
+and generates the \texttt{NewsDb} type automatically).
+
+What information do we want to capture? First of all, we want to add an annotation saying that
+the expression requires \emph{database access}. Secondly, we want to mark the \texttt{pass} variable as 
+\emph{secure} to guarantee that it will not be sent over an unsecured network connection etc.
+The \emph{coeffect typing judgement} representing this information looks like this:
+
+\begin{equation}
+pass : string^{\{secure\}} @ \{database\} \vdash query("News", pass) : NewsDb
+\end{equation}
+
+Rather than attaching the annotations to the \emph{resulting type}, they are attached to the 
+variable \emph{context}. In other words, the equation is saying -- given a variable \texttt{pass} that is
+marked as secure and additional environment providing database access, the expression
+\texttt{query("News", pass)} is well typed and returns a \texttt{NewsDb} value.
+
+As a side-note, it is well known that \emph{effects} correspond to \emph{monads} (and Haskell uses
+monads as a way of implementing limited effect checking). Quite interestingly, \emph{coeffects}
+correspond to the dual concept called \emph{comonads} and, with a syntactic extension akin to 
+the \texttt{do} notation or \emph{computation expressions} \cite{xx}, you could capture contextual 
+propreties by adding comonads to a language.
+
+% ==================================================================================================
+
+\section{Summary}
+
+I started by explaining the
+motivation for my work - different problems that arise when we are writing programs that are
+aware of the context in which they run. The context includes things such as execution environment
+(databases, resources, available devices), platform and framework (different versions, different
+platforms) and meta-data about data we access (sensitivity, security, provenance). 
+
+This may not be preceived as a major problem - we are all used to write code that deals with
+such things. However, I believe that the area of \emph{context-aware} programming is a source of
+many problems and pains - and programming languages can help!
+
+In the second half of the article, I gave a brief introduction to \emph{coeffects} -- a programming
+language theory that can simplify dealing with context.
+The key idea is that we can use types to track and check additional information about
+the \emph{context}. By propagating such information throughout the program (using type system
+that is aware of the annotations), we can make sure that none of the errors that I used
+as a motivation for this article happen. 

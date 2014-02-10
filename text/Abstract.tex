@@ -8,27 +8,29 @@
 \let\cleardoublepage\relax
 
 \chapter*{Abstract} % Abstract name
+The development of programming languages needs to reflect important changes in the industry.
+In recent years, this included \eg~the development of parallel programming models (in reaction 
+to the multi-core revolution). This thesis is a response to another such revolution -- the 
+diversification of devices and systems where programs run. 
 
-Static type systems are the most common form of program verification. In their most basic form, type
-systems guarantee that a computation always returns a value of some type. The work on monads
-and effect systems extends type systems to guarantee properties about \emph{effectful 
-computations} that perform side-effects like non-termination, I/O operations or exceptions.
+We develop the foundations for statically typed functional languages that understand 
+the \emph{context} or environment in which programs execute. Such context includes different 
+platforms (and their versions) in cross-platform applications, resources available in different 
+execution environments (\eg \; GPS sensor on a phone and database on the server), but also more 
+traditional notions such as variable context (tracking variable usage in static analyses) or 
+past values in stream-based data-flow programming.
 
-In this thesis we extend type systems to guarantee properties about \emph{context-dependent
-computations}. Such computations are increasingly common in modern software. For example, applications
-accessing data need to guarantee that the right data is available and distributed systems need to 
-guarantee that resources are available on specific nodes.
+The thesis presents three \emph{coeffect} calculi that capture different notions of 
+context-awareness: \emph{flat} calculus capturing contextual properties of the execution 
+environment, \emph{structural} calculus capturing contextual properties related to 
+variable usage and \emph{meta-language} calculus which allows reasoning about multiple notions
+of context-dependence in a single language and provides pathway to embedding the other two
+calculi in existing languages.
 
-We develop three \emph{coeffect} type systems that are capable of capturing different context-dependent
-properties. All three systems are based on the unifying semantic structure called \emph{indexed
-comonads}, but they use it differently. 
-
-Our \emph{flat coeffect calculus} tracks one annotation about the entire context. It can be used to
-keep a set of required resources or a set of supported platforms. Our \emph{structural coeffect 
-calculus} tracks one annotation for each variable. It can be used to track liveness of variables
-or number of past values needed in data-flow computations. Finally, our \emph{coeffect meta-language}
-embeds contextual values directly into a language. It can be used to capture context-dependent 
-properties of meta-programming languages and mobile values in distributed computation.
+Although the focus of this thesis is on the syntactical properties of the presented 
+systems, we also discuss their category-theoretical motivation. We introduce the notion of
+an \emph{indexed} comonad (the dual of monads) and show how they provide semantics of the
+presented three calculi. 
 
 \endgroup			
 
