@@ -304,30 +304,6 @@ The information about access patterns can be used to efficiently compile the com
 of boundaries. For example, wrap-around behaviour we could pad the \ident{input} with a known
 number of elements from the other side of the array.
 
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Context-awareness \#4: Resource \& data availability}
-
-A vast majority of applications accesses some data sources (like database) or resources
-(like GPS sensor on a phone). This is more tricky for client/server applications where a part
-of program runs on the server-side and another part runs on the client-side. I believe that 
-these two parts should be written as a single program that is cross-compiled to two parts 
-(and I tried to make that possible with F\# Web Tools \cite{xx})
-a long time ago; more recently [WebSharper](http://websharper.com/) implemented a similar idea).
-
-So, say we have a function \texttt{validateInput}, \texttt{readData} and \texttt{displayMessage} in my prorgam.
-I want to look at their types and see what resources (or \emph{context}) they require. For example,
-\texttt{readData} requires \emph{database} (or perhaps a database with a specific name), \texttt{displayMessage} 
-requires access to \emph{user interface} and \texttt{validateInput} has no special requirements.
-
-This means that I can call \texttt{validateInput} from both server-side and client-side code - it is
-safe to share this piece of code, because it has no special requirements. However, when I write
-a code that calls all three functions without any remote calls, it will only run on a thick
-client that has access to a database as well as user interface.
-
-I'll demonstrate this idea with a sample (pseudo-)code in a later section, so do not worry if
-it sounds a bit abstract at first.
-
 % ==================================================================================================
 
 \section{Coeffects: Towards context-aware languages}
