@@ -266,35 +266,43 @@ information about the calculated results.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Context-awareness \#4: Access patterns in data-flow languages}
+\subsection{Context-awareness \#4: Checking array access patterns}
 
-As an example, consider a language that allows us to get a value of a variable (representing
-some changing data-source) \ident{x} versions back using the syntax $\ident{x}_{[a]}$. 
-To track information about individual variables, we use a product-like operation $\times$ on tags 
-to mirrors the product structure of variables. For example:
-%
-\begin{equation*}
-?
-\end{equation*}
-%
-The annotations $5 \times 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
-that we need at most 5 and 10 past values of \ident{a} and \ident{b}, respectively. If we substitute 
-\ident{c} for both \ident{a} and \ident{b}, we need to combine the context-requirements and take the
-maximum of the requirements of the individual variables:
+The last example leaves the topic of cross-platform and distributed computing. We focus on 
+checking how arrays are accessed. This is a simpler version of the data-flow programming
+examples used later in the thesis.
+
+Consider a simple programming language with arrays where $n^{\textnormal{th}}$ element of an
+array \ident{arr} is accessed using $\ident{arr}[n]$. Furthermore, we focus on performing local
+transformations and we assume that the keyword $\kvd{cursor}$ returns the \emph{current} location
+in the array.
+
+The following example implements a simple one-dimensional cellular automata, reading from the
+\ident{input} array and writing to \ident{output}:
 %
 \begin{equation*}
 \begin{array}{l}
-?
+\kvd{let}~\ident{sum}=\ident{input}[\kvd{cursor} - 1] ~+~ \ident{input}[\kvd{cursor}] ~+~ \ident{input}[\kvd{cursor} + 1]\\[-0.25em]
+\kvd{if}~\ident{sum}=2 ~||~ (\ident{sum}=1 ~\&\&~ \ident{input}[\kvd{cursor} - 1] = 0)\\[-0.25em] 
+\kvd{then}~\ident{output}[\kvd{cursor}] \leftarrow 1 ~\kvd{else}~\ident{output}[\kvd{cursor}] \leftarrow 0
+
 \end{array}
 \end{equation*}
 %
-This version of the calculus removes the non-determinism of the lambda abstraction from the previous
-version. As we associate information with individual variables, lambda abstraction creates a function
-that requires the context requirements associated with the variable that is being abstracted over.
+In this example, we use the term \emph{context} to refer to the values in the array around the 
+current location provided by \kvd{cursor}. The interesting question is, how much of the context
+(\ie~how far in the array) does the program access. 
 
-For example, if we wrapped the earlier example above in a function taking \ident{a} (and using 
-\ident{b} from the declaration-site) then the function would have context requirements $5$ -- that
-is the number associated with the variable \ident{a}.
+This is contextual information attached to individual (array) variables. 
+In the above example, we want to track that \ident{input} is accessed in the range $\langle-1, 1 \rangle$
+while \ident{output} is accessed in the range $\langle 0, 0 \rangle$. When calculating the ranges,
+we need to be able to compose ranges $\langle-1,-1$, $\langle 0,0 \rangle$ and $\langle 1,1 \rangle$
+(based on the accesses on the first line). 
+
+The information about access patterns can be used to efficiently compile the computation
+(as we know which sub-range of the array might be accessed) and it also allows better handling
+of boundaries. For example, wrap-around behaviour we could pad the \ident{input} with a known
+number of elements from the other side of the array.
 
 % --------------------------------------------------------------------------------------------------
 
