@@ -306,35 +306,39 @@ number of elements from the other side of the array.
 
 % ==================================================================================================
 
-\section{Coeffects: Towards context-aware languages}
+\section{Towards context-aware languages}
 
-The above examples cover a couple of different scenarios, but they share a common theme - 
-they all talk about some \emph{context} in which an expression is evaluated. The context has 
-essentially two aspects:
+The four examples presented in the previous section cover different notions of \emph{context}.
+The context can be viewed as execution environment, capabilities provided by the environment 
+or input and meta-data about the input.
+
+The different notions of context can be broadly classified into two categories -- those that
+speak about the environment and those that speak about individual inputs (variables). In this
+thesis, we refer to them as \emph{flat coeffects} and \emph{structural coeffects}, respectively:
 
 \begin{itemize}
-\item \textbf{Flat context} represents additional data, resources and meta-data that are 
-   available in the execution environment (regardless of where in the program you 
-   access them). Examples include resources like GPS sensors or databases, battery status,
-   framework version and similar. 
+\item \textbf{Flat coeffects} represent additional data, resources and meta-data that are 
+   available in the execution environment (regardless of how they are accessed in a program).
+   Examples include resources such as GPS sensors and battery status (on a phone), databases 
+   (on the server), or framework version.
 
-\item \textbf{Structural context} contains additional meta-data related to variables. This can include
-   provenance (source of the variable value), usage information (how often is the value
-   accessed) or security information (does it contain sensitive data). 
+\item \textbf{Structural coeffects} capture additional meta-data related to inputs. This can include
+   provenance (source of the input value), usage information (how often is the value
+   accessed and in what ways) or security information (whether it contain sensitive data or not). 
 \end{itemize}
+%
+This thesis follows the tradition of statically typed programming languages. As such, we
+attempt to capture such contextual information in the type system of context-aware programming
+languages. The type system should provide both safety guarantees (as in the first three examples)
+and also static analysis useful for optimization (as in the last example).
 
-As a proponent of statically typed functional languages I believe that a context-aware 
-programming language should capture such context information in the type system and make
-sure that basic errors (like the ones demonstrated in the four examples above) are ruled
-out at compile time.  
-
-This is essentially the idea behind \emph{coeffects}. Let's look at an example showing the
-idea in (a very simplified) practice and then I'll say a few words about the theory
-(which is the main topic of this thesis).
+Although the main focus of this thesis is on the underlying theory of \emph{coeffects} and on
+their structure, the following section briefly demonstrates the features that a practical
+context-aware language, based on the theory of coeffects, can provide. 
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Case study: Coeffects in action}
+\section{Context-aware languages in action}
 
 So, how should a context-aware language look? Surely, there is a wide range of options, but I hope
 I convinced you that it needs to be \emph{context-aware} in some way! I'll write my pseudo-example in a
@@ -425,7 +429,7 @@ Windows respectively, that reference only one or the other platform.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Coeffects: Theory of context dependence}
+\section{Coeffects: Theory of context dependence}
 
 If you're expecting a "Download!" button or (even better) a "Buy now!" button at the end of this article,
 then I'll disappoint you. I have no implementation that would let you do all of this.
@@ -434,7 +438,7 @@ understand what is \emph{actually} going on and what does the \emph{context} mea
 it this far, then it probably worked, because I understood the problem well enough to be 
 write a readable article about it!
 
-\subsubsection{Brief introduction to type systems}
+\subsection{Brief introduction to type systems}
 
 I won't try to reproduce the entire content of the thesis in this introduction -- but I will
 try to give you some background in case you are interested (that should make it easier to
@@ -462,7 +466,7 @@ we derive that the type of \texttt{x + y} is also an \texttt{int}. This is a val
 not the only one possible - if \texttt{x} and \texttt{y} were of type \texttt{string}, then the result would also be 
  \texttt{string}.
 
-\subsubsection{Checking what program does with effect systems}
+\subsection{Checking what program does with effect systems}
 
 Type systems can be extended in various interesting ways. Essentially, they give us an approximation
 of the possible values that we can get as a result. For example refinement types \cite{xx}
@@ -503,7 +507,7 @@ to ML-like languages like F\#. However, they are not that widely adopted (intere
 exceptions in Java are probably the most major use of effect system). However, effect systems are
 also a good example of general approach that we can use for tracking contextual information...
 
-\subsubsection{Checking what program requires with coeffect systems}
+\subsection{Checking what program requires with coeffect systems}
 
 How could we use the same idea of \emph{annotating} the types to capture information about the context?
 Let's look at a part of the program from the case study that I described earlier:
