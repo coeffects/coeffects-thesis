@@ -1,187 +1,304 @@
 \chapter{Why context-aware programming matters} 
 \label{ch:introduction1} 
 
-\todo{This chapter is currently copy \& paste of a \texttt{}popular'' introduction to coeffects
-that I wrote online (\url{http://tomasp.net/blog/2014/why-coeffects-matter}). It needs to be
-rewritten in academic style - but hopefully it has the right structure for an intro chapter? }
+Many advances in programming language design are driven by some practical motivations. Sometimes, 
+the practical motivations are easy to see -- for example, when they come from an external change 
+such as the rise of multi-core processors. Sometimes, discovering the practical motivations is a 
+difficult task -- perhaps because we are so used to a certain way of doing things that we do not 
+even \emph{see} the flaws of our approach. 
 
 % ==================================================================================================
 
-Many advances in programming language design are driven by some practical motivations.
-Sometimes, the practical motivations are easy to see - for example, when they come from
-some external change such as the rise of multi-core processors. Sometimes, discovering 
-the practical motivations is a tricky task - perhaps because everyone is used to a 
-certain way of doing things that we do not even \emph{see} how poor our current solution is. 
+\section{Programming language and innovation}
 
-The following two examples are related to the work done in F\# (because this is what
-I'm the most familiar with), but you can surely find similar examples in other languages:
+We briefly consider two practical concerns that led to the development of new programming languages. 
+This helps to explain why context-aware programming is of importance, which we cover in the next section. 
+The examples are by no means representative, but they illustrate the motivations well.
 
-\begin{itemize}
-\item \textbf{Multi-core} is an easy to see challenge caused by an external development. 
-   It led to the popularity of \emph{immutable} data structures (and functional programming,
-   in general) and it was also partly motivation for asynchronous workflows \cite{xx}.
+\paragraph{Parallel programming.} 
 
-\item \textbf{Data access} is a more subtle challenge. Technologies like LINQ \cite{xx} make it
-   significantly easier, but it was not easy to see that inline SQL was a poor solution.
-   This is even more the case for F\# \emph{type providers}. You will not realize how poor the
-   established data access story is until you \emph{see} something like 
-   the WorldBank and R provider \cite{xx} or CSV type provider \cite{xx}.
-\end{itemize}
+The rise of multi-core CPUs is a clear example of an external development influencing
+programming language research. As multi-core and multi-processor systems became de-facto standard, 
+languages had to provide better abstractions for parallel programming. This led to the industrial 
+popularity of \emph{immutable} data structures (and functional programming in general), software 
+transactional memory \cite{app-haskell-stm}, data-parallelism and also asynchronous 
+computing \cite{app-fsharp-async}. 
 
-I believe that the next important practical challenge for programming language designers
-is of the kind that is not easy to see -- because we are so used to doing things in 
-certain ways that we cannot see how poor they are. The problem is designing languages
-that are better at working with (and understanding) the \emph{context} in which programs are
-executed.
+In this case, the motivation is easy to see -- writing multi-core programs using earlier 
+abstractions, such as threads and locks, is difficult and error-prone. At the same time, 
+multi-core CPUs become the standard very quickly and so the lack of good language abstractions
+was apparent.
+
+\paragraph{Data access.}
+
+Accessing data is an example of a more subtle challenge. Initiatives like open government data
+certainly make more data available. However, to access the data, one has to parse CSV and Excel files, 
+issue SQL or SPARQL queries (to query database and the semantic web, respectively).
+
+Technologies like LINQ \cite{app-linq} make querying data significantly easier. But perhaps 
+because accessing data became important more gradually, it was not easy to see that inline
+SQL is a poor solution.
+
+This is even more the case for \emph{type providers} -- a recent feature in F\# that integrates
+external data sources directly into the type system of the language and thus makes data explorable
+directly from the source code editor (through features such as auto-completion on object members).
+It is not easy to see the limitations of standard techniques (using HTTP requests to query REST 
+services or parsing CSV files and using string-based lookup) until one sees how type providers 
+change the data-scientist's workflow\footnote{This is difficult to explain in writing and so the 
+reader is encouraged to watch a video showing type providers for the WorldBank and CSV data 
+sources \cite{app-fsharp-world}.}.
+
+\paragraph{Context-aware programming.}
+
+In this chapter, we argue that the next important practical challenge for programming language 
+designers is designing languages that are better at working with (and understanding) the 
+\emph{context in which programs are executed}. 
+
+This challenge is of the kind that is not easy to see -- perhaps because we are so used to 
+doing things in certain ways that we cannot see their flaws. In this chapter, we aim to
+uncover such flaws -- we look at a number of basic programs that rely on contextual 
+information, we explain why they are inappropriate and then we briefly outline how this
+thesis remedies the situation.
+
+Putting deeper philosophical questions about the nature of scientific prog\-ress aside,
+the goal of programming language research is generally to design languages that provide 
+more \emph{appropriate abstractions} for capturing common problems, are \emph{simple} and 
+more \emph{unified}. 
+These are exactly the aims that we follow in this thesis. In this chapter, we explain what
+the common problems are. In Chapter~\ref{ch:flat-coeffects} and Chapter~\ref{ch:structural-coeffects},
+we develop two simple calculi to understand and capture the structure of the problems and,
+finally, Chapter~\ref{ch:unified-coeffects} unifies the two abstractions.
 
 % ==================================================================================================
 
-\section{Context-aware programming matters}
+\section{Why context-aware programming matters}
 
-The phrase \emph{context in which programs are executed} sounds quite abstract and generic.
-What are some concrete examples of such \emph{context}? For example: 
+The phrase \emph{context in which programs are executed} sounds rather abstract and generic.
+What notions of \emph{context} can be identified in modern software systems?
+Different environments provide different resources (\eg~database
+or GPS sensor), environments are increasingly diverse (\eg~multiple versions of different
+mobile platforms). Web applications are split between client, server and mobile components; mobile
+applications must be aware of the physical environment while the ``internet
+of things`` makes the environments even more heterogeneous. At the same time, applications access
+rich data sources and need to be aware of security policies and provenance information from the
+environment.
+
+Writing such context-aware (or environment-aware) applications is a fundamental problem of modern 
+software engineering. The state of the art relies on ad-hoc approaches -- using hand-written conditions 
+or pre-processors for conditional compilation. Common problems that developers face include: 
 
 \begin{itemize}
-\item When writing a cross-platform application, different platforms (and even different 
-   versions of the same platform) provide different contexts - the API functions that are 
-   available.
+\item \textbf{System capabilities.} When writing code that is cross-compiled to multiple 
+  targets (e.g. SQL \cite{app-linq}, OpenCL or JavaScript \cite{app-hop-lang}) a part of the compilation 
+  (\eg~SQL generation) often occurs at runtime and developers have no guarantee that it will succeed 
+  until the program is executed.  
+  
+\item \textbf{Platform versions.} When developing cross-platform applications, different platforms
+  (and different versions of the same platform) provide different API functions. Writing a 
+  cross-platform code usually relies on (fragile) conditional compilation or (equally fragile) 
+  dynamic loading.
       
-\item When creating a mobile app, the different capabilities that you may (or may not) have
-   access to are context (GPS sensor, accelerometer, battery status).
-
-\item When working with data (be it sensitive database or social network data from Facebook),
-   you have permissions to access only some of the data (depending on your identity) and
-   you may want to track \emph{provenance} information. This is another example of a context.
+\item \textbf{Security and provenance.} When working with data (be it sensitive database or social 
+   network data), we have permissions to access only some of the data and we may want to track 
+   \emph{provenance} information. However, this is not checked -- if a program attempts to access 
+   unavailable data, the access will be refused at run-time.
+  
+\item \textbf{Resources \& data availability.} When creating a mobile application, the program may
+  (or may not) be granted access to device capabilities such as GPS sensor, social updates or battery
+  status. We would like to know which of the capabilities are required and which are optional
+  (\ie~enhance the user experience, but there is a fallback strategy). Equally, on the server-side,
+  we might have access to different database tables and other information sources.
 \end{itemize}
- 
-These are all fairly standard problems that developers deal with today. As the number of 
-devices where programs need to run increases, dealing with diverse contexts will be becoming
-more and more important (and I'm not even talking about \emph{ubiquitous computing} where you need
-to compile your code to a coffee machine).
 
-We do not preceive the above things as problems (at best, annoyances that we just have to 
-deal with), because we do not realize that there should be a better way. Let me digg into
-four examples in a bit more detail.
+Most developers do not perceive the above as programming language flaws -- they are simply common
+programming problems (at most somewhat annoying and tedious) that had to be solved. However, this 
+is because we do not realize that a suitable language extension could make the above problems 
+significantly easier to solve. As the number of distinct contexts and their diversity increases,
+these problems will become even more commonplace.
+
+The following sub-sections explore four examples in more details. The examples are chosen to 
+demonstrate two distinct forms of contexts that are studied in this thesis.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}
+\begin{equation*}
+\begin{array}{l}
+\kvd{for}~\ident{header},\ident{value}~\kvd{in}~\ident{header}~\kvd{do}\\[-0.25em]
+\hspace{2em}\kvd{match}~\ident{header}~\kvd{with}\\[-0.25em]
+\hspace{2em}|~\str{accept} \rightarrow~ \ident{req.Accept} \leftarrow \ident{value}\\[-0.25em]
+%
+\prepk{\#if}~\prepi{FX\_NO\_WEBREQUEST\_USERAGENT}\\[-0.25em]
+\hspace{2em}|~\str{user-agent} \rightarrow~ \ident{req.UserAgent} \leftarrow \ident{value}\\[-0.25em]
+\prepk{\#else}\\[-0.25em]
+\hspace{2em}|~\str{user-agent} \rightarrow~
+  \ident{req.Headers}.[\,\ident{HttpHeader.UserAgent}\,] \leftarrow \ident{value}\\[-0.25em]
+\prepk{\#endif}\\[-0.25em]
+%
+\prepk{\#if}~\prepi{FX\_NO\_WEBREQUEST\_REFERER}\\[-0.25em]
+\hspace{2em}|~\str{referer} \rightarrow~ \ident{req.Referer} \leftarrow \ident{value}\\[-0.25em]
+\prepk{\#else}\\[-0.25em]
+\hspace{2em}|~\str{user-agent} \rightarrow~
+  \ident{req.Headers}.[\,\ident{HttpHeader.Referer}\,] \leftarrow \ident{value}\\[-0.25em]
+\prepk{\#endif}\\[-0.25em]
+%
+\hspace{2em}|~\ident{other} \rightarrow~ \ident{req.Headers}.[\,\ident{other}\,] \leftarrow \ident{value}\\[-0.25em]
+\end{array}
+\end{equation*}
+
+\vspace{1em}
+\noindent\makebox[\linewidth]{\rule{\textwidth}{0.5pt}} 
+\vspace{-1.5em}
+\caption{Conditional compilation in the HTTP module of the F\# Data library}
+\label{fig:introduction-context-http}
+\end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Context awareness \#1: Platform versioning}
 
-The number of different platform versions that you need to target is increasing, no matter what 
-platform are you using. For Android, there is a number called API Level 
-\footnote{\url{http://developer.android.com/guide/topics/manifest/uses-sdk-element.html}}
-with mostly additive changes (\emph{mostly} sounds very reassuring). In the .NET world, there are multiple
-versions, mobile editions, multiple versions of Silverlight etc. So, code that targets multiple
-frameworks easily ends up looking as the following sample from the Http module in F\# Data\footnote{
-\url{https://github.com/fsharp/FSharp.Data/blob/master/src/Net/Http.fs}}:
+The diversity across devices means that developers need to target an increasing number of platforms
+and possibly also multiple versions of each platform. For Android, there is a number called 
+API level \cite{app-android-apilevel} which ``uniquely identifies the framework API revision offered 
+by a version of the Android platform''. Most changes in the libraries (but not all) are additive.
 
-\begin{verbatim}
-for header, value in headers do
-  match header with
-  | StringEquals "accept" -> req.Accept <- value
-#if FX_NO_WEBREQUEST_USERAGENT
-  | StringEquals "user-agent" -> 
-      req.Headers.[HttpRequestHeader.UserAgent] <- value
-#else
-  | StringEquals "user-agent" -> req.UserAgent <- value
-#endif
-#if FX_NO_WEBREQUEST_REFERER
-  | StringEquals "referer" -> 
-      req.Headers.[HttpRequestHeader.Referer] <- value
-#else
-  | StringEquals "referer" -> req.Referer <- value
-#endif
-  | _ -> req.Headers.[header] <- value
-\end{verbatim}
+Equally, in the .NET ecosystem, there are multiple versions of the .NET runtime, mobile and 
+portable versions of the framework etc. The differences may be subtle -- for example, some members
+are omitted to make the mobile version of the library smaller, some functionality is not available
+at all, but naming can also vary between versions.
 
-This is difficult to write (you won't know if the code even compiles until you try building all 
-combinations) and maintaining such code is not particularly nice (try adding another platform version).
-Maybe we could refactor the code in F\# Data to improve it, but that's not really my point - supporting
-multiple platforms should be a lot easier.
+For example, the Figure~\ref{fig:introduction-context-http} shows an excerpt from the \ident{Http} module 
+in the F\# Data library\footnote{The file version shown here is available at:
+\url{https://github.com/fsharp/FSharp.Data/blob/b4c58f4015a63bb9f8bb4449ab93853b90f93790/src/Net/Http.fs}}.
+The example uses conditional compilation to target multiple versions of the .NET framework. Such code
+is difficult to write -- to see whether a change is correct, it had to be recompiled for all combinations
+of pre-processor flags -- and maintaining the code is equally hard. The above example could be refactored
+and the .NET API could be cleaner, but the fundamental issue remains. If the language does not understand
+the context (here, the different platforms and platform versions), it cannot provide any static
+guarantees about the code.
 
-On Android, you can access API from higher level platform dynamically using techniques like 
-reflection and writing wrappers 
-\footnote{\url{http://android-developers.blogspot.cz/2009/04/backward-compatibility-for-android.html}}
-Again, this sounds very error prone - to quote the linked article 
-\emph{``Remember the mantra: if you haven't tried it, it doesn't work''}.
-Testing is no doubt important. But at least in statically typed langauges, we
-should not need to worry about calling a method that does not exist when writing
-multi-platform applications!
+As an alternative to conditional compilation, developers can use dynamic loading. For example, 
+on Android, programs can access API from higher level platform dynamically using techniques like 
+reflection and writing wrappers. This is even more error prone. As noted in an article introducing
+the technique\footnote{Retrieved from: \url{http://android-developers.blogspot.com/2009/04/backward-}\\\url{compatibility-for-android.html}}:
+\emph{``Remember the mantra: if you haven't tried it, it doesn't work''}. Again, it would be 
+reasonable to expect that statically-typed languages could provide a better solution.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsubsection{Context awareness \#2: System capabilities}
+\subsection{Context awareness \#2: System capabilities}
 
-Another example related to the previous one is when you're using something like LINQ or 
-FunScript (\url{http://funscript.info/}) to translate code written in a sub-set of C\# or F\#
-to some other language - such as SQL or JavaScript. This is another important area, because
-you can use this technique to target JavaScript, GPUs, SQL, Erlang runtime or other components 
-that use a particular programming language.
+Another example related to the previous one is when libraries use meta-programming techniques
+(such as LINQ \cite{app-linq} or F\# quotations \cite{app-fsharp-metaprog}) to translate code
+written in a subset of a host language to some other target language, such as SQL, OpenCL or 
+JavaScript. This is an important technique, because it lets developers targets multiple 
+heterogeneous runtimes that have limited execution capabilities.
 
-For example, take a look at the following LINQ query that selects product names where the
-first upper case letter is "C":
-
-\begin{verbatim}
-var db = new NorthwindDataContext();
-
-from p in db.Products
-where p.ProductName.First(c => Char.IsUpper(c)) == "C"
-select p.ProductName;
-\end{verbatim}
-
-This looks like a perfectly fine piece of code and it compiles fine. But when you try running
-it, you get the following error:
-
+For example, consider the following LINQ query written in C\# that queries a database and
+selects product names where the first upper case letter is "C":
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{var}~\ident{db} = \kvd{new}~\ident{NorthwindDataContext}();\\[0.25em]
+\kvd{from}~\ident{p}~\kvd{in}~\ident{db.Products}\\[-0.25em]
+\kvd{where}~\ident{p.ProductName.First}(\ident{c} \Rightarrow \ident{Char.IsUpper}(\ident{c})) == \str{C}\\[-0.25em]
+\kvd{select}~\ident{p.ProductName};
+\end{array}
+\end{equation*}
+%
+This appears as a perfectly valid code ant the C\# compiler accepts it. However, when the program
+is executed, it fails with the following error:
+%
 \begin{quote}
 Unhandled Exception: \texttt{System.NotSupportedException}: Sequence operators 
 not supported for type \texttt{System.String}.
 \end{quote}
+%
+The problem is that LINQ can only translate a \emph{subset} of normal C\# code. The above snippet
+uses \ident{First} method to iterate over characters of a string, which is not supported. This is
+not a technical limitation of LINQ, but a fundamental problem of the approach. 
 
-The problem is that LINQ can only translate a \emph{subset} of normal C\# code. Here, we are using
-the \texttt{First} method to iterate over characters of a string and that's not supported. This is
-not a technical limitation of LINQ, but a fundamental problem of the approach. If we target a 
-limited language, we simply cannot support the full source language. Is this an important 
-problem? If you search on Google for ``has no supported translation to SQL'' 
-(which is a part of a similar error message that you get in another case), you get some 26900
-links. So yes - this is an issue that people are hitting all the time.
-
-% --------------------------------------------------------------------------------------------------
-
-\subsubsection{Context awareness \#3: Confidentiality and provenance}
-
-The previous two examples were mainly related to the (non-)existence of some API functions
-or to their behaviour. However, this is not the only case of context-awarness that is important
-in every day programming.
-
-Most readers of this blog will immediately see what is wrong with the following code, but that
-does not change the fact that it can be compiled and deployed (and that there is a large number
-of systems that contain something similar):
-
-\begin{verbatim}
-let query = sprintf "SELECT * FROM Products WHERE ProductName = '%s'" name
-use cmd = new SqlCommand(query)
-use reader = cmd.ExecuteReader()
-\end{verbatim}
-
-The problem is obviously SQL Injenction \footnote{\url{http://en.wikipedia.org/wiki/SQL_injection}}. 
-Concatenating strings to build an SQL command is a bad practice, but it is an example of a more general problem.
-
-Sometimes, we have special kinds of variables that should have some contextual meta-data associated
-with them. Such meta-data can dictate how the variable can be used. Here, \texttt{name} comes from the user
-input and this \emph{provenance} information should propagate to \texttt{query} and we should get an error when
-we try passing this - potentially unsafe - input to \texttt{SqlCommand}. Similarly, if you have \texttt{password} or
-\texttt{creditCard}, it should be annotated with meta-data saying that this is a sensitive piece of data and
-should not, for example, be sent over an unsecured network connection.
-As a side note - this idea is related to a technique called taint checking \cite{xx}.
-
-In another context, if you are working with data (e.g. in some data jouranlism application), it would be
-great if your sources were annotated with meta-data about the quality and source of the data (e.g.
-can it be trusted? how up-to-date is it?) The meta-data could propagate to the result and tell you how
-accurate and trustworthy your result is.
+When cross-compiling to a limited environment, we cannot always support the full source language.
+The example with LINQ and SQL demonstrates the importance of this problem. As of March 2014,
+Google search returns 11800 results for the message above and even more (44100 results) for a
+LINQ error message \emph{``Method X has no supported translation to SQL``} caused by a similar 
+limitation. 
 
 % --------------------------------------------------------------------------------------------------
 
-\subsubsection{Context-awareness \#4: Resource \& data availability}
+\subsection{Context awareness \#3: Confidentiality and provenance}
+
+The previous two examples were related to the non-existence of some library functions in another
+environment. Another common factor was that they were related to the execution context of the whole 
+program or a scope. However, contextual properties can be also related to specific variables.
+
+For example, consider the following code sample that accesses database by building a SQL query
+using string concatenation:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{query} = \ident{sprintf}~\str{SELECT * FROM Products WHERE Name='\%s'}~\ident{name}\\[-0.25em]
+\kvd{let}~\ident{cmd} = \kvd{new}~\ident{SqlCommand}(\ident{query})\\[-0.25em]
+\kvd{let}~\ident{reader} = \ident{cmd.ExecuteReader}()
+\end{array}
+\end{equation*}
+%
+The code compiles without error, but it contains a major security flaw called \emph{SQL injection}
+(an attacker could enter \str{'; DROP TABLE Products -{}-} as their \ident{name} and delete the 
+database table with products). For this reason, most libraries discourage building SQL commands by
+string concatenation, but there are still many systems that do so. 
+
+The example demonstrates a more general property. Sometimes, it is desirable to track additional 
+meta-data about variables that are in some ways special. Such meta-data can determine how the variables
+can be used. Here, \ident{name} comes from the user input. This \emph{provenance} information should 
+be propagated to \ident{query}. The \ident{SqlCommand} object should then require arguments that can
+not directly contain user input (in an unchecked form). Such marking of values (but at run-time)
+is also called tainting \cite{app-tainting-sql}.
+
+Similarly, if we had \ident{password} or \ident{creditCard} variables in a client/server web application,
+these should be annotated as sensitive and it should not be possible to send their values over an
+unsecured network connection. 
+ 
+In another context, when working with data (\eg~in data journalism), it would be desirable to 
+track meta-data about the quality and the source of the data. For example, is the source trustworthy?
+Is the data up-to-date? Such meta-data could propagate to the result and tell us important 
+information about the calculated results.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Context-awareness \#4: Access patterns in data-flow languages}
+
+As an example, consider a language that allows us to get a value of a variable (representing
+some changing data-source) \ident{x} versions back using the syntax $\ident{x}_{[a]}$. 
+To track information about individual variables, we use a product-like operation $\times$ on tags 
+to mirrors the product structure of variables. For example:
+%
+\begin{equation*}
+?
+\end{equation*}
+%
+The annotations $5 \times 10$ corresponds to the free-variable context $\ident{a}, \ident{b}$, denoting
+that we need at most 5 and 10 past values of \ident{a} and \ident{b}, respectively. If we substitute 
+\ident{c} for both \ident{a} and \ident{b}, we need to combine the context-requirements and take the
+maximum of the requirements of the individual variables:
+%
+\begin{equation*}
+\begin{array}{l}
+?
+\end{array}
+\end{equation*}
+%
+This version of the calculus removes the non-determinism of the lambda abstraction from the previous
+version. As we associate information with individual variables, lambda abstraction creates a function
+that requires the context requirements associated with the variable that is being abstracted over.
+
+For example, if we wrapped the earlier example above in a function taking \ident{a} (and using 
+\ident{b} from the declaration-site) then the function would have context requirements $5$ -- that
+is the number associated with the variable \ident{a}.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Context-awareness \#4: Resource \& data availability}
 
 A vast majority of applications accesses some data sources (like database) or resources
 (like GPS sensor on a phone). This is more tricky for client/server applications where a part
@@ -204,7 +321,6 @@ I'll demonstrate this idea with a sample (pseudo-)code in a later section, so do
 it sounds a bit abstract at first.
 
 % ==================================================================================================
-
 
 \section{Coeffects: Towards context-aware languages}
 

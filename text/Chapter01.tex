@@ -3,46 +3,6 @@
 
 %----------------------------------------------------------------------------------------
 
-Modern software applications behave differently depending on the environment or context 
-in which they execute. They often run in increasingly rich environments that provide 
-resources (e.g. database or GPS sensor) and are gradually more diverse (e.g. multiple 
-versions of different mobile platforms). Web applications are split between client, server 
-and mobile components; mobile applications must be aware of the context and of the platform 
-while the ``internet of things'' makes the environments even more heterogeneous; 
-applications that access rich data sources need to propagate security policies and provenance 
-information about the data.
-
-Writing such context-aware applications is a fundamental problem of modern software 
-engineering. The state of the art relies on ad-hoc approaches -- using hand-written conditions 
-or pre-processors for conditional compilation. Common problems that developers face include: 
-
-\begin{itemize}
-\item \textbf{System capabilities.} When writing code that is cross-compiled to multiple 
-  targets (e.g. SQL, CUDA or JavaScript) the compilation often occurs at runtime and developers 
-  have no guarantee that it will succeed until the program is executed.
-  
-\item \textbf{Platform versioning.} When developing application for multiple versions of a 
-  system (e.g. Android), developers rely on lazy loading at runtime or use conditional compilation 
-  using \ident{\#if}. The former delays errors to runtime, while the latter requires building all 
-  possible configurations to discover simple compile-time errors.
-  
-\item \textbf{Resources \& data availability.} When programming applications that access 
-  resources or data provided by the environment (e.g. specific database table, GPS sensor), 
-  the program typically performs dynamic check for the resource availability. However, this 
-  is not checked in any way -- we have no easy way to tell what happens when the resource is 
-  not available (e.g. is there a fallback strategy or not?)
-
-\item \textbf{Meta-programming.} In distributed client-server programming, we often need to 
-  manipulate code using meta-programming techniques on the server and then pass a closed 
-  expression to client, translated to another language (JavaScript). We need to be able to 
-  guarantee that such expressions are well-formed before they are translated.
-\end{itemize}
-
-The issues discussed above pose an important problem to current and future state of computing.
-In this thesis, we develop a unifying mathematical model that allows us to capture the properties
-discussed above. We use the model in three different ways to capture different notions of 
-context-dependence.
-
 In the rest of the chapter, we first look at the distinguishing factor of two of the presented
 coeffect systems (how they differ from other existing work). Then we look at a number of concrete 
 problems that are discussed in greater details in later chapters. We use the examples to demonstrate 

@@ -41,11 +41,16 @@
 
 \newcommand{\ctxtrans}[2]{#1 \Rightarrow_c #2}  % Context transformation rules in \scl
 
-
 % Formatting for source code & types
+\definecolor{kvdclr}{rgb}{0.0,0.0,0.6}
+\definecolor{strclr}{rgb}{0.5,0.1,0.0}
+\definecolor{prepclr}{rgb}{0.0,0.0,0.0}
+
 \newcommand{\sep}[0]{\; | \;}
-\newcommand{\kvd}[1]{\textnormal{\bfseries\sffamily #1}} 
-\newcommand{\str}[1]{\textnormal{\ttfamily #1}} 
+\newcommand{\kvd}[1]{\textnormal{\textcolor{kvdclr}{\bfseries\sffamily #1}}}
+\newcommand{\str}[1]{\textnormal{\textcolor{strclr}{\ttfamily "#1"}}}
+\newcommand{\prepk}[1]{\textnormal{\textcolor{prepclr}{\bfseries\sffamily #1}}}
+\newcommand{\prepi}[1]{\textnormal{\textcolor{prepclr}{\ttfamily #1}}}
 \newcommand{\ident}[1]{\textnormal{\sffamily #1}}
 \newcommand{\ctyp}[2]{C^{#1}#2}
 \newcommand{\mtyp}[2]{M^{#1}#2}
