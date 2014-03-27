@@ -1,0 +1,35 @@
+\chapter{Coeffect meta-language} 
+\label{ch:meta} 
+
+%---------------------------------------------------------------------------------------------------
+
+Both flat coeffect calculus and structural coeffect calculus (presented in the past two chapters)
+use indexed comonads to define the semantics of the langauge. In this section, we follow the 
+meta-language style and embed indexed comonads into the language -- the type constructor
+$\ctyp{r}{\alpha}$ becomes a first-class value and we add language constructs corresponding to
+primitive operations of the indexed comonad.
+
+%===================================================================================================
+
+\section{Introduction}
+\label{sec:metalanguage-intro}
+
+\section{Type system}
+\ExecuteMetaData[rules/rules.tex]{cml-types}
+
+\section{Operational properties}
+
+\section{Categorical semantics}
+
+\section{Applications}
+
+\subsection{Meta-programming}
+
+\subsection{Mobile computations}
+
+\section{Related work}
+This chapter is closely related to Contextual Modal Type Theory (CMTT) of Nanevski et al. However
+they develop their language using model logic as a basis, while we use categorical foundations 
+as the basis - leading to a different system.
+
+\section{Summary}

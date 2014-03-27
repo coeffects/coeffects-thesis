@@ -1,1026 +1,587 @@
-\chapter{Flat coeffect language} 
-\label{ch:flat-coeffects} 
+\chapter{Context-aware applications} 
+\label{ch:applications} 
 
 %---------------------------------------------------------------------------------------------------
 
-% comonadic semantics
-\newcommand{\iunit}{\mathsf{e}}
-\newcommand{\imult}{\oplus}
-\newcommand{\iftor}[1]{C^{#1}}
-\newcommand{\iftorhat}[1]{\hat{C}^{#1}}
+TODO
 
-\newcommand{\cosem}[1]{\llbracket #1 \rrbracket}
-\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
-\newcommand{\ccat}[0]{\mathcal{C}}
-\newcommand{\obj}[1]{\textnormal{obj}(#1)}
+%===================================================================================================
 
-\newcommand{\cobind}[2]{#1^\dagger_{#2}}
-\newcommand{\cmerge}[0]{ \ident{m} }
-\newcommand{\csplit}[0]{ \ident{n} }
-\newcommand{\counit}[0]{ \varepsilon }
-% identity function
+\section{Through applications}
+\label{sec:path-apps}
 
-% structural coeffect calculus - operation names
+The general theme of this thesis is improving programming languages to better support writing
+\emph{context-dependent} (or \emph{context-aware}) computations. With current trends in the 
+computing industry such as mobile and ubiquitous computing, this is becoming an important topic.
+In software engineering and programming community, a number of authors have addressed this problem
+from different perspectives. Hirschfeld et al. propose \emph{Context-Oriented Programming} (COP)
+as a methodology \cite{app-cop-method}, and the subject has also been addressed in mobile
+computations \cite{app-cop-mobile,app-cop-mobile2}. In programming languages, Costanza 
+\cite{app-cop-contextl} develops a domain-specific LISP-like language ContextL and Bardram 
+\cite{app-cop-javafwk} proposes a Java framework for COP.
+
+We approach the problem from a different perspective, building on the tradition of 
+statically-typed functional programming languages and their theories. However, even in this field,
+there is a number of calculi or language features that can be viewed as context-dependent.
 
 %---------------------------------------------------------------------------------------------------
 
-\todo{Update the introduction \& edit the whole chapter -- currently, this is just a direct copy
-from the accepted ICALP paper on flat coeffects.}
+\subsection{Motivation for flat coeffects}
 
-\todo{Other extensions -- add more examples of indexed comonoads, consider recursion and 
-fixed-point operator, possibly also consider partially defined operations, which lets us
-express type systems that rule out some computations (rather than just static analyses). }
+In a number of systems, the execution environment provides some additional data, resources or 
+information about the execution context, but are independent of the variables used by the 
+program. We look at implicit parameters and rebindable resources (that both provide additional
+identifiers that can be accessed similarly to variables, but follow different scoping rules),
+distributed programming, cross-compilation and data-flow.
 
-Understanding how programs affect their environment is a well studied area: \emph{effect 
-systems}~\cite{effects-talpin-et-al} provide a static analysis of effects and 
-\emph{monads}~\cite{monad-notions} provide a unified semantics to different notions of effect.  
-Wadler and Thiemann unify the two approaches~\cite{monads-effects-marriage}, \emph{indexing}
-a monad with effect information, and showing that the propagation of effects in an effect system 
-matches the semantic propagation of effects in the monadic approach.
+%---------------------------------------------------------------------------------------------------
 
-No such unified mechanism exists for tracking the context requirements. We use the term 
-\emph{coeffect} for such contextual program properties. 
-Notions of context have been previously captured using comonads
-\cite{comonads-notions} (the dual of monads) 
-and by languages derived from modal logic
-\cite{logic-modal-reconstruction,logic-cmtt}, but these approaches
-do not capture many useful examples which motivate our work. 
-We build mainly on the former comonadic direction (\S\ref{sec:comonads}) and discuss the
-modal logic approach later (\S\ref{sec:related}).
+\paragraph{Implicit parameters} In Haskell, implicit parameters \cite{app-implicit-parameters} are 
+a special kind of variables that may behave as dynamically scoped. This means, if a function uses 
+parameter $\ident{?p}$, then the caller of the function must define $\ident{?p}$ and set its value.
+Implicit parameters can be used to parameterise a computation (involving a chain of function calls)
+without passing parameters explicitly as additional arguments of all involved functions. A simple 
+language with implicit parameters has an expression $\ident{?p}$ to read a parameter value and an 
+expression\footnote{Haskell uses $\kvd{let}~\ident{?p} = e_1~\kvd{in}~e_2$, but we use a different keyword to 
+avoid confusion.} $\kvd{letdyn}~?p = e_1~\kvd{in}~e_2$ that sets a parameter $\ident{?p}$ to the value of $e_1$ 
+and evaluates $e_2$ in a context containing $\ident{?p}$
 
-We extend a simply typed lambda calculus with a coeffect system based on comonads,
-replicating the successful approach of effect systems and monads.
-
-\paragraph{Examples of coeffects.}
-We present three examples that do not fit the traditional approach of
-\emph{effect systems} and have not been considered using the \emph{modal logic}
-perspective, but can be captured as \emph{coeffect systems} (\S\ref{sec:motivation}) --
-the tracking of implicit dynamically-scoped parameters (or resources),
-analysis of variable liveness, and tracking the
-number of required past values in dataflow computations.
-
-\paragraph{Coeffect calculus.}
-Informed by the examples, we identify a general algebraic structure for coeffects. 
-From this, we define a general \emph{coeffect calculus} that unifies the motivating 
-examples (\S\ref{sec:calculus}) and discuss its syntactic properties (\S\ref{sec:syntactic}). 
-
-\paragraph{Indexed comonads.}
-Our categorical semantics (\S\ref{sec:comonads}) extends the work of Uustalu and Vene 
-\cite{comonads-notions}. By adding annotations, we generalize comonads to \emph{indexed comonads}, 
-which capture notions of computation not captured by ordinary comonads.
-
-% ==================================================================================================
-
-\section{Motivation}
-\label{sec:motivation}
-
-Effect systems, introduced by Gifford and Lucassen
-\cite{effects-gifford}, track \emph{effects} of computations, such as
-memory access or message-based
-communication~\cite{effects-messagepassing}. Their approach augments
-typing judgments with effect information: $\Gamma \vdash e :
-\tau, F$.  Wadler and Thiemann explain how this shapes
-effect analysis of lambda abstraction~\cite{monads-effects-marriage}:
-%
-\begin{quote}
-\emph{In the rule for abstraction, the effect is empty because evaluation immediately
-returns the function, with no side effects. The effect on the function arrow
-is the same as the effect for the function body, because applying the function will
-have the same side effects as evaluating the body.}
-\end{quote}
-%
-In contrast to the static analysis of \emph{effects}, the analysis of \emph{context-dependence} 
-does not match this pattern. In the systems we consider, lambda abstraction places 
-requirements on both the \emph{call-site} (latent requirements) and the \emph{declaration-site} 
-(immediate requirements), resulting in different syntactic properties. 
-We informally discuss three examples first that demonstrate how contextual
-requirements propagate. Section (\S\ref{sec:calculus}) then unifies these 
-in a single calculus.
-
-We write coeffect judgements $\ctyp{s}{\Gamma} \vdash e : \tau$ where the 
-coeffect annotation $s$ associates context requirements with the 
-free-variable context $\Gamma$. Function types have the form $\ctyp{s}{\tau_1} \rightarrow \tau_2$ associating
-\emph{latent} coeffects $s$ with the parameter.
-The $\ctyp{s}{\Gamma}$ syntax and $\ctyp{s}{\tau}$ types are a result of the
-indexed comonadic semantics (\S\ref{sec:comonads}).
-
-% --------------------------------------------------------------------------------------------------
-\vspace{-1em}
-\subsection{Implicit parameters and resources.}
-\label{sec:coeffects-res}
-
-Implicit parameters~\cite{app-implicit-parameters} are \emph{dynamically-scoped} variables.
-They can be used to parameterize a computation without propagating arguments explicitly through a 
-chain of calls and are part of the context in which expressions evaluate. As correctly expected
-\cite{app-implicit-parameters}, they can be modelled by comonads. Rebindable resources in distributed
-computations follow a similar pattern, but we discuss implicit parameters for simplicity.
-
-The following function prints a number using implicit parameters
-\ident{?culture} (determining the decimal mark) and \ident{?format}
-(the number of decimal places):
+An interesting question arises when we use implicit parameters in a nested function. The following 
+function does some pre-processing and then returns a function that builds a formatted string based 
+on two implicit parameters $\ident{?width}$ and $\ident{?size}$:
 %
 \begin{equation*}
-\lambda n . \ident{printNumber}~n~\ident{?culture}~\ident{?format}
-\end{equation*}
-%
-Figure~\ref{fig:example-resources} shows a type-and-coeffect system
-tracking the set of an expression's implicit parameters. 
-For simplicity here, all implicit parameters have type $\rho$.
-
-Context requirements are created in (\emph{access}), while (\emph{var}) requires no
-implicit parameters; (\emph{app}) combines requirements of
-both sub-expressions as well as the latent requirements of the
-function. The (\emph{abs}) rule is where the example differs from
-effect systems.  Function bodies can access the union of the
-parameters (or resources) available at the declaration-site ($\ctyp{r}{\Gamma}$) and
-at the call-site ($\ctyp{s}{\tau_1}$). Two of the nine permissible
-judgements for the above example are:
-%
-\newcommand{\cfebody}{(\ldots)} % \ident{countFutureEvents}
-\begin{equation*}
-\begin{array}{rcl}
-\ctyp{\emptyset}{\Gamma} &\vdash& \cfebody : \ctyp{\{\ident{?culture}, \ident{?format} \}}{\ident{int}} \rightarrow \ident{string}\\
-\ctyp{\{\ident{?culture}, \ident{?format}\}}{\Gamma} &\vdash& \cfebody : \ctyp{\{\ident{?format}\}}{\ident{int}} \rightarrow \ident{string}
+\begin{array}{l}
+\kvd{let}~\ident{format} = \lambda \ident{str}~\rightarrow \\
+\quad \kvd{let}~\ident{lines} = \ident{formatLines}~\ident{str}~\ident{?width}~\kvd{in}\\
+\quad (\lambda \ident{rest}~\rightarrow~\ident{append}~
+         \ident{lines}~\ident{rest}~\ident{?width}~\ident{?size})\\
 \end{array}
 \end{equation*}
 %
-The coeffect system infers multiple, \ie{} non-principal, coeffects for functions.
-Different judgments are desirable depending on how a function is used. 
-In the first case, both parameters have to be provided by the caller.
-In the second, both are available at declaration-site, but \ident{?format} may be
-rebound (precise meaning is provided by the monoidal structure on the product comonad in \S\ref{sec:comonads}).
+The body of the outer function accesses the parameter $\ident{?width}$, so it certainly requires a context 
+$\{ \ident{?width} : \ident{int} \}$. The nested function (returned as a result) uses the parameter 
+$\ident{?width}$, but in addition also uses $\ident{?size}$. Where should the parameters of the nested 
+function come from?
 
-Implicit parameters can be captured by the
-\emph{reader} monad, where parameters are associated with the function codomain $\mtyp{\emptyset}{(\ident{int} \rightarrow
-  \mtyp{\{\ident{?culture}, \ident{?format} \}}{\ident{string}})}$,
-modelling only the first case. Whilst the reader monad can be extended to model rebinding, 
-the next example cannot be structured by \emph{any} monad.
+In a purely dynamically scoped system, they would have to be defined when the user invokes the nested function.
+However, in Haskell, implicit parameters behave as a combination of lexical and dynamic scoping. This means
+that the nested function can capture the value of $\ident{?width}$ and require just $\ident{?size}$
+In Haskell, this corresponds to the following type:
+%
+\begin{equation*}
+(\ident{?width} :: \ident{Int}) \Rightarrow \ident{String} \rightarrow 
+  ((\ident{?size} :: \ident{Int}) \Rightarrow \ident{String} \rightarrow \ident{string})
+\end{equation*}
+%
+As a result, the function can be called as follows:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{formatHello} = \\
+\quad(~\kvd{letdyn}~\ident{?width}=5~\kvd{in}\\
+\quad~~\ident{format}~\texttt{"Hello"})~~\kvd{in}\\
+\kvd{letdyn}~\ident{?size} = 10~\kvd{in}~\ident{formatHello}~\texttt{"world"}
+\end{array}
+\end{equation*}
+%
+This way of assigning type to \ident{format} and calling it is not the only possible, though. 
+We could also say that the outer function requires both of the implicit parameters and the result
+is a (pure) function with no context requirements. This interaction between implicit parameters 
+and lambda abstraction demonstrates one of the key aspects of coeffects and will be discussed 
+later. Implicit parameters will also sever as one of our examples in Chapter~Y.
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Type classes}
+Implicit parameters are closely related to \emph{type classes} \cite{app-type-classes}. In Haskell,
+type classes provide a principled form of ad-hoc polymorphism (overloading). When a code uses 
+an overloaded operation (e.g.~comparison or numeric operators) a constraint is placed on the 
+context in which the operation is used. For example:
+%
+\begin{equation*}
+\begin{array}{l}
+\ident{twoTimes}~::~\ident{Num}~\alpha \Rightarrow \alpha \rightarrow \alpha \\
+\ident{twoTimes}~x=x+x
+\end{array}
+\end{equation*}
+%
+The constraint $\ident{Num}~a$ on the function type arises from the use of the $+$ operator. 
+From the implementation perspective, the type class constraint means that the function takes 
+a hidden parameter -- a dictionary that provides the operation $+ :: \alpha \rightarrow \alpha \rightarrow \alpha$.
+Thus, the type $\ident{Num}~\alpha \Rightarrow \alpha \rightarrow \alpha$ can be viewed as
+$(\ident{Num}_\alpha \times \alpha) \rightarrow \alpha$. Implicit parameters work in exactly
+the same way -- they are passed around as hidden parameters.
+
+The implementation of type classes and implicit parameters shows two important points about 
+context-dependent properties. First, they are associated with some \emph{scope}, such as the body
+of a function. Second, they are associated with the input. To call a function that takes an 
+implicit parameter or has a type-class constraint, the caller needs to pass a (hidden) parameter
+together with the function inputs.
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Rebindable resources}
+The need for parameters that do not strictly follow static scoping rules also arises in distributed
+computing. This problem has been addressed, for example, by Bierman et al. and Sewell et al. 
+\cite{app-distributed-rebinding,app-distributed-acute}. To quote the first work: \emph{``Dynamic 
+binding is required in various guises, for example when a marshalled value is received from the 
+network, containing identifiers that must be rebound to local resources.''}
+
+This situation arises when marshalling and transferring function values. A function may depend 
+on a local resource (e.g.~a database available only on the server) and also resources that are 
+available on the target node (e.g.~current time). In the following example, the construct
+$\kvd{access}~\ident{Res}$ represents access to a re-bindable resource named $\ident{Res}$:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{recentEvents} = \lambda () \rightarrow\\
+\quad\kvd{let}~\ident{db} = \kvd{access}~\ident{News}~\kvd{in}\\
+\quad\ident{query}~\ident{db}~\str{"SELECT * WHERE Date > \%1"}~(\kvd{access}~\ident{Clock})
+\end{array}
+\end{equation*}
+%
+When \ident{recentEvents} is created on a server and sent to a client, a remote reference to the 
+database (available only on the server) must be captured. If the client device supports a clock, 
+then \ident{Clock} can be locally \emph{rebound}, e.g., to accommodate time-zone changes. 
+Otherwise, the date and time needs to be obtained from the server too.
+
+The use of re-bindable resources creates a context requirement similar to the one arising from
+the use of implicit parameters. For function values, such context-requirements can be satisfied
+in different ways -- resources must be available either at the declaration site (i.e.~when a 
+function is created) or at the call site (i.e.~when a function is called).
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Distributed computing and multi-targetting}
+
+An increasing number of programming languages is capable of running across multiple different 
+platforms or execution environments. Functional programming languages that can be compiled to
+JavaScript (to target web and mobile clients) include, among others, F\#, Haskell and OCaml \cite{app-ocaml-js}.
+
+Links \cite{app-distributed-links}, F\# libraries \cite{app-fsharp-webapps,app-fsharp-webtools},
+ML5 and QWeSST \cite{app-distributed-ml5, app-distributed-qwesst} and Hop \cite{app-hop-lang} go 
+further and allow a single source program to be compiled to multiple target runtimes. This posses 
+additional challenges -- it is necessary to track where each part of computation runs and statically 
+guarantee that it will be possible to compile code to the required target platform 
+(safe \emph{multi-targetting}).
+
+We demonstrate the problem by looking at input validation. In distributed applications 
+that communicate over unsecured HTTP channel, user input needs to be validated interactively
+on the client-side (to provide immediate response) and then again on the server-side (to 
+guarantee safety). For example:
+
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{validateInput} = \lambda \ident{name} \rightarrow\\
+\quad\ident{name} \neq \str{""} ~~\&\&~~ \ident{forall~isLetter~name}
+\\[0.5em]
+\kvd{let}~\ident{displayProduct} = \lambda \ident{name} \rightarrow\\
+\quad\kvd{if}~\ident{validateInput name}~\kvd{then}~\ident{displayProductPage~name}\\
+\quad\kvd{else}~\ident{displayErrorPage}~() 
+\end{array}
+\end{equation*}
+%
+The function \ident{validateInput} can be compiled to both JavaScript (for client-side) and
+native code (for server-side). However, \ident{displayProduct} uses other functionality
+(generating web pages) that is only available on the server-side, so it can only be compiled to
+native code.
+
+In Links \cite{app-distributed-links}, functions can be annotated as client-side, server-side
+and database-side. F\# WebTools \cite{app-fsharp-webtools} adds functions that support multiple
+targets (mixed-side). However, these are single-purpose language features and they are not 
+extensible. For example, in modern mobile development it is also important to track minimal 
+supported version of runtime\footnote{Android Developer guide \cite{app-android-multitarget} 
+demonstrates how difficult it is to solve the problem without language support.}. 
+
+Requirements on the execution environment can be viewed as contextual properties, but could be
+also presented as effects (use of some API required only in certain environment is a computational
+effect). We discuss the difference in Section~X. Furthermore, the theoretical foundations of
+distributed languages like ML5 \cite{app-distributed-ml5} suggest that a contextual treatment
+is more appropriate. We return to ML5 when discussing semantics in Section~\ref{sec:path-sem-contextdep}.
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}[t]
-\vspace{-1.4em}
-\begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{\emptyset}{\Gamma} \vdash x : \tau }
-%
-\quad\quad
-%
-\inference[(\emph{app})\;]
-  {\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{t}{\tau_1} \rightarrow \tau_2 &
-   \ctyp{s}{\Gamma} \vdash e_2 : \tau_1 }
-  {\ctyp{r \cup s \cup t}{\Gamma} \vdash e_1~e_2 : \tau_2}
-\end{equation*}
-\vspace{-0.7em}
-\begin{equation*}
-\inference[(\emph{access})\;]
-  {}
-  {\ctyp{ \{\ident{?a} \} }{\Gamma} \vdash \ident{?a} : \rho }
-%
-\quad\quad\quad
-%
-\inference[(\emph{abs})\;]
-  {\ctyp{r \cup s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
-\end{equation*}
-\vspace{-0.9em}
-\caption{Selected coeffect rules for implicit parameters}
-\label{fig:example-resources}
-\vspace{-1em}
-\end{figure}
+\paragraph{Safe locking}
+In the previous examples, the context provides additional values or functions that may be accessed
+at runtime. However, it may also track \emph{permissions} to perform some operation. This is done
+in the type system for safe locking of Flanagan and Abadi \cite{app-safe-locking}.
 
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[!b]
-\vspace{-2em}
+The system prevents race conditions (by only allowing access to mutable state under a lock)
+and avoids deadlocks (by imposing strict partial order on locks). The following 
+program uses a mutable state under a lock:
+%
 \begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{\ident L}{\Gamma} \vdash x : \tau }
+\begin{array}{l}
+\kvd{newlock}~l:\rho~\kvd{in}\\
+\kvd{let}~\ident{state}~=~\ident{ref}_\rho~10~\kvd{in}\\
+\kvd{sync}~l~(!\ident{state})
+\end{array}
+\end{equation*}
+%
+The declaration \kvd{newlock} creates a lock $l$ protecting memory region $\rho$. We can than
+allocate mutable variables in that memory region (second line). An access to mutable variable
+is only allowed in scope that is protected by a lock. This is done using the \kvd{sync} keyword,
+which locks a lock and evaluates an expression in a context that contains permission to access
+memory region of the lock ($\rho$ in the above example).
+
+The type system for safe locking associates the list of permission with the variable context.
+It uses judgements of a form $\Gamma, m \vdash e : \alpha$ specifying that an expression has a
+type in context $\Gamma$, given permissions (a list of locked regions) $m$. However, the treatment
+of lambda abstraction differs from the one for implicit parameters or rebindable resources.
+In the system for locking, code inside lambda function cannot use permissions from the scope
+where the function is declared. This is a necessary requirement -- a lambda function created 
+under a lock cannot access protected memory, because it will be executed later. We discuss how
+this restriction fits into our general coeffect framework in Section~X.Y.
+
+%
+% => This has coeffect style judgments, but it has effect-style lambda
+%
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Data-flow languages}
+
+The examples discussed so far are all -- to some extent -- similar. They attach additional 
+information (implicit parameters, dictionaries) or restrictions (on execution environment) to the
+context where code evaluates. By \emph{context}, we mean, most importantly, the values of variables
+and declarations that are in scope. The examples so far add more information to the context, but
+do not operate on the variable values.
+
+Data-flow languages provide a different example. Lucid \cite{app-lucid} is a declarative data-flow 
+language designed by Wadge and Ashcroft. In Lucid, variables represent streams and programs
+are written as transformations over streams. A function application $\mathit{square}(a)$ represents
+a stream of squares calculated from the stream of values $a$.
+
+The data-flow approach has been successfully used in domains such as development of real-time embedded 
+application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the data-flow
+paradigm. The following example is inspired by the Lustre \cite{app-synchronous-lustre} language
+and implements program to count the number of edges on a Boolean stream:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{edge} = \ident{false}~\kvd{fby}~(\ident{input}~\&\&~\ident{not}~(\kvd{prev}~\ident{input}))
+\\[0.5em]
+\kvd{let}~\ident{edgeCount} = \\
+\quad 0~\kvd{fby}~ (~\kvd{if}~\ident{edge}~\kvd{then}~\kvd{prev}~\ident{edgeCount}\\
+\quad\quad\quad~~~\, \kvd{else}~\kvd{prev}~\ident{edgeCount} ~)
+\end{array}
+\end{equation*}
+%
+The construct $\kvd{prev}~x$ returns a stream consisting of previous values of the stream 
+$x$. The second value of $\kvd{prev}~x$ is first value of $x$ (and the first
+value is undefined). The construct $y~\kvd{fby}~x$ returns a stream whose first element is the 
+first element of $y$ and the remaining elements are values of $x$. Note that in Lucid, the constants
+such as \ident{false} and $0$ are constant streams. Formally, the construct are defined as follows
+(writing $x_n$ for $n$-th element of a stream $x$):
+%
+\[ 
+(\kvd{prev}~x)_n = \left\{ 
+  \begin{array}{ll}
+    nil     & \; \text{if $n=0$}\\
+    x_{n-1} & \; \text{if $n>0$}
+  \end{array} \right.
 \quad
-\inference[(\emph{app})\;]
-  { \ctyp{s}{\Gamma} \vdash e_2 : \tau_1 &
-    \ctyp{r}{\Gamma} \vdash e_1 : \ctyp{t}{\tau_1} \rightarrow \tau_2 }
-  {\ctyp{r \sqcup (s \sqcap t)}{\Gamma} \vdash e_1~e_2 : \tau_2}
-\end{equation*}
-\vspace{-1.5em}
-\caption{Selected coeffect rules for liveness analysis}
-\label{fig:example-need}
-\vspace{-1.2em}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\subsection{Liveness analysis.}
-
-Liveness analysis detects whether a free variable of an expression may be used (\emph{live}) or 
-whether it is definitely not needed (\emph{dead}). A compiler can remove
-bindings to dead variables as the result is never used. 
-
-We start with a restricted analysis and briefly mention how to make it practical
-later (\S\ref{sec:related}). The restricted form is interesting theoretically as it gives rise
-to the indexed Maybe comonad (\S\ref{sec:comonads}), which is a basic but instructive example.
-
-A coeffect system in Fig.~\ref{fig:example-need} detects whether all variables are dead 
-($\ctyp{\ident D}{\Gamma}$) or whether at least one variable is live ($\ctyp{\ident L}{\Gamma}$). 
-Variable access (\emph{var}) is annotated with \ident L and constant access with \ident D. That is,
-if $c\in\mathbb{N}$ then $\ctyp{\ident D}{\Gamma} \vdash c : \ident{int}$.
-A dead context may be marked as live by
-letting $\ident D \sqsubseteq \ident L$ and adding sub-coeffecting (\S\ref{sec:calculus}).
-
-The (\emph{app}) rule is best understood by discussing its semantics. Consider first 
-\emph{sequential composition} of (semantic) functions $g, f$ annotated with $r, s$. 
-The argument of $g \circ f$ is live only when arguments of both $f$ and $g$ are live. 
-The coeffect semantics captures the additional behaviour that $f$ is not evaluated when
-$g$ ignores its input (regardless of the evaluation order of the underlying language).
-We write $r \sqcap s$ for a conjunction (returning \ident L iff $r = s = \ident{L}$). 
-Secondly, a \emph{pointwise composition} passes the same
-argument to $g$ and $h$. The parameter is live if either the parameter
-of $g$ or $h$ is live ($r \sqcup s$). Application combines the
-two operations, so the context $\Gamma$ is live if it is needed by
-$e_1$ \emph{or} by the function value \emph{and} by $e_2$.
-
-An (\emph{abs}) rule (not shown) compatible with the structure in Fig.~\ref{fig:example-resources}
-combines the context annotations using $\sqcap$. Thus, if the body uses some 
-variables, both the function argument and the context of the declaration-site are marked as live.
-
-Liveness cannot be modelled using monads as $\tau_1 \rightarrow \mtyp{r}{\tau_2}$.
-In call-by-value languages, the argument $\tau_1$ is always evaluated. Using 
-indexed comonads (\S\ref{sec:comonads}), we
-model liveness as $\ctyp{r}{\tau_1} \rightarrow \tau_2$ where
-$\ctyp{r}$ is the parametric type $\mathsf{Maybe}~\tau = \tau + 1$
-(which contains a value $\tau$ when $r=\ident{L}$ and does not contain
-value when $r=\ident{D}$).
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-\vspace{-1em}
-\begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{0}{\Gamma} \vdash x : \tau }
+(y~\kvd{fby}~x)_n = \left\{ 
+  \begin{array}{ll}
+    y_0     & \; \text{if $n=0$}\\
+    x_n     & \; \text{if $n>0$}
+  \end{array} \right.
+\]  
 %
-\quad\quad
+When reading data-flow programs, we do not need to think about variables in terms of streams --
+we can see them as simple values. However, the operations \kvd{fby} and \kvd{prev} cannot operate
+on plain values -- they require additional \emph{context} which provides past values of variables
+(for \kvd{prev}) and information about the current location in the stream (for \kvd{fby}). 
+
+In this case, the context is not simply an additional (hidden) parameter. It completely changes
+how variables must be represented. We may want to capture various \emph{contextual properties}
+of Lucid programs. For example, how many past elements need to be cached when we evaluate the 
+stream.
+
+To understand the nature of the context, we later look at the semantics of Lucid. This can be
+captured using a number of mathematical structures. Wadge \cite{app-lucid-monads} originally 
+proposed to use monads, while Uustalu and Vene later used comonads \cite{app-dataflow-essence}.
+
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Motivation for structural coeffects}
+
+We now turn our attention to system where additional contextual information are associated not
+with the context as a whole (or program scope), but with individual variables. We start by looking
+simple static analysis -- variable \emph{liveness}. Then we revisit data-flow computations and
+look at applications in security and software updating.
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Liveness analysis}
+
+\emph{Live variable analysis} (LVA) \cite{app-modern-compiler} is a standard technique in compiler theory. 
+It detects whether a free variable of an expression may be used by a program later (it is
+\emph{live}) or whether it is definitely not needed (it is \emph{dead}). As an optimization, 
+compiler can remove bindings to dead variables as the result is never accessed. Wadler 
+\cite{app-strictness-absecnce} describes the property of a variable that is dead as the 
+\emph{absence} of a variable. 
+
+In this thesis, we first use a restricted (and not practically useful) form of liveness analysis
+to introduce the theory of indexed comonads (Section~X) and then use liveness analysis as one of the
+motivations for structural coeffects. Consider the following two simple functions:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{constant42} = \lambda \ident{x} \rightarrow 42\\
+\kvd{let}~\ident{constant} = \lambda \ident{value} \rightarrow \lambda \ident{x} \rightarrow \ident{value}
+\end{array}
+\end{equation*}
+%
+In liveness analysis, we annotate the context with a value specifying whether the variables in
+scope are \emph{live} or \emph{dead}. If we associate just a single value with the entire 
+context, then the liveness analysis is very limited -- it can say that the context of the 
+expression $42$ in the first function is dead, because no variables are accessed. 
+
+A useful liveness analysis needs to consider individual variables. For example, in the body of
+the second function (\ident{value}), two variables are in scope. The variable \ident{value} is
+accessed and thus is \emph{live}, but the variable \ident{x} is dead.
+
+Static analyses can be classified as either \emph{forward} or \emph{backward} (depending on how they 
+propagate information) and as either \emph{must} or \emph{may} (depending on what properties they
+guarantee). Liveness is a \emph{backward} analysis -- this means that the requirements propagates
+from variables to their declaration sites. The distinction between \emph{must} and \emph{may} is 
+apparent when we look at an example with conditionals:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{defaultArg}~= \lambda \ident{cond} \rightarrow \lambda \ident{input} \rightarrow\\
+\quad\kvd{if}~\ident{cond}~\kvd{then}~42~\kvd{else}~\ident{input}
+\end{array}
+\end{equation*}
+%
+The liveness analysis is a \emph{may} analysis meaning that it marks variable as live when it
+\emph{may} be used and as dead if it is \emph{definitely} not used. This means that the variable
+\ident{input} is \emph{live} in the example above. A \emph{must} analysis would mark the variable
+only if it was used in both of the branches (this is sometimes called \emph{neededness}).
+
+The distinction between \emph{may} and \emph{must} analyses demonstrates the importance of 
+interaction between contextual properties and certain language constructs such as conditionals.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Data-flow languages (revisited)}
+When discussing data-flow languages in the previous section, we said that the context provides 
+past values of variables. This can be viewed as a flat contextual property (the context needs
+to keep all past values), but we can also view it as a structural property. Consider the following
+example:
+%
+\begin{equation*}
+\kvd{let}~\ident{offsetZip} = 0~\kvd{fby}~(\ident{left} + \kvd{prev}~\ident{right})
+\end{equation*}
+%
+The value \ident{offsetZip} adds values of \ident{left} with previous values of \ident{right}.
+To evaluate a current value of the stream, we need the current value of \ident{left} and one past
+value of \ident{right}. 
+
+As mentioned earlier, a static analysis for data-flow computations could calculate how many past 
+values must be cached. This can be done as a \emph{flat} coeffect analysis that produces just a 
+single number for each function. However, we can design a more precise \emph{structural} analysis
+and track the number of required elements for individual variables.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Tainting and provenance}
+Tainting is a mechanism where variables coming from potentially untrusted sources are marked
+(\emph{tainted}) and the use of such variables is disallowed in contexts where untrusted input
+can cause security issues or other problems. Tainting can be done dynamically as a runtime mark
+(e.g.~in the Perl language) or statically using a type system. Tainting can be viewed as a special
+case of \emph{provenance tracking}, known from database systems \cite{app-provenance-db}, where
+values are annotated with more detailed information about their source.
+
+Statically typed systems that based on tainting have been use to prevent cross-site scripting
+attacks \cite{app-tainting-xss} and a well known attack known as SQL injection
+\cite{app-tainting-sql,app-tainting-wasp}. In the latter chase, we want to check that SQL commands 
+cannot be directly constructed from, potentially dangerous, inputs provided by the user. Consider the 
+type checking of the following expression in a context containing variables \ident{id} and \ident{msg}:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{name} = \ident{query}~(\str{"SELECT Name WHERE Id = "}~+~\ident{id})~\kvd{in}\\
+\ident{msg}~+~\ident{name}
+\end{array}
+\end{equation*}
+%
+In this example, \ident{id} must not come directly from a user input, because \ident{query} requires 
+untainted string. Otherwise, the attacker could specify values such as \str{"1; DROP TABLE Users"}. 
+The variable \ident{msg} may or may not be tainted, because it is not used in protected context 
+(i.e.~to construct an SQL query). 
+
+In runtime checking, all (string) values need to be wrapped in an object that stores Boolean 
+flag (for tainting) or more complex data (for provenance). In static checking, the information
+need to be associated with the variables in the variable context. We use tainting as a motivating
+example for \emph{structural} coeffects in Section~X.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Security and core dependency calculus}
+
+The checking of tainting is a special case of checking of the \emph{non-interference} property 
+in \emph{secure information flow}. Here, the aim is to guarantee that sensitive information (such
+as credit card number) cannot be leaked to contexts with low secrecy (e.g.~sent via an unsecured
+network channel). Volpano et al. \cite{app-secure-flow} provide the first (provably) sound type 
+system that guarantees non-inference and Sabelfeld et al. \cite{app-secure-information-flow} survey
+more recent work. The checking of information flows has been also integrated (as a single-purpose
+extension) in the FlowCaml \cite{app-security-flowcaml} language. Finally, Russo et al. and 
+Swamy et al. \cite{monad-secure-flow,monads-lightweight-ml} show that the properties can be checked
+using a monadic library.
+
+Systems for secure information flow typically define a lattice of security classes $(\mathcal{S}, \leq)$
+where $\mathcal{S}$ is a finite set of classes and an ordering. For example a set $\{\ident{L}, \ident{H}\}$ 
+represents low and high secrecy, respectively with $\ident{L} \leq \ident{H}$ meaning that low security
+values can be treated as high security (but not the other way round).
+
+An important aspect of secure information flow is called \emph{implicit flows}. Consider the following
+example which may assign a new value to $z$:
+%
+\begin{equation*}
+\kvd{if}~x>0~\kvd{then}~z := y
+\end{equation*}
+%
+If the value of $y$ is high-secure, then $z$ becomes high-secure after the assignment
+(this is an \emph{explicit} flow). However, if $x$ is high-secure, then the value of
+$z$ becomes high-secure, regardless of the security level of $y$, because the fact whether an 
+assignment is performed or not performed leaks information in its own (this is an 
+\emph{implicit} flow).
+
+Abadi et al. realized that there is a number of analyses similar to secure information flow
+and proposed to unify them using a single model called Dependency Core Calculus (DCC) \cite{app-dcc}.
+It captures other cases where some information about expression relies on properties of variables
+in the context where it executes.  The DCC captures, for example, \emph{binding time analysis}
+\cite{app-binding-time-analysis}, which detects which parts of programs can be partially evaluated
+(do not depend on user input) and \emph{program slicing} \cite{app-slicing-survey} that identifies
+parts of programs that contribute to the output of an expression.
+	
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Beyond passive contexts}
+
+In the systems discussed so far, the context provides additional data (resources, implicit 
+parameters, historical values) or meta-data (security, provenance). However, it is impossible to
+write a function that modifies the context. We use the term \emph{passive} context for such 
+applications. 
+
+However, there is a number of systems where the context may be changed -- not just be evaluating
+certain code block in a different scope (e.g. by wrapping it in $\ident{prev}$ in data-flow), but
+also by calling a function that, for example, acquires new capabilities. While this thesis focuses
+on systems with passive context, we quickly look at the most important examples of the 
+\emph{active} variant.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Calculus of capabilities}
+Crary et al. \cite{app-capabilities} introduced the Calculus of Capabilities to provide 
+a sound system with region-based memory management for low-level code that can be easily 
+compiled to assembly language. They build on the work of Tofte and Talpin \cite{app-region-memory}
+who developed an \emph{effect system} (discussed in Section~\ref{sec:path-sem-effects}) that uses
+lexically scoped \emph{memory regions} to provide an efficient and controlled memory management.
+
+In the work of Tofte and Talpin, the context is \emph{passive}. They extend a simple functional language
+with the \kvd{letrgn} construct that defines a new memory region, evaluates an expression (possibly)
+using memory in that region and then deallocates the memory of the region:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\
+\quad\kvd{letrgn}~\rho~\kvd{in}\\
+\quad\kvd{let}~\ident{x} = \kvd{ref}_\rho \ident{input}~\kvd{in}~!\ident{x}
+\end{array}
+\end{equation*}
+%
+The memory region $\rho$ is a part of the context, but only in the scope of the body of 
+\kvd{letrgn}. It is only available to the last line which allocates a memory cell in the region
+and reads it (before the region is deallocated). There is no way to allocate a region inside a 
+function and pass it back to the caller.
+
+Calculus of capabilities differs in two ways. First, it allows explicit allocation and deallocation
+of memory regions (and so region lifetimes do not follow strict LIFO ordering). Second, it
+uses continuation-passing style. We ignore the latter aspect and so the following example:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\
+\quad \kvd{letrgn}~\rho~\kvd{in}\\
+\quad \kvd{let}~\ident{x} = \kvd{ref}_\rho \ident{input}~\kvd{in}~\ident{x}
+\end{array}
+\end{equation*}
+%
+The example is almost identical to the previous one, except that it does not return the value
+of reference \ident{x}. Instead, it returns the reference, which is located in a newly allocated
+region. Together with the value, the function returns a \emph{capability} to access the region
+$\rho$.
+
+This is where systems with active context differ. To type check such programs, we do not only need
+to know what context is required to call \ident{calculate}. We also need to know what effects it
+has on the context when it evaluates and the current context meeds to be appropriately adjusted
+after a function call. We briefly consider this problem in Section~X. % future work
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Software updating}
+Dynamic software updating (DSU) \cite{app-dsu-programs,app-dsu} is the ability to update programs at
+runtime without stopping them. The Proteus system developed by Stoyle et al. \cite{app-dsu-mutatis} 
+investigates what language support is needed to enable safe dynamic software updating in C-like 
+languages. The system is based on the idea of capabilities.
+
+The system distinguishes between \emph{concrete} uses and \emph{abstract} uses of a value. When
+a value is used concretely, the program examines its representation (and so it is not safe to
+change the representation during an update). An abstract use of a value does not need to examine
+the representation and so updating the value does not break the program.
+
+The Proteus system uses capabilities to restrict what types may be used concretely after any point
+in the program. All other types, not listed in the capability, can be dynamically updated as this
+will not change concrete representation of types accessed later in the evaluation.
+
+Similarly to Capability Calculus, capabilities in DSU can be changed by a function call. For 
+example, calling a function that may update certain types makes it impossible to use those types
+concretely following the function call. This means that DSU uses the context \emph{actively}
+and not just \emph{passively}.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Thesis perspective}
+
+As demonstrated in this section, there is a huge number of systems and applications that exhibit
+a form of context-dependence. The range includes different static analyses (liveness, provenance), 
+well-known programming language features (implicit parameters and type classes) as well as features
+not widely available (e.g. for distributed programming).
+
+It is impossible to cover all of these topics in a single coherent thesis and so we focus on 
+two key aspects:
+
+\begin{compactitem}
+\item \textbf{Flat vs. structural.} We look at both flat coeffects (single value for entire context) and 
+  structural coeffects (single value per variable). We use liveness, implicit parameters and 
+  data-flow to introduce flat coeffects (Section~X) and liveness, refined data-flow and tainting
+  to talk about structural coeffects (Section~Y).
+  
+\item \textbf{Analysis vs. restriction.} Some of the discussed examples can be viewed as static
+  analyses that obtain some information about programs (i.e.~the number of required past values
+  in data-flow). Other examples provide type system that rules out certain invalid programs 
+  (e.g.~safe locking). We cover this topic when discussing \emph{partial coeffects} in Section~Z.
+  
+\item \textbf{May vs. must analysis.} When discussing liveness, we observed that we can obtain 
+  two different analyses depending on how conditionals are treated. We discuss this topic in 
+  Section~X. % TBD - could be a chapter
+\end{compactitem}
+
+Although we also looked at examples of \emph{active} contextual computations (where developers can
+write functions that modify the context), we do not consider these applications, to keep the 
+material presented in this thesis focused. We briefly discuss them as future work in Section~X.
+
+%===================================================================================================
+
+\section{Summary}
+
+TODO
+
+% \section{Missing}
+% ~
 % 
-\inference[(\emph{app})\;]
-  {\ctyp{m}{\Gamma} \vdash e_1 : \ctyp{p}{\tau_1} \rightarrow \tau_2 &
-   \ctyp{n}{\Gamma} \vdash e_2 : \tau_1 }
-  {\ctyp{\textit{max}(m, n + p)}{\Gamma} \vdash e_1~e_2 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\inference[(\emph{prev})\;]
-  {\ctyp{n}{\Gamma} \vdash e : \tau}
-  {\ctyp{n+1}{\Gamma} \vdash \kvd{prev}~e : \tau}
-%
-\quad\quad
-%
-\inference[(\emph{abs})\;]
-  {\ctyp{\textit{min}(m, n)}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{m}{\Gamma} \vdash \lambda x.e : \ctyp{n}{\tau_1} \rightarrow \tau_2 }
-\end{equation*}
-\vspace{-1em}
-\caption{Selected coeffect rules for causal data flow}
-\label{fig:example-dataflow}
-\vspace{-1em}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\subsection{Efficient dataflow.}
-Dataflow languages (\eg~\cite{app-lucid}) declaratively describe
-computations over streams. In \emph{causal} data flow, program may
-access past values -- in this setting, a function $\tau_1 \rightarrow
-\tau_2$ becomes a function from a list of historical values $[\tau_1]
-\rightarrow \tau_2$. A coeffect system here tracks how many past values
-to cache.
-
-Figure~\ref{fig:example-dataflow} annotates contexts with an integer specifying the maximum
-number of required past values. The current value is always present, so (\emph{var}) is annotated with $0$.
-The expression $\kvd{prev}~e$ gets the previous value of stream $e$ and requires one
-additional past value (\emph{prev}); \eg~$\kvd{prev}~(\kvd{prev}~e)$ requires 2 past values.
-
-The (\emph{app}) rule follows the same intuition as for liveness. Sequential composition
-adds the tags (the first function needs $n + p$ past values to produce $p$ past inputs
-for the second function); passing the context to two subcomputations requires the maximum
-number of the elements required by the two subcomputations. The (\emph{abs}) rule for data-flow 
-needs a distinct operator -- \emph{min} -- therefore, the declaration-site and 
-call-site must each provide at least the number of past values required by the function body
-(the body may use variables coming from the declaration-site as well as the argument).
-
-The soundness follows from our categorical model (\S\ref{sec:comonads}). Uustalu and Vene
-\cite{comonads-notions} model causal dataflow computations using a non-empty list comonad 
-$\ident{NeList}~\tau = \tau \times (\ident{NeList}~\tau + 1)$. However, such model leads to
-(inefficient) unbounded lists of past elements. The above static analysis provides an
-approximation of the number of required past elements and so we use just fixed-length lists.
-
-% ==================================================================================================
-
-\section{Generalized coeffect calculus}
-\label{sec:calculus}
-
-The previous three examples exhibit a number of commonalities. We capture these in 
-the \emph{coeffect calculus}. We do not overly restrict the calculus to make
-it open for notions of context-dependent computations not discussed above.
-
-The syntax of our calculus is that of the simply-typed lambda calculus
-(where $v$ ranges over variables, \ident{T} over base types, and $r$ over coeffect annotations):
-%
-\begin{equation*}
-e ::= v \sep \lambda v.e \sep e_1~e_2
-\quad\quad\quad\quad
-\tau ::= \ident{T} \sep \tau_1 \rightarrow \tau_2 \sep \ctyp{r}{\tau}
-\end{equation*}
-
-The type $\ctyp{r}{\tau}$ captures values of type $\tau$ in a context
-specified by the annotation  $r$. This type appears only on the
-left-hand side of a function arrow $\ctyp{r}{\tau_1} \rightarrow \tau_2$. 
-In the semantics, $\ctyp{r}$ corresponds to some data type
-(\eg{}~\ident{list} or \ident{Maybe}). Extensions
-such as explicit \emph{let}-binding are discussed later
-(\S\ref{sec:syntactic}).
-
-The coeffect tags $r$, that were demonstrated in the previous section, can be generalized to a 
-structure with three binary operators and a particular element. 
-
-\begin{definition}
-A \emph{coeffect algebra} $(S, \imult, \vee, \wedge, \iunit)$ is a set $S$ with
-an element $\iunit \in S$, a semi-lattice $(S, \vee)$, a monoid $(S, \imult, \iunit)$,
-and a binary $\wedge$. That is, $\forall r,s,t\in S$:
-\begin{equation}
-\tag{monoid}
-   r \imult (s \imult t) = (r \imult s) \imult t 
-\quad\quad\quad
-   \iunit \imult r = r = r \imult \iunit  \quad\quad
-\end{equation}
-\vspace{-1.5em}
-\begin{equation}
-\tag{semi-lattice}
-   r \vee s = s \vee r 
-\quad\quad
-   r \vee (s \vee t) = (r \vee s) \vee t
-\quad\quad
-   r \vee r = r
-\end{equation}
-\end{definition}
-%
-The generalized coeffect calculus captures the three motivating examples (\S\ref{sec:motivation}),
-where some operators of the coeffect algebra may coincide. 
-
-The $\imult$ operator represents \emph{sequential} composition; guided by the categorical
-model (\S\ref{sec:comonads}), we require it to form a monoid with $\iunit$.
-The operator $\vee$ corresponds to merging of context-requirements in \emph{pointwise composition} 
-and the semi-lattice $(S, \vee)$ defines a partial order: $r \leq s$ when 
-$r \vee s = s$. This ordering implies a sub-coeffecting rule.  
-The coeffect $\iunit$ is often the top or bottom of the lattice.
-
-The $\wedge$ operator corresponds to splitting requirements of a function body. 
-The operator is unrestricted in the general system.
-A number of additional laws holds for \emph{some} coeffects systems, \eg{}~semi-lattice structure of
-$\wedge$ and a form of distributivity. Quite possibly, they should hold for all coeffect systems.  
-We start with as few laws as possible so as not to limit possible uses of the calculus.  
-We consider constrained variants that provide useful syntactic properties later (\S\ref{sec:syntactic}).
-
-
-\vspace{-0.4em}
-\paragraph{Implicit parameters} use sets of names $S = \mathcal{P}(\ident{Id})$ as tags with
-union $\cup$ for all three operators. Variable access is annotated with $\iunit = \emptyset$
-and $\leq$ is subset ordering.
-
-\vspace{-0.4em}
-\paragraph{Liveness} uses a two point lattice $S=\{ \ident{D}, \ident{L} \}$ where
-$\ident{D} \sqsubseteq \ident{L}$. Variables are annotated with the top element $e = \ident{L}$ 
-and constants with bottom $\ident{D}$. The $\vee$ operation is $\sqcup$ (join) and $\wedge$
-and $\imult$ are both $\sqcap$ (meet).
-
-\vspace{-0.4em}
-\paragraph{Dataflow} tags are natural numbers $S = \mathbb{N}$ and operations
-$\vee, \wedge$ and $\imult$ correspond to \textit{max}, \textit{min} and $+$, respectively. 
-Variable access is annotated with $\iunit = 0$ and the order $\leq$ is the standard ordering
-of natural numbers.
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\subsection{Coeffect typing rules.}
-Figure~\ref{fig:coeffect-typing} shows the
-rules of the coeffect calculus, given some coeffect algebra $(S, \imult, \vee, \wedge, \iunit)$.
-The context required by a variable access (\emph{var}) is annotated with $\iunit$.
-The sub-coeffecting rule (\emph{sub}) allows the contextual requirements of an expression 
-to be generalized.
-
-The (\emph{abs}) rule checks the body of the function in a context $r \wedge s$, which is a 
-combination of the coeffects available in the context $r$ where the function is 
-defined and in a context provided by the caller of the function. 
-Note that none of the judgements create a \emph{value} of type $\ctyp{r}{\tau}$. This
-type appears only immediately to the left of  an arrow $\ctyp{r}{\tau_1} \rightarrow \tau_2$.
-
-In function application (\emph{app}), context requirements of both expressions and the 
-function are combined as previously: the pointwise composition $\vee$ is used to combine
-the coeffects of the expression representing a function $r$ and the coeffects of
-the argument, sequentially composed with the coeffects of the function $s \imult t$.
-
-For space reasons, we omit recursion. We note that this would require adding
-effect variables and extending the coeffect algebra with a fixed point operation.
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-\vspace{-1em}
-\begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{\iunit}{\Gamma} \vdash x : \tau }
-%
-\quad\quad
-%
-\inference[(\emph{app})\;]
-  {\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{s}{\tau_1} \rightarrow \tau_2 &
-   \ctyp{t}{\Gamma} \vdash e_2 : \tau_1 }
-  {\ctyp{r \vee (s \imult t)}{\Gamma} \vdash e_1~e_2 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\inference[(\emph{sub})\;]
-  {\ctyp{s}{\Gamma} \vdash e : \tau }
-  {\ctyp{r}{\Gamma} \vdash e : \tau }
-\;(s\leq r)  
-%
-\quad\quad\quad\quad
-%
-\inference[(\emph{abs})\;]
-  {\ctyp{r \wedge s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
-\end{equation*}
-\caption{Type and coeffect system for the coeffect calculus}
-\label{fig:coeffect-typing}
-\vspace{-1em}
-\end{figure}
-
-% ==================================================================================================
-
-\section{Coeffect semantics using indexed comonads}
-\label{sec:comonads}
-
-The approach of \emph{categorical semantics} interprets terms as
-morphisms in some category.  For typed calculi, typing judgments $x_1 : \tau_1 \ldots x_n : \tau_n
-\vdash e: \tau$ are usually mapped to morphisms $\interp{\tau_1} \times \ldots \times
-\interp{\tau_n} \rightarrow \interp{\tau}$. Moggi showed the semantics of various effectful 
-computations can be captured generally using the (\emph{strong}) \emph{monad}
-structure~\cite{monad-notions}. Dually, Uustalu and Vene showed that
-(\emph{monoidal}) \emph{comonads} capture various kinds of context-dependent 
-computation~\cite{comonads-notions}.
-
-We extend Uustalu and Vene's approach to give a semantics for
-the coeffect calculus by generalising comonads to
-\emph{indexed comonads}. We emphasise semantic intuition and
-abbreviate the categorical foundations for space reasons.
-
-\vspace{-1em}
-\paragraph{Indexed comonads.}
-
-Uustalu and Vene's approach interprets well-typed terms 
-as morphisms $C (\tau_1 \times \ldots
-\times \tau_n) \rightarrow \tau$, where $C$ encodes contexts
-and has a comonad structure~\cite{comonads-notions}.
-Indexed comonads comprise a \emph{family} of object mappings 
-$C^r$ indexed by a coeffect $r$ describing the contextual requirements satisfied by
-the encoded context. We interpret judgments $C^r (x_1 : \tau_1, \ldots, x_n : \tau_n) \vdash e : \tau$ as
-morphisms $C^r (\interp{\tau_1} \times \ldots \times \interp{\tau_n}) \rightarrow \interp{\tau}$.
-
-The indexed comonad structure provides a notion of composition
-for computations with different contextual requirements.
-%%
-\begin{definition}
-Given a monoid $(S, \imult, \iunit)$ with binary operator $\imult$ and
-unit $\iunit$, an \emph{indexed comonad} over a category $\ccat$
-comprises a family of object mappings $\iftor r$ where for all $r \in S$ and $A \in \obj{\ccat}$ then 
-$\iftor r A \in \obj{\ccat}$ and:
-%%
-\begin{itemize}
-\item a natural transformation $\counit_A : \iftor{\iunit} A \rightarrow A$, called the \emph{counit};
-\item a family of mappings $\cobind{(-)}{r, s}$ from morphisms $\iftor
-  r A \rightarrow B$ to \\ morphisms $\iftor{r \imult{} s} A
-  \rightarrow \iftor s B$ in $\ccat$, natural in $A,B$, called
-  \emph{coextend};
-\end{itemize}
-%
-\noindent
-such that for all $f : \iftor r \tau_1 \rightarrow \tau_2$ and $g : \iftor s \tau_2 \rightarrow \tau_3$ 
-the following equations hold:
-%
-\renewcommand{\arraycolsep}{1.5em}
-\begin{align*}
-\begin{array}{ccc}
-\counit \circ \cobind{f}{r, \iunit} = f & 
-\cobind{{(\counit)}}{\iunit, r} = \ident{id} & 
-\cobind{(g \circ \cobind{f}{r, s})}{(r \imult s), t} = \cobind{g}{s, t} \circ \cobind{f}{r, (s \imult t)} \\
-\end{array}
-\end{align*}
-\end{definition}
-%
-The \emph{coextend} operation gives rise to an associative composition operation for
-computations with contextual requirements (with \emph{counit} as the identity):
-%
-\[
-\hat{\circ} : (\iftor r \tau_1 \rightarrow \tau_2) \rightarrow (\iftor s \tau_2 \rightarrow \tau_3) 
-  \rightarrow (\iftor{r \imult s} \tau_1 \rightarrow \tau_3) \quad\quad\quad
-g \, \hat{\circ} \, f = g \circ f^\dagger_{r,s}\quad
-\]
-%
-The composition $\hat{\circ}$ best expresses the intention
-of indexed comonads: contextual requirements of the composed
-functions are combined. The properties of
-the composition follow from the indexed comonad laws and the 
-monoid $(S, \oplus, \iunit)$.
-
-\paragraph{Example}
-Indexed comonad are analogous to comonads (in coKleisli form), but
-with the additional monoidal structure on indices.  Indeed, comonads
-are a special case of indexed comonads with a trivial singleton
-monoid, \eg{}, $(\{1\}, \ast, 1)$ with $1 \ast 1 = 1$ where $\iftor 1$
-is the underlying functor of the comonad and $\counit$ and
-$\cobind{(-)}{1, 1}$ are the usual comonad operations.
-However, as demonstrated next, not all indexed comonads are derived from ordinary comonads.
-
-\paragraph{Example}
-The \emph{indexed partiality comonad} encodes free-variable contexts
-of a computation which are either \emph{live} or \emph{dead} (\ie{}, have
-\emph{liveness} coeffects) with the monoid $(\{\ident{D}, \ident{L}\},
-\sqcap, \ident{L})$, where $\iftor{\ident L} A = A$ encodes live
-contexts and $\iftor{\ident D} A = 1$ encodes dead contexts,
-where $1$ is the unit type inhabited by a single value $()$.
-The \emph{counit} operation $\counit{} : \iftor{\ident{L}} A \rightarrow A$
-is defined $\counit\ x = x$ and \emph{coextend},
-for all $f : \iftor r A \rightarrow B$, and thus
-$\cobind{f}{r, s} : \; \iftor{r \sqcap s} A \rightarrow \iftor s B$,
-is defined:
-%
-\begin{align*}
-\begin{array}{llll}
-\cobind{f}{\ident{D}, \ident{D}} x = () \qquad\qquad & 
-\cobind{f}{\ident{D}, \ident{L}} x = f () \qquad\qquad &
-\cobind{f}{\ident{L}, \ident{D}} x = () \qquad\qquad &
-\cobind{f}{\ident{L}, \ident{L}} x = f~x 
-\end{array}
-\end{align*}
-%
-The indexed family $C^r$ here is analogous to the non-indexed \textsf{Maybe} (or \emph{option})
-data type $\mathsf{Maybe}\ A = A + 1$.  This
-type does not permit a comonad structure since
-$\varepsilon : \mathsf{Maybe}\ A \rightarrow A$ is undefined at $(\textsf{inr} \, ())$. 
-For the indexed comonad, $\counit$ need only be defined
- for $\iftor{\ident{L}} A = A$. Thus, indexed comonads capture a broader range of
- contextual notions of computation than comonads.
-
- Moreover, indexed comonads are not restricted by the \emph{shape
-   preservation} property of comonads~\cite{orchard12codo}: that
- a coextended function cannot change the \emph{shape} of the
- context. For example, in the second case above $f^\dagger_{\ident{D},
-   \ident{L}} : \iftor{\ident{D}} A \rightarrow \iftor{\ident{L}} B$
- where the shape changes from $1$ (empty context) to $B$ (available
- context). 
-
-\vspace{-1em}
-\subsection{Monoidal indexed comonads.}
-Indexed comonads provide a semantics to sequential composition, but
-additional structure is needed for the semantics of the full coeffect calculus.
-Uustalu and Vene~\cite{comonads-notions} additionally require a (\emph{lax semi-}) \emph{monoidal comonad} 
-structure, which provides a monoidal operation $\mathsf{m} : C A
-\times C B \rightarrow C (A \times B)$ for merging contexts (used in
-the semantics of abstraction).
-
-The semantics of the coeffect calculus requires an indexed
-lax semi-monoidal structure for combining contexts \emph{as well as} an indexed
-\emph{colax} monoidal structure for \emph{splitting} contexts. These are provided
-by two families of morphisms (given a coeffect algebra with $\vee$ and $\wedge$):
-%
-\begin{itemize}
-\item $\cmerge_{r, s} : \iftor r A \times \iftor s B \rightarrow \iftor{(r \wedge s)}(A \times B)$ natural
-in $A, B$;
-\item $\csplit_{r, s} : \iftor{(r \vee s)}(A \times B) \rightarrow \iftor r A \times \iftor s B$ natural
-in $A, B$;
-\end{itemize}
-%
-\noindent
-The $\cmerge_{r, s}$ operation merges contextual computations with
-tags combined by $\wedge$ (greatest lower-bound), elucidating 
-the behaviour of $\cmerge_{r, s}$: that merging may result in 
-the loss of some parts of the contexts $r$ and $s$.
-
-The $\csplit_{r, s}$ operation splits context-dependent computations
-and thus the contextual requirements. To obtain coeffects $r$ and
-$s$, the input needs to provide \emph{at least} $r$ and $s$, so the
-tags are combined using the $\vee$ (least upper-bound).
-
-For the sake of brevity, we elide the indexed versions of the laws required by Uustalu and Vene
-(\eg~most importantly, merging two contexts and then adding the third is
-equivalent to merging the last two and then adding the first; similar rule holds is required
-for splitting).
-
-\paragraph{Example}
-For the indexed partiality comonad, given the liveness coeffect
-algebra $(\{\ident{D}, \ident{L}\}, \sqcap, \sqcup, \sqcap, \ident{L})$,
-the additional lax/colax monoidal operations are:
-%%
-\begin{align*}
-\begin{array}{lll}
-\cmerge_{\ident{L}, \ident{L}} (x, y) = (x, y) 
-  \quad\quad& \csplit_{\ident{D}, \ident{D}} \;\; () \;\;\; = ((), ())
-  \quad\quad& \csplit_{\ident{D}, \ident{L}} (x, y) = ((), y) \\
-\cmerge_{\ident{r}, \ident{s}} \;\,(x, y) = () 
-  & \csplit_{\ident{L}, \ident{D}} (x, y) = (x, ())
-  & \csplit_{\ident{L}, \ident{L}} (x, y) = (x, y)
-\end{array}
-\end{align*}
-
-\paragraph{Example}
-Uustalu and Vene model causal dataflow computations using the
-non-empty list comonad $\ident{NEList}~A = A \times (1 +
-\ident{NEList}~A)$~\cite{comonads-notions}.  Whilst this comonad
-implies a trivial indexed comonad, we define an indexed comonad with
-integer indices for the number of past values demanded of the context.
-
-We define $\ctyp{n}{A} = A \times (A \times \ldots \times A)$ where the first $A$ is the current
-(always available) value, followed by a finite product of $n$ past values. The definition of the
-operations is a straightforward extension of the work of Uustalu and Vene.
-
-%\begin{example}
-%The semantics of the coeffect calculus for
-% dynamically-scoped implicit parameters, with coeffect
-%algebra $(\mathcal{P}(\ident{Id}), \cup, \cup, \cup, \emptyset)$, 
-%is provided by the indexed comonad $\iftor rA = A \times (r \rightarrow \tau)$
-%where $r \in \mathcal{P}(\ident{Id})$ with operations:\dnote{The type here is wrong,
-%do we need to store the types too? Maybe should just be a product.}
-%%
-%\vspace{-1.0em}
-%\begin{equation*}
-%\begin{array}{l}
-%\cobind{f}{r, s} \; : \; \iftor{r \cup s} A \rightarrow \iftor s B\\
-%\cobind{f}{r, s} (a, g) = (f(a, g|_r), g|_s)
-%\\[1em]
-%\counit{} (a, g) = a\\
-%%\iota_{r, s} \; : \: \iftor r A \rightarrow \iftor s A\\
-%\iota_{r, s}(a, g) = (a, g|_s)\quad(\textnormal{if}~\leq r)
-%\end{array}
-%\quad\begin{array}{l}
-%\cmerge_{r, s} : \iftor r A \times \iftor s B \rightarrow \iftor{(r \cup s)}(A \times B)\\
-%\cmerge_{r, s} ((a_1, g_1), (a_2, g_2)) = ((a_1, a_2), g_1|_{r \setminus s} \cup g_2 )
-%\\[1em]
-%\csplit_{r, s} : \iftor{(r \cup s)}(A \times B) \rightarrow \iftor r A \times \iftor s B \\
-%\csplit_{r, s} ((a_1, a_2), g) = ((a_1, g|_r), (a_1, g|_s))
-%\end{array}
-%\end{equation*}
-%\end{example}
-
-%The function created using \emph{coextend} expects a function $g$ that is defined for
-%resource names $r \cup s$. We use function restriction $g|_r$ and $g|_s$ to get functions that are 
-%defined on resources required by $f$ and the result of coextend, respectively.
-
-%The operation $\cmerge_{r, s}$ pairs the values and combines the resources available in both contexts. 
-%It combines a function $g_1|_{r\setminus s}$ (defined for resources in $r$ excluding those in $s$) and 
-%function $g_2$ (defined for resources $s$). This definition is not symmetric as it prefers resources 
-%defined in the second context. As a result, the caller of a function can rebind resources defined
-%at the declaration site. 
-
-%Resources show that indexed comonads describe the structure of context more precisely
-%than comonads. A comonad would have to use $TA = A \times (\Omega \rightharpoonup R)$ 
-%with a \emph{partial} function on all resource names. Using indexed comonads, we can ensure that the function
-%is defined on all resources tracked statically in the tag.\dnote{Needs tweaking}
-
-\vspace{-1.5em}
-\subsection{Categorical Semantics. }
-\label{sec:comonads-semantics}
-
-\newcommand{\llangle}{\langle\hspace{-0.25em}\langle}
-\newcommand{\rrangle}{\rangle\hspace{-0.25em}\rangle}
-
-\begin{figure*}[t]
-\vspace{-1em}
-\newcommand{\uu}[1]{\overline{#1}}
-% \begin{equation*} 
-% \cosem{\ctyp{r}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
-%   \ctyp{r}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau
-% \end{equation*}
-% \vspace{-0.4em}
-\begin{equation*}
-\begin{array}{rcll}
-\cosem{\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2} &=& 
-    \emph{curry} \; (\cosem{\ctyp{r \wedge s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    %&$(1)$
-\\[0.1em]
-\cosem{\ctyp{r \vee (s \imult t)}{\Gamma} \vdash e_1~e_2 : \tau} &=& 
-    (\emph{uncurry} \;  \cosem{\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{s}{\tau_1} \rightarrow \tau_2}) \, \circ \\
- & & \quad\; (id \times \cobind{\cosem{\ctyp{t}{\Gamma}\vdash e_2 : \tau_1}}{t,s})
-    \circ \csplit_{r, s \imult t} \circ \iftor{r \vee (s \imult t)}\Delta
-\\[0.1em]
-\cosem{\ctyp{\iunit}{\Gamma} \vdash x_i : \tau_i} &=&
-    \pi_i \circ \counit                                                                  % &$(3)$
-%\\[0.1em]
-%\cosem{\ctyp{r}{\Gamma} \vdash e : \tau} &=&
-%    \cosem{\ctyp{s}{\Gamma} \vdash e : \tau} \circ \iota_{r, s}                              %   &%$(4)$
-%\\[0.1em]
-%\cosem{\ctyp{r\vee (r \imult s)}{\Gamma} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2} &=&
-%    \cosem{\ctyp{r}{(\Gamma, x:\tau_1)} \vdash e_2 : \tau_2} \circ
-% ((\varepsilon \times \cosem{ \ctyp{s}{\Gamma} \vdash e_1 : \tau_1 }) \circ 
-%\iftorhat{r \vee (r \imult t)}\Delta
-\end{array}
-\end{equation*}
-\vspace{-1.5em}
-\caption{Categorical semantics for the coeffect calculus}
-\label{fig:semantics}
-\vspace{-1.0em}
-\end{figure*}
-
-Figure~\ref{fig:semantics} shows the
-categorical semantics of the coeffect calculus
-using additional operations 
-$\pi_i$ for projection of the \emph{i}$^{th}$ element of a 
-product, usual
-\emph{curry} and \emph{uncurry} operations, and
- $\Delta : A \rightarrow A \times A$ duplicating a
-value. While $\iftor{r}$ is a family of object mappings,
-it is promoted to a family of functors with the derived morphism mapping 
-$\iftor{r}(f) = \cobind{ (f \circ \counit) }{\iunit, r}$.
-
-The semantics of variable access and abstraction are the same as in
-Uustalu and Vene's semantics, modulo coeffects. Abstraction uses $\cmerge_{r, s}$ to merge the outer
-context with the argument context for the context of the function body.
-The indices of $\iunit$ for
-$\counit$ and $r,s$ for $\cmerge_{r, s}$ match the coeffects
-of the terms.
-The semantics of application is more complex. It first duplicates the
-free-variable values inside the context and then splits this context
-using $\csplit_{r, {s \oplus t}}$. The two contexts (with
-different coeffects) are passed to the two sub-expressions,
-where the argument subexpression, passed a context $(s \oplus t)$,
-is coextended to produce a context $s$ which is passed into
-the parameter of the function subexpression (\emph{cf.} given $f : A \rightarrow (B \rightarrow C)$,
- $g : A \rightarrow B$, then $\emph{uncurry} \, f \, \circ \, (id \times g) \circ \Delta : A \rightarrow C$).
-
-A semantics for sub-coeffecting is omitted, but may be provided
-by an operation 
-$\iota_{r, s} : \iftor r A \rightarrow \iftor s A$ natural in $A$, for all $r, s \in S$ where $s \leq r$,
-which transforms a value $C^r A$ to $C^s A$ by
-ignoring some of the encoded context.
-
-% ==========================================================================================
-
-\section{Syntax-based equational theory}
-\label{sec:syntactic}
-
-Operational semantics of every context-dependent language differs as the notion of context 
-is always different. However, for coeffect calculi satisfying certain conditions we can 
-define a universal equational theory. This suggests a pathway to an operational semantics for 
-two out of our three examples (the notion of context for data-flow is more complex).
-
-In a pure $\lambda$-calculus, $\beta$ and $\eta$ equality for
-functions (also called \emph{local soundness} and \emph{completeness}
-respectively~\cite{logic-modal-reconstruction})
-describe how pairs of abstraction and application can be eliminated:
-$(\lambda x . e_2) e_1 \equiv_\beta \subst{e_1}{x}{e_2}$ and $(\lambda x . e \, x) 
-\equiv_\eta e$. The $\beta$ equality rule, using the usual Barendregt convention of 
-syntactic substitution, implies a \emph{reduction},
-giving part of an operational semantics for the calculus.
-
-The call-by-name evaluation strategy modelled by $\beta$-reduction is
-not suitable for impure calculi therefore a restricted $\beta$ rule,
-corresponding to call-by-value, is used, \ie~$(\lambda x . e_2) v
-\equiv \subst{e_2}{x}{v}$. Such reduction can be encoded by a
-\emph{let}-binding term, $\kvd{let}~x=e_1~\kvd{in}~e_2$, which
-corresponds to sequential composition of two computations, where the
-resulting pure value of $e_1$ is substituted into
-$e_2$~\cite{monads-inaction,monad-notions}.
-
-%
-% We consider here both a notion of \emph{let}-binding for the coeffect
-% calculus, useful for a CBV evaluation, and a notion of substitution 
-% for a CBV evaluation.
-% 
-
-For an equational theory of coeffects, consider first a notion 
-of \emph{let}-binding equivalent to $(\lambda x . e_2)~e_1$, which
-has the following type and coeffect rule:
-%
-\begin{equation}
-\inference
-  {\ctyp{s}{\Gamma} \vdash e_1 : \tau_1 &
-   \ctyp{r_1 \wedge r_2}{(\Gamma, x : \tau_1)} \vdash e_2 : \tau_2}
-  {\ctyp{r_1 \vee (r_2 \imult s)}{\Gamma} \vdash \kvd{let}~x = e_1~\kvd{in}~e_2
-: \tau_2 }
-\label{eq:let1}
-\end{equation}
-
-\noindent
-For our examples, $\wedge$ is idempotent (\ie{}, $r \wedge r = r$)
-implying a simpler rule:
-
-% For the three examples we consider, a simpler rule gives a more
-% precise coeffect. Because $r \wedge r = r$ for all our examples, we
-% can also a coeffect $r \vee (r \imult s)$. Moreover,
-%for our examples (but not necessarily for \emph{all} coeffect
-%systems), $r \vee (r \imult s) \leq r_1 \vee (r_2 \imult s)$ meaning
-%that the following gives more precise coeffects:
-%
-\begin{equation}
-\inference
-  {\ctyp{s}{\Gamma} \vdash e_1 : \tau_1 &
-   \ctyp{r}{(\Gamma, x : \tau_1)} \vdash e_2 : \tau_2}
-  {\ctyp{r \vee (r \imult s)}{\Gamma} \vdash \kvd{let}~x = e_1~\kvd{in}~e_2 : \tau_2 }
-\label{eq:let2}
-\end{equation}
-%%
-For our examples (but not necessarily \emph{all} coeffect
-systems), this defines a more ``precise'' coeffect with respect to $\leq$
-where $r \vee (r \imult s) \leq r_1 \vee (r_2 \imult s)$.
-
-This rule removes the non-principality of the first rule
-(\ie~multiple possible typings).  However, using idempotency 
-to split coeffects in abstraction would remove additional
-flexibility needed by the implicit parameters example.
-
-The coeffect $r \vee (r \imult s)$ can
-also be simplified for all our examples, leading to more intuitive
-rules -- for implicit parameters $r \cup (r \cup s) = r \cup s$; for
-liveness we get that $r \sqcup (r \sqcap s) = r$ and for dataflow we
-obtain $\textit{max}(r, r+s) = r + s$.
-
-Our calculus can be extended with \emph{let}-binding and \eqref{eq:let2}.
-However, we also consider the cases when a
-syntactic substitution $e_2[x \leftarrow e_1]$ has the coeffects
-specified by the above rule \eqref{eq:let2} 
-and prove \emph{subject reduction} theorem
-for certain coeffect calculi.  We consider two common special cases
-when the coeffect of variables $\iunit$ is the greatest ($\top$) or
-least ($\bot$) element of the semi-lattice $(S, \vee)$ and derive
-additional conditions that have to hold about the coeffect algebra:
-
-\begin{lemma}[Substitution]
-\label{thm:subst}
-Given $C^r (\Gamma, x : \tau_2) \vdash e_1 : \tau_1$ and $C^s \Gamma \vdash e_2 : \tau_2$
-then $C^{r \vee (r \oplus s)} \Gamma \vdash \subst{e_2}{x}{e_1} : \tau_1$ if 
-the coeffect algebra satisfies the conditions that 
-$\iunit$ is either the greatest or least element of the semi-lattice,
-$\oplus = \wedge$, and $\oplus$ distributes over $\vee$,
-\ie{}, $X \oplus (Y \vee Z) = (X \oplus Y) \vee (X \oplus Z)$.
-\end{lemma}
-
-\begin{proof}
-By induction over $\vdash$, using the laws (\S\ref{sec:calculus}) and additional assumptions.
-\end{proof}
-
-Assuming $\rightarrow_\beta$ is the usual call-by-name reduction, the
-following theorem models the evaluation of coeffect calculi with
-coeffect algebra that satisfies the above requirements. We do not
-consider \emph{call-by-value}, because our calculus does not have a
-notion of \emph{value}, unless explicitly provided by
-\emph{let}-binding (even a function ``value'' $\lambda x.e$ may have
-immediate contextual requirements).
-
-\begin{theorem}[Subject reduction]
-\label{thm:reduction}
-For a coeffect calculus, satisfying the conditions of Lemma~\ref{thm:subst}, if
-$\ctyp{r}{\Gamma} \vdash e : \tau$ and $e \rightarrow_\beta e'$ then 
-$\ctyp{r}{\Gamma} \vdash e' : \tau$.
-\end{theorem}
-\begin{proof}
-A direct consequence of Lemma~\ref{thm:subst}. 
-\end{proof}
-
-The above theorem holds for both the liveness and resources examples,
-but not for dataflow.  In the case of liveness, $\iunit$ is the
-greatest element ($r \vee \iunit = \iunit$); in the case of
-resources, $\iunit$ is the \emph{least} element ($r \vee \iunit =
-r$) and the proof relies on the fact that additional
-context-requirements can be placed at the context $\ctyp{r}{\Gamma}$
-(without affecting the type of function when substituted under
-$\lambda$ abstraction).
-
-However, the coeffect calculus also captures context-dependence in
-languages with more complex evaluation strategies than
-\emph{call-by-name} reduction based on syntactic substitution.  In
-particular, syntactic substitution does not provide a suitable evaluation
-for dataflow (because a substituted expression needs to capture the
-context of the original scope).
-
-Nevertheless, the above results show that -- unlike effects --
-context-dependent properties can be integrated with
-\emph{call-by-name} languages. Our work also provides a model of
-existing work, namely Haskell implicit parameters
-\cite{app-implicit-parameters}.
-
-% ==================================================================================================
-
-\section{Related and further work}
-\label{sec:related}
-
-This paper follows the approaches of effect systems \cite{effects-gifford,effects-talpin-et-al,monads-effects-marriage}
-and categorical semantics based on monads and comonads \cite{monad-notions,comonads-notions}. Syntactically,
-\emph{coeffects} differ from \emph{effects} in that they model systems where $\lambda$-abstraction 
-may split contextual requirements between the declaration-site and call-site.
-
-Our \emph{indexed (monoidal) comonads} (\S\ref{sec:comonads}) fill the gap between (non-indexed)
-\emph{(monoidal) comonads} of Uustalu and Vene \cite{comonads-notions}
-and indexed monads of Atkey~\cite{monads-parameterised-notions}, Wadler and Thiemann
-\cite{monads-effects-marriage}. Interestingly, \emph{indexed} comonads are \emph{more
-general} than comonads, capturing more notions of context-dependence (\S\ref{sec:motivation}).
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\paragraph{Comonads and modal logics.}
-
-Bierman and de Paiva \cite{logic-intuitionistic-modal} model the
-$\square$ modality of an intuitionistic S4 modal logic using monoidal
-comonads, which links our calculus to modal logics.  This link can be
-materialized in two ways.
-
-Pfenning et al. and Nanevski et al.  derive term languages using the Curry-Howard
-correspondence~\cite{logic-modal-reconstruction,logic-intuitionistic-modal,logic-cmtt},
-building a \emph{metalanguage} (akin to Moggi's monadic metalanguage
-\cite{monad-notions}) that includes $\square$ as a type
-constructor. For example, in \cite{logic-modal-reconstruction}, the
-modal type $\Box \tau$ represents closed terms.
-In contrast, the \emph{semantic} approach uses monads or comonads
-\emph{only} as a semantics.  This has been employed by Uustalu and
-Vene and (again) Moggi \cite{monad-notions,comonads-notions}.  We
-follow the semantic approach.
-
-Nanevski et al. extend an S4 term language to a \emph{contextual}
-modal type theory (CMTT)~\cite{logic-cmtt}.
-The \emph{context} is a set of variables required by a computation, which
-makes CMTT useful for meta-programming and staged computations. Our contextual types are
-indexed by a coeffect algebra, which is more general and can capture
-variable contexts, but also integers, two-point lattices, \emph{etc.}.
-
-The work on CMTT suggests two extensions to coeffects. The first is
-developing the logical foundations. We briefly considered special cases
-of our system that permits local soundness in \S\ref{sec:syntactic} and
-local completeness can be treated similarly. The second problem is 
-developing the coeffects \emph{metalanguage}. The use of coeffect algebras
-would provide an additional flexibility over CMTT, allowing a wider range 
-of applications.
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\paragraph{Relating effects and coeffects.} 
-The difference between effects and coeffects is mainly in the (\emph{abs}) rule. While the 
-semantic model (monads vs. comonads) is very different, we can consider extending the two to 
-obtain equivalent syntactic rules. To allow splitting of implicit parameters in lambda abstraction, 
-the reader monad needs an operation that eagerly performs some effects of a function: 
-$(\tau_1 \rightarrow \mtyp{r \oplus s}{\tau_2}) \rightarrow \mtyp{r}{(\tau_1 \rightarrow \mtyp{s}{\tau_2})}$.
-To obtain a pure lambda abstraction
-for coeffects, we need to restrict the $\cmerge_{r, s}$ 
-operation of indexed comonads, so that the first parameter is annotated with $\iunit$ (meaning
-no effects): $\iftor \iunit A \times \iftor r B \rightarrow \iftor{r}(A \times B)$.
-
-\newcommand{\cprd}{\times}
-\newcommand{\cvop}{\oplus}
-
-\vspace{-1em}
-\paragraph{Structural coeffects.} To make the liveness analysis practical, we need to associate
-information with individual variables (rather than the entire context). We can generalize the 
-calculus from this paper by adding a product operation $\times$ to the coeffect algebra.
-A variable context $x:\tau_1, y:\tau_2, z:\tau_3$ is then annotated with
-$r\times s \times t$ where each component of the tag corresponds to a single variable. The system
-then needs to be extended with structural rules such as:
-%
-\begin{equation*}
-\inference[(\emph{abs})]
-  {\ctyp{r \cprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
-\quad
-\inference[(\emph{contr})]
-  {\ctyp{r \cprd s}{(x:\tau_1, y:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r \cvop s }{(z:\tau_1)} \vdash \subst{\subst{e}{x}{z}}{y}{z} : \tau_2 }
-\end{equation*}
-%
-The context-requirements associated with function are exactly those linked to the specific
-variable of the lambda abstraction. Rules such as contraction manipulate variables and perform
-a corresponding operation on the indices.
-
-The structural coeffect system is related to bunched typing \cite{types-bunched} (but generalizes
-it by adding indices). We are currently investigating how to use structural coeffects to capture 
-fine-grained context-dependence properties such as secure information flow \cite{app-secure-flow}
-or, more generally, those captured by dependency core calculus \cite{types-dcc}.
-
-% ==================================================================================================
-
-\section{Conclusions}
-
-We examined three simple calculi with associated
-static analyses (liveness analysis, implicit parameters, and dataflow
-analysis). These were unified in the \emph{coeffect calculus},
-providing a general coeffect system parameterised by an
-algebraic structure describing the propagation of context
-requirements throughout a program.
-
-We model the semantics of coeffect calculus using \emph{indexed comonad} -- a novel structure, which
-is more powerful than (monoidal) comonads. Indices of the indexed comonad operations manifest the 
-semantic propagation of context such that the propagation of information in the general coeffect
-type system corresponds exactly to the semantic propagation of context in our categorical model.
-
-We consider the analysis of context to be essential, not least for the examples here but 
-also given increasingly rich and diverse distributed systems.
+% indexed/layered/etc. monads, productors or whatever
