@@ -1,32 +1,174 @@
+% ==================================================================================================
+
 \chapter{Context-aware applications} 
 \label{ch:applications} 
 
-%---------------------------------------------------------------------------------------------------
+Software developers as well as programming language researchers choose abstractions based not 
+just on how appropriate they are. Other factors may include social aspects -- how well is the 
+abstraction known, how well is it documented and whether it is a standard tool of the 
+\emph{research programme}\footnote{ Research programme, as introduced by Lakatos \cite{philosophy-lakatos},
+is a network of scientists sharing the same basic assumptions and techniques.}. 
 
-TODO
+In Chapter~\ref{ch:intro}, we argued that context-awareness had, so far, only limited influence 
+on the design of programming languages, possibly because it is a challenge that is not easy to
+see. However, many of the properties that we treat uniformly as \emph{coeffects} have been
+previously tracked by other means. This includes special-purpose type systems, systematic 
+approaches arising from modal logic S4, as well as techniques based on abstractions designed 
+for other purpose, most frequently monads.
+
+In this chapter, we describe a number of simple calculi for tracking a wide range of contextual
+properties. The systems are adapted from existing work, but the uniform presentation in this 
+chapter is a novel contribution. The fact that we find a common structure in all systems presented 
+here lets us develop unified coeffect calculi in the upcoming three chapters.
 
 %===================================================================================================
 
-\section{Through applications}
-\label{sec:path-apps}
+\section{Structure of coeffect systems}
 
-The general theme of this thesis is improving programming languages to better support writing
-\emph{context-dependent} (or \emph{context-aware}) computations. With current trends in the 
-computing industry such as mobile and ubiquitous computing, this is becoming an important topic.
-In software engineering and programming community, a number of authors have addressed this problem
-from different perspectives. Hirschfeld et al. propose \emph{Context-Oriented Programming} (COP)
-as a methodology \cite{app-cop-method}, and the subject has also been addressed in mobile
-computations \cite{app-cop-mobile,app-cop-mobile2}. In programming languages, Costanza 
-\cite{app-cop-contextl} develops a domain-specific LISP-like language ContextL and Bardram 
-\cite{app-cop-javafwk} proposes a Java framework for COP.
+When introducing coeffect systems in Section~\ref{sec:intro-theory}, we related coeffect systems
+with effect systems. Effect systems track how program affects the environment, or, in other words 
+capture some \emph{output impurity}. In contrast, coeffect systems track what program requires from the 
+environment, or \emph{input impurity}.
 
-We approach the problem from a different perspective, building on the tradition of 
-statically-typed functional programming languages and their theories. However, even in this field,
-there is a number of calculi or language features that can be viewed as context-dependent.
+Effect systems generally use judgements of the form $\Gamma \vdash e : \tau \;\&\; \aclrd{\sigma}$, 
+associating effects $\sigma$ with the output type. In contrast, we choose to write coeffect 
+systems using judgements of the form $\coctx{\Gamma}{\aclrd{\sigma}} \vdash e : \tau$, associating
+the context requirements with $\Gamma$. Thus, we extend the traditional notion of free-variable
+context $\Gamma$ with richer notions of context. Besides the notation, there are more important 
+differences between effects and coeffects.
 
-%---------------------------------------------------------------------------------------------------
+% --------------------------------------------------------------------------------------------------
 
-\subsection{Motivation for flat coeffects}
+\subsection{Lambda abstraction}
+
+The difference between effects and coeffects becomes apparent when we consider lambda abstraction.
+The typical lambda abstraction rule for effect systems looks as (\emph{abs-eff}) in 
+Figure~\ref{fig:applications-abs}. Wadler and Thiemann~\cite{monads-effects-marriage} explain how 
+the effect analysis works `as follows:
+%
+\begin{quote}
+\emph{In the rule for abstraction, the effect is empty because evaluation immediately
+returns the function, with no side effects. The effect on the function arrow
+is the same as the effect for the function body, because applying the function will
+have the same side effects as evaluating the body.}
+\end{quote}
+%
+This is the key property of \emph{output impurity}. The effects are only produced when the
+function is evaluated and so the effects of the body are attached to the function. A recent
+work by Tate~\cite{effects-producer-semantics} uses the term \emph{producer} effect systems
+for such standard systems and characterises them as follows:
+%
+\begin{quote}
+\emph{Indeed, we will define an effect as a producer effect if all computations with that 
+effect can be thunked as ``pure'' computations for a domain-specific notion of purity.}
+\end{quote} 
+%
+The thunking is typically a lambda abstraction -- given an effectful expression $e$, the
+function $\lambda x.e$ is effect free value (thunk) that delays all effects.
+
+Coeffects do not follow this pattern. Indeed, we can see this even when we consider the classical
+notion of context. Standard lambda abstraction (\emph{app-pure}) in Figure~\ref{fig:applications-abs}
+splits the free-variable context of an expression between variables defined at the \emph{declaration 
+site} (the lexical scope) and those provided by the \emph{call site} (bound variable, or the 
+parameter). This is also the case for other notions of context that we consider in this thesis.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}
+\[
+\tyrule{abs-pure}
+  { \Gamma, x\-:\-\tau_1 \vdash e : \tau_2}
+  { \Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 1}
+\;\;
+\tyrule{abs-eff}
+  { \Gamma, x\-:\-\tau_1 \vdash e : \tau_2 \,\&\, \aclrd{\sigma} }
+  { \Gamma \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{\sigma}} \tau_2 \,\&\, \aclrd{\emptyset} }
+\]
+\caption{Lambda abstraction for pure and effectful computations}
+\label{fig:applications-abs}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Notions of context}
+
+Aside from the standard free-variable context, we consider two notions of context -- 
+\emph{flat} refers to overall properties of the environment and \emph{structural} refer to 
+properties attached to individual variables. Similarly to free-variable context, both of these
+notions split the context between declaration-site (lexical scope) and call-site (dynamic scope).
+
+\paragraph{Flat coeffects.}
+
+In distributed 
+systems, additional resources available at certain nodes (\eg~a database or GPS sensor) can be 
+also viewed as a part of typing assumptions. 
+
+Similarly, resources in a distributed system can be satisfied by both the declaration site (by 
+capturing a remote reference) and the call site (by resource rebinding)~\cite{app-distributed-acute}. 
+In this case, the resource requirements are split freely. 
+
+\paragraph{Structural coeffects.}
+
+The previously described notion of a \emph{coeffect system} \cite{petricek2013coeffects} tracks
+contextual properties of entire programs, which is practically useful for implicit parameters 
+or resources. However, for per-variable coeffects, the previous work provides only an approximation 
+with limited practical usefulness (\eg~marking the whole context as live when just one 
+variable in the context is live).
+
+Furthermore, contextual requirements may relate to 
+specific variables. For example, liveness or access patterns, such as the number of accesses in 
+bounded linear logic or past values in causal dataflow.
+
+For contextual properties associated with 
+variables (\eg~liveness or dataflow), the splitting tracks free variables -- requirements associated 
+with a \emph{bound} variable should be satisfied by the call site, while those associated with 
+\emph{free} variables should be provided by the declaration site.
+
+lambda abstraction places 
+requirements on both the \emph{call-site} (latent requirements) and the \emph{declaration-site} 
+(immediate requirements), 
+
+ We start with some background and finish with a brief overview of the literature leading to coeffects.
+
+In the rest of the chapter, we look at instances of both. But before, we need to look at vectors.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Scalars and vectors}
+
+The $\lambda$-calculus is asymmetric-- it maps a context with \emph{multiple} variables to a 
+\emph{single} result. An expression with $n$ free variables of types $\sigma_i$ can be modelled
+by a function
+$\sigma_1 \times \ldots \times \sigma_n \rightarrow \tau$ with a product on the left, but a single value
+on the right. Effect systems attach effect annotations to the result $\tau$. In coeffect systems,
+we attach coeffects to the context $\sigma_1 \times \ldots \times \sigma_n$ and we often (but not always)
+have one coeffect per each variable. We call the overall coeffect a \emph{vector} consisting of
+\emph{scalar} coeffects. This asymmetry explains why coeffect systems are not trivially dual to 
+effect systems.
+
+It is useful to clarify how vectors are used in this paper. Suppose we have a set $\C$ of
+\emph{scalars} such as $\cclrd{r_1},\ldots,\cclrd{r_n} \in \C$. A vector $\aclrd{R}$ over $\C$
+is a tuple $\langle \cclrd{r_1}, \ldots, \cclrd{r_n}\rangle$ of scalars. 
+We use letters like $\aclrd{R}, \aclrd{S}, \aclrd{T}$ for 
+vectors and $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars.\footnote{For better readability, the paper 
+distinguishes different structures using colours. However ignoring the colour does not introduce 
+any ambiguity.} We also say that a \emph{shape} of a vector $\slift{\aclrd{R}}$ (or more generally any container) 
+is the set of \emph{positions} in a vector. So, a vector of length
+$n$ has shape $\{ 1, 2, \ldots, n \}$. 
+
+Just as in scalar-vector multiplication, we lift any binary operation on scalars into a scalar-vector one:
+$\cclrd{s} \bullet \aclrd{R} = \langle \cclrd{s}\bullet\cclrd{r_1}, \ldots, \cclrd{s}\bullet\cclrd{r_n}\rangle$.
+Given two vectors $\aclrd{R},\aclrd{S}$ of the same shape, containing partially ordered scalars, we 
+write $\aclrd{R} \leq \aclrd{S}$ for the pointwise extension of $\leq$ on scalars. Finally,
+the associative operation $\times$ concatenates vectors.
+
+We note that an environment $\Gamma$ containing $n$ uniquely named, typed variables is also a vector, 
+but we continue to write `$,$' for the product, so $\Gamma_1, x\!:\!\tau, \Gamma_2$ should 
+be seen as $\Gamma_1 \times \langle x\!:\!\tau\rangle \times \Gamma_2$.
+
+%===================================================================================================
+
+\section{Flat coeffects (1.)}
 
 In a number of systems, the execution environment provides some additional data, resources or 
 information about the execution context, but are independent of the variables used by the 
@@ -303,9 +445,225 @@ To understand the nature of the context, we later look at the semantics of Lucid
 captured using a number of mathematical structures. Wadge \cite{app-lucid-monads} originally 
 proposed to use monads, while Uustalu and Vene later used comonads \cite{app-dataflow-essence}.
 
-%---------------------------------------------------------------------------------------------------
+% ==================================================================================================
 
-\subsection{Motivation for structural coeffects}
+\section{Flat coeffects (2.)}
+
+% --------------------------------------------------------------------------------------------------
+\subsection{Implicit parameters and resources.}
+\label{sec:coeffects-res}
+
+Implicit parameters~\cite{app-implicit-parameters} are \emph{dynamically-scoped} variables.
+They can be used to parameterize a computation without propagating arguments explicitly through a 
+chain of calls and are part of the context in which expressions evaluate. As correctly expected
+\cite{app-implicit-parameters}, they can be modelled by comonads. Rebindable resources in distributed
+computations follow a similar pattern, but we discuss implicit parameters for simplicity.
+
+The following function prints a number using implicit parameters
+\ident{?culture} (determining the decimal mark) and \ident{?format}
+(the number of decimal places):
+%
+\begin{equation*}
+\lambda n . \ident{printNumber}~n~\ident{?culture}~\ident{?format}
+\end{equation*}
+%
+Figure~\ref{fig:example-resources} shows a type-and-coeffect system
+tracking the set of an expression's implicit parameters. 
+For simplicity here, all implicit parameters have type $\rho$.
+
+Context requirements are created in (\emph{access}), while (\emph{var}) requires no
+implicit parameters; (\emph{app}) combines requirements of
+both sub-expressions as well as the latent requirements of the
+function. The (\emph{abs}) rule is where the example differs from
+effect systems.  Function bodies can access the union of the
+parameters (or resources) available at the declaration-site ($\ctyp{r}{\Gamma}$) and
+at the call-site ($\ctyp{s}{\tau_1}$). Two of the nine permissible
+judgements for the above example are:
+%
+\newcommand{\cfebody}{(\ldots)} % \ident{countFutureEvents}
+\begin{equation*}
+\begin{array}{rcl}
+\ctyp{\emptyset}{\Gamma} &\vdash& \cfebody : \ctyp{\{\ident{?culture}, \ident{?format} \}}{\ident{int}} \rightarrow \ident{string}\\
+\ctyp{\{\ident{?culture}, \ident{?format}\}}{\Gamma} &\vdash& \cfebody : \ctyp{\{\ident{?format}\}}{\ident{int}} \rightarrow \ident{string}
+\end{array}
+\end{equation*}
+%
+The coeffect system infers multiple, \ie{} non-principal, coeffects for functions.
+Different judgments are desirable depending on how a function is used. 
+In the first case, both parameters have to be provided by the caller.
+In the second, both are available at declaration-site, but \ident{?format} may be
+rebound (precise meaning is provided by the monoidal structure on the product comonad in \S\ref{sec:comonads}).
+
+Implicit parameters can be captured by the
+\emph{reader} monad, where parameters are associated with the function codomain $\mtyp{\emptyset}{(\ident{int} \rightarrow
+  \mtyp{\{\ident{?culture}, \ident{?format} \}}{\ident{string}})}$,
+modelling only the first case. Whilst the reader monad can be extended to model rebinding, 
+the next example cannot be structured by \emph{any} monad.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\vspace{-1.4em}
+\begin{equation*}
+\inference[(\emph{var})\;]
+  {x : \tau \in \Gamma}
+  {\ctyp{\emptyset}{\Gamma} \vdash x : \tau }
+%
+\quad\quad
+%
+\inference[(\emph{app})\;]
+  {\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{t}{\tau_1} \rightarrow \tau_2 &
+   \ctyp{s}{\Gamma} \vdash e_2 : \tau_1 }
+  {\ctyp{r \cup s \cup t}{\Gamma} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\vspace{-0.7em}
+\begin{equation*}
+\inference[(\emph{access})\;]
+  {}
+  {\ctyp{ \{\ident{?a} \} }{\Gamma} \vdash \ident{?a} : \rho }
+%
+\quad\quad\quad
+%
+\inference[(\emph{abs})\;]
+  {\ctyp{r \cup s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
+  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
+\end{equation*}
+\vspace{-0.9em}
+\caption{Selected coeffect rules for implicit parameters}
+\label{fig:example-resources}
+\vspace{-1em}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[!b]
+\vspace{-2em}
+\begin{equation*}
+\inference[(\emph{var})\;]
+  {x : \tau \in \Gamma}
+  {\ctyp{\ident L}{\Gamma} \vdash x : \tau }
+\quad
+\inference[(\emph{app})\;]
+  { \ctyp{s}{\Gamma} \vdash e_2 : \tau_1 &
+    \ctyp{r}{\Gamma} \vdash e_1 : \ctyp{t}{\tau_1} \rightarrow \tau_2 }
+  {\ctyp{r \sqcup (s \sqcap t)}{\Gamma} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\vspace{-1.5em}
+\caption{Selected coeffect rules for liveness analysis}
+\label{fig:example-need}
+\vspace{-1.2em}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\vspace{-1em}
+\subsection{Liveness analysis.}
+
+Liveness analysis detects whether a free variable of an expression may be used (\emph{live}) or 
+whether it is definitely not needed (\emph{dead}). A compiler can remove
+bindings to dead variables as the result is never used. 
+
+We start with a restricted analysis and briefly mention how to make it practical
+later (\S\ref{sec:related}). The restricted form is interesting theoretically as it gives rise
+to the indexed Maybe comonad (\S\ref{sec:comonads}), which is a basic but instructive example.
+
+A coeffect system in Fig.~\ref{fig:example-need} detects whether all variables are dead 
+($\ctyp{\ident D}{\Gamma}$) or whether at least one variable is live ($\ctyp{\ident L}{\Gamma}$). 
+Variable access (\emph{var}) is annotated with \ident L and constant access with \ident D. That is,
+if $c\in\mathbb{N}$ then $\ctyp{\ident D}{\Gamma} \vdash c : \ident{int}$.
+A dead context may be marked as live by
+letting $\ident D \sqsubseteq \ident L$ and adding sub-coeffecting (\S\ref{sec:calculus}).
+
+The (\emph{app}) rule is best understood by discussing its semantics. Consider first 
+\emph{sequential composition} of (semantic) functions $g, f$ annotated with $r, s$. 
+The argument of $g \circ f$ is live only when arguments of both $f$ and $g$ are live. 
+The coeffect semantics captures the additional behaviour that $f$ is not evaluated when
+$g$ ignores its input (regardless of the evaluation order of the underlying language).
+We write $r \sqcap s$ for a conjunction (returning \ident L iff $r = s = \ident{L}$). 
+Secondly, a \emph{pointwise composition} passes the same
+argument to $g$ and $h$. The parameter is live if either the parameter
+of $g$ or $h$ is live ($r \sqcup s$). Application combines the
+two operations, so the context $\Gamma$ is live if it is needed by
+$e_1$ \emph{or} by the function value \emph{and} by $e_2$.
+
+An (\emph{abs}) rule (not shown) compatible with the structure in Fig.~\ref{fig:example-resources}
+combines the context annotations using $\sqcap$. Thus, if the body uses some 
+variables, both the function argument and the context of the declaration-site are marked as live.
+
+Liveness cannot be modelled using monads as $\tau_1 \rightarrow \mtyp{r}{\tau_2}$.
+In call-by-value languages, the argument $\tau_1$ is always evaluated. Using 
+indexed comonads (\S\ref{sec:comonads}), we
+model liveness as $\ctyp{r}{\tau_1} \rightarrow \tau_2$ where
+$\ctyp{r}$ is the parametric type $\mathsf{Maybe}~\tau = \tau + 1$
+(which contains a value $\tau$ when $r=\ident{L}$ and does not contain
+value when $r=\ident{D}$).
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\vspace{-1em}
+\begin{equation*}
+\inference[(\emph{var})\;]
+  {x : \tau \in \Gamma}
+  {\ctyp{0}{\Gamma} \vdash x : \tau }
+%
+\quad\quad
+% 
+\inference[(\emph{app})\;]
+  {\ctyp{m}{\Gamma} \vdash e_1 : \ctyp{p}{\tau_1} \rightarrow \tau_2 &
+   \ctyp{n}{\Gamma} \vdash e_2 : \tau_1 }
+  {\ctyp{\textit{max}(m, n + p)}{\Gamma} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\inference[(\emph{prev})\;]
+  {\ctyp{n}{\Gamma} \vdash e : \tau}
+  {\ctyp{n+1}{\Gamma} \vdash \kvd{prev}~e : \tau}
+%
+\quad\quad
+%
+\inference[(\emph{abs})\;]
+  {\ctyp{\textit{min}(m, n)}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
+  {\ctyp{m}{\Gamma} \vdash \lambda x.e : \ctyp{n}{\tau_1} \rightarrow \tau_2 }
+\end{equation*}
+\vspace{-1em}
+\caption{Selected coeffect rules for causal data flow}
+\label{fig:example-dataflow}
+\vspace{-1em}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\vspace{-1em}
+\subsection{Efficient dataflow.}
+Dataflow languages (\eg~\cite{app-lucid}) declaratively describe
+computations over streams. In \emph{causal} data flow, program may
+access past values -- in this setting, a function $\tau_1 \rightarrow
+\tau_2$ becomes a function from a list of historical values $[\tau_1]
+\rightarrow \tau_2$. A coeffect system here tracks how many past values
+to cache.
+
+Figure~\ref{fig:example-dataflow} annotates contexts with an integer specifying the maximum
+number of required past values. The current value is always present, so (\emph{var}) is annotated with $0$.
+The expression $\kvd{prev}~e$ gets the previous value of stream $e$ and requires one
+additional past value (\emph{prev}); \eg~$\kvd{prev}~(\kvd{prev}~e)$ requires 2 past values.
+
+The (\emph{app}) rule follows the same intuition as for liveness. Sequential composition
+adds the tags (the first function needs $n + p$ past values to produce $p$ past inputs
+for the second function); passing the context to two subcomputations requires the maximum
+number of the elements required by the two subcomputations. The (\emph{abs}) rule for data-flow 
+needs a distinct operator -- \emph{min} -- therefore, the declaration-site and 
+call-site must each provide at least the number of past values required by the function body
+(the body may use variables coming from the declaration-site as well as the argument).
+
+The soundness follows from our categorical model (\S\ref{sec:comonads}). Uustalu and Vene
+\cite{comonads-notions} model causal dataflow computations using a non-empty list comonad 
+$\ident{NeList}~\tau = \tau \times (\ident{NeList}~\tau + 1)$. However, such model leads to
+(inefficient) unbounded lists of past elements. The above static analysis provides an
+approximation of the number of required past elements and so we use just fixed-length lists.
+
+% ==================================================================================================
+
+\section{Structural coeffects (1.)}
 
 We now turn our attention to system where additional contextual information are associated not
 with the context as a whole (or program scope), but with individual variables. We start by looking
@@ -458,9 +816,371 @@ in the context where it executes.  The DCC captures, for example, \emph{binding 
 (do not depend on user input) and \emph{program slicing} \cite{app-slicing-survey} that identifies
 parts of programs that contribute to the output of an expression.
 	
+%===================================================================================================
+
+\section{Structural coeffects}
+\label{sec:intro-coeffects}
+
+Coeffects are way to describe notions of context in programming that keep turning up. 
+To illustrate this, we overview three systems tracking contextual properties that 
+ motivate our general coeffect system. Two systems track per-variable properties (bounded 
+linear logic and dataflow) and one tracks whole-context properties (implicit parameters).
+
+\subsection{Bounded reuse}
+\label{sec:intro-coeffects-bll}
+
+Bounded linear logic \cite{girard1992bounded} restricts well-typed terms to polynomial-time algorithms.  
+This is done by limiting the number of times a value (proposition) can be used. An assumption
+$!_k A$ means that a variable can be used at most $k$ times. 
+We attach annotations to the whole context rather than individual assumptions and so a context
+$!_{k_1} A_1, ..., !_{k_n} A_n$ is written as $\coctx{\tau_1, ..., \tau_n}{\langle \cclrd{k_1}, ..., \cclrd{k_n}\rangle}$. 
+This difference is further explained in Section~\ref{sec:related-work}. %For uniformity
+%with later systems, we also write assumptions $A$ as $\tau$ and annotations $K$ as $\cclrd{r}$.
+
+Bounded linear logic includes explicit weakening and contraction rules
+that affect the multiplicity. Following the original logical style (but with our notation), these are written as:
+\[
+\inference
+  {\coctx{\Gamma}{\aclrd{R}} \vdash \tau}
+  {\coctx{\Gamma,\sigma}{\aclrd{R} \cons \alift{0}} \vdash \tau} 
+\quad
+\inference
+  {\coctx{\Gamma_1,\sigma,\sigma,\Gamma_2}{\aclrd{R}\cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash \tau}
+  {\coctx{\Gamma_1,\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{Q}} \vdash \tau}
+\]
+The context $\coctx{\Gamma}{\aclrd{R}}$ includes a \emph{coeffect annotation} $\aclrd{R}$ which is a vector
+$\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$ of the same length as $\Gamma$ (a side-condition omitted for brevity).
+In weakening (left), unused propositions are annotated with $0$ (no uses), while in contraction (right), multiple 
+occurrences of a proposition are joined by adding the number of uses.
+
+
+\begin{figure}[t]
+\vspace{-0.5em}
+\begin{align*}
+\begin{array}{c}
+%
+\hspace{-0.6em}
+\begin{array}{c}
+\tyrule{var}{}
+  {\coctx{x \!:\! \tau}{\alift{1}} \vdash x : \tau} 
+\quad 
+\tyruleCompact{weak}
+  {\coctx{\Gamma}{R} \vdash e : \tau}
+  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{R} \cons \alift{0}} \vdash e : \tau} 
+\\[1.8em]
+\tyruleCompact{sub}
+  {\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{R'}} \vdash e : \tau}~(\text{\scriptsize $\aclrd{R} \leq \aclrd{R'}$})
+\quad 
+\tyrule{abs}
+  {\coctx{\Gamma, x \!:\! \sigma}{\aclrd{R} \cons \alift{s}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{R}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau} 
+\\[1.2em]
+\end{array} \\
+%
+% ------------------------ 
+%
+\begin{array}{c}
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{R}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau \quad 
+    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{R} \cons (\cclrd{t} \ast \aclrd{S})} \vdash e_1 \, e_2 : \tau} 
+\\[1.3em]
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
+  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{Q}} \vdash \subst{e}{z,y}{x} : \tau}
+\\[1.3em]
+\tyrule{exch}
+  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
+  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{Q}} \vdash e : \tau}
+\end{array} 
+% ------------------------ 
+%
+% \hspace{-1em}
+%\begin{array}{c}
+%
+% TP: I removed the 'let' rule again because we do not need it to explain the storage axiom here.
+% Also, I think the BLL sample is already used to explain quite a lot of things, so I'd be happier
+% to keep it simple.
+%
+% BTW: The \tyruleCompact macro creates a rule that *looks* differently..
+% (I do not understand why but it makes the line somehow thicker...)
+%
+% \tyruleCompact{let}
+%   {\coctxs{\Gamma_1, v : \sigma}{R \times \langle{t}\rangle} \vdash e_1 : \tau \quad 
+%    \coctxs{\Gamma_2}{S} \vdash e_2 : \sigma}
+%   {\coctxs{\Gamma_1, \Gamma_2}{R \times (t \ast S)} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau} \\[1.8em]
+\end{array}
+\end{align*}
+\vspace{-0.5em}
+\caption{type and coeffect system for bounded reuse}
+\label{fig:bounded-coeff}
+\end{figure}
+
+
+\paragraph{Bounded linear coeffects.}
+The system in Figure~\ref{fig:bounded-coeff} extends the outlined idea into a simple calculus.
+Variable access (\emph{var}) has a singleton context with a singleton coeffect vector
+$\alift{1}$. Weakening (\emph{weak}) extends the free-variable context with an unused variable and 
+the coeffect with an associated scalar $0$. Explicit contraction (\emph{contr}) and
+exchange (\emph{exch}) rules manipulate variables in the context and
+modify the annotations accordingly -- adding the number of uses in
+contraction and switching vector elements in exchange.
+
+For abstraction (\emph{abs}), we know the number of uses of the parameter variable $x$ 
+and attach it to the function type $\sigma \xrightarrow{\cclrd{s}}
+\tau$ as a \emph{latent} coeffect. The remaining variables in $\Gamma$ are 
+annotated with the remaining coeffect vector $\aclrd{R}$, specifying \emph{immediate} coeffects.
+
+Application (\emph{app}) describes call-by-name evaluation.  Applying
+a function that uses its parameter $\cclrd{t}$-times to an argument
+that uses variables in $\Gamma_2$ $\aclrd{S}$-times means that, in
+total, the variables in $\Gamma_2$ will be used $(\cclrd{t} \ast \aclrd{S})$-times. 
+Recall that $\cclrd{t} \ast \aclrd{S}$ is a scalar multiplication of a
+vector. Meanwhile, the variables in $\Gamma_1$ are used just
+$\aclrd{R}$-times when reducing the expression $e_1$ to a function
+value. 
+
+Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates
+the number of uses using the pointwise
+$\leq$ relation. We can view any variable as being used a greater
+number of times than it actually is.
+
+\paragraph{Example.} To demonstrate, consider a term
+$(\lambda v.x+v+v)~(x+y)$. According to the call-by-name intuition, the variable $x$ is used three 
+times -- once directly inside the function and twice via the variable $v$ after 
+substitution. Similarly, $y$ is used 
+twice. Assuming a judgment for the function body, abstraction yields:
+%
+\begin{equation*}
+\tyrule{abs}
+ { \coctx{x\!:\!\mathbb{Z},v:\mathbb{Z}}{\alift{\cclrd{1},\cclrd{2}}} \vdash x+v+v : \mathbb{Z} }
+ { \coctx{x\!:\!\mathbb{Z}}{\alift{\cclrd{1}}} \vdash (\lambda v.x+v+v) : \mathbb{Z} \xrightarrow{\cclrd{2}} \mathbb{Z} }
+\end{equation*}
+%
+To avoid name clashes, we $\alpha$-rename $x$ to $x'$ and later join $x$ and $x'$ using contraction.
+Assuming $(x'+y)$ is checked in a context that marks $x'$ and $y$ as used once, the application rule yields
+a judgment that is simplified as follows:
+\[
+\hspace{-0.7em}\inference
+  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}
+          {\alift{\cclrd{1}} \cons (\cclrd{2} \ast \alift{\cclrd{1},\cclrd{1}}) } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
+{\inference
+  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{1}, \cclrd{2}, \cclrd{2}} } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
+  { \coctx{x\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{3}, \cclrd{2}}} \vdash (\lambda v.x+v+v)~(x+y)  : \mathbb{Z}} }
+\]
+%
+The first step performs scalar multiplication, producing the vector
+$\alift{\cclrd{1},\cclrd{2},\cclrd{2}}$. In the second step, we use contraction to join variables 
+$x$ and $x'$ from the function and argument terms respectively.
+
+It is worth pointing out that reduction by substitution yields $x+(x+y)+(x+y)$ which has the same coeffect as
+the original. We return to evaluation strategies in Section~\ref{sec:syntax}, and 
+show that structural coeffect systems preserve types and coeffects under $\beta$-reduction. 
+
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Beyond passive contexts}
+\subsection{Dataflow and data access}
+
+Dataflow languages such as Lucid \cite{wadge1985lucid} describe computations over \emph{streams}.
+An expression is re-evaluated when new inputs are available (push) or when more output
+is demanded (pull).  In causal dataflow, programs can access past
+values of a stream. We consider a language where $\kvd{prev}~e$
+returns the previous value of $e$, where 
+$\kvd{prev}~(\kvd{prev}~e)$ therefore returns the second past value.
+
+An implementation of causal dataflow may cache past values of
+variables as an optimisation. The question is, how many past values
+should be cached?  This can be approximated by a coeffect system.
+
+\paragraph{Dataflow coeffects.} The coeffect system for dataflow is
+similar to the one for bounded reuse in that it tracks a vector
+of numbers $\aclrd{R}$ as part of the context
+$\coctx{\Gamma}{\aclrd{R}}$. Here, coeffects represent the maximal number of
+past values (\emph{causality depth}) required for a variable. 
+
+Weakening, exchange, abstraction and sub-coeffecting are the same as in bounded linear
+coeffects, but the remaining rules differ. In Figure~\ref{fig:dataflow-coeff},
+accessed variables (\emph{var}) are annotated with
+$0$ meaning that no past value is required (only the
+current one). The (\emph{prev}) rule crates caching requirements --
+it increments the number of required values for all variables
+used in $e$ using scalar-vector addition.
+
+Application and contraction have the same structure as before, 
+but use different operators. If two variables 
+are contracting, requiring $\cclrd{s}$ and $\cclrd{t}$ past
+values, then overall we need at most
+$\ident{max}(\cclrd{s}, \cclrd{t})$ past values (\emph{contr}). That is, 
+two caches are combined with the maximum of the two requirements, 
+which satisfy the smaller requirements. 
+
+In (\emph{app}), the function requires $\cclrd{t}$ past values of
+its parameter.  This means $\cclrd{t}$ past values of
+$e_2$ are needed which in turn requires $\aclrd{S}$ past values of its free
+variables $\Gamma_2$. Thus, we need $\cclrd{t}+\aclrd{S}$ past values of $\Gamma_2$ to perform the
+call (\eg{}, we need $1+\aclrd{S}$ values to
+get $1$ past value of the input $\sigma$, $2+\aclrd{S}$
+values to get $2$ past values of $\sigma$, \emph{etc.}).
+
+
+\paragraph{Example.} As an example, consider a function $\lambda x.\kvd{prev}~(y+x)$ applied to an argument
+$\kvd{prev}~(\kvd{prev}~y)$. The body of the function accesses the past value of two variables, one free
+and one bound:
+\[
+\dfrac
+  {\coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1, 1}} \vdash \kvd{prev}~(y+x) : \mathbb{Z} }
+  {\coctx{y\!:\!\mathbb{Z}}{\alift{1}} \vdash \lambda x . \kvd{prev}~(y+x) : \mathbb{Z} \xrightarrow{\cclrd{1}} \mathbb{Z} }
+\]
+The expression always requires the previous value of $y$ and adds it to
+a previous value of the parameter $x$. Evaluating the value of the
+argument $\kvd{prev}~(\kvd{prev}~y)$ requires two past values of $y$
+and so the overall requirement is $3$ past values:
+\[
+\inference
+  { \coctx{y\!:\!\mathbb{Z}}{\alift{1} } \vdash \lambda x.~(\ldots) \quad  \coctx{x\!:\!\mathbb{Z}}{\alift{2}} \vdash (\kvd{prev}~(\kvd{prev}~x) : \mathbb{Z} }
+{\inference
+  { \coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1,3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~x)) : \mathbb{Z} }
+  { \coctx{y\!:\!\mathbb{Z}}{\alift{3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~y)) : \mathbb{Z} } }
+\]
+The derivation uses (\emph{app}) to get requirements $\alift{1,3}$ and then 
+(\emph{contr}) to take the maximum, showing three past values are sufficient. Reducing 
+the expression by substitution we get $\kvd{prev}~(y+(\kvd{prev}~(\kvd{prev}~y)))$. 
+Semantically, this performs stream lookups $y[1] + y[3]$ where the indices are the 
+number of enclosing $\kvd{prev}$s.% expressions.
+
+We previously used dataflow as an example of
+coeffects~\cite{petricek2013coeffects}, but tracked caching
+requirements on the whole context. The system outlined here is more
+powerful and practically useful, with finer-grained coeffects tracking
+caching requirements per-variable.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\[
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{R}\cons\alift{\ident{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{Q}} \vdash \subst{e}{y,z}{x} : \tau}
+\]
+\[
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{R}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau &
+    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma }
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{R} \cons (\cclrd{t} + \aclrd{S})} \vdash e_1 \, e_2 : \tau} 
+\]
+\[
+\tyrule{var}{}
+  {\coctx{x\!:\!\tau}{\alift{0}} \vdash x : \tau}
+\quad\;
+\tyrule{prev}
+  {\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau}
+  {\coctx{\Gamma}{1 + \aclrd{R}} \vdash \kvd{prev}~e : \tau}  
+\]
+\caption{type and coeffect system for dataflow caching}
+\label{fig:dataflow-coeff}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Implicit parameters}
+\label{sec:intro-coeffects-impl}
+
+As our third example, we revisit Haskell implicit parameters \cite{lewis2000implicit} 
+used in our earlier coeffect work \cite{petricek2013coeffects}. Implicit parameters are variables
+that mix aspects of dynamic and lexical scoping. Implicit parameters are a distinct syntactic 
+category to variables and we write them as \ident{?p}. For simplicity, we omit \emph{let}-binding for
+implicit parameters and focus just on tracking requirements.
+
+\paragraph{Implicit parameters coeffects.} Implicit parameters are a whole-context coeffect 
+not linked to ordinary variables. We keep track of sets of implicit parameters that are required
+by an expression (and their types). For example $\coctx{\Gamma}{\{ \ident{?p}_1 : \tau_1, \ldots, \ident{?p}_n : \tau_n \}}$
+means that a context provides ordinary variables $\Gamma$ and values for implicit parameters $\ident{?p}_i$.
+Unlike in the previous examples, we no longer need to distinguish between coeffects attached
+to variables (scalars) and coeffects attached to contexts (vectors), so we write $\cclrd{r},\cclrd{s},\cclrd{t}$
+for both.
+
+Despite the differences, the type system in Figure~\ref{fig:implpar-coeff} follows the same 
+structure as the earlier two examples. Context requirements are created when accessing an implicit
+parameter (\emph{param}) (a system-specific rule). Structural rules (exchange, weaken, contract) 
+do not affect the coeffects. For example parameters are reordered in (\emph{exch}),
+but this has no effect as set union $\cup$ is commutative.
+
+In abstraction and application, the structural $\cons$ operator (previously vector 
+concatenation) becomes $\cup$. Sets of implicit parameters are not associated to
+individual variables and so they are unioned. The (\emph{app}) rule uses $\cup$ to
+combine the implicit parameters required by the function with the requirements of the argument too.
+
+We call this a \emph{flat} coeffect system since coeffects have only
+one shape (there is no scalar/vector distinction).  Other flat
+coeffect systems may use a richer structure~\cite{petricek2013coeffects}. In
+particular, the operations used in abstraction and application may differ
+(to accommodate over-approximation). We return to this in
+Section~\ref{sec:coeffects-structural}.
+
+\paragraph{Example.} Unlike structural coeffect systems, flat systems
+do not necessarily have principal coeffects. 
+This arises from the (\emph{abs}) rule which can freely split
+requirements between the function type and the declaring
+context. Consider a function %filters news based on a location:
+$\lambda ().\ident{?p}_1 + \ident{?p}_2$.  There are nine possible 
+ type and coeffect derivations, two of which are:
+%% 1 p1p2  p1p2
+%% 2 p1p2  p1
+%% 3 p1p2  p2
+%% 4 p1p2  
+%% 5 p1    p1p2
+%% 6 p1    p2
+%% 7 p2    p1p2
+%% 8 p2    p1
+%% 9       p1p2
+\[
+\begin{array}{rl}
+\coctx{\emptyset}{ \{  \} } &\hspace{-0.7em}\vdash (\ldots) : 
+  \ident{unit} \xrightarrow{ \{ \ident{?p}_1:\mathbb{Z}, \ident{?p}_2:\mathbb{Z} \} } \mathbb{Z}
+\\
+\coctx{\emptyset}{ \{ \ident{?p}_1:\mathbb{Z} \} } &\hspace{-0.7em} \vdash (\ldots) : 
+  \ident{unit} \xrightarrow{ \{ \ident{?p}_2:\mathbb{Z} \} } \mathbb{Z}
+\end{array}
+\]
+In the first case, both parameters are dynamically scoped and have to be provided by the caller.
+In the second case, the parameter $\ident{?p}_1$ is available in the declaring scope and so it is
+(lexically) captured.
+
+Although structural coeffects have more desirable syntactic properties, we aim to capture this
+non-principality too as it is practically useful -- Haskell's implicit parameters use it and
+it can be used to model resource rebinding in distributed systems such as~\cite{app-distributed-acute}).
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}
+\[
+\tyrule{exch}
+  {\coctx{\Gamma_1,x\!:\!\tau,y:\sigma,\Gamma_2}{r \cup \cclrd{s} \cup \cclrd{t} \cup \cclrd{q}} \vdash e : \tau}
+  {\coctx{\Gamma_1,y\!:\!\sigma,x:\tau,\Gamma_2}{\cclrd{r} \cup \cclrd{t} \cup \cclrd{s} \cup \cclrd{q}} \vdash e : \tau}
+\]
+\[
+\tyrule{app}
+  { \coctx{\Gamma_1}{\cclrd{r}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau &
+    \coctx{\Gamma_2}{\cclrd{s}} \vdash e_2 : \sigma }
+  { \coctx{\Gamma_1, \Gamma_2}{\cclrd{r} \cup \cclrd{t} \cup \cclrd{s}} \vdash e_1 \, e_2 : \tau} 
+\]
+\[
+\tyrule{param}{}
+  {\coctx{()}{ \{ \ident{?p}:\tau \} } \vdash \ident{?p} : \tau}
+\quad\;
+\tyrule{abs}
+  {\coctx{\Gamma, x \!:\! \sigma}{\cclrd{r} \cup \cclrd{s}} \vdash e : \tau}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau}
+\]
+\vspace{-0.5em}
+\caption{Type and coeffect system for implicit parameters}
+\label{fig:implpar-coeff}
+\end{figure}
+
+% ==================================================================================================
+
+\section{Beyond passive contexts}
 
 In the systems discussed so far, the context provides additional data (resources, implicit 
 parameters, historical values) or meta-data (security, provenance). However, it is impossible to
@@ -574,6 +1294,31 @@ two key aspects:
 Although we also looked at examples of \emph{active} contextual computations (where developers can
 write functions that modify the context), we do not consider these applications, to keep the 
 material presented in this thesis focused. We briefly discuss them as future work in Section~X.
+
+%===================================================================================================
+
+\section{Context oriented programming}
+
+The importance of context-aware computations is perhaps most obvious when considering mobile
+application, client/server web applications or even the internet of things. A pioneering work
+in the area using functional languages has been done by Serrano \cite{app-hop-diffuse,app-hop-lang}
+(which also inspired the example presented in Chapter~\ref{ch:intro}). His HOP language supports 
+cross-compilation and programs execute in different contexts. However, HOP is not statically 
+type checked.
+
+In the software engineering community, a number of authors have addressed the
+problem of context-aware computations. Hirschfeld et al. propose \emph{Context-Oriented Programming} 
+(COP) as a methodology \cite{app-cop-method}. The COP paradigm has been later implemented by
+programming language features. Costanza \cite{app-cop-contextl} develops a domain-specific LISP-like 
+language ContextL and Bardram \cite{app-cop-javafwk} proposes a Java framework for COP.
+
+Finally, the subject of context-awareness has also been addressed in work focusing on the development 
+of mobile applications \cite{app-cop-mobile,app-cop-mobile2}. Here, the \emph{context} focuses more 
+on concrete physical context (obtained from the device sensors) than context as an abstract 
+language feature.
+
+We approach the problem from a different perspective, building on the tradition of 
+statically-typed functional programming languages and their theories. 
 
 %===================================================================================================
 

@@ -490,6 +490,7 @@ can be tracked using the systems developed in this thesis in Chapter~\ref{ch:app
 % --------------------------------------------------------------------------------------------------
 
 \section{Theory of context dependence}
+\label{sec:intro-theory}
 
 The previous section introduced the idea of context-aware languages from the practical perspective.
 As already discussed, we approach the problem from the perspective of statically typed programming
@@ -533,7 +534,7 @@ Another option for tracking effects is to extend the judgement with additional i
 about the effects. The judgement in a language with effect system would look as follows:
 %
 \begin{equation*}
-x\-:\-\ident{int} \vdash \ident{print}~x : \ident{unit~\&~\{ console \}}
+x\-:\-\ident{int} \vdash \ident{print}~x : \ident{unit~\&\aclrd{\{ console \}}}
 \end{equation*}
 %
 Effect systems add \emph{effect annotation} as another component of the typing judgement. In the above
@@ -570,10 +571,10 @@ The \emph{coeffect systems} developed in this thesis capture this information in
 %
 \begin{equation*}
 \begin{array}{l}
- ( \ident{password}\-:\-\ident{string \hspace{-1em}{\footnotesize @ sensitive}},
+ ( \ident{password}\-:\-\ident{string \hspace{-1em}{\footnotesize @ \aclrd{sensitive}}},
    \ident{cmd}\-:\-\ident{string})
  \hspace{-0.5em}
- \ident{\footnotesize @ \{ database \}} \vdash \\[-0.1em]
+ \ident{\footnotesize @ \aclrd{\{ database \}}} \vdash \\[-0.1em]
  \hspace{3em} \ident{query}(\ident{cmd}, \ident{password}) : \ident{news list}
 \end{array}
 \end{equation*}

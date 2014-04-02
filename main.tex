@@ -28,8 +28,41 @@
 \newtheorem{lemma}{Lemma}
 \newtheorem{proposition}{Proposition}
 
+
+
 % source code & types
 \ExecuteMetaData[rules/rules.tex]{rule-definitions}
+
+% Typing rule and typing statement (single line)
+\newcommand{\tyrule}[3]{ \inference[\footnotesize{(#1)}~]{#2}{#3} }
+\newcommand{\tyruleCompact}[3]{ \text{(\footnotesize{#1})}~\dfrac{#2}{#3} }
+
+% Coeffect algebra
+\definecolor{aclr}{rgb}{0.0,0.0,0.7}
+\newcommand{\aclrd}[1]{ \textcolor{aclr}{#1} }
+
+% Coeffect algebra
+\definecolor{cclr}{rgb}{0.0,0.4,0.0}
+\newcommand{\cclrd}[1]{ \textcolor{cclr}{#1} }
+
+% Ordinary context where colouring is done by hand 
+\newcommand{\coctx}[2]{ #1 \,\text{\scriptsize @}\, {\footnotesize{\text{$#2$}}}  }
+
+% Simple coeffect systems in the introduction
+\newcommand{\cons}{\hspace{-0.15em}\times\hspace{-0.25em}} %\sctxclrd{+\hspace{-0.55em}+}}
+
+\newcommand{\alift}[1]{ \textcolor{aclr}{\langle} #1 \textcolor{aclr}{\rangle}} 
+
+\definecolor{sclr}{rgb}{0.5,0,0.0}
+\newcommand{\sclrd}[1]{ \textcolor{sclr}{#1} }
+
+\newcommand{\C}{ {\textcolor{cclr}{\mathcal{C}}} }
+
+\newcommand{\slift}[1]{{\sclrd{[}#1\sclrd{]}}}
+
+
+
+
 
 \definecolor{todoclr}{rgb}{0.8,0,0.5}
 \newcommand{\todo}[1]{\textcolor{todoclr}{ \begin{quotation} \noindent\textbf{TODO:} #1 \end{quotation} }}
@@ -73,7 +106,7 @@
 %	PRE-CONTENT THESIS PAGES
 %----------------------------------------------------------------------------------------
 
-\include{text/Titlepage} % Main title page
+%\include{text/Titlepage} % Main title page
 
 % \include{FrontBackMatter/Titleback} % Back of the title page
 
@@ -81,7 +114,7 @@
 
 %\cleardoublepage\include{FrontBackMatter/Foreword} % Uncomment and create a Foreword.tex to include a foreword
 
-\cleardoublepage\include{text/Abstract} % Abstract page
+%\cleardoublepage\include{text/Abstract} % Abstract page
 
 % \cleardoublepage\include{FrontBackMatter/Publication} % Publications from the thesis page
 
@@ -89,7 +122,7 @@
 
 \pagestyle{scrheadings} % Show chapter titles as headings
 
-\cleardoublepage\include{text/Contents} % Contents, list of figures/tables/listings and acronyms
+%\cleardoublepage\include{text/Contents} % Contents, list of figures/tables/listings and acronyms
 
 \pagenumbering{arabic} % Arabic page numbering for thesis content (1, 2, 3, etc)
 %\setcounter{page}{90} % Uncomment to manually start the page counter at an arbitrary value (for example if you wish to count the pre-content pages in the page count)
@@ -119,11 +152,11 @@
 \include{text/Chapter01}
 \include{text/Chapter02}
 \include{text/Chapter03}
-\include{text/Chapter04}
-\include{text/Chapter05}
-\include{text/Chapter06}
-\include{text/Chapter07}
-\include{text/Chapter08}
+%\include{text/Chapter04}
+%\include{text/Chapter05}
+%\include{text/Chapter06}
+%\include{text/Chapter07}
+%\include{text/Chapter08}
 
 %----------------------------------------------------------------------------------------
 %	THESIS CONTENT - APPENDICES

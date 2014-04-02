@@ -26,23 +26,13 @@
 \newcommand{\diagaro}[4]{\ar@{}[#3]^(.15){}="#1"^(.85){}="#2"\ar@{<=}_{#4}"#1";"#2" }
 
 % Typing rule and typing statement (single line)
-\newcommand{\tyrule}[3]{ \inference[(\footnotesize{#1})~]{#2}{#3} }
-\newcommand{\tyruleCompact}[3]{ \text{(\footnotesize{#1})}~\dfrac{#2}{#3} }
 \newcommand{\tystmt}[2]{ (\text{\footnotesize{#1}})~~{#2} }
 % Context transformation and context transformation with new line in the middle
 \renewcommand{\ctxtrans}[3]{ #2 \rightsquigarrow #1, #3 }
 \newcommand{\ctxtransnl}[3]{ \begin{array}{l} #2 \rightsquigarrow\\ #1, #3 \end{array}}
-% Ordinary context where colouring is done by hand 
-\newcommand{\coctx}[2]{ #1 \text{\scriptsize @} {\footnotesize{\text{$#2$}}}  }
 
-% Simple coeffect systems in the introduction
-\newcommand{\cons}{\hspace{-0.15em}\times\hspace{-0.25em}} %\sctxclrd{+\hspace{-0.55em}+}}
 
-% Coeffect algebra
-\definecolor{cclr}{rgb}{0.0,0.4,0.0}
-\newcommand{\cclrd}[1]{ \textcolor{cclr}{#1} }
 
-\newcommand{\C}{ {\textcolor{cclr}{\mathcal{C}}} }
 \newcommand{\czero}{ \textcolor{cclr}{ \mathsf{ign} } }
 \newcommand{\cunit}{ \textcolor{cclr}{ \mathsf{use} } }
 \newcommand{\cseq}{ \textcolor{cclr}{ \circledast }} % \bullet} } % \textcolor{cclr}{\bullet}}  
@@ -54,8 +44,6 @@
 \newcommand{\uncurry}{\Lambda^{\hspace{-0.2em}-1}}
 
 % Coeffect shapes 
-\definecolor{sclr}{rgb}{0.5,0,0.0}
-\newcommand{\sclrd}[1]{ \textcolor{sclr}{#1} }
 
 \newcommand{\SH}{ {\textcolor{sclr}{\mathcal{S}}} }
 \newcommand{\sempty}{ {\textcolor{sclr}{ \hat{0}}} }
@@ -64,18 +52,12 @@
 
 \newcommand{\sflat}{\star}
 
-% Coeffect algebra
-\definecolor{aclr}{rgb}{0.0,0.0,0.7}
-\newcommand{\aclrd}[1]{ \textcolor{aclr}{#1} }
-
-\newcommand{\mksh}[1]{{\sclrd{[}#1\sclrd{]}}}
 
 \newcommand{\amerge}{ \textcolor{aclr}{ \mathbin{\rotatebox[origin=c]{-90}{$\ltimes$}} } }
 \newcommand{\asplit}{ \textcolor{aclr}{ \mathbin{\rotatebox[origin=c]{90}{$\ltimes$}} } }
 \newcommand{\aseq}{ \textcolor{aclr}{\circledast}} % Should be the same as \cseq 
 % Tomas: I prefer \circledast here because it is a circled (lifted) version of \cseq 
 % { \textcolor{aclr}{\bullet}}
-\newcommand{\alift}[1]{ \textcolor{aclr}{\langle} #1 \textcolor{aclr}{\rangle}} 
 \newcommand{\azero}{ \textcolor{aclr}{\bot} }
 \newcommand{\aunit}{ \alift{\cunit} } %\textcolor{aclr}{\textnormal{U}} }
 \newcommand{\aweak}{ \alift{\czero} } % \textcolor{aclr}{\textnormal{I}} }
@@ -150,473 +132,6 @@ Coeffects can be approached from multiple directions (Section~\ref{sec:intro-pat
 syntactic (effect systems), semantic, and proof-theoretic. We 
 emphasize the syntactic view, though we also outline a categorical semantics
 and note the interesting technical details. 
-
-% ==================================================================================================
-
-
-\section{Why coeffects matter}
-\label{sec:intro-coeffects}
-
-Coeffects are way to describe notions of context in programming that keep turning up. 
-To illustrate this, we overview three systems tracking contextual properties that 
- motivate our general coeffect system. Two systems track per-variable properties (bounded 
-linear logic and dataflow) and one tracks whole-context properties (implicit parameters).
- We start with some background and finish with a brief overview of the literature leading to coeffects.
-
-\subsection{Background, scalars and vectors}
-
-The $\lambda$-calculus is asymmetric-- it maps a context with \emph{multiple} variables to a 
-\emph{single} result. An expression with $n$ free variables of types $\sigma_i$ can be modelled
-by a function
-$\sigma_1 \times \ldots \times \sigma_n \rightarrow \tau$ with a product on the left, but a single value
-on the right. Effect systems attach effect annotations to the result $\tau$. In coeffect systems,
-we attach coeffects to the context $\sigma_1 \times \ldots \times \sigma_n$ and we often (but not always)
-have one coeffect per each variable. We call the overall coeffect a \emph{vector} consisting of
-\emph{scalar} coeffects. This asymmetry explains why coeffect systems are not trivially dual to 
-effect systems.
-
-It is useful to clarify how vectors are used in this paper. Suppose we have a set $\C$ of
-\emph{scalars} such as $\cclrd{r_1},\ldots,\cclrd{r_n} \in \C$. A vector $\aclrd{R}$ over $\C$
-is a tuple $\langle \cclrd{r_1}, \ldots, \cclrd{r_n}\rangle$ of scalars. 
-We use letters like $\aclrd{R}, \aclrd{S}, \aclrd{T}$ for 
-vectors and $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars.\footnote{For better readability, the paper 
-distinguishes different structures using colours. However ignoring the colour does not introduce 
-any ambiguity.} We also say that a \emph{shape} of a vector $\mksh{\aclrd{R}}$ (or more generally any container) 
-is the set of \emph{positions} in a vector. So, a vector of length
-$n$ has shape $\{ 1, 2, \ldots, n \}$. 
-
-Just as in scalar-vector multiplication, we lift any binary operation on scalars into a scalar-vector one:
-$\cclrd{s} \bullet \aclrd{R} = \langle \cclrd{s}\bullet\cclrd{r_1}, \ldots, \cclrd{s}\bullet\cclrd{r_n}\rangle$.
-Given two vectors $\aclrd{R},\aclrd{S}$ of the same shape, containing partially ordered scalars, we 
-write $\aclrd{R} \leq \aclrd{S}$ for the pointwise extension of $\leq$ on scalars. Finally,
-the associative operation $\times$ concatenates vectors.
-
-We note that an environment $\Gamma$ containing $n$ uniquely named, typed variables is also a vector, 
-but we continue to write `$,$' for the product, so $\Gamma_1, x\!:\!\tau, \Gamma_2$ should 
-be seen as $\Gamma_1 \times \langle x\!:\!\tau\rangle \times \Gamma_2$.
-
-
-\subsection{Bounded reuse}
-\label{sec:intro-coeffects-bll}
-
-Bounded linear logic \cite{girard1992bounded} restricts well-typed terms to polynomial-time algorithms.  
-This is done by limiting the number of times a value (proposition) can be used. An assumption
-$!_k A$ means that a variable can be used at most $k$ times. 
-We attach annotations to the whole context rather than individual assumptions and so a context
-$!_{k_1} A_1, ..., !_{k_n} A_n$ is written as $\coctx{\tau_1, ..., \tau_n}{\langle \cclrd{k_1}, ..., \cclrd{k_n}\rangle}$. 
-This difference is further explained in Section~\ref{sec:related-work}. %For uniformity
-%with later systems, we also write assumptions $A$ as $\tau$ and annotations $K$ as $\cclrd{r}$.
-
-Bounded linear logic includes explicit weakening and contraction rules
-that affect the multiplicity. Following the original logical style (but with our notation), these are written as:
-\[
-\inference
-  {\coctx{\Gamma}{\aclrd{R}} \vdash \tau}
-  {\coctx{\Gamma,\sigma}{\aclrd{R} \cons \alift{0}} \vdash \tau} 
-\quad
-\inference
-  {\coctx{\Gamma_1,\sigma,\sigma,\Gamma_2}{\aclrd{R}\cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash \tau}
-  {\coctx{\Gamma_1,\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{Q}} \vdash \tau}
-\]
-The context $\coctx{\Gamma}{\aclrd{R}}$ includes a \emph{coeffect annotation} $\aclrd{R}$ which is a vector
-$\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$ of the same length as $\Gamma$ (a side-condition omitted for brevity).
-In weakening (left), unused propositions are annotated with $0$ (no uses), while in contraction (right), multiple 
-occurrences of a proposition are joined by adding the number of uses.
-
-
-\begin{figure}[t]
-\vspace{-0.5em}
-\begin{align*}
-\begin{array}{c}
-%
-\hspace{-0.6em}
-\begin{array}{c}
-\tyrule{var}{}
-  {\coctx{x \!:\! \tau}{\alift{1}} \vdash x : \tau} 
-\quad 
-\tyruleCompact{weak}
-  {\coctx{\Gamma}{R} \vdash e : \tau}
-  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{R} \cons \alift{0}} \vdash e : \tau} 
-\\[1.8em]
-\tyruleCompact{sub}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{R'}} \vdash e : \tau}~(\text{\scriptsize $\aclrd{R} \leq \aclrd{R'}$})
-\quad 
-\tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \sigma}{\aclrd{R} \cons \alift{s}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau} 
-\\[1.2em]
-\end{array} \\
-%
-% ------------------------ 
-%
-\begin{array}{c}
-\tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{R}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau \quad 
-    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma}
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{R} \cons (\cclrd{t} \ast \aclrd{S})} \vdash e_1 \, e_2 : \tau} 
-\\[1.3em]
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{Q}} \vdash \subst{e}{z,y}{x} : \tau}
-\\[1.3em]
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{Q}} \vdash e : \tau}
-\end{array} 
-% ------------------------ 
-%
-% \hspace{-1em}
-%\begin{array}{c}
-%
-% TP: I removed the 'let' rule again because we do not need it to explain the storage axiom here.
-% Also, I think the BLL sample is already used to explain quite a lot of things, so I'd be happier
-% to keep it simple.
-%
-% BTW: The \tyruleCompact macro creates a rule that *looks* differently..
-% (I do not understand why but it makes the line somehow thicker...)
-%
-% \tyruleCompact{let}
-%   {\coctxs{\Gamma_1, v : \sigma}{R \times \langle{t}\rangle} \vdash e_1 : \tau \quad 
-%    \coctxs{\Gamma_2}{S} \vdash e_2 : \sigma}
-%   {\coctxs{\Gamma_1, \Gamma_2}{R \times (t \ast S)} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau} \\[1.8em]
-\end{array}
-\end{align*}
-\vspace{-0.5em}
-\caption{type and coeffect system for bounded reuse}
-\label{fig:bounded-coeff}
-\end{figure}
-
-
-\paragraph{Bounded linear coeffects.}
-The system in Figure~\ref{fig:bounded-coeff} extends the outlined idea into a simple calculus.
-Variable access (\emph{var}) has a singleton context with a singleton coeffect vector
-$\alift{1}$. Weakening (\emph{weak}) extends the free-variable context with an unused variable and 
-the coeffect with an associated scalar $0$. Explicit contraction (\emph{contr}) and
-exchange (\emph{exch}) rules manipulate variables in the context and
-modify the annotations accordingly -- adding the number of uses in
-contraction and switching vector elements in exchange.
-
-For abstraction (\emph{abs}), we know the number of uses of the parameter variable $x$ 
-and attach it to the function type $\sigma \xrightarrow{\cclrd{s}}
-\tau$ as a \emph{latent} coeffect. The remaining variables in $\Gamma$ are 
-annotated with the remaining coeffect vector $\aclrd{R}$, specifying \emph{immediate} coeffects.
-
-Application (\emph{app}) describes call-by-name evaluation.  Applying
-a function that uses its parameter $\cclrd{t}$-times to an argument
-that uses variables in $\Gamma_2$ $\aclrd{S}$-times means that, in
-total, the variables in $\Gamma_2$ will be used $(\cclrd{t} \ast \aclrd{S})$-times. 
-Recall that $\cclrd{t} \ast \aclrd{S}$ is a scalar multiplication of a
-vector. Meanwhile, the variables in $\Gamma_1$ are used just
-$\aclrd{R}$-times when reducing the expression $e_1$ to a function
-value. 
-
-Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates
-the number of uses using the pointwise
-$\leq$ relation. We can view any variable as being used a greater
-number of times than it actually is.
-
-\paragraph{Example.} To demonstrate, consider a term
-$(\lambda v.x+v+v)~(x+y)$. According to the call-by-name intuition, the variable $x$ is used three 
-times -- once directly inside the function and twice via the variable $v$ after 
-substitution. Similarly, $y$ is used 
-twice. Assuming a judgment for the function body, abstraction yields:
-%
-\begin{equation*}
-\tyrule{abs}
- { \coctx{x\!:\!\mathbb{Z},v:\mathbb{Z}}{\alift{\cclrd{1},\cclrd{2}}} \vdash x+v+v : \mathbb{Z} }
- { \coctx{x\!:\!\mathbb{Z}}{\alift{\cclrd{1}}} \vdash (\lambda v.x+v+v) : \mathbb{Z} \xrightarrow{\cclrd{2}} \mathbb{Z} }
-\end{equation*}
-%
-To avoid name clashes, we $\alpha$-rename $x$ to $x'$ and later join $x$ and $x'$ using contraction.
-Assuming $(x'+y)$ is checked in a context that marks $x'$ and $y$ as used once, the application rule yields
-a judgment that is simplified as follows:
-\[
-\hspace{-0.7em}\inference
-  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}
-          {\alift{\cclrd{1}} \cons (\cclrd{2} \ast \alift{\cclrd{1},\cclrd{1}}) } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
-{\inference
-  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{1}, \cclrd{2}, \cclrd{2}} } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
-  { \coctx{x\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{3}, \cclrd{2}}} \vdash (\lambda v.x+v+v)~(x+y)  : \mathbb{Z}} }
-\]
-%
-The first step performs scalar multiplication, producing the vector
-$\alift{\cclrd{1},\cclrd{2},\cclrd{2}}$. In the second step, we use contraction to join variables 
-$x$ and $x'$ from the function and argument terms respectively.
-
-It is worth pointing out that reduction by substitution yields $x+(x+y)+(x+y)$ which has the same coeffect as
-the original. We return to evaluation strategies in Section~\ref{sec:syntax}, and 
-show that structural coeffect systems preserve types and coeffects under $\beta$-reduction. 
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Dataflow and data access}
-
-Dataflow languages such as Lucid \cite{wadge1985lucid} describe computations over \emph{streams}.
-An expression is re-evaluated when new inputs are available (push) or when more output
-is demanded (pull).  In causal dataflow, programs can access past
-values of a stream. We consider a language where $\kvd{prev}~e$
-returns the previous value of $e$, where 
-$\kvd{prev}~(\kvd{prev}~e)$ therefore returns the second past value.
-
-An implementation of causal dataflow may cache past values of
-variables as an optimisation. The question is, how many past values
-should be cached?  This can be approximated by a coeffect system.
-
-\paragraph{Dataflow coeffects.} The coeffect system for dataflow is
-similar to the one for bounded reuse in that it tracks a vector
-of numbers $\aclrd{R}$ as part of the context
-$\coctx{\Gamma}{\aclrd{R}}$. Here, coeffects represent the maximal number of
-past values (\emph{causality depth}) required for a variable. 
-
-Weakening, exchange, abstraction and sub-coeffecting are the same as in bounded linear
-coeffects, but the remaining rules differ. In Figure~\ref{fig:dataflow-coeff},
-accessed variables (\emph{var}) are annotated with
-$0$ meaning that no past value is required (only the
-current one). The (\emph{prev}) rule crates caching requirements --
-it increments the number of required values for all variables
-used in $e$ using scalar-vector addition.
-
-Application and contraction have the same structure as before, 
-but use different operators. If two variables 
-are contracting, requiring $\cclrd{s}$ and $\cclrd{t}$ past
-values, then overall we need at most
-$\ident{max}(\cclrd{s}, \cclrd{t})$ past values (\emph{contr}). That is, 
-two caches are combined with the maximum of the two requirements, 
-which satisfy the smaller requirements. 
-
-In (\emph{app}), the function requires $\cclrd{t}$ past values of
-its parameter.  This means $\cclrd{t}$ past values of
-$e_2$ are needed which in turn requires $\aclrd{S}$ past values of its free
-variables $\Gamma_2$. Thus, we need $\cclrd{t}+\aclrd{S}$ past values of $\Gamma_2$ to perform the
-call (\eg{}, we need $1+\aclrd{S}$ values to
-get $1$ past value of the input $\sigma$, $2+\aclrd{S}$
-values to get $2$ past values of $\sigma$, \emph{etc.}).
-
-
-\paragraph{Example.} As an example, consider a function $\lambda x.\kvd{prev}~(y+x)$ applied to an argument
-$\kvd{prev}~(\kvd{prev}~y)$. The body of the function accesses the past value of two variables, one free
-and one bound:
-\[
-\dfrac
-  {\coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1, 1}} \vdash \kvd{prev}~(y+x) : \mathbb{Z} }
-  {\coctx{y\!:\!\mathbb{Z}}{\alift{1}} \vdash \lambda x . \kvd{prev}~(y+x) : \mathbb{Z} \xrightarrow{\cclrd{1}} \mathbb{Z} }
-\]
-The expression always requires the previous value of $y$ and adds it to
-a previous value of the parameter $x$. Evaluating the value of the
-argument $\kvd{prev}~(\kvd{prev}~y)$ requires two past values of $y$
-and so the overall requirement is $3$ past values:
-\[
-\inference
-  { \coctx{y\!:\!\mathbb{Z}}{\alift{1} } \vdash \lambda x.~(\ldots) \quad  \coctx{x\!:\!\mathbb{Z}}{\alift{2}} \vdash (\kvd{prev}~(\kvd{prev}~x) : \mathbb{Z} }
-{\inference
-  { \coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1,3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~x)) : \mathbb{Z} }
-  { \coctx{y\!:\!\mathbb{Z}}{\alift{3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~y)) : \mathbb{Z} } }
-\]
-The derivation uses (\emph{app}) to get requirements $\alift{1,3}$ and then 
-(\emph{contr}) to take the maximum, showing three past values are sufficient. Reducing 
-the expression by substitution we get $\kvd{prev}~(y+(\kvd{prev}~(\kvd{prev}~y)))$. 
-Semantically, this performs stream lookups $y[1] + y[3]$ where the indices are the 
-number of enclosing $\kvd{prev}$s.% expressions.
-
-We previously used dataflow as an example of
-coeffects~\cite{petricek2013coeffects}, but tracked caching
-requirements on the whole context. The system outlined here is more
-powerful and practically useful, with finer-grained coeffects tracking
-caching requirements per-variable.
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-\[
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{R}\cons\alift{\ident{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{Q}} \vdash \subst{e}{y,z}{x} : \tau}
-\]
-\[
-\tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{R}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau &
-    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma }
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{R} \cons (\cclrd{t} + \aclrd{S})} \vdash e_1 \, e_2 : \tau} 
-\]
-\[
-\tyrule{var}{}
-  {\coctx{x\!:\!\tau}{\alift{0}} \vdash x : \tau}
-\quad\;
-\tyrule{prev}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau}
-  {\coctx{\Gamma}{1 + \aclrd{R}} \vdash \kvd{prev}~e : \tau}  
-\]
-\caption{type and coeffect system for dataflow caching}
-\label{fig:dataflow-coeff}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Implicit parameters}
-\label{sec:intro-coeffects-impl}
-
-As our third example, we revisit Haskell implicit parameters \cite{lewis2000implicit} 
-used in our earlier coeffect work \cite{petricek2013coeffects}. Implicit parameters are variables
-that mix aspects of dynamic and lexical scoping. Implicit parameters are a distinct syntactic 
-category to variables and we write them as \ident{?p}. For simplicity, we omit \emph{let}-binding for
-implicit parameters and focus just on tracking requirements.
-
-\paragraph{Implicit parameters coeffects.} Implicit parameters are a whole-context coeffect 
-not linked to ordinary variables. We keep track of sets of implicit parameters that are required
-by an expression (and their types). For example $\coctx{\Gamma}{\{ \ident{?p}_1 : \tau_1, \ldots, \ident{?p}_n : \tau_n \}}$
-means that a context provides ordinary variables $\Gamma$ and values for implicit parameters $\ident{?p}_i$.
-Unlike in the previous examples, we no longer need to distinguish between coeffects attached
-to variables (scalars) and coeffects attached to contexts (vectors), so we write $\cclrd{r},\cclrd{s},\cclrd{t}$
-for both.
-
-Despite the differences, the type system in Figure~\ref{fig:implpar-coeff} follows the same 
-structure as the earlier two examples. Context requirements are created when accessing an implicit
-parameter (\emph{param}) (a system-specific rule). Structural rules (exchange, weaken, contract) 
-do not affect the coeffects. For example parameters are reordered in (\emph{exch}),
-but this has no effect as set union $\cup$ is commutative.
-
-In abstraction and application, the structural $\cons$ operator (previously vector 
-concatenation) becomes $\cup$. Sets of implicit parameters are not associated to
-individual variables and so they are unioned. The (\emph{app}) rule uses $\cup$ to
-combine the implicit parameters required by the function with the requirements of the argument too.
-
-We call this a \emph{flat} coeffect system since coeffects have only
-one shape (there is no scalar/vector distinction).  Other flat
-coeffect systems may use a richer structure~\cite{petricek2013coeffects}. In
-particular, the operations used in abstraction and application may differ
-(to accommodate over-approximation). We return to this in
-Section~\ref{sec:coeffects-structural}.
-
-\paragraph{Example.} Unlike structural coeffect systems, flat systems
-do not necessarily have principal coeffects. 
-This arises from the (\emph{abs}) rule which can freely split
-requirements between the function type and the declaring
-context. Consider a function %filters news based on a location:
-$\lambda ().\ident{?p}_1 + \ident{?p}_2$.  There are nine possible 
- type and coeffect derivations, two of which are:
-%% 1 p1p2  p1p2
-%% 2 p1p2  p1
-%% 3 p1p2  p2
-%% 4 p1p2  
-%% 5 p1    p1p2
-%% 6 p1    p2
-%% 7 p2    p1p2
-%% 8 p2    p1
-%% 9       p1p2
-\[
-\begin{array}{rl}
-\coctx{\emptyset}{ \{  \} } &\hspace{-0.7em}\vdash (\ldots) : 
-  \ident{unit} \xrightarrow{ \{ \ident{?p}_1:\mathbb{Z}, \ident{?p}_2:\mathbb{Z} \} } \mathbb{Z}
-\\
-\coctx{\emptyset}{ \{ \ident{?p}_1:\mathbb{Z} \} } &\hspace{-0.7em} \vdash (\ldots) : 
-  \ident{unit} \xrightarrow{ \{ \ident{?p}_2:\mathbb{Z} \} } \mathbb{Z}
-\end{array}
-\]
-In the first case, both parameters are dynamically scoped and have to be provided by the caller.
-In the second case, the parameter $\ident{?p}_1$ is available in the declaring scope and so it is
-(lexically) captured.
-
-Although structural coeffects have more desirable syntactic properties, we aim to capture this
-non-principality too as it is practically useful -- Haskell's implicit parameters use it and
-it can be used to model resource rebinding in distributed systems such as~\cite{app-distributed-acute}).
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}
-\[
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\tau,y:\sigma,\Gamma_2}{r \cup \cclrd{s} \cup \cclrd{t} \cup \cclrd{q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\sigma,x:\tau,\Gamma_2}{\cclrd{r} \cup \cclrd{t} \cup \cclrd{s} \cup \cclrd{q}} \vdash e : \tau}
-\]
-\[
-\tyrule{app}
-  { \coctx{\Gamma_1}{\cclrd{r}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau &
-    \coctx{\Gamma_2}{\cclrd{s}} \vdash e_2 : \sigma }
-  { \coctx{\Gamma_1, \Gamma_2}{\cclrd{r} \cup \cclrd{t} \cup \cclrd{s}} \vdash e_1 \, e_2 : \tau} 
-\]
-\[
-\tyrule{param}{}
-  {\coctx{()}{ \{ \ident{?p}:\tau \} } \vdash \ident{?p} : \tau}
-\quad\;
-\tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \sigma}{\cclrd{r} \cup \cclrd{s}} \vdash e : \tau}
-  {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau}
-\]
-\vspace{-0.5em}
-\caption{Type and coeffect system for implicit parameters}
-\label{fig:implpar-coeff}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Pathways to coeffects}
-\label{sec:intro-pathways}
-
-This paper mainly follows work on effect systems and their link to categorical semantics. We briefly 
-review this and other directions leading to coeffects. An eager reader can return to this section later.
-
-\paragraph{Effect systems.}
-
-Effect systems \cite{gifford1986effects} track
-effectful operations of computations such as memory access or lock
-usage \cite{flanagan2003type}. They are written as judgments $\Gamma
-\vdash e : \tau ~\&~\cclrd{\rho}$ associating effects
-$\cclrd{\rho}$ with the result. Effect systems capture \emph{output
-  effects} where, as Tate puts it, \emph{``all computations with [an]
-  effect can be thunked as pure computations for a domain-specific
-  notion of purity.''}~\cite{effects-producer-semantics}.  This
-thunking is typically a $\lambda$-abstraction. Given an effectful
-expression $e$, the function $\lambda x . e$ is an effect-free value
-that delays all effects:
-%
-\begin{equation*}
-\inference[({abs})\;]
-  {\Gamma, x\!:\!\tau_1 \vdash e : \tau_2 ~\&~\cclrd{\rho}} 
-  {\Gamma \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{\rho}} \tau_2~\&~\cclrd{\emptyset}}
-\end{equation*}
-%
-Coeffects do not follow this pattern.  In contrast to effect systems,
-context requirements cannot be easily ``thunked'' as
-pure values. Lambda abstraction can split context requirements
-between \emph{immediate} and \emph{latent} requirements. This is akin
-to how lambda abstraction splits a free-variable context into 
-the bound parameter (call site) and the remaining free variables (declaration site).
-
-\paragraph{Categorical semantics.}
-Moggi models effectful computations as functions of type 
-$\tau_1 \rightarrow \mtyp{}{\tau_2}$ where $M$ is monad providing composition of effectful 
-computations~\cite{moggi1991monads}. Wadler and Thiemann \cite{wadler2003marriage} link effect systems with monads using 
-annotated monads $\tau_1 \rightarrow \mtyp{\cclrd{\rho}}{\tau_2}$ whose semantics has been 
-provided by Katsumata~\cite{katsumata2014parametric}.
-
-Context-dependent computations require a different model. Uustalu and Vene \cite{uustalu2008notions} 
-use functions $C{}{\tau_1} \rightarrow \tau_2$ where $C$ is a \emph{comonad}. Our earlier work 
-\cite{petricek2013coeffects} used indexed comonads with denotations $C^{\cclrd{r}}{\tau_1} \rightarrow \tau_2$ adding 
-annotations akin to Wadler and Thiemann. In Section~\ref{sec:semantics} we extend
-indexed comonads to capture the general coeffect systems of this paper,  
-in the style of Katsumata. 
-% 
-% TP: Mentioned Katsumata here. Thought it is nice to say we build on new work here (as opposed to ICALP)
-%
-
-\paragraph{Language and meta-language.}
-Moggi uses monads in two systems~\cite{moggi1991monads}. In the first system, a monad is used to model
-an effectful language itself -- the semantics of a language uses a specific monad. In the second system, 
-monads are added as type constructors, together with syntax corresponding to \emph{unit} and \emph{bind}
-operations.
-
-Looking at context, Uustalu and Vene \cite{uustalu2008notions} follow the first approach 
-(using a concrete comonad to model dataflow). Contextual-Modal Type Theory (CMTT) of Nanevski et al.
-\cite{logic-cmtt} follows the latter approach, adding a comonad via the $\Box$ modality of modal S4
-to the language. We focus on concrete languages using the first approach. 
-A ``coeffect meta-language'' is an interesting future work.
-
-\paragraph{Sub-structural and bunched types.}
-% \cite{substruct-linear-change} 
-Sub-structural type systems restrict how a context is used. This is achieved by removing some
-of the structural typing rules (weakening, contraction, exchange). As the bounded linear logic 
-example (Section~\ref{sec:intro-coeffects-bll}) shows, our system can be viewed as a generalization.
 
 % ==================================================================================================
 
@@ -741,7 +256,7 @@ bijective. For example, flat coeffect systems have just a single shape $\SH = \{
 
 In the coeffect judgment $\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau$, the coeffect annotation
 $\aclrd{R}$ is drawn from the set of coeffect scalars $\C$ indexed by the shape of $\Gamma$.
-We write $\aclrd{s} = \mksh{\Gamma}$ for the shape corresponding to $\Gamma$. We define shapes by a 
+We write $\aclrd{s} = \slift{\Gamma}$ for the shape corresponding to $\Gamma$. We define shapes by a 
 \emph{set} of positions and so we can write $\aclrd{R} \in \sclrd{s} \rightarrow \C$ as a
 mapping from positions (defined by the shape) to scalar coeffects. We usually write this as 
 the exponent $\aclrd{R} \in \C^{\sclrd{s}}$.
@@ -751,10 +266,10 @@ variable contexts), an operation that computes shape from the free-variable cont
 and two special shapes in $\SH$ representing empty context and singleton context. 
 
 \begin{definition}
-  A \emph{\sclrd{coeffect shape}} structure $(\SH, \mksh{\textnormal{--}}, \stimes,
+  A \emph{\sclrd{coeffect shape}} structure $(\SH, \slift{\textnormal{--}}, \stimes,
   \sempty, \sunit)$ comprises a set $\SH$ with a binary operation
   $\stimes$ on $\SH$ for shape composition, a mapping from contexts to
-  shapes $\mksh{\Gamma} \in \SH$, and elements $\sempty,\sunit \in
+  shapes $\slift{\Gamma} \in \SH$, and elements $\sempty,\sunit \in
   \SH$ such that $(\SH, \stimes, \sempty)$ is a monoid. The 
   elements $\sempty$ and $\sunit$ represent the shapes of empty and
   singleton free-variable contexts respectively.
@@ -803,7 +318,7 @@ operators for combining shaped coeffects.
 
 \begin{definition}
   Given a \cclrd{coeffect scalar} $(\C, \cseq, \cpar, \cunit, \czero,
-  \cleq)$ and a \sclrd{coeffect shape} $(\SH, \mksh{\textnormal{--}}, \stimes,
+  \cleq)$ and a \sclrd{coeffect shape} $(\SH, \slift{\textnormal{--}}, \stimes,
   \sempty, \sunit)$ a \emph{\aclrd{coeffect algebra}} extends the two
   structures with $(\amerge, \asplit, \azero)$ where $\azero \in
   \C^{\sempty}$ is a coeffect annotation for the empty context and
@@ -979,8 +494,8 @@ used in the (\emph{contr}) rule.
 
 Exchange and contraction decompose and reconstruct coeffect annotations 
 using $\amerge_{\sclrd{m},\sclrd{n}}$ (in assumption) and $\asplit_{\sclrd{m},\sclrd{n}}$ (in conclusion). 
-The shape subscripts are omitted, but we require the shapes to match using $\sclrd{m} = \mksh{\Gamma_1}$
-and $\sclrd{n} = \mksh{\Gamma_2}$. 
+The shape subscripts are omitted, but we require the shapes to match using $\sclrd{m} = \slift{\Gamma_1}$
+and $\sclrd{n} = \slift{\Gamma_2}$. 
 
 The (\emph{weak}) rule drops an ignored variable annotated with $\aweak$ (compare with (\emph{var})
 annotated using $\aunit$). The (\emph{exch}) rule switches the values 
@@ -1020,7 +535,7 @@ coeffect system} has:
 
 \noindent
 The definition is valid since the shape operations form a monoid
-$\sclrd{(\mathbb{N}, +, 0)}$ and $\mksh{\textnormal{--}}$ (calculating the length of
+$\sclrd{(\mathbb{N}, +, 0)}$ and $\slift{\textnormal{--}}$ (calculating the length of
 a list) is a monoid homomorphism from the free monoid to the monoid of
 shapes.
 
@@ -1274,7 +789,7 @@ has no immediate context requirements.
 
 \begin{definition} 
 An expression $e$ is a \emph{value}, written as $\textit{val}(e)$ if $\coctx{\Gamma}{ \aclrd{\mathsf{VAL}} } \vdash e : \tau$ 
-where $\aclrd{\mathsf{VAL}} : \C^{\mksh{\Gamma}}$ is a coeffect indexed by the shape of $\Gamma$ that
+where $\aclrd{\mathsf{VAL}} : \C^{\slift{\Gamma}}$ is a coeffect indexed by the shape of $\Gamma$ that
 always returns $\cunit$. That is $\aclrd{\mathsf{VAL}} = \lambda \sclrd{n} . \cunit$.
 \end{definition}
 
@@ -1539,7 +1054,7 @@ are written in two ways, either $B^A$ or $A \Rightarrow B$.
 \label{sem:interp}
 
 The semantics is parameterised by a coeffect algebra, with scalar coeffects $(\C,
-\cseq, \cpar, \cunit, \czero, \cleq)$, coeffect shape $(\SH, \mksh{-},
+\cseq, \cpar, \cunit, \czero, \cleq)$, coeffect shape $(\SH, \slift{-},
 \stimes, \sempty, \sunit)$, and $(\amerge, \asplit, \azero)$. An
 interpretation $\interp{-}$ is given to types, free-variable contexts,
 and type and coeffect judgments, with a base Cartesian-closed category
@@ -1558,14 +1073,14 @@ type and coeffect judgments are interpreted (given denotations)
 as morphisms in $\mathbb{C}$, of the form:
 %
 \begin{align*}
-\interp{\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau} : \D^{\mksh{\Gamma}}_{\aclrd{R}}
+\interp{\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau} : \D^{\slift{\Gamma}}_{\aclrd{R}}
 \interp{\Gamma} \rightarrow \interp{\tau}
 \end{align*}
 %%
 The interpretation is a morphism from an interpretation of the context $\Gamma$
-to the interpretation of the result. The functor $\D^{\mksh{\Gamma}}_{\aclrd{R}}$ over the
+to the interpretation of the result. The functor $\D^{\slift{\Gamma}}_{\aclrd{R}}$ over the
 context encodes the semantic notion of context and is indexed by the free-variable 
-context shape $\mksh{\Gamma}$ and coeffect annotation $\aclrd{R}$. 
+context shape $\slift{\Gamma}$ and coeffect annotation $\aclrd{R}$. 
 
 The structure $\D$ can be thought of as a coproduct of functors $\D^{\sclrd{n}}$ for every
 possible shape $\sclrd{n} \in \SH$ of free-variable context:
@@ -1595,7 +1110,7 @@ formed by lists of length matching the required number.
 % TP: I think this is easier to understand in the later paragraph
 %
 % Thus free-variable contexts are interpreted
-% $\interp{\Gamma} \in \mathbb{C}^{\mksh{\Gamma}}$ and 
+% $\interp{\Gamma} \in \mathbb{C}^{\slift{\Gamma}}$ and 
 
 %
 % TP: I did not get the following - but I think I tried to say the same thing above...?
@@ -1627,7 +1142,7 @@ This interpretation is shared by all coeffect calculi.
 
 \paragraph{Free-variable contexts.} 
 As described above, free-variable contexts $\Gamma$ are given an
-interpretation as objects in $\mathbb{C}^{\mksh{\Gamma}}$. Thus,
+interpretation as objects in $\mathbb{C}^{\slift{\Gamma}}$. Thus,
 the interpretation of contexts is shape dependent. 
 
 %\tpnote{This is tricky but clever! Tried to add explanation}
@@ -1638,7 +1153,7 @@ structural systems, the shape matches the number of variables and so the model
 is a value in the product category $\mathbb{C} \times \ldots \times \mathbb{C}$.
 
 \paragraph{\textnormal{\emph{Flat coeffects.}}} 
-Recall that $\SH = \{\sflat\}$ and $\mksh{\Gamma} = \sflat$.
+Recall that $\SH = \{\sflat\}$ and $\slift{\Gamma} = \sflat$.
 Since the set of positions $\sflat$ is a singleton, then $\mathbb{C}^{\sflat}$
 is isomorphic to $\mathbb{C}$.
 %
@@ -1670,7 +1185,7 @@ x_n : \tau_n}{\aclrd{R}} \vdash e : \tau} : \D^{\sflat}_{\aclrd{R}}(\interp{\tau
 $$
 
 \paragraph{\textnormal{\emph{Structural coeffects.}}}
-Recall that $\SH = \mathbb{N}$ and $\mksh{\Gamma} = |\Gamma|$
+Recall that $\SH = \mathbb{N}$ and $\slift{\Gamma} = |\Gamma|$
 (number of free variables), thus 
 $\interp{\Gamma} : \emph{obj}(\mathbb{C}^{|\Gamma|})$. This is defined similarly 
 to the above, but instead of using products in $\mathbb{C}$, %and the terminal object
