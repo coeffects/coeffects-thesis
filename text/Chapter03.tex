@@ -7,11 +7,12 @@ Software developers as well as programming language researchers choose abstracti
 just on how appropriate they are. Other factors may include social aspects -- how well is the 
 abstraction known, how well is it documented and whether it is a standard tool of the 
 \emph{research programme}\footnote{ Research programme, as introduced by Lakatos \cite{philosophy-lakatos},
-is a network of scientists sharing the same basic assumptions and techniques.}. 
+is a network of scientists sharing the same basic assumptions and techniques.}. This may
+partly be why no unified context tracking mechanism has been developed so far.
 
 In Chapter~\ref{ch:intro}, we argued that context-awareness had, so far, only limited influence 
-on the design of programming languages, possibly because it is a challenge that is not easy to
-see. However, many of the properties that we treat uniformly as \emph{coeffects} have been
+on the design of programming languages because it is a challenge that is not easy to
+see. However, many of the properties that this thesis treats uniformly as \emph{coeffects} have been
 previously tracked by other means. This includes special-purpose type systems, systematic 
 approaches arising from modal logic S4, as well as techniques based on abstractions designed 
 for other purpose, most frequently monads.
@@ -44,13 +45,13 @@ differences between effects and coeffects.
 The difference between effects and coeffects becomes apparent when we consider lambda abstraction.
 The typical lambda abstraction rule for effect systems looks as (\emph{abs-eff}) in 
 Figure~\ref{fig:applications-abs}. Wadler and Thiemann~\cite{monads-effects-marriage} explain how 
-the effect analysis works `as follows:
+the effect analysis works as follows:
 %
 \begin{quote}
 \emph{In the rule for abstraction, the effect is empty because evaluation immediately
 returns the function, with no side effects. The effect on the function arrow
 is the same as the effect for the function body, because applying the function will
-have the same side effects as evaluating the body.}
+have the same side effects as evaluating the~body.}
 \end{quote}
 %
 This is the key property of \emph{output impurity}. The effects are only produced when the
@@ -63,14 +64,9 @@ for such standard systems and characterises them as follows:
 effect can be thunked as ``pure'' computations for a domain-specific notion of purity.}
 \end{quote} 
 %
-The thunking is typically a lambda abstraction -- given an effectful expression $e$, the
-function $\lambda x.e$ is effect free value (thunk) that delays all effects.
-
-Coeffects do not follow this pattern. Indeed, we can see this even when we consider the classical
-notion of context. Standard lambda abstraction (\emph{app-pure}) in Figure~\ref{fig:applications-abs}
-splits the free-variable context of an expression between variables defined at the \emph{declaration 
-site} (the lexical scope) and those provided by the \emph{call site} (bound variable, or the 
-parameter). This is also the case for other notions of context that we consider in this thesis.
+The thunking is typically performed by a lambda abstraction -- given an effectful expression 
+$e$, the function $\lambda x.e$ is an effect free value (thunk) that delays all effects.
+As shown in the next section, contextual properties do not follow this pattern.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -92,12 +88,46 @@ parameter). This is also the case for other notions of context that we consider 
 
 \subsection{Notions of context}
 
-Aside from the standard free-variable context, we consider two notions of context -- 
-\emph{flat} refers to overall properties of the environment and \emph{structural} refer to 
-properties attached to individual variables. Similarly to free-variable context, both of these
-notions split the context between declaration-site (lexical scope) and call-site (dynamic scope).
+We look at three notions of context. The first is the standard free-variable context in 
+$\lambda$-calculus. This is well understood and we use it to demonstrate how contextual 
+properties behave. Then we consider two notions of context introduced in this thesis --
+\emph{flat coeffects} refer to overall properties of the environment and \emph{structural coeffects} 
+refer to properties attached to individual variables. 
+
+\paragraph{Variable coeffects.}
+
+In standard $\lambda$-calculus, variable access can be seen as a primitive operation that 
+accesses the context. The expression $x$ introduces a context requirement -- the expression 
+is typeable only in a context that contains $x:\tau$ for some type $\tau$. 
+
+The standard lambda abstraction (\emph{abs-pure}), shown in Figure~\ref{fig:applications-abs},
+splits the free-variable context of an expression into two parts. The value of the parameter
+has to be provided by the \emph{call site} (dynamic scope) and the remaining values are provided 
+by the \emph{declaration site} (lexical scope). Here, the splitting is determined syntactically --
+the notation $\lambda x.e$ names the variable whose value comes from the call site.
+
+The flat and structural coeffects behave in the same way. They also split context-requirements
+between the declaration site and call site, but they do it in two different ways.
 
 \paragraph{Flat coeffects.}
+
+In Chapter~\ref{ch:intro}, we used \emph{resources} in a distributed system as an example of flat
+coeffects. These could be, for example, a database, GPS sensor or access to current time.
+We also outlined that such context requirements can be tracked as part of the typing assumption,
+for example, say we have an expression $e$ that requires GPS and current time. The context of
+such expression will be $\coctx{\Gamma}{ \aclrd{\ident{\{ gps, time \}}} }$.
+
+The interesting case is when we construct a lambda function $\lambda x.e$, marshall it and
+send it to another node. In that case, the context requirements can be satisfied in a number of
+ways. When the same resource is available at the target machine (\eg.~current time), we can
+send the function with a context requirement and \emph{rebind} the resource. However, if the
+resource is not available (\eg.~GPS on the server), we need to capture a \emph{remote reference}.
+
+In the example discussed here, $\lambda x.e$ would require a context 
+$\coctx{\Gamma}{ \aclrd{\ident{\{ gps \}}} }$
+
+Context requirements in distributed systems can be satisfied in a number of ways. When the 
+resource is available locally, 
 
 In distributed 
 systems, additional resources available at certain nodes (\eg~a database or GPS sensor) can be 
@@ -106,6 +136,8 @@ also viewed as a part of typing assumptions.
 Similarly, resources in a distributed system can be satisfied by both the declaration site (by 
 capturing a remote reference) and the call site (by resource rebinding)~\cite{app-distributed-acute}. 
 In this case, the resource requirements are split freely. 
+
+We discuss this example in detail in Section~X. 
 
 \paragraph{Structural coeffects.}
 
