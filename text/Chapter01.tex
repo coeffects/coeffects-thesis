@@ -267,6 +267,7 @@ information about the calculated results.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Context-awareness \#4: Checking array access patterns}
+\label{sec:intro-why-array}
 
 The last example leaves the topic of cross-platform and distributed computing. We focus on 
 checking how arrays are accessed. This is a simpler version of the data-flow programming
@@ -338,6 +339,7 @@ context-aware language, based on the theory of coeffects, can provide.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Context-aware language in action}
+\label{sec:intro-context-example}
 
 As an example, consider a news reader consisting of server-side (which stores the news in a 
 database) and a number of clients applications for popular platforms (Android, Windows Phone, etc.). 
@@ -508,11 +510,11 @@ or \ident{float}, depending on the types of the variables. For example, the foll
 typing judgement in F\#:
 %
 \begin{equation*}
-x\-:\-\ident{int},~y\-:\-\ident{int} \vdash x+y : \ident{int}
+x\!:\!\ident{int},~y\!:\!\ident{int} \vdash x+y : \ident{int}
 \end{equation*}
 %
 This judgement assumes that the type of both $x$ and $y$ is \ident{int} and so the result must also
-be \ident{int}. The expression would also be typeable in a context $x\-:\-\ident{int},~y\-:\-\ident{int}$,
+be \ident{int}. The expression would also be typeable in a context $x\!:\!\ident{int},~y\!:\!\ident{int}$,
 but not, for example, in a context where $x$ has a type \ident{unit}.
 
 \paragraph{Tracking evaluation effects.}
@@ -521,7 +523,7 @@ the range of an integer. However, it is also possible to track what program \emp
 In ML-like languages, the following is a valid judgement:
 %
 \begin{equation*}
-x\-:\-\ident{int} \vdash \ident{print}~x : \ident{unit}
+x\!:\!\ident{int} \vdash \ident{print}~x : \ident{unit}
 \end{equation*}
 %
 The judgement states that the expression $\ident{print}~x$ has a type \ident{unit}. This is correct, 
@@ -534,7 +536,7 @@ Another option for tracking effects is to extend the judgement with additional i
 about the effects. The judgement in a language with effect system would look as follows:
 %
 \begin{equation*}
-x\-:\-\ident{int} \vdash \ident{print}~x : \ident{unit~\&\aclrd{\{ console \}}}
+x\!:\!\ident{int} \vdash \ident{print}~x : \ident{unit~\&\aclrd{\{ console \}}}
 \end{equation*}
 %
 Effect systems add \emph{effect annotation} as another component of the typing judgement. In the above
@@ -558,7 +560,7 @@ of effect systems. To demonstrate our approach, consider the following call from
 shown earlier -- first using standard ML-like type system:
 %
 \begin{equation*}
-\ident{password}\-:\-\ident{string},~\ident{cmd}\-:\-\ident{string} 
+\ident{password}\!:\!\ident{string},~\ident{cmd}\!:\!\ident{string} 
   \vdash \ident{query}(\ident{cmd}, \ident{password}) : \ident{news list}
 \end{equation*}
 %
@@ -571,8 +573,8 @@ The \emph{coeffect systems} developed in this thesis capture this information in
 %
 \begin{equation*}
 \begin{array}{l}
- ( \ident{password}\-:\-\ident{string \hspace{-1em}{\footnotesize @ \aclrd{sensitive}}},
-   \ident{cmd}\-:\-\ident{string})
+ ( \ident{password}\!:\!\ident{string \hspace{-1em}{\footnotesize @ \aclrd{sensitive}}},
+   \ident{cmd}\!:\!\ident{string})
  \hspace{-0.5em}
  \ident{\footnotesize @ \aclrd{\{ database \}}} \vdash \\[-0.1em]
  \hspace{3em} \ident{query}(\ident{cmd}, \ident{password}) : \ident{news list}

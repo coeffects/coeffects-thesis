@@ -73,11 +73,11 @@ As shown in the next section, contextual properties do not follow this pattern.
 \begin{figure}
 \[
 \tyrule{abs-pure}
-  { \Gamma, x\-:\-\tau_1 \vdash e : \tau_2}
+  { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2}
   { \Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 1}
 \;\;
 \tyrule{abs-eff}
-  { \Gamma, x\-:\-\tau_1 \vdash e : \tau_2 \,\&\, \aclrd{\sigma} }
+  { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2 \,\&\, \aclrd{\sigma} }
   { \Gamma \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{\sigma}} \tau_2 \,\&\, \aclrd{\emptyset} }
 \]
 \caption{Lambda abstraction for pure and effectful computations}
@@ -111,11 +111,11 @@ between the declaration site and call site, but they do it in two different ways
 
 \paragraph{Flat coeffects.}
 
-In Chapter~\ref{ch:intro}, we used \emph{resources} in a distributed system as an example of flat
-coeffects. These could be, for example, a database, GPS sensor or access to current time.
-We also outlined that such context requirements can be tracked as part of the typing assumption,
-for example, say we have an expression $e$ that requires GPS and current time. The context of
-such expression will be $\coctx{\Gamma}{ \aclrd{\ident{\{ gps, time \}}} }$.
+In Section~\ref{sec:intro-context-example}, we used \emph{resources} in a distributed system as an 
+example of flat coeffects. These could be, for example, a database, GPS sensor or access to the current 
+time. We also outlined that such context requirements can be tracked as part of the typing assumption,
+for example, say we have an expression $e$ that requires GPS coordinates and the current time. 
+The context of such expression will be $\coctx{\Gamma}{ \aclrd{\ident{\{ gps, time \}}} }$.
 
 The interesting case is when we construct a lambda function $\lambda x.e$, marshall it and
 send it to another node. In that case, the context requirements can be satisfied in a number of
@@ -123,76 +123,87 @@ ways. When the same resource is available at the target machine (\eg.~current ti
 send the function with a context requirement and \emph{rebind} the resource. However, if the
 resource is not available (\eg.~GPS on the server), we need to capture a \emph{remote reference}.
 
-In the example discussed here, $\lambda x.e$ would require a context 
-$\coctx{\Gamma}{ \aclrd{\ident{\{ gps \}}} }$
+In the example discussed here, $\lambda x.e$ would require GPS sensor from the declaration
+site (lexical scope) where the function is declared, which is attached to the current context
+as $\coctx{\Gamma}{ \aclrd{\ident{\{ gps \}}} }$. The current time is required from the caller
+of the function. So, the context requirement on the call site (dynamic scope) will be
+$\aclrd{r}=\aclrd{\footnotesize\ident{\{ time \}}}$. In coeffect systems, we attach this information
+to the function writing $\tau_1 \xrightarrow{ \aclrd{r} } \tau_2$.
 
-Context requirements in distributed systems can be satisfied in a number of ways. When the 
-resource is available locally, 
-
-In distributed 
-systems, additional resources available at certain nodes (\eg~a database or GPS sensor) can be 
-also viewed as a part of typing assumptions. 
-
-Similarly, resources in a distributed system can be satisfied by both the declaration site (by 
-capturing a remote reference) and the call site (by resource rebinding)~\cite{app-distributed-acute}. 
-In this case, the resource requirements are split freely. 
-
-We discuss this example in detail in Section~X. 
+We look at resources in distributed programming in more details in Section~\ref{sec:applications-flat-distr}.
+The important point here is that in flat coeffect systems, contextual requirements are 
+\emph{split} between the call-site and declaration-site. Furthermore, in case of distributed
+programming, the resources can be freely distributed between the two sites.
 
 \paragraph{Structural coeffects.}
 
-The previously described notion of a \emph{coeffect system} \cite{petricek2013coeffects} tracks
-contextual properties of entire programs, which is practically useful for implicit parameters 
-or resources. However, for per-variable coeffects, the previous work provides only an approximation 
-with limited practical usefulness (\eg~marking the whole context as live when just one 
-variable in the context is live).
+On the one hand, variable context provides a \emph{fine-grained tracking} mechanism of how context
+(variables) are used. On the other hand, flat coeffects let us track \emph{additional information} about 
+the context. The purpose of \emph{structural coeffects} is to reconcile the two and to provide a way
+for fine-grained tracking of additional information related to variables in programs.
 
-Furthermore, contextual requirements may relate to 
-specific variables. For example, liveness or access patterns, such as the number of accesses in 
-bounded linear logic or past values in causal dataflow.
+In Section~\ref{sec:intro-why-array}, we used an example of tracking array access patterns. For every
+variable, the additional coeffect annotation keeps a range of indices that may be accessed relatively
+to the current cursor. For example, consider an expression 
+$x[\kvd{cursor}] = y[\kvd{cursor}-1] + y[\kvd{cursor}+1]$.
 
-For contextual properties associated with 
-variables (\eg~liveness or dataflow), the splitting tracks free variables -- requirements associated 
-with a \emph{bound} variable should be satisfied by the call site, while those associated with 
-\emph{free} variables should be provided by the declaration site.
+Here, the variable context $\Gamma$ contains two variables, both of type \ident{Arr}. This means
+$\Gamma = x\!:\!\ident{Arr},\, y\-!\-!\ident{Arr}$. For simplicity, we treat \kvd{cursor} as a 
+language primitive. The coeffect annotations will be $(0,0)$ for $x$ and $(-1,1)$ for $y$, 
+denoting that we access only the current value in $x$, but we need access to both left and right 
+neighbours in the $y$ array. In order to unify the flat and structural notions, we attach this information 
+as a \emph{vector} of annotations associated with a \emph{vector} of variable and write:
+$\coctx{x\!:\!\ident{Arr},\, y\!:\!\ident{Arr}}{ \aclrd{\alift{ (0,0), (-1,1) }} }$.
+The unification is discussed in Chapter~\ref{ch:unified}.
 
-lambda abstraction places 
-requirements on both the \emph{call-site} (latent requirements) and the \emph{declaration-site} 
-(immediate requirements), 
+Unlike in flat coeffects, in the structural systems, splitting of context determined by the syntax. 
+For example, consider a function that takes $y$ and contains the above body:
+$\lambda y.x[\kvd{cursor}] = y[\kvd{cursor}-1] + y[\kvd{cursor}+1]$. Here, the declaration site
+contains $x$ and needs to provide access at least within a range $(0,0)$. The call site provides
+a value for $y$, which needs to be accessible at least within $(-1, 1)$. In this way, structural
+coeffects remove the non-determinism of flat coeffect systems.
 
- We start with some background and finish with a brief overview of the literature leading to coeffects.
-
-In the rest of the chapter, we look at instances of both. But before, we need to look at vectors.
+Before looking at concrete flat and structural systems in mode details, we briefly overview 
+some notation used in this thesis. As structural coeffects keep annotations as \emph{vectors},
+we use a number of operations related to scalars and vectors.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Scalars and vectors}
 
-The $\lambda$-calculus is asymmetric-- it maps a context with \emph{multiple} variables to a 
-\emph{single} result. An expression with $n$ free variables of types $\sigma_i$ can be modelled
-by a function
-$\sigma_1 \times \ldots \times \sigma_n \rightarrow \tau$ with a product on the left, but a single value
+The $\lambda$-calculus is asymmetric -- it maps a context with \emph{multiple} variables to a 
+\emph{single} result. An expression with free variables of types $\tau_i$ can be modelled by a function 
+$\tau_1 \times \ldots \times \tau_n \rightarrow \tau$ with a product on the left, but a single value
 on the right. Effect systems attach effect annotations to the result $\tau$. In coeffect systems,
-we attach coeffects to the context $\sigma_1 \times \ldots \times \sigma_n$ and we often (but not always)
-have one coeffect per each variable. We call the overall coeffect a \emph{vector} consisting of
-\emph{scalar} coeffects. This asymmetry explains why coeffect systems are not trivially dual to 
+we attach a coeffect annotation to the context $\tau_1 \times \ldots \times \tau_n$.
+
+Structural coeffects have one coeffect annotation per each variable. Thus, the annotation consists
+of multiple values -- one belonging to each variable. To distinguish between the overall annotation
+and individual (per-variable) annotations, we call the overall coeffect a \emph{vector} consisting of 
+\emph{scalar} coeffects. This asymmetry also explains why coeffect systems are not trivially dual to 
 effect systems.
 
-It is useful to clarify how vectors are used in this paper. Suppose we have a set $\C$ of
-\emph{scalars} such as $\cclrd{r_1},\ldots,\cclrd{r_n} \in \C$. A vector $\aclrd{R}$ over $\C$
-is a tuple $\langle \cclrd{r_1}, \ldots, \cclrd{r_n}\rangle$ of scalars. 
-We use letters like $\aclrd{R}, \aclrd{S}, \aclrd{T}$ for 
-vectors and $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars.\footnote{For better readability, the paper 
-distinguishes different structures using colours. However ignoring the colour does not introduce 
-any ambiguity.} We also say that a \emph{shape} of a vector $\slift{\aclrd{R}}$ (or more generally any container) 
-is the set of \emph{positions} in a vector. So, a vector of length
-$n$ has shape $\{ 1, 2, \ldots, n \}$. 
+It is useful to clarify how vectors are used in this thesis. Suppose we have a set $\C$ of
+\emph{scalars} such that $\cclrd{r_1},\ldots,\cclrd{r_n} \in \C$. A vector $\aclrd{R}$ 
+over $\C$ is a tuple $\alift{ \cclrd{r_1}, \ldots, \cclrd{r_n} }$ of scalars. 
+We use upper-case letters like $\aclrd{R}, \aclrd{S}, \aclrd{T}$ for vectors and lower-case
+letters $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars\footnote{For better readability, the thesis
+also distinguishes different structures using colours. However ignoring the colour does not introduce 
+any ambiguity.}. We also say that a \emph{shape} of a vector $\slift{\aclrd{R}}$ (or more generally any container) 
+is the set of \emph{positions} in a vector. So, a vector of length $n$ has shape $\{ 1, 2, \ldots, n \}$. 
+We discuss containers and shapes further in Chapter~\ref{ch:unified} and also discuss how our use
+relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
 
-Just as in scalar-vector multiplication, we lift any binary operation on scalars into a scalar-vector one:
-$\cclrd{s} \bullet \aclrd{R} = \langle \cclrd{s}\bullet\cclrd{r_1}, \ldots, \cclrd{s}\bullet\cclrd{r_n}\rangle$.
-Given two vectors $\aclrd{R},\aclrd{S}$ of the same shape, containing partially ordered scalars, we 
-write $\aclrd{R} \leq \aclrd{S}$ for the pointwise extension of $\leq$ on scalars. Finally,
-the associative operation $\times$ concatenates vectors.
+Just as in the usual multiplication of a vector by scalar, we lift any binary operation on scalars into a 
+scalar-vector one. For any binary operation on scalars $\circ : \C \times \C \rightarrow \C$, we define
+ $\cclrd{s} \circ \aclrd{R} = \alift{ \cclrd{s}\circ\cclrd{r_1}, \ldots, \cclrd{s}\circ\cclrd{r_n}}$.
+Relations on scalars can be also lifted to vectors. Given two vectors $\aclrd{R}, \aclrd{S}$ of the
+same shape with positions $\{ 1, \ldots, n \}$ and a relation $\varpropto\, \subseteq \C \times \C$ we define 
+$\aclrd{R} \varpropto \aclrd{S} \Leftrightarrow (\cclrd{r_1} \varpropto \cclrd{s_1}) \wedge \ldots \wedge (\cclrd{r_n} \varpropto \cclrd{s_n}) $
+Finally, we often concatenate vectors -- for example, when joining two variable contexts.
+Given vectors $\aclrd{R}, \aclrd{S}$ with (possibly different) shapes $\{ 1, \ldots, n \}$ and 
+$\{ 1, \ldots, m \}$, the associative operation for concatenation $\times$ is defined as 
+$\aclrd{R}\times\aclrd{S} = \alift{\cclrd{r_1},\ldots,\cclrd{r_n},\cclrd{s_1},\ldots,\cclrd{s_m}}$.
 
 We note that an environment $\Gamma$ containing $n$ uniquely named, typed variables is also a vector, 
 but we continue to write `$,$' for the product, so $\Gamma_1, x\!:\!\tau, \Gamma_2$ should 
@@ -210,7 +221,7 @@ distributed programming, cross-compilation and data-flow.
 
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Implicit parameters} In Haskell, implicit parameters \cite{app-implicit-parameters} are 
+\subsection{Implicit parameters} In Haskell, implicit parameters \cite{app-implicit-parameters} are 
 a special kind of variables that may behave as dynamically scoped. This means, if a function uses 
 parameter $\ident{?p}$, then the caller of the function must define $\ident{?p}$ and set its value.
 Implicit parameters can be used to parameterise a computation (involving a chain of function calls)
@@ -267,7 +278,7 @@ later. Implicit parameters will also sever as one of our examples in Chapter~Y.
 
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Type classes}
+\subsection{Type classes}
 Implicit parameters are closely related to \emph{type classes} \cite{app-type-classes}. In Haskell,
 type classes provide a principled form of ad-hoc polymorphism (overloading). When a code uses 
 an overloaded operation (e.g.~comparison or numeric operators) a constraint is placed on the 
@@ -295,7 +306,9 @@ together with the function inputs.
 
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Rebindable resources}
+\subsection{Rebindable resources}
+\label{sec:applications-flat-distr}
+
 The need for parameters that do not strictly follow static scoping rules also arises in distributed
 computing. This problem has been addressed, for example, by Bierman et al. and Sewell et al. 
 \cite{app-distributed-rebinding,app-distributed-acute}. To quote the first work: \emph{``Dynamic 
