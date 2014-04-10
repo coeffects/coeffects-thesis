@@ -34,7 +34,7 @@
 \ExecuteMetaData[rules/rules.tex]{rule-definitions}
 
 % Typing rule and typing statement (single line)
-\newcommand{\tyrule}[3]{ \inference[\footnotesize{(#1)}~]{#2}{#3} }
+\newcommand{\tyrule}[3]{ \inference[\footnotesize{(\emph{#1})}~~]{#2}{#3} }
 \newcommand{\tyruleCompact}[3]{ \text{(\footnotesize{#1})}~\dfrac{#2}{#3} }
 
 % Coeffect algebra
@@ -46,7 +46,7 @@
 \newcommand{\cclrd}[1]{ \textcolor{cclr}{#1} }
 
 % Ordinary context where colouring is done by hand 
-\newcommand{\coctx}[2]{ #1 \,\text{\scriptsize @}\, {\footnotesize{\text{$#2$}}}  }
+\newcommand{\coctx}[2]{ #1 \,\text{\scriptsize @}\, {{\text{$#2$}}}  }
 
 % Simple coeffect systems in the introduction
 \newcommand{\cons}{\hspace{-0.15em}\times\hspace{-0.25em}} %\sctxclrd{+\hspace{-0.55em}+}}
@@ -61,6 +61,7 @@
 \newcommand{\slift}[1]{{\sclrd{[}#1\sclrd{]}}}
 
 
+\newcommand{\restr}[2]{#1|_{#2}}
 
 
 

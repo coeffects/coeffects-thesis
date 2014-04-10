@@ -1,6 +1,6 @@
 % ==================================================================================================
 
-\chapter{Context-aware applications} 
+\chapter{Context-aware systems} 
 \label{ch:applications} 
 
 Software developers as well as programming language researchers choose abstractions based not 
@@ -41,6 +41,7 @@ differences between effects and coeffects.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Lambda abstraction}
+\label{sec:applications-structure-lam}
 
 The difference between effects and coeffects becomes apparent when we consider lambda abstraction.
 The typical lambda abstraction rule for effect systems looks as (\emph{abs-eff}) in 
@@ -211,373 +212,589 @@ be seen as $\Gamma_1 \times \langle x\!:\!\tau\rangle \times \Gamma_2$.
 
 %===================================================================================================
 
-\section{Flat coeffects (1.)}
+\section{Flat coeffect systems}
 
-In a number of systems, the execution environment provides some additional data, resources or 
-information about the execution context, but are independent of the variables used by the 
-program. We look at implicit parameters and rebindable resources (that both provide additional
-identifiers that can be accessed similarly to variables, but follow different scoping rules),
-distributed programming, cross-compilation and data-flow.
+In flat coeffect systems, the additional contextual information are independent of the variables.
+As such, flat coeffects capture properties where the execution environment provides some 
+additional data, resources or information about the execution context.
+
+In this section, we look at a number of examples ranging from Haskell's type constraints
+and implicit parameters to distributed computing. For three of our examples --
+implicit parameters, liveness analysis and data-flow -- we show an ad-hoc type system that
+captures their properties. This serves as a basis for Chapter~\ref{ch:flat}, which develops
+a unified flat coeffect calculus.
 
 %---------------------------------------------------------------------------------------------------
 
-\subsection{Implicit parameters} In Haskell, implicit parameters \cite{app-implicit-parameters} are 
-a special kind of variables that may behave as dynamically scoped. This means, if a function uses 
-parameter $\ident{?p}$, then the caller of the function must define $\ident{?p}$ and set its value.
-Implicit parameters can be used to parameterise a computation (involving a chain of function calls)
-without passing parameters explicitly as additional arguments of all involved functions. A simple 
-language with implicit parameters has an expression $\ident{?p}$ to read a parameter value and an 
-expression\footnote{Haskell uses $\kvd{let}~\ident{?p} = e_1~\kvd{in}~e_2$, but we use a different keyword to 
-avoid confusion.} $\kvd{letdyn}~?p = e_1~\kvd{in}~e_2$ that sets a parameter $\ident{?p}$ to the value of $e_1$ 
-and evaluates $e_2$ in a context containing $\ident{?p}$
+\subsection{Implicit parameters and type classes} 
 
-An interesting question arises when we use implicit parameters in a nested function. The following 
-function does some pre-processing and then returns a function that builds a formatted string based 
-on two implicit parameters $\ident{?width}$ and $\ident{?size}$:
+Haskell provides two examples of flat coeffects -- type class and implicit parameter constraints
+\cite{app-type-classes,app-implicit-parameters}. Both of the features introduce additional 
+\emph{constraints} on the context requiring that the environment provides certain operations for
+a type (type classes) or that it provides values for named implicit parameters.
+In the Haskell type system, constraints $C$ are attached to the types of top-level declarations,
+such as let-bound functions. The Haskell notation $\Gamma \vdash e : C \Rightarrow \tau$ 
+corresponds to our notation $\coctx{\Gamma}{C} \vdash e : \tau$. 
+
+In this section, we present a type system for implicit parameters in terms of the coeffect typing
+judgement. We briefly consider type classes, but do no give a full type system.
+
+\paragraph{Implicit parameters.}
+Implicit parameters are a special kind of variables that support dynamic scoping.
+They can be used to parameterise a computation (involving a long chain of function calls)
+without passing parameters explicitly as additional arguments of all involved functions. 
+
+The dynamic scoping means that if a function uses a parameter $\ident{?param}$ then the caller of the 
+function must set a value of $\ident{?param}$ before calling the function. However, implicit 
+parameters also support lexical scoping. If the parameter $\ident{?param}$ is available in the 
+lexical scope where a function (which uses it) is defined, then the function will not require a
+value from the caller.
+
+A simple language with implicit parameters has an expression $\ident{?param}$ to read a parameter 
+and an expression\footnote{Haskell uses $\kvd{let}~\ident{?p} = e_1~\kvd{in}~e_2$, but we use a 
+different keyword to avoid confusion.} $\kvd{letdyn}~\ident{?param} = e_1~\kvd{in}~e_2$ that sets a 
+parameter $\ident{?param}$ to the value of $e_1$ and evaluates $e_2$ in a context containing 
+$\ident{?param}$. 
+
+The fact that implicit parameters support both lexical and dynamic scoping becomes interesting
+when we consider nested functions. The following function does some pre-processing and then returns a 
+function that builds a formatted string based on two implicit parameters $\ident{?width}$ and 
+$\ident{?size}$:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{format} = \lambda \ident{str}~\rightarrow \\
-\quad \kvd{let}~\ident{lines} = \ident{formatLines}~\ident{str}~\ident{?width}~\kvd{in}\\
+\kvd{let}~\ident{format} = \lambda \ident{str}~\rightarrow \\[-0.25em]
+\quad \kvd{let}~\ident{lines} = \ident{formatLines}~\ident{str}~\ident{?width}~\kvd{in}\\[-0.25em]
 \quad (\lambda \ident{rest}~\rightarrow~\ident{append}~
-         \ident{lines}~\ident{rest}~\ident{?width}~\ident{?size})\\
+         \ident{lines}~\ident{rest}~\ident{?width}~\ident{?size})
 \end{array}
 \end{equation*}
 %
 The body of the outer function accesses the parameter $\ident{?width}$, so it certainly requires a context 
 $\{ \ident{?width} : \ident{int} \}$. The nested function (returned as a result) uses the parameter 
-$\ident{?width}$, but in addition also uses $\ident{?size}$. Where should the parameters of the nested 
-function come from?
+$\ident{?width}$, but in addition also uses $\ident{?size}$. Where should the parameters used by the 
+nested function come from?
 
+To keep examples in this chapter uniform, we do not use the Haskell notation and instead
+write $\tau_1 \xrightarrow{r} \tau_2$ for a function that requires implicit parameters specified $r$.
 In a purely dynamically scoped system, they would have to be defined when the user invokes the nested function.
-However, in Haskell, implicit parameters behave as a combination of lexical and dynamic scoping. This means
-that the nested function can capture the value of $\ident{?width}$ and require just $\ident{?size}$
-In Haskell, this corresponds to the following type:
+However, implicit parameters behave as a combination of lexical and dynamic scoping. This means
+that the nested function can capture the value of $\ident{?width}$ and require just $\ident{?size}$.
+The following shows the two options:
 %
-\begin{equation*}
-(\ident{?width} :: \ident{Int}) \Rightarrow \ident{String} \rightarrow 
-  ((\ident{?size} :: \ident{Int}) \Rightarrow \ident{String} \rightarrow \ident{string})
-\end{equation*}
+\begin{equation}
+\tag{dynamic}
+\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int} \} }
+  (\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int}, \ident{?size} : \ident{int} \} } \ident{string})
+\end{equation}
+\vspace{-1em}
+\begin{equation}
+\tag{mixed}
+\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int} \} }
+  (\ident{string} \xrightarrow{ \{ \ident{?size} : \ident{int} \} } \ident{string})
+\end{equation}
 %
-As a result, the function can be called as follows:
+This is not a complete list of possible typings, but it demonstrates the options. The \emph{dynamic}
+case requires the parameter \ident{?width} twice (this may be confusing when the caller provides
+two different values). In the \emph{mixed} case, the nested function captures the \ident{?width} 
+parameter available from the declaration site. As a result, the latter function can be called as follows:\
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{formatHello} = \\
-\quad(~\kvd{letdyn}~\ident{?width}=5~\kvd{in}\\
-\quad~~\ident{format}~\texttt{"Hello"})~~\kvd{in}\\
-\kvd{letdyn}~\ident{?size} = 10~\kvd{in}~\ident{formatHello}~\texttt{"world"}
+\kvd{let}~\ident{formatHello} = \\[-0.25em]
+\quad(~\kvd{letdyn}~\ident{?width}=5~\kvd{in}~\ident{format}~\texttt{"Hello"})\\[-0.25em]
+\kvd{in}\,(~\kvd{letdyn}~\ident{?size} = 10~\kvd{in}~\ident{formatHello}~\texttt{"world"}~)
 \end{array}
 \end{equation*}
 %
-This way of assigning type to \ident{format} and calling it is not the only possible, though. 
-We could also say that the outer function requires both of the implicit parameters and the result
-is a (pure) function with no context requirements. This interaction between implicit parameters 
-and lambda abstraction demonstrates one of the key aspects of coeffects and will be discussed 
-later. Implicit parameters will also sever as one of our examples in Chapter~Y.
+For different typings of \ident{format}, different ways of calling it are valid. This illustrates
+the point made in Section~\ref{sec:applications-structure-lam} -- flat coeffect systems may 
+introduce certain non-determinism in the typing. The following section shows how this looks in the
+type system for implicit parameters.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\begin{equation*}
+\tyrule{var}
+  {x : \tau \in \Gamma}
+  {\coctx{\Gamma}{\aclrd{\emptyset}} \vdash x : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{param}
+  {}
+  {\coctx{\Gamma}{ \{\ident{?param}:\tau \} } \vdash \ident{?param} : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{r'}} \vdash e : \tau }
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau }\quad\quad(\aclrd{r'} \subseteq \aclrd{r})
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 &
+   \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma}{\aclrd{r} \cup \aclrd{s} \cup \aclrd{t}} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma, x:\tau_1}{\aclrd{s}} \vdash e_2 : \tau_2}
+  {\coctx{\Gamma}{\aclrd{r \cup s}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x:\tau_1}{\aclrd{r} \cup \aclrd{s}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 }
+\end{equation*}
+\vspace{-0.9em}
+\caption{Selected coeffect rules for implicit parameters}
+\label{fig:applications-flat-impl}
+\vspace{-1em}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Type system.}
+
+Figure~\ref{fig:applications-flat-impl} shows a type system that tracks the set of expression's 
+implicit parameters. The type system uses judgements of the form $\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau$
+meaning that an expression $e$ has a type $\tau$ in a free-variable context $\Gamma$ with a set 
+of implicit parameters specified by $\aclrd{r}$. The annotations $\aclrd{r},\aclrd{s},\aclrd{t}$ are sets of 
+pairs consisting of implicit parameter names and types, \ie~$\aclrd{r},\aclrd{s},\aclrd{t} \subseteq 
+  \ident{Names} \times \ident{Types}$. The expressions include \ident{?param} to read implicit
+parameter and \kvd{letdyn} to bind an implicit parameter. The types are standard, but functions are
+annotated with the set of implicit parameters that must be available on the call-site, \ie~
+$\tau_1 \xrightarrow{\aclrd{s}} \tau_2$.
+
+Accessing an ordinary variable (\emph{var}) does not require any implicit parameters. The rule that 
+introduces primitive context requirements is (\emph{param}) -- accessing a parameter \ident{?param} 
+of type $\tau$ requires it to be available in the context. The context may provide more (unused) 
+implicit parameters thanks to the (\emph{sub}) rule.
+
+When we read the rules from the top to the bottom, application (\emph{app}) and let binding 
+(\emph{let}) simply union the context requirements of the sub-expressions. However, lambda abstraction
+(\emph{abs}) is where the example differs from effect systems. The implicit parameters required by
+the body $\aclrd{r} \cup \aclrd{s}$ can be freely split between the declaration-site ($\coctx{\Gamma}{\aclrd{r}}$)
+and the call-site ($\tau_1 \xrightarrow{\aclrd{s}} \tau_2$).
+
+The union operation $\cup$ is not a disjoint union, which means that the values for implicit 
+parameters can also be provided by both sites. For example, consider a function with a body
+$\ident{?a} + \ident{?b}$. Assuming that the function takes and returns $\ident{int}$, the following
+list shows 4 out of 9 possible valid typing:
+%
+\begin{equation*}
+\begin{array}{rcllllr}
+\coctx{\Gamma}{\aclrd{ \{ \ident{?a}:\ident{int} \} }} &\vdash& \lambda x.\ident{?a} + \ident{?b} &:& 
+  \ident{int} \xrightarrow{ \{ \ident{?b}:\ident{int} \} } \ident{int} &\qquad\qquad&(1) \\
+\coctx{\Gamma}{\aclrd{ \{ \ident{?b}:\ident{int} \} }} &\vdash& \lambda x.\ident{?a} + \ident{?b} &:& 
+  \ident{int} \xrightarrow{ \{ \ident{?a}:\ident{int} \} } \ident{int} &&(2)\\
+\coctx{\Gamma}{\aclrd{ \{\ident{?a}:\ident{int} \} }} &\vdash& \lambda x.\ident{?a} + \ident{?b} &:& 
+  \ident{int} \xrightarrow{ \{\ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} } \ident{int} &&(3)\\
+\coctx{\Gamma}{\aclrd{ \emptyset }} &\vdash& \lambda x.\ident{?a} + \ident{?b} &:& 
+  \ident{int} \xrightarrow{ \{\ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} } \ident{int} &&(4)
+\end{array}
+\end{equation*}
+%
+The first two examples demonstrate why the system does not have the principal typing property. 
+Both ($1$) and ($2$) are valid typings and they may both be desirable in certain contexts where
+the function is used. 
+
+In ($3$), the parameter \ident{?a} has to be provided from both the declaration-site and call-site.
+We describe system that supports dynamic rebinding, meaning that when the caller provides a 
+value, it hides the value that may be available from the declaration-site. This means that 
+$4$ is a more precise typing modelling the same situation. 
 
 %---------------------------------------------------------------------------------------------------
 
-\subsection{Type classes}
-Implicit parameters are closely related to \emph{type classes} \cite{app-type-classes}. In Haskell,
-type classes provide a principled form of ad-hoc polymorphism (overloading). When a code uses 
-an overloaded operation (e.g.~comparison or numeric operators) a constraint is placed on the 
-context in which the operation is used. For example:
+\begin{figure}
+
+{\small The semantics is defined inductively over the typing derivation:}
+\begin{equation}
+\tag{\emph{var}}
+\sem{\coctx{\Gamma}{\aclrd{r}} \vdash x_i : \tau_i} = \lambda ((x_1, \ldots, x_n), \_) \rightarrow x_i
+\end{equation}
+\vspace{-1.5em}
+\begin{equation}
+\tag{\emph{param}}
+\sem{\coctx{\Gamma}{\aclrd{r}} \vdash ?p : \sigma} = \lambda (\_, f) \rightarrow f~?p
+\end{equation}
+\vspace{-1.5em}
+\begin{equation}
+\tag{\emph{sub}}
+\sem{\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau} = \lambda (x, f) \rightarrow 
+  \sem{\coctx{\Gamma}{\aclrd{r'}} \vdash e : \tau}~(x, \restr{f}{\aclrd{r'}})
+\end{equation}
+\vspace{-1.5em}
+\begin{equation}
+\tag{\emph{abs}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), f) \rightarrow\\
+  \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{r}\cup\aclrd{s}} \vdash e : \tau_2 }~((x_1, \ldots, x_n, y), f \uplus g)   	 
+\end{array}
+\end{equation}
+\vspace{-1.0em}
+\begin{equation*}
+\tag{\emph{app}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{r}\cup\aclrd{s}\cup\aclrd{t}} \vdash e_1~e_2 : \tau_2 } = \lambda (x, f) \rightarrow \\
+  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 }~(x, \restr{f}{\aclrd{r}})\\
+  \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }~(x, \restr{f}{\aclrd{s}} ), \restr{f}{\aclrd{t}})
+\end{array}
+\end{equation*}
+
+\vspace{1em}
+{\small Monadic semantics using the reader monads differs as follows:}
+\begin{equation}
+\tag{\emph{rdabs}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), \_) \rightarrow\\
+  \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{r}\cup\aclrd{s}} \vdash e : \tau_2 }~((x_1, \ldots, x_n, y), g)   	 
+\end{array}
+\end{equation}
+
+\vspace{1em}
+{\small Where $\uplus$ and $\restr{f}{\aclrd{r}}$ are auxiliary definitions:}
+\begin{equation*}
+\begin{array}{rcl}
+\restr{f}{\aclrd{r}} &=& \{ (p,v) \;|\; (p,v) \in f, \;p \in \aclrd{r} \}\\
+f \uplus g &=& \restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g \\
+\end{array}
+\end{equation*}
+
+
+\caption{Semantics of a language with implicit parameters}
+\label{fig:applications-flat-implsem}
+\end{figure}
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Semantics.}
+Implicit parameters can be implemented by passing around a hidden dictionary that provides values
+to the implicit parameters. Accessing a parameter then becomes a lookup in the dictionary and
+the \kvd{letdyn} construct extends the dictionary. To elucidate how such hidden dictionaries 
+are propagated through the program when using lambda abstractions and applications, we present a 
+simple semantics for implicit parameters. The goal here is not to prove properties of the language,
+but simply to provide a better explanation. A detailed semantics in terms of indexed comonads is
+shown in Chapter~\ref{ch:flat}.
+
+For simplicity, we assume that all implicit parameters have the same type $\sigma$. In that setting, 
+coeffect annotations $\aclrd{r}$ are just sets of names, \ie~$\aclrd{r}, \aclrd{s}, \aclrd{t} \subseteq \ident{Names}$.
+Given an expression $e$ of type $\tau$ that requires free variables $\Gamma$ and implicit parameters 
+$\aclrd{r}$, our interpretation is a function that takes a product of variables from $\Gamma$ together 
+with a hidden dictionary of implicit parameters and returns $\tau$:
+%
+\begin{equation*}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \aclrd{r} } \vdash e : \tau} 
+  ~:~ (\tau_1 \times \ldots \times \tau_n) \times (\aclrd{r} \rightarrow \sigma) \rightarrow \tau
+\end{equation*}
+%
+The hidden dictionary is represented as a function from $\aclrd{r}$ to $\sigma$. This means that it 
+provides a $\sigma$ value for all implicit parameters that are required according to the typing.
+Note that the domain of the function is not the set of all possible implicit parameter names, but
+only a set of those that are specified by the type system.
+
+A hidden dictionary also needs to be attached to all functions. A function $\tau_1 \xrightarrow{\aclrd{s}} \tau_2$
+is interpreted by a function that takes $\tau_1$ together with a dictionary that defines values for
+implicit parameters in $\aclrd{s}$:
 %
 \begin{equation*}
 \begin{array}{l}
-\ident{twoTimes}~::~\ident{Num}~\alpha \Rightarrow \alpha \rightarrow \alpha \\
+\sem{\tau_1 \xrightarrow{\aclrd{s}} \tau_2} = \tau_1 \times (\aclrd{s} \rightarrow \sigma) \rightarrow \tau_2
+\end{array}
+\end{equation*}
+%
+The definition of the semantics is shown in Figure~\ref{fig:applications-flat-implsem}. Let binding
+can be viewed as a syntactic sugar for $(\lambda x.e_2)~e_1$ and so it is omitted for brevity. The 
+(\emph{var}) and (\emph{param}) rules are simple -- they project the appropriate variable and 
+implicit parameter, respectively.
+
+When an expression requires implicit parameters $\aclrd{r}$, the semantics always provides a 
+dictionary defined \emph{exactly} on $\aclrd{r}$. To achieve this, the (\emph{sub}) rule restricts
+the function to $\aclrd{r'}$ (which is valid because $\aclrd{r'} \subseteq \aclrd{r}$).
+
+The most interesting rules are (\emph{abs}) and (\emph{app}). In abstraction, we get two dictionaries
+$f$ and $g$ (from the declaration-site and call-site, respectively), which are combined and passed 
+to the body of the function. The semantics prefers values from the call-site, which is captured by
+the $\uplus$ operation. In application, we first evaluate the expression $e_1$, then $e_2$ and finally
+call the returned function. The three calls use (possibly overlapping) restrictions of the dictionary
+as required by the static types.
+
+Without providing a proof here, we note that the semantics is sounds with respect to the type 
+system -- when evaluating an expression, it provides it with a dictionary that is guaranteed to
+contain values for all implicit parameters that may be accessed. This can be easily checked by
+examining the semantic rules (and noting that the restriction and union always provide the
+expected set of parameters).
+
+\paragraph{Monadic semantics.}
+Implicit parameters are related to the \emph{reader mo\-nad}. The type 
+$\tau_1 \times (\aclrd{r} \rightarrow \sigma) \rightarrow \tau_2$ is equivalent to
+$\tau_1 \rightarrow ((\aclrd{r} \rightarrow \sigma) \rightarrow \tau_2)$ through currying. Thus, we can
+express the function as $\tau_1 \rightarrow M\tau_2$ for $M\tau = (\aclrd{r} \rightarrow \sigma) \rightarrow \tau$.
+Indeed, the reader monad can be used to model dynamic scoping. However, there is an important distinction
+from implicit parameters. The usual monadic semantics models fully dynamic scoping, while implicit
+parameters combine lexical and dynamic scoping.
+
+The (\emph{rdabs}) rule in Figure~\ref{fig:applications-flat-implsem} shows a semantics that
+matches the usual monadic semantics using the reader monad. Note that the declaration-site dictionary
+is ignored and the body is called with only the dictionary provided by the call-site. This is
+a consequence of the fact that monadic functions are always pure values created using \emph{unit}.
+
+As we discuss later in Section~3.?, the reader monad can be extended to model rebinding.
+However, later examples in this chapter, such as liveness in Section~\ref{sec:applications-flat-live}
+show that other context-aware computations cannot be captured by \emph{any} monad.
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Type classes.}
+Another type of constraints in Haskell that is closely related to implicit parameters are 
+\emph{type class} constraints \cite{app-type-classes}. They provide a principled form of ad-hoc
+polymorphism (overloading). When a code uses an overloaded operation (e.g.~comparison or numeric 
+operators) a constraint is placed on the context in which the operation is used. For example:
+%
+\begin{equation*}
+\begin{array}{l}
+\ident{twoTimes}~::~\ident{Num}~\alpha \Rightarrow \alpha \rightarrow \alpha \\[-0.25em]
 \ident{twoTimes}~x=x+x
 \end{array}
 \end{equation*}
 %
-The constraint $\ident{Num}~a$ on the function type arises from the use of the $+$ operator. 
-From the implementation perspective, the type class constraint means that the function takes 
-a hidden parameter -- a dictionary that provides the operation $+ :: \alpha \rightarrow \alpha \rightarrow \alpha$.
-Thus, the type $\ident{Num}~\alpha \Rightarrow \alpha \rightarrow \alpha$ can be viewed as
-$(\ident{Num}_\alpha \times \alpha) \rightarrow \alpha$. Implicit parameters work in exactly
-the same way -- they are passed around as hidden parameters.
+The constraint $\ident{Num}~\alpha$ on the function type arises from the use of the $+$ operator. 
+Similarly to implicit parameters, type classes can be implemented using a hidden dictionary. In 
+the above case, the function \ident{twoTimes} takes a hidden dictionary that provides an operation
+$+$ of type $\alpha \times \alpha \rightarrow \alpha$.
 
-The implementation of type classes and implicit parameters shows two important points about 
-context-dependent properties. First, they are associated with some \emph{scope}, such as the body
+Type classes could be modelled as a coeffect system. The type system would annotate the context
+with a set of required type classes. The typing of the body of \ident{twoTimes} would look as 
+follows:
+%
+\begin{equation*}
+\coctx{x\!:\!\alpha}{ \{ \ident{Num}_\alpha \} } \vdash x + x : \alpha
+\end{equation*}
+%
+Similarly, the semantics of a language with type class constraints can be defined in a way
+similar to implicit parameters. The interpretation of the body is a function that takes $\alpha$
+together with a hidden dictionary of operations: $\alpha \times \ident{Num}_\alpha \rightarrow \alpha$.
+
+Type classes and implicit parameters show two important points about flat coeffect systems.
+First, the context requirements are associated with some \emph{scope}, such as the body
 of a function. Second, they are associated with the input. To call a function that takes an 
 implicit parameter or has a type-class constraint, the caller needs to pass a (hidden) parameter
 together with the function inputs.
 
 %---------------------------------------------------------------------------------------------------
 
-\subsection{Rebindable resources}
+\subsection{Distributed computing}
 \label{sec:applications-flat-distr}
 
-The need for parameters that do not strictly follow static scoping rules also arises in distributed
-computing. This problem has been addressed, for example, by Bierman et al. and Sewell et al. 
-\cite{app-distributed-rebinding,app-distributed-acute}. To quote the first work: \emph{``Dynamic 
-binding is required in various guises, for example when a marshalled value is received from the 
-network, containing identifiers that must be rebound to local resources.''}
+Distributed programming was used as one of the motivating examples for coeffects in 
+Chapter~\ref{ch:intro}. This section explores the use case. We look at rebindable resources and
+cross-compilation. The structure of both is very similar to implicit parameters and type
+class constraints, but they demonstrate that there is a broader use for coeffect systems.
 
-This situation arises when marshalling and transferring function values. A function may depend 
-on a local resource (e.g.~a database available only on the server) and also resources that are 
-available on the target node (e.g.~current time). In the following example, the construct
-$\kvd{access}~\ident{Res}$ represents access to a re-bindable resource named $\ident{Res}$:
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Rebindable resources.}
+
+The need for parameters that support dynamic scoping also arises in distributed computing.
+To quote an example discussed by Bierman et al. \cite{app-distributed-rebinding}: \emph{``Dynamic 
+binding is required in various guises, for example when a marshalled value is received from the 
+network, containing identifiers that must be rebound to local resources.''} 
+
+Rebindable parameters are identifiers that refer to some specific resource. When a function value
+is marshalled and sent to another machine, rebindable resources can be handled in two ways. 
+First, if the resource is available on the target machine, the parameter is \emph{rebound} to
+the resource on the new machine. This is captured by dynamic scoping rules. Second, if the 
+resource is not available on the target machine, the resource is either marshalled or a \emph{remote 
+reference} is created. This is captured by lexical scoping rules.
+
+A practical language that supports rebindable resources is for example Acute \cite{app-distributed-acute}.
+In the following example, we use the construct $\kvd{access}~\ident{Res}$ to represent
+access to a rebindable resource named $\ident{Res}$. The following simple function accessed
+a database and a current date and filters values based on the date:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{recentEvents} = \lambda () \rightarrow\\
-\quad\kvd{let}~\ident{db} = \kvd{access}~\ident{News}~\kvd{in}\\
-\quad\ident{query}~\ident{db}~\str{"SELECT * WHERE Date > \%1"}~(\kvd{access}~\ident{Clock})
+\kvd{let}~\ident{recentEvents} = \lambda () \rightarrow\\[-0.25em]
+\quad\kvd{let}~\ident{db} = \kvd{access}~\ident{News}~\kvd{in}\\[-0.25em]
+\quad\ident{query}~\ident{db}~\str{SELECT * WHERE Date > \%1}~(\kvd{access}~\ident{Clock})
 \end{array}
 \end{equation*}
 %
-When \ident{recentEvents} is created on a server and sent to a client, a remote reference to the 
-database (available only on the server) must be captured. If the client device supports a clock, 
-then \ident{Clock} can be locally \emph{rebound}, e.g., to accommodate time-zone changes. 
+When \ident{recentEvents} is created on the server and sent to the client, a remote reference to 
+the database (available only on the server) must be captured. If the client device supports a 
+clock, then \ident{Clock} can be locally \emph{rebound}, e.g., to accommodate time-zone changes. 
 Otherwise, the date and time needs to be obtained from the server too.
 
-The use of re-bindable resources creates a context requirement similar to the one arising from
-the use of implicit parameters. For function values, such context-requirements can be satisfied
-in different ways -- resources must be available either at the declaration site (i.e.~when a 
-function is created) or at the call site (i.e.~when a function is called).
+The type system and semantics for rebindable resources are essentially the same as those for
+implicit parameters. Primitive requirements are introduced by the $\kvd{access}$ keyword. 
+Lambda abstraction splits the resources non-deterministically between declaration-site 
+(capturing remote reference) and call-site (representing rebinding). For this reason, we do not
+discuss the system in details and instead look at other uses.
 
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Distributed computing and multi-targetting}
-
-An increasing number of programming languages is capable of running across multiple different 
-platforms or execution environments. Functional programming languages that can be compiled to
-JavaScript (to target web and mobile clients) include, among others, F\#, Haskell and OCaml \cite{app-ocaml-js}.
-
-Links \cite{app-distributed-links}, F\# libraries \cite{app-fsharp-webapps,app-fsharp-webtools},
-ML5 and QWeSST \cite{app-distributed-ml5, app-distributed-qwesst} and Hop \cite{app-hop-lang} go 
-further and allow a single source program to be compiled to multiple target runtimes. This posses 
-additional challenges -- it is necessary to track where each part of computation runs and statically 
-guarantee that it will be possible to compile code to the required target platform 
-(safe \emph{multi-targetting}).
-
-We demonstrate the problem by looking at input validation. In distributed applications 
-that communicate over unsecured HTTP channel, user input needs to be validated interactively
-on the client-side (to provide immediate response) and then again on the server-side (to 
-guarantee safety). For example:
-
+\begin{figure}
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{validateInput} = \lambda \ident{name} \rightarrow\\
-\quad\ident{name} \neq \str{""} ~~\&\&~~ \ident{forall~isLetter~name}
+\cmt{// Checks that input is valid; can run on both server and client}\\[-0.25em]
+\kvd{let}~\ident{validateInput} = \lambda \ident{name} \rightarrow\\[-0.25em]
+\quad\ident{name} \neq \str{} ~~\&\&~~ \ident{forall~isLetter~name}
 \\[0.5em]
-\kvd{let}~\ident{displayProduct} = \lambda \ident{name} \rightarrow\\
-\quad\kvd{if}~\ident{validateInput name}~\kvd{then}~\ident{displayProductPage~name}\\
-\quad\kvd{else}~\ident{displayErrorPage}~() 
+\cmt{// Searches database for a product; can run on the server-side}\\[-0.25em]
+\kvd{let}~\ident{retrieveProduct} = \lambda \ident{name} \rightarrow\\[-0.25em]
+\quad\kvd{if}~\ident{validateInput name}~\kvd{then}~\ident{Some}(\ident{queryProductDb~name})\\[-0.25em]
+\quad\kvd{else}~\ident{None}
+\\[0.5em]
+\cmt{// Client-side function to show price or error (for invalid inputs)}\\[-0.25em]
+\kvd{let}~\ident{showPrice} = \lambda \ident{name} \rightarrow\\[-0.25em]
+\quad\kvd{if}~\ident{validateInput name}~\kvd{then}\\[-0.25em]
+\quad\quad\kvd{match}~(\kvd{remote}~\ident{retrieveProduct}())~\kvd{with}\\[-0.25em]
+\quad\quad|~\ident{Some}~\ident{p} \rightarrow \ident{showPrice}~(\ident{getPrice}~\ident{p})\\[-0.25em]
+\quad\quad|~\ident{None}~\rightarrow \ident{showError}~\str{Invalid input on the server}\\[-0.25em]
+\quad\kvd{else}~\ident{showError}~\str{Invalid input on the client}
 \end{array}
 \end{equation*}
-%
-The function \ident{validateInput} can be compiled to both JavaScript (for client-side) and
-native code (for server-side). However, \ident{displayProduct} uses other functionality
-(generating web pages) that is only available on the server-side, so it can only be compiled to
-native code.
+
+\vspace{1em}
+\noindent\makebox[\linewidth]{\rule{\textwidth}{0.5pt}} 
+\vspace{-1.5em}
+\caption{Sample client-server application with input validation}
+\label{fig:applications-flat-distr}
+\end{figure}
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Cross-compilation.}
+A related issue with distributed programming is the need to target increasing number of diverse
+platforms. Modern applications often need to run on multiple platforms (iOS, Android, Windows or
+as JavaScript) or multiple versions of the same platform. Many programming languages are capable
+of targeting multiple different platforms. For example, functional languages that can be compiled 
+to native code and JavaScript include, among others, F\#, Haskell and OCaml \cite{app-ocaml-js}.
+
+Links \cite{app-distributed-links}, F\# WebTools and WebSharper \cite{app-fsharp-webapps,app-fsharp-webtools},
+ML5 and QWeSST \cite{app-distributed-ml5, app-distributed-qwesst} and Hop \cite{app-hop-lang} go 
+further and allow including code for multiple distinct platforms in a single source file. 
+A single program is then automatically split and compiled to multiple target runtimes. This
+posses additional challenges -- it is necessary to check where each part of the program can run
+and statically guarantee that it will be possible to compile code to the required target 
+platform (safe \emph{multi-targetting}).
+
+We demonstrate the problem by looking at input validation. In applications that communicate over 
+unsecured HTTP channel, user input needs to be validated interactively on the client-side (to 
+provide immediate response) and then again on the server-side (to guarantee safety). 
+
+Consider the client-server example in Figure~\ref{fig:applications-flat-distr}. The 
+\ident{retrieveProduct} function represents the server-side, while \ident{showPrice} is called 
+on the client-side and performs a remote call to the server-side function (how this is implemented 
+is not our concern here). To ensure that the input is valid \emph{both} functions call 
+\ident{validateInput} -- however, this is fine, because \ident{validateInput} uses only basic
+functions and language features that can be cross-compiled to both client-side and server-side.
 
 In Links \cite{app-distributed-links}, functions can be annotated as client-side, server-side
-and database-side. F\# WebTools \cite{app-fsharp-webtools} adds functions that support multiple
-targets (mixed-side). However, these are single-purpose language features and they are not 
-extensible. For example, in modern mobile development it is also important to track minimal 
-supported version of runtime\footnote{Android Developer guide \cite{app-android-multitarget} 
-demonstrates how difficult it is to solve the problem without language support.}. 
-
-Requirements on the execution environment can be viewed as contextual properties, but could be
-also presented as effects (use of some API required only in certain environment is a computational
-effect). We discuss the difference in Section~X. Furthermore, the theoretical foundations of
-distributed languages like ML5 \cite{app-distributed-ml5} suggest that a contextual treatment
-is more appropriate. We return to ML5 when discussing semantics in Section~\ref{sec:path-sem-contextdep}.
-
-% --------------------------------------------------------------------------------------------------
-
-\paragraph{Safe locking}
-In the previous examples, the context provides additional values or functions that may be accessed
-at runtime. However, it may also track \emph{permissions} to perform some operation. This is done
-in the type system for safe locking of Flanagan and Abadi \cite{app-safe-locking}.
-
-The system prevents race conditions (by only allowing access to mutable state under a lock)
-and avoids deadlocks (by imposing strict partial order on locks). The following 
-program uses a mutable state under a lock:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{newlock}~l:\rho~\kvd{in}\\
-\kvd{let}~\ident{state}~=~\ident{ref}_\rho~10~\kvd{in}\\
-\kvd{sync}~l~(!\ident{state})
-\end{array}
-\end{equation*}
-%
-The declaration \kvd{newlock} creates a lock $l$ protecting memory region $\rho$. We can than
-allocate mutable variables in that memory region (second line). An access to mutable variable
-is only allowed in scope that is protected by a lock. This is done using the \kvd{sync} keyword,
-which locks a lock and evaluates an expression in a context that contains permission to access
-memory region of the lock ($\rho$ in the above example).
-
-The type system for safe locking associates the list of permission with the variable context.
-It uses judgements of a form $\Gamma, m \vdash e : \alpha$ specifying that an expression has a
-type in context $\Gamma$, given permissions (a list of locked regions) $m$. However, the treatment
-of lambda abstraction differs from the one for implicit parameters or rebindable resources.
-In the system for locking, code inside lambda function cannot use permissions from the scope
-where the function is declared. This is a necessary requirement -- a lambda function created 
-under a lock cannot access protected memory, because it will be executed later. We discuss how
-this restriction fits into our general coeffect framework in Section~X.Y.
-
-%
-% => This has coeffect style judgments, but it has effect-style lambda
-%
-
-%---------------------------------------------------------------------------------------------------
-
-\paragraph{Data-flow languages}
-
-The examples discussed so far are all -- to some extent -- similar. They attach additional 
-information (implicit parameters, dictionaries) or restrictions (on execution environment) to the
-context where code evaluates. By \emph{context}, we mean, most importantly, the values of variables
-and declarations that are in scope. The examples so far add more information to the context, but
-do not operate on the variable values.
-
-Data-flow languages provide a different example. Lucid \cite{app-lucid} is a declarative data-flow 
-language designed by Wadge and Ashcroft. In Lucid, variables represent streams and programs
-are written as transformations over streams. A function application $\mathit{square}(a)$ represents
-a stream of squares calculated from the stream of values $a$.
-
-The data-flow approach has been successfully used in domains such as development of real-time embedded 
-application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the data-flow
-paradigm. The following example is inspired by the Lustre \cite{app-synchronous-lustre} language
-and implements program to count the number of edges on a Boolean stream:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{edge} = \ident{false}~\kvd{fby}~(\ident{input}~\&\&~\ident{not}~(\kvd{prev}~\ident{input}))
-\\[0.5em]
-\kvd{let}~\ident{edgeCount} = \\
-\quad 0~\kvd{fby}~ (~\kvd{if}~\ident{edge}~\kvd{then}~\kvd{prev}~\ident{edgeCount}\\
-\quad\quad\quad~~~\, \kvd{else}~\kvd{prev}~\ident{edgeCount} ~)
-\end{array}
-\end{equation*}
-%
-The construct $\kvd{prev}~x$ returns a stream consisting of previous values of the stream 
-$x$. The second value of $\kvd{prev}~x$ is first value of $x$ (and the first
-value is undefined). The construct $y~\kvd{fby}~x$ returns a stream whose first element is the 
-first element of $y$ and the remaining elements are values of $x$. Note that in Lucid, the constants
-such as \ident{false} and $0$ are constant streams. Formally, the construct are defined as follows
-(writing $x_n$ for $n$-th element of a stream $x$):
-%
-\[ 
-(\kvd{prev}~x)_n = \left\{ 
-  \begin{array}{ll}
-    nil     & \; \text{if $n=0$}\\
-    x_{n-1} & \; \text{if $n>0$}
-  \end{array} \right.
-\quad
-(y~\kvd{fby}~x)_n = \left\{ 
-  \begin{array}{ll}
-    y_0     & \; \text{if $n=0$}\\
-    x_n     & \; \text{if $n>0$}
-  \end{array} \right.
-\]  
-%
-When reading data-flow programs, we do not need to think about variables in terms of streams --
-we can see them as simple values. However, the operations \kvd{fby} and \kvd{prev} cannot operate
-on plain values -- they require additional \emph{context} which provides past values of variables
-(for \kvd{prev}) and information about the current location in the stream (for \kvd{fby}). 
-
-In this case, the context is not simply an additional (hidden) parameter. It completely changes
-how variables must be represented. We may want to capture various \emph{contextual properties}
-of Lucid programs. For example, how many past elements need to be cached when we evaluate the 
-stream.
-
-To understand the nature of the context, we later look at the semantics of Lucid. This can be
-captured using a number of mathematical structures. Wadge \cite{app-lucid-monads} originally 
-proposed to use monads, while Uustalu and Vene later used comonads \cite{app-dataflow-essence}.
-
-% ==================================================================================================
-
-\section{Flat coeffects (2.)}
-
-% --------------------------------------------------------------------------------------------------
-\subsection{Implicit parameters and resources.}
-\label{sec:coeffects-res}
-
-Implicit parameters~\cite{app-implicit-parameters} are \emph{dynamically-scoped} variables.
-They can be used to parameterize a computation without propagating arguments explicitly through a 
-chain of calls and are part of the context in which expressions evaluate. As correctly expected
-\cite{app-implicit-parameters}, they can be modelled by comonads. Rebindable resources in distributed
-computations follow a similar pattern, but we discuss implicit parameters for simplicity.
-
-The following function prints a number using implicit parameters
-\ident{?culture} (determining the decimal mark) and \ident{?format}
-(the number of decimal places):
-%
-\begin{equation*}
-\lambda n . \ident{printNumber}~n~\ident{?culture}~\ident{?format}
-\end{equation*}
-%
-Figure~\ref{fig:example-resources} shows a type-and-coeffect system
-tracking the set of an expression's implicit parameters. 
-For simplicity here, all implicit parameters have type $\rho$.
-
-Context requirements are created in (\emph{access}), while (\emph{var}) requires no
-implicit parameters; (\emph{app}) combines requirements of
-both sub-expressions as well as the latent requirements of the
-function. The (\emph{abs}) rule is where the example differs from
-effect systems.  Function bodies can access the union of the
-parameters (or resources) available at the declaration-site ($\ctyp{r}{\Gamma}$) and
-at the call-site ($\ctyp{s}{\tau_1}$). Two of the nine permissible
-judgements for the above example are:
-%
-\newcommand{\cfebody}{(\ldots)} % \ident{countFutureEvents}
-\begin{equation*}
-\begin{array}{rcl}
-\ctyp{\emptyset}{\Gamma} &\vdash& \cfebody : \ctyp{\{\ident{?culture}, \ident{?format} \}}{\ident{int}} \rightarrow \ident{string}\\
-\ctyp{\{\ident{?culture}, \ident{?format}\}}{\Gamma} &\vdash& \cfebody : \ctyp{\{\ident{?format}\}}{\ident{int}} \rightarrow \ident{string}
-\end{array}
-\end{equation*}
-%
-The coeffect system infers multiple, \ie{} non-principal, coeffects for functions.
-Different judgments are desirable depending on how a function is used. 
-In the first case, both parameters have to be provided by the caller.
-In the second, both are available at declaration-site, but \ident{?format} may be
-rebound (precise meaning is provided by the monoidal structure on the product comonad in \S\ref{sec:comonads}).
-
-Implicit parameters can be captured by the
-\emph{reader} monad, where parameters are associated with the function codomain $\mtyp{\emptyset}{(\ident{int} \rightarrow
-  \mtyp{\{\ident{?culture}, \ident{?format} \}}{\ident{string}})}$,
-modelling only the first case. Whilst the reader monad can be extended to model rebinding, 
-the next example cannot be structured by \emph{any} monad.
+and database-side. F\# WebTools \cite{app-fsharp-webtools} supports cross-compiled (mixed-side)
+functions similar to \ident{validateInput}. However, these are single-purpose language features 
+and they are not extensible. A practical implementation needs to be able to capture multiple
+different patterns -- sets of environments (client, server, mobile) for distributed computing,
+but also Android API level \cite{app-android-multitarget} to cross-compile for multiple versions 
+of the same platform.
 
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
-\vspace{-1.4em}
+
+{\small a.) Set based type system for cross-compilation, inspired by Links \cite{app-distributed-links}}
+
 \begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{\emptyset}{\Gamma} \vdash x : \tau }
-%
-\quad\quad
-%
-\inference[(\emph{app})\;]
-  {\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{t}{\tau_1} \rightarrow \tau_2 &
-   \ctyp{s}{\Gamma} \vdash e_2 : \tau_1 }
-  {\ctyp{r \cup s \cup t}{\Gamma} \vdash e_1~e_2 : \tau_2}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{r'}} \vdash e : \tau }
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau }\quad\quad(\aclrd{r'} \supseteq \aclrd{r})
 \end{equation*}
-\vspace{-0.7em}
 \begin{equation*}
-\inference[(\emph{access})\;]
-  {}
-  {\ctyp{ \{\ident{?a} \} }{\Gamma} \vdash \ident{?a} : \rho }
-%
-\quad\quad\quad
-%
-\inference[(\emph{abs})\;]
-  {\ctyp{r \cup s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
+\tyrule{app}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 &
+   \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma}{\aclrd{r} \cap \aclrd{s} \cap \aclrd{t}} \vdash e_1~e_2 : \tau_2}
 \end{equation*}
-\vspace{-0.9em}
-\caption{Selected coeffect rules for implicit parameters}
-\label{fig:example-resources}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x:\tau_1}{\aclrd{r} \cup \aclrd{s}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 }
+\end{equation*}
+\vspace{0.5em}
+
+{\small b.) Version number based type system, inspired by Android API level \cite{app-android-multitarget}}
+
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{r'}} \vdash e : \tau }
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau }\quad\quad(\aclrd{r'} \leq \aclrd{r})
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 &
+   \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma}{\ident{max} \{\aclrd{r}, \aclrd{s}, \aclrd{t} \}} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x:\tau_1}{\aclrd{r}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{r}} \tau_2 }
+\end{equation*}
+
+\caption{Two variants of coeffect typing rules for cross-compilation}
+\label{fig:applications-flat-cross}
 \vspace{-1em}
 \end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Type systems.}
+
+Cross-compilation may seem similar to the tracking of resources (and thus to the tracking of implicit 
+parameters), but it actually demonstrates a couple of new ideas that are important for flat coeffect 
+systems. Unlike with implicit parameters, we will not present a specific existing system in this 
+section -- instead we briefly look at two examples that let us explore the range of possibilities. 
+
+In the first system, shown in Figure~\ref{fig:applications-flat-cross} (a), the coeffect annotations
+are sets of execution environments, \ie~$\aclrd{r}, \aclrd{s}, \aclrd{t} \subseteq \{ \ident{client},
+\ident{server}, \ident{database} \}$. Sub-coeffecting (\emph{sub}) lets us ignore some of the supported 
+execution environments; application (\emph{app}) can be only executed in the \emph{intersection} of the
+environments required by the two expressions and the function value.
+
+Sub-coeffecting and application are trivially dual to the rules for implicit parameters. We just track
+supported environments using intersection as opposed to tracking of required parameters using union.
+However, this symmetry does not hold for lambda abstraction (\emph{abs}), which still uses \emph{union}.
+This models the case where the function can be executed in two different ways:
+%
+\begin{itemize}
+\item[--] The function is represented as executable code for an environment available at the call-site
+  and is executed there, possibly after it is marshalled and transferred to another machine.
+\vspace{-0.5em}
+\item[--] The function body is compiled for the environment available at the declaration-site; the value
+  that is returned is a remote reference to the code and function calls are performed as remote invocations.
+\end{itemize}
+%
+This example ignores important considerations -- for example, it is likely desirable to make this
+difference explicit and the implementation (and semantics) needs to be clarified. However, the
+example shows that the algebraic structure of coeffect annotations may be more complex. Here, using
+$\cap$ for application and $\cup$ for abstraction.
+
+The second system, shown in Figure~\ref{fig:applications-flat-cross} (b) is inspired by the API
+level requirements in Android. Coeffect annotations are simply numbers representing the level
+($\aclrd{r}, \aclrd{s}, \aclrd{t} \in \mathbb{N}$). Levels are ordered increasingly, so we can
+always require higher level (\emph{sub}). The requirement on function application (\emph{app}) is
+the highest level of the levels required by the sub-expressions and the function. The system uses 
+yet another variant of lambda abstraction (\emph{abs}) -- the requirements of the body are duplicated
+and placed on \emph{both} the declaration-site and the call-site.
+
+In addition to the work discussed already, ML5 \cite{app-distributed-ml5} is another important work 
+that looks at tracking of execution environments. It uses modalities of modal S4 to represent the 
+environment -- this approach is similar to coeffects, both from the practical perspective, but also 
+through deeper theoretical links. We return to this topic in Chapter~\ref{ch:meta}.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -601,8 +818,8 @@ the next example cannot be structured by \emph{any} monad.
 
 % --------------------------------------------------------------------------------------------------
 
-\vspace{-1em}
 \subsection{Liveness analysis.}
+\label{sec:applications-flat-live}
 
 Liveness analysis detects whether a free variable of an expression may be used (\emph{live}) or 
 whether it is definitely not needed (\emph{dead}). A compiler can remove
@@ -705,6 +922,109 @@ The soundness follows from our categorical model (\S\ref{sec:comonads}). Uustalu
 $\ident{NeList}~\tau = \tau \times (\ident{NeList}~\tau + 1)$. However, such model leads to
 (inefficient) unbounded lists of past elements. The above static analysis provides an
 approximation of the number of required past elements and so we use just fixed-length lists.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Safe locking}
+In the previous examples, the context provides additional values or functions that may be accessed
+at runtime. However, it may also track \emph{permissions} to perform some operation. This is done
+in the type system for safe locking of Flanagan and Abadi \cite{app-safe-locking}.
+
+The system prevents race conditions (by only allowing access to mutable state under a lock)
+and avoids deadlocks (by imposing strict partial order on locks). The following 
+program uses a mutable state under a lock:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{newlock}~l:\rho~\kvd{in}\\
+\kvd{let}~\ident{state}~=~\ident{ref}_\rho~10~\kvd{in}\\
+\kvd{sync}~l~(!\ident{state})
+\end{array}
+\end{equation*}
+%
+The declaration \kvd{newlock} creates a lock $l$ protecting memory region $\rho$. We can than
+allocate mutable variables in that memory region (second line). An access to mutable variable
+is only allowed in scope that is protected by a lock. This is done using the \kvd{sync} keyword,
+which locks a lock and evaluates an expression in a context that contains permission to access
+memory region of the lock ($\rho$ in the above example).
+
+The type system for safe locking associates the list of permission with the variable context.
+It uses judgements of a form $\Gamma, m \vdash e : \alpha$ specifying that an expression has a
+type in context $\Gamma$, given permissions (a list of locked regions) $m$. However, the treatment
+of lambda abstraction differs from the one for implicit parameters or rebindable resources.
+In the system for locking, code inside lambda function cannot use permissions from the scope
+where the function is declared. This is a necessary requirement -- a lambda function created 
+under a lock cannot access protected memory, because it will be executed later. We discuss how
+this restriction fits into our general coeffect framework in Section~X.Y.
+
+%
+% => This has coeffect style judgments, but it has effect-style lambda
+%
+
+%---------------------------------------------------------------------------------------------------
+
+\paragraph{Data-flow languages}
+
+The examples discussed so far are all -- to some extent -- similar. They attach additional 
+information (implicit parameters, dictionaries) or restrictions (on execution environment) to the
+context where code evaluates. By \emph{context}, we mean, most importantly, the values of variables
+and declarations that are in scope. The examples so far add more information to the context, but
+do not operate on the variable values.
+
+Data-flow languages provide a different example. Lucid \cite{app-lucid} is a declarative data-flow 
+language designed by Wadge and Ashcroft. In Lucid, variables represent streams and programs
+are written as transformations over streams. A function application $\mathit{square}(a)$ represents
+a stream of squares calculated from the stream of values $a$.
+
+The data-flow approach has been successfully used in domains such as development of real-time embedded 
+application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the data-flow
+paradigm. The following example is inspired by the Lustre \cite{app-synchronous-lustre} language
+and implements program to count the number of edges on a Boolean stream:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{edge} = \ident{false}~\kvd{fby}~(\ident{input}~\&\&~\ident{not}~(\kvd{prev}~\ident{input}))
+\\[0.5em]
+\kvd{let}~\ident{edgeCount} = \\
+\quad 0~\kvd{fby}~ (~\kvd{if}~\ident{edge}~\kvd{then}~\kvd{prev}~\ident{edgeCount}\\
+\quad\quad\quad~~~\, \kvd{else}~\kvd{prev}~\ident{edgeCount} ~)
+\end{array}
+\end{equation*}
+%
+The construct $\kvd{prev}~x$ returns a stream consisting of previous values of the stream 
+$x$. The second value of $\kvd{prev}~x$ is first value of $x$ (and the first
+value is undefined). The construct $y~\kvd{fby}~x$ returns a stream whose first element is the 
+first element of $y$ and the remaining elements are values of $x$. Note that in Lucid, the constants
+such as \ident{false} and $0$ are constant streams. Formally, the construct are defined as follows
+(writing $x_n$ for $n$-th element of a stream $x$):
+%
+\[ 
+(\kvd{prev}~x)_n = \left\{ 
+  \begin{array}{ll}
+    nil     & \; \text{if $n=0$}\\
+    x_{n-1} & \; \text{if $n>0$}
+  \end{array} \right.
+\quad
+(y~\kvd{fby}~x)_n = \left\{ 
+  \begin{array}{ll}
+    y_0     & \; \text{if $n=0$}\\
+    x_n     & \; \text{if $n>0$}
+  \end{array} \right.
+\]  
+%
+When reading data-flow programs, we do not need to think about variables in terms of streams --
+we can see them as simple values. However, the operations \kvd{fby} and \kvd{prev} cannot operate
+on plain values -- they require additional \emph{context} which provides past values of variables
+(for \kvd{prev}) and information about the current location in the stream (for \kvd{fby}). 
+
+In this case, the context is not simply an additional (hidden) parameter. It completely changes
+how variables must be represented. We may want to capture various \emph{contextual properties}
+of Lucid programs. For example, how many past elements need to be cached when we evaluate the 
+stream.
+
+To understand the nature of the context, we later look at the semantics of Lucid. This can be
+captured using a number of mathematical structures. Wadge \cite{app-lucid-monads} originally 
+proposed to use monads, while Uustalu and Vene later used comonads \cite{app-dataflow-essence}.
 
 % ==================================================================================================
 
