@@ -1280,8 +1280,8 @@ rather than using \eg~on-demand computed lazy streams.
 \end{equation*}
 \begin{equation*}
 \tyrule{prev}
-  {\coctx{\Gamma}{n} \vdash e : \tau}
-  {\coctx{\Gamma}{n+1} \vdash \kvd{prev}~e : \tau}
+  {\coctx{\Gamma}{ \aclrd{n} } \vdash e : \tau}
+  {\coctx{\Gamma}{ \aclrd{n}+1} \vdash \kvd{prev}~e : \tau}
 \end{equation*}
 \begin{equation*}
 \tyrule{sub}
@@ -1358,45 +1358,155 @@ $x$. Finally, the (\emph{let}) rule simply adds the two requirements. This corre
 composition operation, but it is also a rule that we obtain by treating let-binding as a syntactic 
 sugar for $(\lambda x.e_2)~e_1$.
 
+% --------------------------------------------------------------------------------------------------
+
 \paragraph{Example.} 
-In the following example, \ident{counter} generates positive integers 
-and \ident{tick} flips between $0$ and $1$:
+As with the liveness example, the application rule might require more explanation. The following 
+example is somewhat arbitrary, but it demonstrates the rule well. We assume that \ident{counter} 
+is a stream of positive integers (starting from zero) and \ident{tick} flips between $0$ and $1$.
+The full typing derivation is shown in Appendix~?:
 %
 \begin{equation*}
 \begin{array}{l}
-(\,   \kvd{if}~~(\kvd{prev}~\ident{tick})=0~\kvd{then}~(\lambda x \rightarrow \kvd{prev}~x)\\
-\,\,\, \kvd{else}~(\lambda x \rightarrow x) \,)\quad(\kvd{prev}~\ident{counter})
+(\,   \kvd{if}~~(\kvd{prev}~\ident{tick})=0\\[-0.25em]
+\,\,\, \kvd{then}~(\lambda x \rightarrow \kvd{prev}~x)\\[-0.25em]
+\,\,\, \kvd{else}~(\lambda x \rightarrow x) \,)\qquad(\kvd{prev}~\ident{counter})
 \end{array}
 \end{equation*}
 %
-The function on the left-hand side returns the previous value of the argument every other 
-step. Applied to a stream $\langle{\ldots,4,3,2,1}\rangle$ (where $1$ is the ``current''
-value) it yields the stream $\langle{\ldots,4,4,2,2}\rangle$. To obtain the function, 
-we need one past value from the context (for $\kvd{prev}~\ident{tick}$). The returned function 
-needs either none or one past value (thus a subtyping rule is required to type it
-as requiring one past value).
+The left-hand side of the application returns a function depending on the \emph{previous}
+value of \ident{tick}. The resulting stream of functions flips between a function returning
+a current value and a function returning the previous value. If the current \ident{tick} is 0, and
+the function is applied to a stream $\langle{\ldots,4,3,2,1}\rangle$ 
+(where $1$ is the current value), it yields the stream $\langle{\ldots,4,4,2,2}\rangle$. 
 
+To obtain the function, we need one past value from the context (for $\kvd{prev}~\ident{tick}$). The 
+returned function needs either none or one past value (thus a subtyping rule is required to type 
+it as requiring one past value). So, the annotations for (\emph{app}) are $\aclrd{m}=1, \aclrd{p}=1$.
 The function is called with $\kvd{prev}~\ident{counter}$ as an argument, meaning that the result
 is either the first or second past element. Given 
 $\ident{counter}\hspace{-0.1em}=\hspace{-0.1em}\langle{\ldots,5,4,3,2,1}\rangle$, the argument 
-is $\langle{\ldots,5,4,3,2}\rangle$ and so the result is a stream $\langle{\ldots,5,5,3,3}\rangle$.
+is $\langle{\ldots,5,4,3,2}\rangle$ and so the overall result is a stream $\langle{\ldots,5,5,3,3}\rangle$.
+From the argument, we get the requirement $\aclrd{n}=1$.
 
-How many past values does the whole expression need? The argument requires one past value and
-the function one additional ($\kvd{prev}~(\kvd{prev}~\ident{counter}))$, adding to $2$. To obtain
-the function, one past value is needed. Overall we need the maximum of what is needed to evaluate the 
-function and what is needed by passing the argument to the function: $max(1, 2)=2$. This is 
-captured by (\emph{app}) in Figure~\ref{figure:intro-dataflow}. 
+Using the (\emph{app}) rule, we get that the overall number of past elements needed is
+$\mathit{max}(1, 1+1) = 2$. This should match the intuition about the code -- when the first function
+is applied to the argument, the computation will first access $\kvd{prev}~\ident{tick}$ (using one
+past value) and then $\kvd{prev}~(\kvd{prev}~\ident{counter}))$ (using two past values).
 
-The (\emph{fun}) rule again does not allow delaying of context requirements. If the body 
-requires $m$ past values, these have to be available both from the outer context and from the
-argument provided by the caller. Later, we make the rule more flexible to make it compatible
-with (\emph{fun}) for implicit parameters that \emph{splits} requirements.
+%---------------------------------------------------------------------------------------------------
+
+\begin{figure}
+\begin{equation}
+\tag{\emph{var}}
+\hspace{-1em}
+\sem{\coctx{\Gamma}{\aclrd{0}} \vdash x_i : \tau_i} = \lambda \langle(x_0, \ldots, x_n)\rangle \rightarrow x_i
+\end{equation}
+\vspace{-1.0em}
+\begin{equation}
+\tag{\emph{prev}}
+\hspace{-1.5em}
+\begin{array}{l}
+\sem{\coctx{\Gamma}{\aclrd{n}+1} \vdash \kvd{prev}~e : \tau} = \lambda \langle \mathbf{v}_0, \ldots, \mathbf{v}_{\aclrd{n}+1} \rangle \rightarrow\\[-0.1em]
+  \qquad\sem{ \coctx{\Gamma}{ \aclrd{n} } \vdash e : \tau }~\langle \mathbf{v}_1, \ldots, \mathbf{v}_{ \aclrd{n}+1 }\rangle
+\end{array}
+\end{equation}
+\vspace{-0.5em}
+\begin{equation}
+\tag{\emph{sub}}
+\hspace{-1.5em}
+\begin{array}{l}
+\sem{\coctx{\Gamma}{\aclrd{n}} \vdash e : \tau} = \lambda \langle \mathbf{v}_0, \ldots, \mathbf{v}_{\aclrd{n}} \rangle \rightarrow\\[-0.1em]
+  \qquad\sem{ \coctx{\Gamma}{ \aclrd{n'} } \vdash e : \tau }~\langle \mathbf{v}_0, \ldots, \mathbf{v}_{ \aclrd{n'} }\rangle
+\end{array}
+\end{equation}
+\vspace{-0.5em}
+\begin{equation}
+\tag{\emph{abs}}
+\hspace{-1.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{n}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{n}} \tau_2 } = 
+    \lambda \langle \mathbf{v}_0, \ldots \mathbf{v}_{\aclrd{n}} \rangle \rightarrow\\[-0.1em]
+  \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{n}} \vdash e : \tau_2 
+    }~\langle (\mathbf{v}_0, y_0), \ldots, (\mathbf{v}_{ \aclrd{n}  }, y_{ \aclrd{n} } ) \rangle
+\end{array}
+\end{equation}
+\vspace{-0.5em}
+\begin{equation*}
+\tag{\emph{app}}
+\hspace{-1.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\textnormal{max}(\aclrd{m}, \aclrd{n}+\aclrd{p})} \vdash e_1~e_2 : \tau_2 } = 
+    \lambda (\mathbf{v}_0, \ldots, \mathbf{v}_{ \textnormal{max}(\aclrd{m}, \aclrd{n}+\aclrd{p}) } ) \rightarrow \\[-0.1em]
+  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{m}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{p}} \tau_2 
+    }~(\mathbf{v}_0, \ldots, \mathbf{v}_{ \aclrd{m} })\\[-0.1em]
+  \qquad\kvd{in}~g~(~\sem{ \coctx{\Gamma}{\aclrd{n}} \vdash e_2 : \tau_1 }~(\mathbf{v}_0, \ldots, \mathbf{v}_{ \aclrd{n} }),\ldots, \\[-0.1em]
+  \qquad\qquad\;~\sem{ \coctx{\Gamma}{\aclrd{n}} \vdash e_2 : \tau_1 }~(\mathbf{v}_{ \aclrd{p} }, \ldots, \mathbf{v}_{ \aclrd{n}+\aclrd{p} })~)
+\end{array}
+\end{equation*}
+
+\caption{Semantics of a language with implicit parameters}
+\label{fig:applications-flat-dfsem}
+\end{figure}
+
+%---------------------------------------------------------------------------------------------------
 
 \paragraph{Semantics.}
-In this setting, a function $\tau_1 \rightarrow
-\tau_2$ becomes a function from a list of historical values $[\tau_1]
-\rightarrow \tau_2$. A coeffect system here tracks how many past values
-to cache.
+The sample language discussed in this section is a \emph{causal} data-flow language. This means that
+a computation can access \emph{past} values of the stream (but not future values). In the semantics, 
+we again need richer structure over the input.
+
+Uustalu and Vene \cite{comonads-notions} model causal data-flow computations using a non-empty list
+$\ident{NeList}~\tau = \tau \times (\ident{NeList}~\tau + 1)$ over the input. A function $\tau_1 \rightarrow \tau_2$
+is thus modelled as $\ident{NeList}~\tau_1 \rightarrow \tau_2$. This model is difficult to implement
+efficiently, as it creates unbounded lists of past elements.
+
+The coeffect system tracks maximal number of past values and so we can define the semantics using
+a list of fixed length. As with liveness, this is a data structure \emph{indexed} by the coeffect
+annotation. We write $\tau^{\aclrd{n}}$ for a list containing $\aclrd{n}$ elements (which can be 
+also viewed as an $\aclrd{n}$-element product $\tau \times \ldots \times \tau$). 
+
+As with the previous examples, our semantics interprets a judgement using a (semantic) function;
+functions in the language are modelled as functions taking a list of inputs:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \aclrd{n} } \vdash e : \tau} 
+  &:& (\tau_1 \times \ldots \times \tau_n)^{\aclrd{n}+1} \rightarrow \tau\\
+\sem{\tau_1 \xrightarrow{\aclrd{n}} \tau_2} &:& \tau_1^{\aclrd{n}+1} \rightarrow \tau_2
+\end{array}
+\end{equation*}
+%
+Note that the semantics requires one more value than is the number of past values. This is because 
+the first value is the current value and has to be always available, even when the annotation is
+zero as in (\emph{var}).
+
+The rules defining the semantics are shown in Figure~\ref{fig:applications-flat-dfsem}. The
+semantics of the context is a \emph{list of pairs}. To make the rules easier to follow, we write
+$\langle \mathbf{v}_1, \ldots, \mathbf{v}_n \rangle$ for an $n$-element list containing pairs.
+Pairs that model the entire context such as $\mathbf{v}_1$ are written in bold. When we access
+individual variables, we write $\mathbf{v} = (x_1, \ldots, x_m)$ where $x_i$ denote individual
+variables of the context.
+
+In (\emph{var}), the context is a singleton-list containing a product of variables, from which
+we project the right one. In (\emph{prev}) and (\emph{sub}), we drop some of the elements from 
+the history (from the front and end, respectively) and then evaluate the original expression.
+
+Lambda abstractions (\emph{abs}) receives two lists of the same size -- one containing values of
+the variables from the declaration-site $\langle \mathbf{v}_0, \ldots, \mathbf{v}_{\aclrd{n}} \rangle$ and one
+containing the argument provided by the call-site $\langle y_0, \ldots, v_{\aclrd{n}} \rangle$.
+The semantics applies the well-known \emph{zip} operation on the lists and passes the result to the
+body.
+
+Finally, application (\emph{abs}) uses the input context in two ways, which gives rise to the
+two requirements combined using \emph{max}. First, it evaluates the expression $e_1$ which is 
+called with the past $\aclrd{m}$ values. The resulting function $g$ is then sequentially composed
+with the semantics of $e_2$. To call the function, we need to evaluate $e_2$ repeatedly -- namely,
+$\aclrd{p}+1$ times, which results in the overall requirement for $\aclrd{n}+\aclrd{p}$ past values.
+
+\paragraph{Summary}
+
+\todo{Key points...}
 
 % --------------------------------------------------------------------------------------------------
 
