@@ -348,7 +348,7 @@ type system for implicit parameters.
   {\coctx{\Gamma}{\aclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 }
 \end{equation*}
 \vspace{-0.9em}
-\caption{Selected coeffect rules for implicit parameters}
+\caption{Coeffect rules for tracking implicit parameters}
 \label{fig:applications-flat-impl}
 \vspace{-1em}
 \end{figure}
@@ -381,7 +381,7 @@ and the call-site ($\tau_1 \xrightarrow{\aclrd{s}} \tau_2$).
 The union operation $\cup$ is not a disjoint union, which means that the values for implicit 
 parameters can also be provided by both sites. For example, consider a function with a body
 $\ident{?a} + \ident{?b}$. Assuming that the function takes and returns $\ident{int}$, the following
-list shows 4 out of 9 possible valid typing:
+list shows 4 out of 9 possible valid typing. Full typing derivations can be found in Appendix~?:
 %
 \begin{equation*}
 \begin{array}{rcllllr}
@@ -430,7 +430,7 @@ $4$ is a more precise typing modelling the same situation.
 \tag{\emph{abs}}
 \hspace{-0.5em}
 \begin{array}{l}
-  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), f) \rightarrow\\
+  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), f) \rightarrow\\[-0.25em]
   \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{r}\cup\aclrd{s}} \vdash e : \tau_2 }~((x_1, \ldots, x_n, y), f \uplus g)   	 
 \end{array}
 \end{equation}
@@ -439,8 +439,8 @@ $4$ is a more precise typing modelling the same situation.
 \tag{\emph{app}}
 \hspace{-0.5em}
 \begin{array}{l}
-  \sem{\coctx{\Gamma}{\aclrd{r}\cup\aclrd{s}\cup\aclrd{t}} \vdash e_1~e_2 : \tau_2 } = \lambda (x, f) \rightarrow \\
-  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 }~(x, \restr{f}{\aclrd{r}})\\
+  \sem{\coctx{\Gamma}{\aclrd{r}\cup\aclrd{s}\cup\aclrd{t}} \vdash e_1~e_2 : \tau_2 } = \lambda (x, f) \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 }~(x, \restr{f}{\aclrd{r}})\\[-0.25em]
   \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }~(x, \restr{f}{\aclrd{s}} ), \restr{f}{\aclrd{t}})
 \end{array}
 \end{equation*}
@@ -451,7 +451,7 @@ $4$ is a more precise typing modelling the same situation.
 \tag{\emph{rdabs}}
 \hspace{-0.5em}
 \begin{array}{l}
-  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), \_) \rightarrow\\
+  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), \_) \rightarrow\\[-0.25em]
   \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{r}\cup\aclrd{s}} \vdash e : \tau_2 }~((x_1, \ldots, x_n, y), g)   	 
 \end{array}
 \end{equation}
@@ -460,8 +460,8 @@ $4$ is a more precise typing modelling the same situation.
 {\small Where $\uplus$ and $\restr{f}{\aclrd{r}}$ are auxiliary definitions:}
 \begin{equation*}
 \begin{array}{rcl}
-\restr{f}{\aclrd{r}} &=& \{ (p,v) \;|\; (p,v) \in f, \;p \in \aclrd{r} \}\\
-f \uplus g &=& \restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g \\
+\restr{f}{\aclrd{r}} &=& \{ (p,v) \;|\; (p,v) \in f, \;p \in \aclrd{r} \}\\[-0.25em]
+f \uplus g &=& \restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g 
 \end{array}
 \end{equation*}
 
@@ -798,130 +798,605 @@ through deeper theoretical links. We return to this topic in Chapter~\ref{ch:met
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}[!b]
-\vspace{-2em}
+\subsection{Liveness analysis}
+\label{sec:applications-flat-live}
+
+\emph{Live variable analysis} (LVA) \cite{app-modern-compiler} is a standard technique in compiler 
+theory. It detects whether a free variable of an expression may be used by a program during its
+evaluation (it is \emph{live}) or whether it is definitely not needed (it is \emph{dead}). As an 
+optimization, compiler can remove bindings to dead variables as they are never accessed. Wadler 
+\cite{app-strictness-absecnce} describes the property of a variable that is dead as the 
+\emph{absence} of a variable. 
+
+\paragraph{Flat liveness analysis.}
+In this section, we discuss a restricted form of liveness analysis. We do not track liveness of 
+\emph{individual} variables, but of the \emph{entire} variable context. This is not practically
+useful, but it provides interesting insight into how flat coeffects work. A per-variable liveness
+analysis can be captured using structural coeffects and is discussed in Section~\ref{sec:applications-struct-live}.
+Consider the following two examples:
+%
 \begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{\ident L}{\Gamma} \vdash x : \tau }
-\quad
-\inference[(\emph{app})\;]
-  { \ctyp{s}{\Gamma} \vdash e_2 : \tau_1 &
-    \ctyp{r}{\Gamma} \vdash e_1 : \ctyp{t}{\tau_1} \rightarrow \tau_2 }
-  {\ctyp{r \sqcup (s \sqcap t)}{\Gamma} \vdash e_1~e_2 : \tau_2}
+\begin{array}{l}
+\kvd{let}~\ident{constant42} = \lambda \ident{x} \rightarrow 42\\
+\kvd{let}~\ident{constant} = \lambda \ident{value} \rightarrow \lambda \ident{x} \rightarrow \ident{value}
+\end{array}
 \end{equation*}
-\vspace{-1.5em}
-\caption{Selected coeffect rules for liveness analysis}
-\label{fig:example-need}
+%
+The body of the first function is just a constant $42$ and so the context of the body is marked
+as \emph{dead}. The parameter (call-site) of the function is not used and can also be marked as dead. 
+Similarly, no variables from the declaration-site are used and so they are also marked as dead.
+
+In contrast, the body of the second function accesses a variable \ident{value} and so the body 
+of the function is marked as \emph{live}. In the flat system, we do not track \emph{which} 
+variable was used and so we have to mark both the call-site and declaration-site as live (this will
+be refined in structural liveness system).
+
+\paragraph{Forward vs. backward \& may vs. must.}
+Static analyses can be classified as either \emph{forward} or \emph{backward} (depending on how they 
+propagate information) and as either \emph{must} or \emph{may} (depending on what properties they
+guarantee). Liveness is a \emph{backward} analysis -- the requirements are propagated from variables 
+to their declarations. The distinction between \emph{must} and \emph{may} is apparent when we look 
+at an example with conditionals:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{defaultArg}~= \lambda \ident{cond} \rightarrow \lambda \ident{input} \rightarrow\\
+\quad\kvd{if}~\ident{cond}~\kvd{then}~42~\kvd{else}~\ident{input}
+\end{array}
+\end{equation*}
+%
+Liveness analysis is a \emph{may} analysis meaning that it marks variable as live when it
+\emph{may} be used and as dead if it is \emph{definitely} not used. This means that the variable
+\ident{input} is \emph{live} in the example above. A \emph{must} analysis would mark the variable
+only if it was used in both of the branches (this is sometimes called \emph{neededness}).
+
+The distinction between \emph{may} and \emph{must} analyses demonstrates the importance of 
+interaction between contextual properties and certain language constructs such as conditionals.
+We discuss this in Section~\ref{sec:flat-conditionals}
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}
+{\small a.) The operations of a two-point lattice $\mathcal{L} = \{\ident{L}, \ident{D}\}$ 
+where $\ident{D} \sqsubseteq \ident{L}$ are defined as:}
+%
+\begin{equation*}
+\begin{array}{rcl}
+\ident{L} \sqcup \ident{L} &=& \ident{L}\\
+\ident{D} \sqcup \ident{L} &=& \ident{D}\\
+\end{array}
+\qquad
+\begin{array}{rcl}
+\ident{L} \sqcup \ident{D} &=& \ident{D}\\
+\ident{D} \sqcup \ident{D} &=& \ident{D}
+\end{array}
+\qquad
+\begin{array}{rcl}
+\ident{L} \sqcap \ident{L} &=& \ident{L}\\
+\ident{D} \sqcap \ident{L} &=& \ident{L}\\
+\end{array}
+\qquad
+\begin{array}{rcl}
+\ident{L} \sqcap \ident{D} &=& \ident{L}\\
+\ident{D} \sqcap \ident{D} &=& \ident{D}
+\end{array}
+\end{equation*}
+
+{\small b.) Sequential composition of (semantic) functions composes annotations using $\sqcup$:}
+\begin{equation*}
+\begin{array}{llll}
+f : \tau_1 \xrightarrow{\aclrd{r}} \tau_2 \qquad\qquad&
+g : \tau_2 \xrightarrow{\aclrd{s}} \tau_3 \qquad\qquad&
+g \circ f : \tau_1 \xrightarrow{\aclrd{r} \sqcup \aclrd{s}} \tau_3 \qquad\qquad& ~
+\\[0.75em]
+f : \tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2 &
+g : \tau_2 \xrightarrow{\aclrd{\ident{L}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_3 & (1)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2 &
+g : \tau_2 \xrightarrow{\aclrd{\ident{L}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_3 & (2)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2 &
+g : \tau_2 \xrightarrow{\aclrd{\ident{D}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_3 & (3)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2 &
+g : \tau_2 \xrightarrow{\aclrd{\ident{D}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_3 & (4)
+\end{array}
+\end{equation*}
+
+{\small c.) Pointwise composition of (semantic) functions composes annotations using $\sqcap$:}
+\begin{equation*}
+\begin{array}{llll}
+f : \tau_1 \xrightarrow{\aclrd{r}} \tau_2 \qquad\qquad&
+h : \tau_1 \xrightarrow{\aclrd{s}} \tau_3 \qquad\qquad&
+\langle f, h \rangle : \tau_1 \xrightarrow{\aclrd{r} \sqcap \aclrd{s}} \tau_2 \times \tau_3 \qquad&~
+\\[0.75em]
+f : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_2 &
+h : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_2 \times \tau_3 & (1)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_2 &
+h : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_2 \times \tau_3 & (2)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_2 &
+h : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_2 \times \tau_3 & (3)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_2 &
+h : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_2 \times \tau_3 & (4)
+\end{array}
+\end{equation*}
+
+\caption{Liveness annotations with sequential and pointwise composition}
+\label{fig:applications-flat-livealg}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Type system.}
+A type system that captures whole-context liveness annotates the context with value of a 
+two-point lattice $\mathcal{L} = \{ \ident{L}, \ident{D} \}$. The annotation \ident{L} marks
+the context as \emph{live} and \ident{D} stands for a \emph{dead} context. 
+Figure~\ref{fig:applications-flat-livealg} (a) defines the ordering $\sqsubseteq$, meet $\sqcup$ and join 
+operations $\sqcap$ of the lattice.
+
+The typing rules for tracking whole-context liveness are shown in Figure~\ref{fig:applications-flat-liveness}.
+The language now includes constants $c:\tau \in \Delta$. Accessing a constant (\emph{const}) annotates
+the context as dead using \ident{D}. This contrasts with variable access (\emph{var}), which marks the
+context as live using \ident{L}. A dead context (definitely not needed) can be treated as live context
+(which may be used) using the (\emph{sub}) rule. This captures the \emph{may} nature of the analysis.
+
+The (\emph{app}) rule is best understood by discussing its semantics. The semantics uses 
+\emph{sequential composition} to compose the semantics of $e_2$ with the function obtained
+as the result of $e_1$. However, we need more than just sequential composition. The same input
+context is passed to the expression $e_1$ (in order to get the function value) and to the
+sequentially composed function (to evaluate $e_2$ followed by the function call). This is captured 
+by \emph{pointwise composition}.
+
+
+Consider first \emph{sequential composition} of (semantic) functions $f, g$ annotated with 
+$\aclrd{r}, \aclrd{s}$. The composed function $g \circ f$ is annotated with $\aclrd{r} \sqcup \aclrd{s}$
+as shown in Figure~\ref{fig:applications-flat-livealg} (b).
+The argument of the function $g \circ f$ is live only when the arguments of both $f$ and $g$ are 
+live ($1$). When the argument of $f$ is dead, but $g$ requires $\tau_2$ ($2$), we can evaluate 
+$f$ without any input and obtain $\tau_2$, which is then passed to $g$. When $g$ does not require
+its argument ($3, 4$), we can just evaluate $g$, without evaluating $f$. Here, the semantics
+\emph{implements} the dead code elimination optimization.
+
+Secondly, a \emph{pointwise composition} passes the same argument to $f$ and $h$. The parameter 
+is live if either the parameter of $f$ or $h$ is live. The pointwise composition is written as
+$\langle f, h \rangle$ and it combines annotations using $\sqcap$ as shown in Figure~\ref{fig:applications-flat-livealg} (c).
+Here, the argument is not needed only when both $f$ and $h$ do not need it ($1$). In all other cases,
+the parameter is needed and is then used either once ($2,3$) or twice ($4$). The rule for function
+application (\emph{app}) combines the two operations. The context $\Gamma$ is live if it is needed by
+$e_1$ (which always needs to be evaluated) \emph{or} when it is needed by the function value \emph{and}
+by $e_2$. 
+
+The (\emph{abs}) rule duplicates the annotation of the body, similarly to the cross-compilation 
+example in Figure~\ref{fig:applications-flat-cross}. When the body accesses any variables, it 
+requires both the argument and the variables from declaration-site. When it does not use any variables,
+it marks both as dead. Finally, the (\emph{let}) rule annotates the composed expression with the
+liveness of the expression $e_2$ -- if the context of $e_2$ is live, then it also requires variables
+from $\Gamma$; if it is dead, then it does not require $\Gamma$ or $x$. 
+As further discussed later in Section~?, the (\emph{let}) rule is again just a syntactic sugar for 
+$(\lambda x.e_2)~e_1$. Briefly, this follows from the simple observation that 
+$\aclrd{r} \sqcup (\aclrd{s} \sqcap \aclrd{r}) = \aclrd{r}$.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\begin{equation*}
+\tyrule{var}
+  {x : \tau \in \Gamma}
+  {\coctx{\Gamma}{\aclrd{\ident{L} }} \vdash x : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{const}
+  {c : \tau \in \Delta}
+  {\coctx{\Gamma}{ \aclrd{\ident{D}} } \vdash c : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{r'}} \vdash e : \tau }
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau }\quad\quad(\aclrd{r'} \sqsubseteq \aclrd{r})
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 &
+   \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma}{\aclrd{r} \sqcup (\aclrd{s} \sqcap \aclrd{t})} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma, x:\tau_1}{\aclrd{s}} \vdash e_2 : \tau_2}
+  {\coctx{\Gamma}{\aclrd{s}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x:\tau_1}{\aclrd{r}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{r}} \tau_2 }
+\end{equation*}
+\vspace{-0.9em}
+
+\caption{Coeffect rules for tracking whole-context liveness}
+\label{fig:applications-flat-liveness}
 \vspace{-1.2em}
 \end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Liveness analysis.}
-\label{sec:applications-flat-live}
-
-Liveness analysis detects whether a free variable of an expression may be used (\emph{live}) or 
-whether it is definitely not needed (\emph{dead}). A compiler can remove
-bindings to dead variables as the result is never used. 
-
-We start with a restricted analysis and briefly mention how to make it practical
-later (\S\ref{sec:related}). The restricted form is interesting theoretically as it gives rise
-to the indexed Maybe comonad (\S\ref{sec:comonads}), which is a basic but instructive example.
-
-A coeffect system in Fig.~\ref{fig:example-need} detects whether all variables are dead 
-($\ctyp{\ident D}{\Gamma}$) or whether at least one variable is live ($\ctyp{\ident L}{\Gamma}$). 
-Variable access (\emph{var}) is annotated with \ident L and constant access with \ident D. That is,
-if $c\in\mathbb{N}$ then $\ctyp{\ident D}{\Gamma} \vdash c : \ident{int}$.
-A dead context may be marked as live by
-letting $\ident D \sqsubseteq \ident L$ and adding sub-coeffecting (\S\ref{sec:calculus}).
-
-The (\emph{app}) rule is best understood by discussing its semantics. Consider first 
-\emph{sequential composition} of (semantic) functions $g, f$ annotated with $r, s$. 
-The argument of $g \circ f$ is live only when arguments of both $f$ and $g$ are live. 
-The coeffect semantics captures the additional behaviour that $f$ is not evaluated when
-$g$ ignores its input (regardless of the evaluation order of the underlying language).
-We write $r \sqcap s$ for a conjunction (returning \ident L iff $r = s = \ident{L}$). 
-Secondly, a \emph{pointwise composition} passes the same
-argument to $g$ and $h$. The parameter is live if either the parameter
-of $g$ or $h$ is live ($r \sqcup s$). Application combines the
-two operations, so the context $\Gamma$ is live if it is needed by
-$e_1$ \emph{or} by the function value \emph{and} by $e_2$.
-
-An (\emph{abs}) rule (not shown) compatible with the structure in Fig.~\ref{fig:example-resources}
-combines the context annotations using $\sqcap$. Thus, if the body uses some 
-variables, both the function argument and the context of the declaration-site are marked as live.
-
-Liveness cannot be modelled using monads as $\tau_1 \rightarrow \mtyp{r}{\tau_2}$.
-In call-by-value languages, the argument $\tau_1$ is always evaluated. Using 
-indexed comonads (\S\ref{sec:comonads}), we
-model liveness as $\ctyp{r}{\tau_1} \rightarrow \tau_2$ where
-$\ctyp{r}$ is the parametric type $\mathsf{Maybe}~\tau = \tau + 1$
-(which contains a value $\tau$ when $r=\ident{L}$ and does not contain
-value when $r=\ident{D}$).
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-\vspace{-1em}
+\paragraph{Examples.}
+Before looking at the semantics, we consider a number of simple examples to demonstrate the
+key aspects of the system. Full typing derivations are shown in Appendix~?:
+%
 \begin{equation*}
-\inference[(\emph{var})\;]
-  {x : \tau \in \Gamma}
-  {\ctyp{0}{\Gamma} \vdash x : \tau }
-%
-\quad\quad
-% 
-\inference[(\emph{app})\;]
-  {\ctyp{m}{\Gamma} \vdash e_1 : \ctyp{p}{\tau_1} \rightarrow \tau_2 &
-   \ctyp{n}{\Gamma} \vdash e_2 : \tau_1 }
-  {\ctyp{\textit{max}(m, n + p)}{\Gamma} \vdash e_1~e_2 : \tau_2}
+\begin{array}{lll}
+(\lambda x \rightarrow 42)~y &~\hspace{1em}~&(1)\\
+\ident{twoTimes}~42          &&(2)\\
+(\lambda x \rightarrow x)~42 &&(3)\\
+\end{array}
 \end{equation*}
+%
+In the first case, the context is dead. In ($1$), the function's parameter is dead and so the
+overall context is dead, even though the argument uses a variable $y$ -- the semantics evaluates 
+the function without passing it an actual argument. In the second case ($2$), the function is
+a variable that needs to be obtained and so the context is live. In the last case ($3$), the 
+function accesses a variable and so its declaration-site is marked as requiring the context 
+(\emph{abs}). This is where structural coeffect analysis would be more precise -- the system shown
+here cannot capture the fact that $x$ is a bound variable.
+
+%---------------------------------------------------------------------------------------------------
+
+\begin{figure}
+\begin{equation}
+\tag{\emph{var}}
+\sem{\coctx{\Gamma}{\aclrd{ \ident{L} }} \vdash x_i : \tau_i} = \lambda (x_1, \ldots, x_n) \rightarrow x_i
+\end{equation}
+\vspace{-1.75em}
+\begin{equation}
+\tag{\emph{const}}
+\sem{\coctx{\Gamma}{\aclrd{ \ident{D} }} \vdash c_i : \tau_i} = \lambda () \rightarrow \delta(c_i)
+\end{equation}
+%
+%
+\vspace{-0.5em}
+%
+%
+\begin{equation}
+\tag{\emph{sub-1}}
+\sem{\coctx{\Gamma}{\aclrd{\ident{L} }} \vdash e : \tau} = \lambda x \rightarrow 
+  \sem{\coctx{\Gamma}{\aclrd{\ident{D} }} \vdash e : \tau}~()
+\end{equation}
+\vspace{-1.75em}
+\begin{equation}
+\tag{\emph{sub-2}}
+\sem{\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau} = \lambda x \rightarrow 
+  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau}~x
+\end{equation}
+%
+%
+\vspace{-0.5em}
+%
+%
+\begin{equation}
+\tag{\emph{abs-1}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{\ident{L}}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2 } = \lambda (x_1, \ldots, x_n) \rightarrow\\[-0.25em]
+  \qquad\lambda y \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{\ident{L}}} \vdash e : \tau_2 }~(x_1, \ldots, x_n, y)   	 
+\end{array}
+\end{equation}
+\vspace{-1.0em}
+\begin{equation}
+\tag{\emph{abs-2}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{\ident{D}}} \vdash \lambda y. e : \tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2 } = \lambda () \rightarrow\\[-0.25em]
+  \qquad\lambda () \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\aclrd{\ident{D}}} \vdash e : \tau_2 }~()
+\end{array}
+\end{equation}
+%
+%
+\vspace{0.0em}
+%
+%
+%
 \begin{equation*}
-\inference[(\emph{prev})\;]
-  {\ctyp{n}{\Gamma} \vdash e : \tau}
-  {\ctyp{n+1}{\Gamma} \vdash \kvd{prev}~e : \tau}
-%
-\quad\quad
-%
-\inference[(\emph{abs})\;]
-  {\ctyp{\textit{min}(m, n)}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{m}{\Gamma} \vdash \lambda x.e : \ctyp{n}{\tau_1} \rightarrow \tau_2 }
+\tag{\emph{app-1}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{r}} \vdash e_1~e_2 : \tau_2 } = \lambda x \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{ \ident{D} }} \tau_2 }~x
+    ~\kvd{in}~g~()
+\end{array}
 \end{equation*}
-\vspace{-1em}
-\caption{Selected coeffect rules for causal data flow}
-\label{fig:example-dataflow}
-\vspace{-1em}
+\vspace{-1.0em}
+\begin{equation*}
+\tag{\emph{app-2}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{\ident{L}}} \vdash e_1~e_2 : \tau_2 } = \lambda x \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{ \ident{L} }} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{ \ident{L} }} \tau_2 }~x
+    ~\kvd{in}~g~(\sem{ \coctx{\Gamma}{\aclrd{ \ident{D} }} \vdash e_2 : \tau_1 }~())
+\end{array}
+\end{equation*}
+\vspace{-1.0em}
+\begin{equation*}
+\tag{\emph{app-3}}
+\hspace{-0.5em}
+\begin{array}{l}
+  \sem{\coctx{\Gamma}{\aclrd{r} \sqcup (\aclrd{s} \sqcap \aclrd{t}) } \vdash e_1~e_2 : \tau_2 } = \lambda x \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\aclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{t}} \tau_2 }~x
+    ~\kvd{in}~g~(\sem{ \coctx{\Gamma}{\aclrd{s}} \vdash e_2 : \tau_1 }~x)
+\end{array}
+\end{equation*}
+
+\caption{Semantics of a language with liveness analysis}
+\label{fig:applications-flat-livsem}
 \end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
-\vspace{-1em}
-\subsection{Efficient dataflow.}
-Dataflow languages (\eg~\cite{app-lucid}) declaratively describe
-computations over streams. In \emph{causal} data flow, program may
-access past values -- in this setting, a function $\tau_1 \rightarrow
+\paragraph{Semantics.} 
+The type system presented above requires the semantics to \emph{implement} dead code elimination.
+This means that when a function does not require an input (it is marked as dead), the semantics
+does not evaluate the argument and passes an empty value as the input instead.
+
+We can represent such empty values using the option type (known as \ident{Maybe} in Haskell).
+We use the notation $\tau + 1$ to denote option types. Given a context with variables $x_i$ of
+type $\tau_i$, the semantics is a function taking $(\tau_1 \times \ldots \times \tau_n) + 1$.
+When the context is live, it will be called with the left value (product of variable assignments);
+when the context is dead, it will be called with the right value (containing no information).
+
+However, ordinary option type is not sufficient. We need to capture the fact that the 
+representation depends on the annotation -- in other words, the type is \emph{indexed} by 
+the coeffect annotation. The indexing is discussed in details in Section~X. For now, it suffices
+to define the semantics using two separate rules:
+%
+\begin{equation*}
+\begin{array}{rlrcl}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \aclrd{\ident{L}} } \vdash e : \tau} 
+  &:& (\tau_1 \times \ldots \times \tau_n) &\narrow{\rightarrow}& \tau\\
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \aclrd{\ident{D}} } \vdash e : \tau} 
+  &:& 1 &\narrow{\rightarrow}& \tau
+\end{array}
+\end{equation*}
+%
+The semantics of functions is defined similarly. When the argument of a function is live, the function 
+takes the input value; when the argument is dead, the semantic function takes a unit as its argument:
+%
+\begin{equation*}
+\begin{array}{l}
+\sem{\tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2} = \tau_1 \rightarrow \tau_2\\
+\sem{\tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2} = 1 \rightarrow \tau_2
+\end{array}
+\end{equation*}
+%
+Unlike with implicit parameters, the coeffect system for liveness tracking cannot be modelled 
+using monads. Any monadic semantics would express functions as $\tau_1 \rightarrow M\, \tau_2$.
+Unless laziness is already built-in in the semantics, there is no way to call such function without
+first obtaining a value $\tau_1$. The above semantics makes this possible by taking a unit $1$ when
+the argument is not live.
+
+In Figure~\ref{fig:applications-flat-livsem}, we define the semantics directly. We write $()$ for
+the only value of type $1$. This appears, for example, in (\emph{const}) which takes $()$ as the
+input and returns constant using a global dictionary $\delta$. In (\emph{var}), the context is live
+and so the semantics performs a projection. Sub-coeffecting is captured by two rules. A dead context 
+can be treated as live using (\emph{abs-1}); in other cases, the annotation is not changed (\emph{abs-2}).
+
+Lambda abstraction can be annotated in just two ways. When the body requires context (\emph{abs-1}),
+the value of a bound variable $y$ is added to the context $\Gamma$ before passing it to the body.
+When the body does not require context (\emph{abs-2}), it is called with $()$ as the input.
+
+For application, there are 8 possible combinations of annotations. The semantics of some of them
+is the same, so we only need to show 3 cases. The rules should be read as ML-style pattern matching,
+where the last rule handles all cases not covered by the first two. In (\emph{app-1}), we handle the
+case when the function $g$ does not require its argument -- $e_2$ is not used and instead, the function
+is called with $()$ as the argument. The case (\emph{app-2}) covers the case when the expression
+$e_1$ does not require a context, but $e_1$ does. Finally, in (\emph{app-3}), the same input
+(which may be either tuple of variables or unit) is propagated uniformly to both $e_1$ and $e_2$.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Data-flow languages}
+The Section~\ref{sec:intro-why-array} briefly demonstrated that we can treat array access as an 
+operation that accesses a context. In case of arrays, the context is neighbourhood of a current
+location in the array specified by a cursor. In this section, we make the example more concrete,
+using a simpler and better studied programming model, data-flow languages.
+
+Lucid \cite{app-lucid} is a declarative data-flow language designed by Wadge and Ashcroft. In Lucid, 
+variables represent streams and programs are written as transformations over streams. A function 
+application $\ident{square}(x)$ represents a stream of squares calculated from the stream of values $x$.
+
+The data-flow approach has been successfully used in domains such as development of real-time embedded 
+application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the data-flow
+paradigm. The following example is inspired by the Lustre \cite{app-synchronous-lustre} language
+and implements program to count the number of edges on a Boolean stream:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{edge} = \ident{false}~\kvd{fby}~(\ident{input}~\&\&~\ident{not}~(\kvd{prev}~\ident{input}))
+\\[0.5em]
+\kvd{let}~\ident{edgeCount} = \\[-0.25em]
+\quad 0~\kvd{fby}~ (~\kvd{if}~\ident{edge}~\kvd{then}~1 + (\kvd{prev}~\ident{edgeCount})\\[-0.25em]
+\quad\quad\quad~~~\, \kvd{else}~\kvd{prev}~\ident{edgeCount} ~)
+\end{array}
+\end{equation*}
+%
+The construct $\kvd{prev}~x$ returns a stream consisting of previous values of the stream 
+$x$. The second value of $\kvd{prev}~x$ is first value of $x$ (and the first
+value is undefined). The construct $y~\kvd{fby}~x$ returns a stream whose first element is the 
+first element of $y$ and the remaining elements are values of $x$. Note that in Lucid, the constants
+such as \ident{false} and $0$ are constant streams. Formally, the constructs are defined as follows
+(writing $x_n$ for $n$-th element of a stream $x$):
+%
+\[ 
+(\kvd{prev}~x)_n = \left\{ 
+  \begin{array}{ll}
+    nil     & \; \text{if $n=0$}\\
+    x_{n-1} & \; \text{if $n>0$}
+  \end{array} \right.
+\quad
+(y~\kvd{fby}~x)_n = \left\{ 
+  \begin{array}{ll}
+    y_0     & \; \text{if $n=0$}\\
+    x_n     & \; \text{if $n>0$}
+  \end{array} \right.
+\]  
+%
+When reading data-flow programs, we do not need to think about variables in terms of streams --
+we can see them as simple values. Most of the operations perform calculation just on the 
+\emph{current} value of the stream. However, the operation \kvd{fby} and \kvd{prev} are different.
+They require additional \emph{context} which provides past values of variables
+(for \kvd{prev}) and information about the current location in the stream (for \kvd{fby}). 
+
+The semantics of Lucid-like languages can be captured using a number of mathematical 
+structures. Wadge \cite{app-lucid-monads} originally proposed to use monads, while Uustalu and 
+Vene later used comonads \cite{app-dataflow-essence}. In Chapter~\ref{ch:flat}, we extend
+the latter approach. However, the present chapter presents a sketch of a data-flow semantics
+defined directly on streams.
+
+In the introductory example with array access patterns, we used coeffects to track the range
+of values accessed. In this section, we look at a simpler example -- we only consider the
+\kvd{prev} operation and track the maximal number of \emph{past values} needed. This is an 
+important information for efficient implementation of data-flow languages. When we can guarantee
+that at most $x$ past values are accessed, the values can be stored in a pre-allocated buffer
+rather than using \eg~on-demand computed lazy streams.
+
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\begin{equation*}
+\tyrule{var}
+  {x : \tau \in \Gamma}
+  {\coctx{\Gamma}{\aclrd{ 0 }} \vdash x : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{prev}
+  {\coctx{\Gamma}{n} \vdash e : \tau}
+  {\coctx{\Gamma}{n+1} \vdash \kvd{prev}~e : \tau}
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{n'}} \vdash e : \tau }
+  {\coctx{\Gamma}{\aclrd{n}} \vdash e : \tau }\quad\quad(\aclrd{n'} \leq \aclrd{n})
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\coctx{\Gamma}{\aclrd{m}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{p}} \tau_2 &
+   \coctx{\Gamma}{\aclrd{n}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma}{\textnormal{max}(\aclrd{m}, \aclrd{n} + \aclrd{p})} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma}{\aclrd{m}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma, x:\tau_1}{\aclrd{n}} \vdash e_2 : \tau_2}
+  {\coctx{\Gamma}{\aclrd{n}+\aclrd{m}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x:\tau_1}{\aclrd{n}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{n}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{n}} \tau_2 }
+\end{equation*}
+
+\caption{Coeffect rules for tracking context-usage in data-flow language}
+\label{fig:applications-flat-dataflow}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Type system.}
+A type system that tracks the maximal number of accessed past values annotates the context with
+a single integer. The current value is always present, so $0$ means that no past values are 
+needed, but the current value is still available. The typing rules of the system are shown
+in Figure~\ref{fig:applications-flat-dataflow}.
+
+Variable access (\emph{var}) annotates the context with $0$; sub-coeffecting (\emph{sub}) allows
+us to require more values than is actually needed. Primitive context-requirements are introduced
+in (\emph{prev}), which increments the number of past values by one. Thus, for example, 
+$\kvd{prev}~(\kvd{prev}~x)$ requires 2 past values.
+
+The (\emph{app}) rule follows the same intuition as for liveness. It combines \emph{sequential} 
+and \emph{pointwise} composition of semantic functions. In case of data-flow, the operations
+combine annotations using $+$ and \emph{max} operations:
+%
+\begin{equation*}
+\begin{array}{lll}
+f : \tau_1 \xrightarrow{\aclrd{m}} \tau_2 \qquad\qquad&
+g : \tau_2 \xrightarrow{\aclrd{n}} \tau_3 \qquad\qquad&
+g \circ f : \tau_1 \xrightarrow{\aclrd{m} + \aclrd{n}} \tau_3 \qquad\qquad
+\\
+f : \tau_1 \xrightarrow{\aclrd{m}} \tau_2 \qquad\qquad&
+h : \tau_1 \xrightarrow{\aclrd{n}} \tau_3 \qquad\qquad&
+\langle f, h \rangle : \tau_1 \xrightarrow{\textnormal{max}(\aclrd{m}, \aclrd{s})} \tau_2 \times \tau_3 \qquad
+\end{array}
+\end{equation*}
+%
+Sequential composition adds the annotations. The function $f$ needs $\aclrd{m}$ past values to 
+produce a single $\tau_2$ value. To produce two $\tau_2$ values, we thus need $\aclrd{m}+1$ past
+values of $\tau_1$; to produce three $\tau_2$ values, we need $\aclrd{m}+2$ past values of $\tau_1$,
+and so on. To produce $\ident{n}$ past values that are required as the input of $g$, we need
+$\aclrd{m}+\aclrd{n}$ past values of type $\tau_1$. The pointwise composition is simpler. It uses
+the same stream to evaluate functions requiring $\aclrd{m}$ and $\aclrd{n}$ past values, and so it
+needs maximum of the two at most.
+
+In summary, function application (\emph{app}) requires maximum of the values needed to evaluate 
+$e_1$ and the number of values needed to evaluate the argument $e_2$, sequentially composed with
+the function. 
+
+In function abstraction (\emph{abs}), the requirements of the body are duplicated on the declaration-site
+and the call-site as in liveness analysis. If the body requires $\aclrd{n}$ past values, it may access
+$\aclrd{n}$ values of any variables -- including those available in $\Gamma$, as well as the parameter
+$x$. Finally, the (\emph{let}) rule simply adds the two requirements. This corresponds to the sequential
+composition operation, but it is also a rule that we obtain by treating let-binding as a syntactic 
+sugar for $(\lambda x.e_2)~e_1$.
+
+\paragraph{Example.} 
+In the following example, \ident{counter} generates positive integers 
+and \ident{tick} flips between $0$ and $1$:
+%
+\begin{equation*}
+\begin{array}{l}
+(\,   \kvd{if}~~(\kvd{prev}~\ident{tick})=0~\kvd{then}~(\lambda x \rightarrow \kvd{prev}~x)\\
+\,\,\, \kvd{else}~(\lambda x \rightarrow x) \,)\quad(\kvd{prev}~\ident{counter})
+\end{array}
+\end{equation*}
+%
+The function on the left-hand side returns the previous value of the argument every other 
+step. Applied to a stream $\langle{\ldots,4,3,2,1}\rangle$ (where $1$ is the ``current''
+value) it yields the stream $\langle{\ldots,4,4,2,2}\rangle$. To obtain the function, 
+we need one past value from the context (for $\kvd{prev}~\ident{tick}$). The returned function 
+needs either none or one past value (thus a subtyping rule is required to type it
+as requiring one past value).
+
+The function is called with $\kvd{prev}~\ident{counter}$ as an argument, meaning that the result
+is either the first or second past element. Given 
+$\ident{counter}\hspace{-0.1em}=\hspace{-0.1em}\langle{\ldots,5,4,3,2,1}\rangle$, the argument 
+is $\langle{\ldots,5,4,3,2}\rangle$ and so the result is a stream $\langle{\ldots,5,5,3,3}\rangle$.
+
+How many past values does the whole expression need? The argument requires one past value and
+the function one additional ($\kvd{prev}~(\kvd{prev}~\ident{counter}))$, adding to $2$. To obtain
+the function, one past value is needed. Overall we need the maximum of what is needed to evaluate the 
+function and what is needed by passing the argument to the function: $max(1, 2)=2$. This is 
+captured by (\emph{app}) in Figure~\ref{figure:intro-dataflow}. 
+
+The (\emph{fun}) rule again does not allow delaying of context requirements. If the body 
+requires $m$ past values, these have to be available both from the outer context and from the
+argument provided by the caller. Later, we make the rule more flexible to make it compatible
+with (\emph{fun}) for implicit parameters that \emph{splits} requirements.
+
+\paragraph{Semantics.}
+In this setting, a function $\tau_1 \rightarrow
 \tau_2$ becomes a function from a list of historical values $[\tau_1]
 \rightarrow \tau_2$. A coeffect system here tracks how many past values
 to cache.
-
-Figure~\ref{fig:example-dataflow} annotates contexts with an integer specifying the maximum
-number of required past values. The current value is always present, so (\emph{var}) is annotated with $0$.
-The expression $\kvd{prev}~e$ gets the previous value of stream $e$ and requires one
-additional past value (\emph{prev}); \eg~$\kvd{prev}~(\kvd{prev}~e)$ requires 2 past values.
-
-The (\emph{app}) rule follows the same intuition as for liveness. Sequential composition
-adds the tags (the first function needs $n + p$ past values to produce $p$ past inputs
-for the second function); passing the context to two subcomputations requires the maximum
-number of the elements required by the two subcomputations. The (\emph{abs}) rule for data-flow 
-needs a distinct operator -- \emph{min} -- therefore, the declaration-site and 
-call-site must each provide at least the number of past values required by the function body
-(the body may use variables coming from the declaration-site as well as the argument).
-
-The soundness follows from our categorical model (\S\ref{sec:comonads}). Uustalu and Vene
-\cite{comonads-notions} model causal dataflow computations using a non-empty list comonad 
-$\ident{NeList}~\tau = \tau \times (\ident{NeList}~\tau + 1)$. However, such model leads to
-(inefficient) unbounded lists of past elements. The above static analysis provides an
-approximation of the number of required past elements and so we use just fixed-length lists.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -961,71 +1436,6 @@ this restriction fits into our general coeffect framework in Section~X.Y.
 % => This has coeffect style judgments, but it has effect-style lambda
 %
 
-%---------------------------------------------------------------------------------------------------
-
-\paragraph{Data-flow languages}
-
-The examples discussed so far are all -- to some extent -- similar. They attach additional 
-information (implicit parameters, dictionaries) or restrictions (on execution environment) to the
-context where code evaluates. By \emph{context}, we mean, most importantly, the values of variables
-and declarations that are in scope. The examples so far add more information to the context, but
-do not operate on the variable values.
-
-Data-flow languages provide a different example. Lucid \cite{app-lucid} is a declarative data-flow 
-language designed by Wadge and Ashcroft. In Lucid, variables represent streams and programs
-are written as transformations over streams. A function application $\mathit{square}(a)$ represents
-a stream of squares calculated from the stream of values $a$.
-
-The data-flow approach has been successfully used in domains such as development of real-time embedded 
-application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the data-flow
-paradigm. The following example is inspired by the Lustre \cite{app-synchronous-lustre} language
-and implements program to count the number of edges on a Boolean stream:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{edge} = \ident{false}~\kvd{fby}~(\ident{input}~\&\&~\ident{not}~(\kvd{prev}~\ident{input}))
-\\[0.5em]
-\kvd{let}~\ident{edgeCount} = \\
-\quad 0~\kvd{fby}~ (~\kvd{if}~\ident{edge}~\kvd{then}~\kvd{prev}~\ident{edgeCount}\\
-\quad\quad\quad~~~\, \kvd{else}~\kvd{prev}~\ident{edgeCount} ~)
-\end{array}
-\end{equation*}
-%
-The construct $\kvd{prev}~x$ returns a stream consisting of previous values of the stream 
-$x$. The second value of $\kvd{prev}~x$ is first value of $x$ (and the first
-value is undefined). The construct $y~\kvd{fby}~x$ returns a stream whose first element is the 
-first element of $y$ and the remaining elements are values of $x$. Note that in Lucid, the constants
-such as \ident{false} and $0$ are constant streams. Formally, the construct are defined as follows
-(writing $x_n$ for $n$-th element of a stream $x$):
-%
-\[ 
-(\kvd{prev}~x)_n = \left\{ 
-  \begin{array}{ll}
-    nil     & \; \text{if $n=0$}\\
-    x_{n-1} & \; \text{if $n>0$}
-  \end{array} \right.
-\quad
-(y~\kvd{fby}~x)_n = \left\{ 
-  \begin{array}{ll}
-    y_0     & \; \text{if $n=0$}\\
-    x_n     & \; \text{if $n>0$}
-  \end{array} \right.
-\]  
-%
-When reading data-flow programs, we do not need to think about variables in terms of streams --
-we can see them as simple values. However, the operations \kvd{fby} and \kvd{prev} cannot operate
-on plain values -- they require additional \emph{context} which provides past values of variables
-(for \kvd{prev}) and information about the current location in the stream (for \kvd{fby}). 
-
-In this case, the context is not simply an additional (hidden) parameter. It completely changes
-how variables must be represented. We may want to capture various \emph{contextual properties}
-of Lucid programs. For example, how many past elements need to be cached when we evaluate the 
-stream.
-
-To understand the nature of the context, we later look at the semantics of Lucid. This can be
-captured using a number of mathematical structures. Wadge \cite{app-lucid-monads} originally 
-proposed to use monads, while Uustalu and Vene later used comonads \cite{app-dataflow-essence}.
-
 % ==================================================================================================
 
 \section{Structural coeffects (1.)}
@@ -1034,58 +1444,6 @@ We now turn our attention to system where additional contextual information are 
 with the context as a whole (or program scope), but with individual variables. We start by looking
 simple static analysis -- variable \emph{liveness}. Then we revisit data-flow computations and
 look at applications in security and software updating.
-
-%---------------------------------------------------------------------------------------------------
-
-\paragraph{Liveness analysis}
-
-\emph{Live variable analysis} (LVA) \cite{app-modern-compiler} is a standard technique in compiler theory. 
-It detects whether a free variable of an expression may be used by a program later (it is
-\emph{live}) or whether it is definitely not needed (it is \emph{dead}). As an optimization, 
-compiler can remove bindings to dead variables as the result is never accessed. Wadler 
-\cite{app-strictness-absecnce} describes the property of a variable that is dead as the 
-\emph{absence} of a variable. 
-
-In this thesis, we first use a restricted (and not practically useful) form of liveness analysis
-to introduce the theory of indexed comonads (Section~X) and then use liveness analysis as one of the
-motivations for structural coeffects. Consider the following two simple functions:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{constant42} = \lambda \ident{x} \rightarrow 42\\
-\kvd{let}~\ident{constant} = \lambda \ident{value} \rightarrow \lambda \ident{x} \rightarrow \ident{value}
-\end{array}
-\end{equation*}
-%
-In liveness analysis, we annotate the context with a value specifying whether the variables in
-scope are \emph{live} or \emph{dead}. If we associate just a single value with the entire 
-context, then the liveness analysis is very limited -- it can say that the context of the 
-expression $42$ in the first function is dead, because no variables are accessed. 
-
-A useful liveness analysis needs to consider individual variables. For example, in the body of
-the second function (\ident{value}), two variables are in scope. The variable \ident{value} is
-accessed and thus is \emph{live}, but the variable \ident{x} is dead.
-
-Static analyses can be classified as either \emph{forward} or \emph{backward} (depending on how they 
-propagate information) and as either \emph{must} or \emph{may} (depending on what properties they
-guarantee). Liveness is a \emph{backward} analysis -- this means that the requirements propagates
-from variables to their declaration sites. The distinction between \emph{must} and \emph{may} is 
-apparent when we look at an example with conditionals:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{defaultArg}~= \lambda \ident{cond} \rightarrow \lambda \ident{input} \rightarrow\\
-\quad\kvd{if}~\ident{cond}~\kvd{then}~42~\kvd{else}~\ident{input}
-\end{array}
-\end{equation*}
-%
-The liveness analysis is a \emph{may} analysis meaning that it marks variable as live when it
-\emph{may} be used and as dead if it is \emph{definitely} not used. This means that the variable
-\ident{input} is \emph{live} in the example above. A \emph{must} analysis would mark the variable
-only if it was used in both of the branches (this is sometimes called \emph{neededness}).
-
-The distinction between \emph{may} and \emph{must} analyses demonstrates the importance of 
-interaction between contextual properties and certain language constructs such as conditionals.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1344,6 +1702,11 @@ the original. We return to evaluation strategies in Section~\ref{sec:syntax}, an
 show that structural coeffect systems preserve types and coeffects under $\beta$-reduction. 
 
 % --------------------------------------------------------------------------------------------------
+
+\subsection{Liveness}
+\label{sec:applications-struct-live}
+
+todo
 
 \subsection{Dataflow and data access}
 
@@ -1659,31 +2022,6 @@ two key aspects:
 Although we also looked at examples of \emph{active} contextual computations (where developers can
 write functions that modify the context), we do not consider these applications, to keep the 
 material presented in this thesis focused. We briefly discuss them as future work in Section~X.
-
-%===================================================================================================
-
-\section{Context oriented programming}
-
-The importance of context-aware computations is perhaps most obvious when considering mobile
-application, client/server web applications or even the internet of things. A pioneering work
-in the area using functional languages has been done by Serrano \cite{app-hop-diffuse,app-hop-lang}
-(which also inspired the example presented in Chapter~\ref{ch:intro}). His HOP language supports 
-cross-compilation and programs execute in different contexts. However, HOP is not statically 
-type checked.
-
-In the software engineering community, a number of authors have addressed the
-problem of context-aware computations. Hirschfeld et al. propose \emph{Context-Oriented Programming} 
-(COP) as a methodology \cite{app-cop-method}. The COP paradigm has been later implemented by
-programming language features. Costanza \cite{app-cop-contextl} develops a domain-specific LISP-like 
-language ContextL and Bardram \cite{app-cop-javafwk} proposes a Java framework for COP.
-
-Finally, the subject of context-awareness has also been addressed in work focusing on the development 
-of mobile applications \cite{app-cop-mobile,app-cop-mobile2}. Here, the \emph{context} focuses more 
-on concrete physical context (obtained from the device sensors) than context as an abstract 
-language feature.
-
-We approach the problem from a different perspective, building on the tradition of 
-statically-typed functional programming languages and their theories. 
 
 %===================================================================================================
 

@@ -675,6 +675,32 @@ work on bunched logic. Aside from this principal connection, \emph{structural co
 use some of the proof techniques from the work on bunched logics, because they also use tree-like
 structure of variable contexts.
 
+
+%===================================================================================================
+
+\section{Context oriented programming}
+
+The importance of context-aware computations is perhaps most obvious when considering mobile
+application, client/server web applications or even the internet of things. A pioneering work
+in the area using functional languages has been done by Serrano \cite{app-hop-diffuse,app-hop-lang}
+(which also inspired the example presented in Chapter~\ref{ch:intro}). His HOP language supports 
+cross-compilation and programs execute in different contexts. However, HOP is not statically 
+type checked.
+
+In the software engineering community, a number of authors have addressed the
+problem of context-aware computations. Hirschfeld et al. propose \emph{Context-Oriented Programming} 
+(COP) as a methodology \cite{app-cop-method}. The COP paradigm has been later implemented by
+programming language features. Costanza \cite{app-cop-contextl} develops a domain-specific LISP-like 
+language ContextL and Bardram \cite{app-cop-javafwk} proposes a Java framework for COP.
+
+Finally, the subject of context-awareness has also been addressed in work focusing on the development 
+of mobile applications \cite{app-cop-mobile,app-cop-mobile2}. Here, the \emph{context} focuses more 
+on concrete physical context (obtained from the device sensors) than context as an abstract 
+language feature.
+
+We approach the problem from a different perspective, building on the tradition of 
+statically-typed functional programming languages and their theories. 
+
 %===================================================================================================
 
 \section{Summary}
