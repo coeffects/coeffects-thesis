@@ -585,6 +585,18 @@ of a function. Second, they are associated with the input. To call a function th
 implicit parameter or has a type-class constraint, the caller needs to pass a (hidden) parameter
 together with the function inputs.
 
+\paragraph{Summary.}
+Implicit parameters are the simplest example of a system where function abstraction does not 
+delay all impurities of the body. As discussed in Section~\ref{sec:applications-structure-lam},
+this is the defining feature of \emph{coeffect} systems. 
+
+In this section, we have seen how this affects both the type system and the semantics of the 
+language. In the type system, the (\emph{abs}) rule places context-requirements on both the 
+declaration-site and the call-site. For implicit parameters, this rule introduces non-determinism,
+because the parameters can be split arbitrarily. However, as we show in the next section, this is 
+not always the case. Semantically, lambda abstraction \emph{merges} two parts of context (implicit 
+parameter dictionaries) that are provided by the call-site and declaration-site. 
+
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Distributed computing}
@@ -1202,6 +1214,20 @@ is called with $()$ as the argument. The case (\emph{app-2}) covers the case whe
 $e_1$ does not require a context, but $e_1$ does. Finally, in (\emph{app-3}), the same input
 (which may be either tuple of variables or unit) is propagated uniformly to both $e_1$ and $e_2$.
 
+\paragraph{Summary.}
+Unlike with implicit parameters, the lambda abstraction for liveness analysis does not introduce 
+non-determinism. It simply duplicates the context requirements. However, this still matches the
+property of coeffects that impurities cannot be thunked.
+
+The semantics of liveness reveals a number of interesting properties too. Firstly, the semantics
+cannot be captured by any monad. Secondly, the system would not work without the coeffect annotations. 
+The shape of the semantic function depends on the annotation (the input is either $1$ or $\tau$) and 
+is \emph{indexed} by the annotation. Finally, we discussed at length how the semantics of application
+arises from \emph{sequential} and \emph{pointwise} composition. This is another important aspect of
+coeffect systems -- categorical semantics typically builds on \emph{sequential} composition, but to
+model full $\lambda$ calculus it needs more. For coeffect systems, we need \emph{pointwise} composition
+where the same context is shared by multiple sub-expressions.
+
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Data-flow languages}
@@ -1445,7 +1471,7 @@ past value) and then $\kvd{prev}~(\kvd{prev}~\ident{counter}))$ (using two past 
 \end{array}
 \end{equation*}
 
-\caption{Semantics of a language with implicit parameters}
+\caption{Semantics of a simple data-flow language}
 \label{fig:applications-flat-dfsem}
 \end{figure}
 
@@ -1504,25 +1530,33 @@ called with the past $\aclrd{m}$ values. The resulting function $g$ is then sequ
 with the semantics of $e_2$. To call the function, we need to evaluate $e_2$ repeatedly -- namely,
 $\aclrd{p}+1$ times, which results in the overall requirement for $\aclrd{n}+\aclrd{p}$ past values.
 
-\paragraph{Summary}
-
-\todo{Key points...}
+\paragraph{Summary.}
+The most interesting point about the data-flow example is that it is remarkably similar to our
+earlier liveness example. In the type system, abstraction (\emph{abs}) duplicates the context
+requirements and application (\emph{abs}) arises from sequential and pointwise composition.
+We capture this striking similarity in Chapter~\ref{ch:flat}. Before doing that, we look at one
+more example and then explore the \emph{structural} class of systems.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Safe locking}
-In the previous examples, the context provides additional values or functions that may be accessed
-at runtime. However, it may also track \emph{permissions} to perform some operation. This is done
-in the type system for safe locking of Flanagan and Abadi \cite{app-safe-locking}.
+\subsection{Permissions and safe locking}
+In the implicit parameters and data-flow examples, the context provides additional resources or 
+values that may be accessed at runtime. However, it may also track \emph{permissions} or 
+\emph{capabilities} to perform some operation. Liveness can be seen as a trivial example -- when
+the context is live, it contains a permission to access variables. In this section, we briefly
+consider a system for safe locking of Flanagan and Abadi \cite{app-safe-locking} as one, more
+advanced example. Calculus of capabilities of Cray et al. \cite{app-capabilities} is discussed 
+later in Section~\ref{sec:applications-active-ccc}.
 
-The system prevents race conditions (by only allowing access to mutable state under a lock)
-and avoids deadlocks (by imposing strict partial order on locks). The following 
+\paragraph{Safe locking.}
+The system for safe locking prevents race conditions (by only allowing access to mutable state 
+under a lock) and avoids deadlocks (by imposing strict partial order on locks). The following 
 program uses a mutable state under a lock:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{newlock}~l:\rho~\kvd{in}\\
-\kvd{let}~\ident{state}~=~\ident{ref}_\rho~10~\kvd{in}\\
+\kvd{newlock}~l:\rho~\kvd{in}\\[-0.25em]
+\kvd{let}~\ident{state}~=~\ident{ref}_\rho~10~\kvd{in}\\[-0.25em]
 \kvd{sync}~l~(!\ident{state})
 \end{array}
 \end{equation*}
@@ -1533,134 +1567,63 @@ is only allowed in scope that is protected by a lock. This is done using the \kv
 which locks a lock and evaluates an expression in a context that contains permission to access
 memory region of the lock ($\rho$ in the above example).
 
-The type system for safe locking associates the list of permission with the variable context.
-It uses judgements of a form $\Gamma, m \vdash e : \alpha$ specifying that an expression has a
-type in context $\Gamma$, given permissions (a list of locked regions) $m$. However, the treatment
-of lambda abstraction differs from the one for implicit parameters or rebindable resources.
-In the system for locking, code inside lambda function cannot use permissions from the scope
-where the function is declared. This is a necessary requirement -- a lambda function created 
-under a lock cannot access protected memory, because it will be executed later. We discuss how
-this restriction fits into our general coeffect framework in Section~X.Y.
+The type system for safe locking associates a list of acquired locks with the context. 
+Interestingly, the original presentation of the system uses a coeffect-style judgements
+of a form $\Gamma; p \vdash e : \tau$ where $p$ is a list of accessible regions (protected by
+an acquired lock). Using our notation, the rule for \kvd{sync} looks as follows:
+%
+\begin{equation*}
+\tyrule{sync}
+  { \coctx{\Gamma}{\aclrd{p}} \vdash e_1 : m& 
+    \coctx{\Gamma}{\aclrd{p} \cup \{m\} } \vdash e_2 : \tau }
+  { \coctx{\Gamma}{\aclrd{p}} \vdash \kvd{sync}~e_1~e_2 : \tau }
+\end{equation*}
+%
+The rule requires that $e_1$ yields a value of a singleton type $m$. The type is added as an
+indicator of the locked region to the context $\aclrd{p}\cup \{m\}$ which is then used to evaluate
+the expression $e_2$.
 
-%
-% => This has coeffect style judgments, but it has effect-style lambda
-%
+\paragraph{Summary.}
+Despite attaching annotations to the variable context, the system for safe locking uses 
+effect-style lambda abstraction. Lambda abstraction associates all requirements with the 
+call-site -- a lambda function created under a lock cannot access protected memory available at 
+the time of creation. It will be executed later and can only access the memory available then.
+This suggests that safe locking is perhaps better seen as an effect system. 
+
+Another interesting aspect is the extension to avoid deadlocks. In that case, the type system
+needs to reject programs that acquire locks in an invalid order. One way to model this is to 
+replace $\aclrd{p} \cup \{m\}$ with a \emph{partial} operation $\aclrd{p} \uplus \{m\}$ which
+is only defined when the lock $m$ can be added to the set $\aclrd{p}$. Supporting partial 
+operations on coeffect annotations is an interesting extension which we discuss in Section~?.
+The extension also lets us capture systems with effect-style lambda abstraction such as safe
+locking.
 
 % ==================================================================================================
 
-\section{Structural coeffects (1.)}
+\section{Structural coeffect systems}
 
 We now turn our attention to system where additional contextual information are associated not
 with the context as a whole (or program scope), but with individual variables. We start by looking
 simple static analysis -- variable \emph{liveness}. Then we revisit data-flow computations and
 look at applications in security and software updating.
 
-% --------------------------------------------------------------------------------------------------
-
-\paragraph{Data-flow languages (revisited)}
-When discussing data-flow languages in the previous section, we said that the context provides 
-past values of variables. This can be viewed as a flat contextual property (the context needs
-to keep all past values), but we can also view it as a structural property. Consider the following
-example:
-%
-\begin{equation*}
-\kvd{let}~\ident{offsetZip} = 0~\kvd{fby}~(\ident{left} + \kvd{prev}~\ident{right})
-\end{equation*}
-%
-The value \ident{offsetZip} adds values of \ident{left} with previous values of \ident{right}.
-To evaluate a current value of the stream, we need the current value of \ident{left} and one past
-value of \ident{right}. 
-
-As mentioned earlier, a static analysis for data-flow computations could calculate how many past 
-values must be cached. This can be done as a \emph{flat} coeffect analysis that produces just a 
-single number for each function. However, we can design a more precise \emph{structural} analysis
-and track the number of required elements for individual variables.
-
-% --------------------------------------------------------------------------------------------------
-
-\paragraph{Tainting and provenance}
-Tainting is a mechanism where variables coming from potentially untrusted sources are marked
-(\emph{tainted}) and the use of such variables is disallowed in contexts where untrusted input
-can cause security issues or other problems. Tainting can be done dynamically as a runtime mark
-(e.g.~in the Perl language) or statically using a type system. Tainting can be viewed as a special
-case of \emph{provenance tracking}, known from database systems \cite{app-provenance-db}, where
-values are annotated with more detailed information about their source.
-
-Statically typed systems that based on tainting have been use to prevent cross-site scripting
-attacks \cite{app-tainting-xss} and a well known attack known as SQL injection
-\cite{app-tainting-sql,app-tainting-wasp}. In the latter chase, we want to check that SQL commands 
-cannot be directly constructed from, potentially dangerous, inputs provided by the user. Consider the 
-type checking of the following expression in a context containing variables \ident{id} and \ident{msg}:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{let}~\ident{name} = \ident{query}~(\str{"SELECT Name WHERE Id = "}~+~\ident{id})~\kvd{in}\\
-\ident{msg}~+~\ident{name}
-\end{array}
-\end{equation*}
-%
-In this example, \ident{id} must not come directly from a user input, because \ident{query} requires 
-untainted string. Otherwise, the attacker could specify values such as \str{"1; DROP TABLE Users"}. 
-The variable \ident{msg} may or may not be tainted, because it is not used in protected context 
-(i.e.~to construct an SQL query). 
-
-In runtime checking, all (string) values need to be wrapped in an object that stores Boolean 
-flag (for tainting) or more complex data (for provenance). In static checking, the information
-need to be associated with the variables in the variable context. We use tainting as a motivating
-example for \emph{structural} coeffects in Section~X.
-
-% --------------------------------------------------------------------------------------------------
-
-\paragraph{Security and core dependency calculus}
-
-The checking of tainting is a special case of checking of the \emph{non-interference} property 
-in \emph{secure information flow}. Here, the aim is to guarantee that sensitive information (such
-as credit card number) cannot be leaked to contexts with low secrecy (e.g.~sent via an unsecured
-network channel). Volpano et al. \cite{app-secure-flow} provide the first (provably) sound type 
-system that guarantees non-inference and Sabelfeld et al. \cite{app-secure-information-flow} survey
-more recent work. The checking of information flows has been also integrated (as a single-purpose
-extension) in the FlowCaml \cite{app-security-flowcaml} language. Finally, Russo et al. and 
-Swamy et al. \cite{monad-secure-flow,monads-lightweight-ml} show that the properties can be checked
-using a monadic library.
-
-Systems for secure information flow typically define a lattice of security classes $(\mathcal{S}, \leq)$
-where $\mathcal{S}$ is a finite set of classes and an ordering. For example a set $\{\ident{L}, \ident{H}\}$ 
-represents low and high secrecy, respectively with $\ident{L} \leq \ident{H}$ meaning that low security
-values can be treated as high security (but not the other way round).
-
-An important aspect of secure information flow is called \emph{implicit flows}. Consider the following
-example which may assign a new value to $z$:
-%
-\begin{equation*}
-\kvd{if}~x>0~\kvd{then}~z := y
-\end{equation*}
-%
-If the value of $y$ is high-secure, then $z$ becomes high-secure after the assignment
-(this is an \emph{explicit} flow). However, if $x$ is high-secure, then the value of
-$z$ becomes high-secure, regardless of the security level of $y$, because the fact whether an 
-assignment is performed or not performed leaks information in its own (this is an 
-\emph{implicit} flow).
-
-Abadi et al. realized that there is a number of analyses similar to secure information flow
-and proposed to unify them using a single model called Dependency Core Calculus (DCC) \cite{app-dcc}.
-It captures other cases where some information about expression relies on properties of variables
-in the context where it executes.  The DCC captures, for example, \emph{binding time analysis}
-\cite{app-binding-time-analysis}, which detects which parts of programs can be partially evaluated
-(do not depend on user input) and \emph{program slicing} \cite{app-slicing-survey} that identifies
-parts of programs that contribute to the output of an expression.
-	
-%===================================================================================================
-
-\section{Structural coeffects}
-\label{sec:intro-coeffects}
+% % % % % % % %
 
 Coeffects are way to describe notions of context in programming that keep turning up. 
 To illustrate this, we overview three systems tracking contextual properties that 
  motivate our general coeffect system. Two systems track per-variable properties (bounded 
 linear logic and dataflow) and one tracks whole-context properties (implicit parameters).
 
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Liveness}
+\label{sec:applications-struct-live}
+
+todo
+
+% --------------------------------------------------------------------------------------------------
+
 \subsection{Bounded reuse}
-\label{sec:intro-coeffects-bll}
 
 Bounded linear logic \cite{girard1992bounded} restricts well-typed terms to polynomial-time algorithms.  
 This is done by limiting the number of times a value (proposition) can be used. An assumption
@@ -1813,12 +1776,28 @@ show that structural coeffect systems preserve types and coeffects under $\beta$
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Liveness}
-\label{sec:applications-struct-live}
+\subsection{Data-flow languages (revisited)}
+When discussing data-flow languages in the previous section, we said that the context provides 
+past values of variables. This can be viewed as a flat contextual property (the context needs
+to keep all past values), but we can also view it as a structural property. Consider the following
+example:
+%
+\begin{equation*}
+\kvd{let}~\ident{offsetZip} = 0~\kvd{fby}~(\ident{left} + \kvd{prev}~\ident{right})
+\end{equation*}
+%
+The value \ident{offsetZip} adds values of \ident{left} with previous values of \ident{right}.
+To evaluate a current value of the stream, we need the current value of \ident{left} and one past
+value of \ident{right}. 
 
-todo
+As mentioned earlier, a static analysis for data-flow computations could calculate how many past 
+values must be cached. This can be done as a \emph{flat} coeffect analysis that produces just a 
+single number for each function. However, we can design a more precise \emph{structural} analysis
+and track the number of required elements for individual variables.
 
-\subsection{Dataflow and data access}
+% % % % % %
+
+\paragraph{Dataflow and data access}
 
 Dataflow languages such as Lucid \cite{wadge1985lucid} describe computations over \emph{streams}.
 An expression is re-evaluated when new inputs are available (push) or when more output
@@ -1921,100 +1900,77 @@ caching requirements per-variable.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Implicit parameters}
-\label{sec:intro-coeffects-impl}
+\subsection{Tainting and provenance}
+Tainting is a mechanism where variables coming from potentially untrusted sources are marked
+(\emph{tainted}) and the use of such variables is disallowed in contexts where untrusted input
+can cause security issues or other problems. Tainting can be done dynamically as a runtime mark
+(e.g.~in the Perl language) or statically using a type system. Tainting can be viewed as a special
+case of \emph{provenance tracking}, known from database systems \cite{app-provenance-db}, where
+values are annotated with more detailed information about their source.
 
-As our third example, we revisit Haskell implicit parameters \cite{lewis2000implicit} 
-used in our earlier coeffect work \cite{petricek2013coeffects}. Implicit parameters are variables
-that mix aspects of dynamic and lexical scoping. Implicit parameters are a distinct syntactic 
-category to variables and we write them as \ident{?p}. For simplicity, we omit \emph{let}-binding for
-implicit parameters and focus just on tracking requirements.
-
-\paragraph{Implicit parameters coeffects.} Implicit parameters are a whole-context coeffect 
-not linked to ordinary variables. We keep track of sets of implicit parameters that are required
-by an expression (and their types). For example $\coctx{\Gamma}{\{ \ident{?p}_1 : \tau_1, \ldots, \ident{?p}_n : \tau_n \}}$
-means that a context provides ordinary variables $\Gamma$ and values for implicit parameters $\ident{?p}_i$.
-Unlike in the previous examples, we no longer need to distinguish between coeffects attached
-to variables (scalars) and coeffects attached to contexts (vectors), so we write $\cclrd{r},\cclrd{s},\cclrd{t}$
-for both.
-
-Despite the differences, the type system in Figure~\ref{fig:implpar-coeff} follows the same 
-structure as the earlier two examples. Context requirements are created when accessing an implicit
-parameter (\emph{param}) (a system-specific rule). Structural rules (exchange, weaken, contract) 
-do not affect the coeffects. For example parameters are reordered in (\emph{exch}),
-but this has no effect as set union $\cup$ is commutative.
-
-In abstraction and application, the structural $\cons$ operator (previously vector 
-concatenation) becomes $\cup$. Sets of implicit parameters are not associated to
-individual variables and so they are unioned. The (\emph{app}) rule uses $\cup$ to
-combine the implicit parameters required by the function with the requirements of the argument too.
-
-We call this a \emph{flat} coeffect system since coeffects have only
-one shape (there is no scalar/vector distinction).  Other flat
-coeffect systems may use a richer structure~\cite{petricek2013coeffects}. In
-particular, the operations used in abstraction and application may differ
-(to accommodate over-approximation). We return to this in
-Section~\ref{sec:coeffects-structural}.
-
-\paragraph{Example.} Unlike structural coeffect systems, flat systems
-do not necessarily have principal coeffects. 
-This arises from the (\emph{abs}) rule which can freely split
-requirements between the function type and the declaring
-context. Consider a function %filters news based on a location:
-$\lambda ().\ident{?p}_1 + \ident{?p}_2$.  There are nine possible 
- type and coeffect derivations, two of which are:
-%% 1 p1p2  p1p2
-%% 2 p1p2  p1
-%% 3 p1p2  p2
-%% 4 p1p2  
-%% 5 p1    p1p2
-%% 6 p1    p2
-%% 7 p2    p1p2
-%% 8 p2    p1
-%% 9       p1p2
-\[
-\begin{array}{rl}
-\coctx{\emptyset}{ \{  \} } &\hspace{-0.7em}\vdash (\ldots) : 
-  \ident{unit} \xrightarrow{ \{ \ident{?p}_1:\mathbb{Z}, \ident{?p}_2:\mathbb{Z} \} } \mathbb{Z}
-\\
-\coctx{\emptyset}{ \{ \ident{?p}_1:\mathbb{Z} \} } &\hspace{-0.7em} \vdash (\ldots) : 
-  \ident{unit} \xrightarrow{ \{ \ident{?p}_2:\mathbb{Z} \} } \mathbb{Z}
+Statically typed systems that based on tainting have been use to prevent cross-site scripting
+attacks \cite{app-tainting-xss} and a well known attack known as SQL injection
+\cite{app-tainting-sql,app-tainting-wasp}. In the latter chase, we want to check that SQL commands 
+cannot be directly constructed from, potentially dangerous, inputs provided by the user. Consider the 
+type checking of the following expression in a context containing variables \ident{id} and \ident{msg}:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{name} = \ident{query}~(\str{"SELECT Name WHERE Id = "}~+~\ident{id})~\kvd{in}\\
+\ident{msg}~+~\ident{name}
 \end{array}
-\]
-In the first case, both parameters are dynamically scoped and have to be provided by the caller.
-In the second case, the parameter $\ident{?p}_1$ is available in the declaring scope and so it is
-(lexically) captured.
+\end{equation*}
+%
+In this example, \ident{id} must not come directly from a user input, because \ident{query} requires 
+untainted string. Otherwise, the attacker could specify values such as \str{"1; DROP TABLE Users"}. 
+The variable \ident{msg} may or may not be tainted, because it is not used in protected context 
+(i.e.~to construct an SQL query). 
 
-Although structural coeffects have more desirable syntactic properties, we aim to capture this
-non-principality too as it is practically useful -- Haskell's implicit parameters use it and
-it can be used to model resource rebinding in distributed systems such as~\cite{app-distributed-acute}).
+In runtime checking, all (string) values need to be wrapped in an object that stores Boolean 
+flag (for tainting) or more complex data (for provenance). In static checking, the information
+need to be associated with the variables in the variable context. We use tainting as a motivating
+example for \emph{structural} coeffects in Section~X.
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}
-\[
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\tau,y:\sigma,\Gamma_2}{r \cup \cclrd{s} \cup \cclrd{t} \cup \cclrd{q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\sigma,x:\tau,\Gamma_2}{\cclrd{r} \cup \cclrd{t} \cup \cclrd{s} \cup \cclrd{q}} \vdash e : \tau}
-\]
-\[
-\tyrule{app}
-  { \coctx{\Gamma_1}{\cclrd{r}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau &
-    \coctx{\Gamma_2}{\cclrd{s}} \vdash e_2 : \sigma }
-  { \coctx{\Gamma_1, \Gamma_2}{\cclrd{r} \cup \cclrd{t} \cup \cclrd{s}} \vdash e_1 \, e_2 : \tau} 
-\]
-\[
-\tyrule{param}{}
-  {\coctx{()}{ \{ \ident{?p}:\tau \} } \vdash \ident{?p} : \tau}
-\quad\;
-\tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \sigma}{\cclrd{r} \cup \cclrd{s}} \vdash e : \tau}
-  {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau}
-\]
-\vspace{-0.5em}
-\caption{Type and coeffect system for implicit parameters}
-\label{fig:implpar-coeff}
-\end{figure}
+\subsection{Security and core dependency calculus}
+
+The checking of tainting is a special case of checking of the \emph{non-interference} property 
+in \emph{secure information flow}. Here, the aim is to guarantee that sensitive information (such
+as credit card number) cannot be leaked to contexts with low secrecy (e.g.~sent via an unsecured
+network channel). Volpano et al. \cite{app-secure-flow} provide the first (provably) sound type 
+system that guarantees non-inference and Sabelfeld et al. \cite{app-secure-information-flow} survey
+more recent work. The checking of information flows has been also integrated (as a single-purpose
+extension) in the FlowCaml \cite{app-security-flowcaml} language. Finally, Russo et al. and 
+Swamy et al. \cite{monad-secure-flow,monads-lightweight-ml} show that the properties can be checked
+using a monadic library.
+
+Systems for secure information flow typically define a lattice of security classes $(\mathcal{S}, \leq)$
+where $\mathcal{S}$ is a finite set of classes and an ordering. For example a set $\{\ident{L}, \ident{H}\}$ 
+represents low and high secrecy, respectively with $\ident{L} \leq \ident{H}$ meaning that low security
+values can be treated as high security (but not the other way round).
+
+An important aspect of secure information flow is called \emph{implicit flows}. Consider the following
+example which may assign a new value to $z$:
+%
+\begin{equation*}
+\kvd{if}~x>0~\kvd{then}~z := y
+\end{equation*}
+%
+If the value of $y$ is high-secure, then $z$ becomes high-secure after the assignment
+(this is an \emph{explicit} flow). However, if $x$ is high-secure, then the value of
+$z$ becomes high-secure, regardless of the security level of $y$, because the fact whether an 
+assignment is performed or not performed leaks information in its own (this is an 
+\emph{implicit} flow).
+
+Abadi et al. realized that there is a number of analyses similar to secure information flow
+and proposed to unify them using a single model called Dependency Core Calculus (DCC) \cite{app-dcc}.
+It captures other cases where some information about expression relies on properties of variables
+in the context where it executes.  The DCC captures, for example, \emph{binding time analysis}
+\cite{app-binding-time-analysis}, which detects which parts of programs can be partially evaluated
+(do not depend on user input) and \emph{program slicing} \cite{app-slicing-survey} that identifies
+parts of programs that contribute to the output of an expression.
+	
 
 % ==================================================================================================
 
@@ -2034,6 +1990,8 @@ on systems with passive context, we quickly look at the most important examples 
 % --------------------------------------------------------------------------------------------------
 
 \paragraph{Calculus of capabilities}
+\label{sec:applications-active-ccc}
+
 Crary et al. \cite{app-capabilities} introduced the Calculus of Capabilities to provide 
 a sound system with region-based memory management for low-level code that can be easily 
 compiled to assembly language. They build on the work of Tofte and Talpin \cite{app-region-memory}
