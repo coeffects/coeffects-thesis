@@ -171,6 +171,7 @@ we use a number of operations related to scalars and vectors.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Scalars and vectors}
+\label{sec:applications-strucutre-vec}
 
 The $\lambda$-calculus is asymmetric -- it maps a context with \emph{multiple} variables to a 
 \emph{single} result. An expression with free variables of types $\tau_i$ can be modelled by a function 
@@ -187,24 +188,24 @@ effect systems.
 It is useful to clarify how vectors are used in this thesis. Suppose we have a set $\C$ of
 \emph{scalars} such that $\cclrd{r_1},\ldots,\cclrd{r_n} \in \C$. A vector $\aclrd{R}$ 
 over $\C$ is a tuple $\alift{ \cclrd{r_1}, \ldots, \cclrd{r_n} }$ of scalars. 
-We use upper-case letters like $\aclrd{R}, \aclrd{S}, \aclrd{T}$ for vectors and lower-case
+We use bold-face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ for vectors and lower-case
 letters $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars\footnote{For better readability, the thesis
 also distinguishes different structures using colours. However ignoring the colour does not introduce 
-any ambiguity.}. We also say that a \emph{shape} of a vector $\slift{\aclrd{R}}$ (or more generally any container) 
+any ambiguity.}. We also say that a \emph{shape} of a vector $\slift{\aclrd{\textbf{r}}}$ (or more generally any container) 
 is the set of \emph{positions} in a vector. So, a vector of length $n$ has shape $\{ 1, 2, \ldots, n \}$. 
 We discuss containers and shapes further in Chapter~\ref{ch:unified} and also discuss how our use
 relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
 
 Just as in the usual multiplication of a vector by scalar, we lift any binary operation on scalars into a 
 scalar-vector one. For any binary operation on scalars $\circ : \C \times \C \rightarrow \C$, we define
- $\cclrd{s} \circ \aclrd{R} = \alift{ \cclrd{s}\circ\cclrd{r_1}, \ldots, \cclrd{s}\circ\cclrd{r_n}}$.
-Relations on scalars can be also lifted to vectors. Given two vectors $\aclrd{R}, \aclrd{S}$ of the
+ $\cclrd{s} \circ \aclrd{\textbf{r}} = \alift{ \cclrd{s}\circ\cclrd{r_1}, \ldots, \cclrd{s}\circ\cclrd{r_n}}$.
+Relations on scalars can be also lifted to vectors. Given two vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$ of the
 same shape with positions $\{ 1, \ldots, n \}$ and a relation $\varpropto\, \subseteq \C \times \C$ we define 
-$\aclrd{R} \varpropto \aclrd{S} \Leftrightarrow (\cclrd{r_1} \varpropto \cclrd{s_1}) \wedge \ldots \wedge (\cclrd{r_n} \varpropto \cclrd{s_n}) $
+$\aclrd{\textbf{r}} \varpropto \aclrd{\textbf{s}} \Leftrightarrow (\cclrd{r_1} \varpropto \cclrd{s_1}) \wedge \ldots \wedge (\cclrd{r_n} \varpropto \cclrd{s_n}) $
 Finally, we often concatenate vectors -- for example, when joining two variable contexts.
-Given vectors $\aclrd{R}, \aclrd{S}$ with (possibly different) shapes $\{ 1, \ldots, n \}$ and 
+Given vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$ with (possibly different) shapes $\{ 1, \ldots, n \}$ and 
 $\{ 1, \ldots, m \}$, the associative operation for concatenation $\times$ is defined as 
-$\aclrd{R}\times\aclrd{S} = \alift{\cclrd{r_1},\ldots,\cclrd{r_n},\cclrd{s_1},\ldots,\cclrd{s_m}}$.
+$\aclrd{\textbf{r}}\times\aclrd{\textbf{s}} = \alift{\cclrd{r_1},\ldots,\cclrd{r_n},\cclrd{s_1},\ldots,\cclrd{s_m}}$.
 
 We note that an environment $\Gamma$ containing $n$ uniquely named, typed variables is also a vector, 
 but we continue to write `$,$' for the product, so $\Gamma_1, x\!:\!\tau, \Gamma_2$ should 
@@ -1602,26 +1603,176 @@ locking.
 
 \section{Structural coeffect systems}
 
-We now turn our attention to system where additional contextual information are associated not
-with the context as a whole (or program scope), but with individual variables. We start by looking
-simple static analysis -- variable \emph{liveness}. Then we revisit data-flow computations and
-look at applications in security and software updating.
+In structural coeffect systems, the additional information are associated with individual variables.
+This is very often information about how the variables are used, or, in which contexts they are 
+used. 
 
-% % % % % % % %
-
-Coeffects are way to describe notions of context in programming that keep turning up. 
-To illustrate this, we overview three systems tracking contextual properties that 
- motivate our general coeffect system. Two systems track per-variable properties (bounded 
-linear logic and dataflow) and one tracks whole-context properties (implicit parameters).
+In Chapter~\ref{ch:intro}, we introduced the idea using an example that tracks array access patterns.  
+Each variable is annotated with a range specifying which elements of the corresponding array 
+may be accessed. In this section, we look at a number of examples. We first consider an example
+inspired by linear logic. Then we revisit liveness and data-flow, for which the structural system 
+provides a more precise analysis. Finally, we look at a number of other practical uses including 
+security, tainting and provenance tracking.
 
 %---------------------------------------------------------------------------------------------------
 
-\subsection{Liveness}
+\subsection{Liveness analysis revisited}
 \label{sec:applications-struct-live}
 
-todo
+The flat system for liveness analysis presented in Section~\ref{sec:applications-flat-live} is 
+interesting from a theoretical perspective, but it is not practically useful. In this section, we
+revisit the problem and define a structural system that tracks liveness per-variable.
+
+\paragraph{Structural liveness.} 
+Recall two examples discussed earlier where the flat liveness analysis marked the whole context
+as (syntactically) live, despite the fact part of it was (semantically) dead:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{constant} = \lambda y \rightarrow \lambda x \rightarrow y\\
+\kvd{let}~\ident{answer} = (\lambda x \rightarrow x)~42
+\end{array}
+\end{equation*}
+%
+In the first case, the variable $x$ is dead, but was marked as live. In the second example, the
+declaration-site of the \ident{answer} value is dead, but was marked as live. This is because in 
+both of the expressions, \emph{some} variable is accessed. However, the (\emph{abs}) rule of flat
+liveness has no way of determining \emph{which} variables are used by the body -- and, in particular,
+whether the accessed variable is the \emph{bound} variable or some of the \emph{free} variables.
+
+As discussed earlier, we can resolve this by attaching a \emph{vector} of liveness annotations to
+a \emph{vector} of variables. In the first example, the available variables are $y$ and $x$, so
+the variable context $\Gamma$ is a vector $\langle y\!:\!\tau, x\!:\!\tau \rangle$. Only the variable $y$
+is used and so the annotated context is: $\coctx{y\!:\!\tau, x\!:\!\tau}{ \alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}} }$.
+When writing the contexts, we omit angle brackets around variables, but it should still be viewed
+as a vector. There are two important points:
+
+\begin{itemize}
+\item The fact that variables are now a vector means that we cannot freely re-order them. This
+  guarantees that $\coctx{x\!:\!\tau, y\!:\!\tau}{\alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}}}$
+  can not be confused with $\coctx{y\!:\!\tau, x\!:\!\tau}{\alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}}}$.
+  We need to define the type system in a way that is similar to sub-structural systems 
+  (discussed in Section~\ref{sec:path-logic}) which provide explicit rules for manipulating
+  the context. 
+
+\item We choose to attach a vector of annotations to a vector of variables, rather than attaching
+  individual annotations to individual variables. This lets us unify and combine flat and 
+  structural systems as discussed in Chapter~\ref{ch:unified}, but the alternative is briefly
+  explored in Chapter~\ref{ch:meta}.
+\end{itemize}
+
+\paragraph{Type system.}
+The structural system for liveness uses the same two-point lattice of annotations
+$\mathcal{L}=\{ \ident{L}, \ident{D} \}$ that was used by the flat system. We also use the
+$\sqcup, \sqcap$ and $\sqsubseteq$ operators that are defined in Figure~\ref{fig:applications-flat-livealg}.
+
+The rules of the system are split into two groups. Figure~\ref{fig:applications-struct-live} (a) shows 
+the standard syntax-driven rules plus sub-coeffecting. In (\emph{var}), the context contains just the 
+single accessed variable, which is annotated as live. Other variables can be introduced using weakening. 
+A constant (\emph{const}) is accessed in an empty context, which also carries no annotations. The
+sub-coeffecting rule (\emph{sub}) uses a point-wise extension of the $\sqsubseteq$ relation over two
+vectors as defined in Section~\ref{sec:applications-strucutre-vec}.
+
+In the (\emph{abs}) rule, the variable context of the body $\Gamma, x\!:\!\tau_1$ is annotated with
+a vector $\mathbf{\aclrd{r}}\cons\alift{\cclrd{s}}$, where the vector $\mathbf{\aclrd{r}}$ corresponds
+to $\Gamma$ and the singleton annotation $\cclrd{s}$ corresponds to the variable $x$. Thus, the
+function is annotated with $\cclrd{s}$. Note that the free-variable context is annotated with vectors,
+but functions take only a single input and so are annotated with primitive annotations.
+
+The (\emph{app}) rule is similar to function applications in flat systems, but there is an important
+difference. In structural systems, the two sub-expressions have separate variable contexts
+$\Gamma_1$ and $\Gamma_2$. Therefore, the composed expression just concatenates the variables
+and their corresponding annotations. (We can still use the same variable in both sub-expressions
+thanks to the structural contraction rule.) 
+
+The context $\Gamma_1$ is used to evaluate $e_1$ and is thus annotated with $\aclrd{\mathbf{r}}$. 
+The annotation for $\Gamma_2$ is more interesting. It is a result of sequential composition of two
+semantic functions -- the first one takes the (multi-variable) context $\Gamma_2$ and evaluates 
+$e_2$; the second takes the result of type $\tau_1$ and passes it to the function $\tau_1 \xrightarrow{\cclrd{t}} \tau_2$.
+The composition is defined as follows:
+%
+\begin{equation*}
+g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\aclrd{\mathbf{s}}} \sigma
+\qquad
+f : \sigma \xrightarrow{\cclrd{t}} \tau
+\qquad
+f \circ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\cclrd{t} \sqcup \aclrd{\mathbf{s}}} \tau
+\end{equation*}
+%
+This definition is only for illustration and is revised in Chapter~\ref{ch:structural}. The function
+$g$ takes a product of multiple variables (and is annotated with a vector). The function $f$ takes
+just a single value and is annotated with the scalar. As in the flat system, sequential composition
+is modelled using $\sqcup$ -- but here, we use a scalar-vector extension of the operation. Finally,
+the (\emph{let}) rule follows similar reasoning (and also corresponds to the typing of $(\lambda x.e_2)~e_1$.
+
+\paragraph{Structural typing rules.}
+
+The rules are split into two groups. We first discuss the standard rules.
+
+is good
 
 % --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+{\small a.) Ordinary, syntax-driven rules with sub-coeffecting}
+\begin{equation*}
+\tyrule{var}{}
+  {\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau} 
+\end{equation*}
+\begin{equation*}
+\tyrule{const}
+  {c:\tau \in \Delta}
+  {\coctx{()}{\alift{}} \vdash c : \tau} 
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \sqsubseteq \aclrd{\textbf{r'}}
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2} 
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} 
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma_1, x : \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+\end{equation*}
+\vspace{0.5em}
+
+{\small b.) Structural rules for context manipulation}
+\begin{equation*}
+\tyrule{weak}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
+  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{\textbf{r}} \cons \alift{0}} \vdash e : \tau} 
+\end{equation*}
+\begin{equation*}
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
+\end{equation*}
+\begin{equation*}
+\tyrule{exch}
+  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+\end{equation*}
+
+
+
+\caption{Structural coeffect liveness analysis}
+\label{fig:applications-struct-live}
+\vspace{-1em}
+\end{figure}
+
+%---------------------------------------------------------------------------------------------------
 
 \subsection{Bounded reuse}
 
@@ -1649,70 +1800,64 @@ $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$ of the same length as $\Gamma$ (a sid
 In weakening (left), unused propositions are annotated with $0$ (no uses), while in contraction (right), multiple 
 occurrences of a proposition are joined by adding the number of uses.
 
+% --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
-\vspace{-0.5em}
-\begin{align*}
-\begin{array}{c}
-%
-\hspace{-0.6em}
-\begin{array}{c}
+{\small Ordinary rules}
+
+\begin{equation*}
 \tyrule{var}{}
   {\coctx{x \!:\! \tau}{\alift{1}} \vdash x : \tau} 
-\quad 
-\tyruleCompact{weak}
-  {\coctx{\Gamma}{R} \vdash e : \tau}
-  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{R} \cons \alift{0}} \vdash e : \tau} 
-\\[1.8em]
-\tyruleCompact{sub}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{R'}} \vdash e : \tau}~(\text{\scriptsize $\aclrd{R} \leq \aclrd{R'}$})
-\quad 
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
+\end{equation*}
+\begin{equation*}
 \tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \sigma}{\aclrd{R} \cons \alift{s}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau} 
-\\[1.2em]
-\end{array} \\
-%
-% ------------------------ 
-%
-\begin{array}{c}
+  {\coctx{\Gamma, x \!:\! \sigma}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau} 
+\end{equation*}
+\begin{equation*}
 \tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{R}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau \quad 
-    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma}
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{R} \cons (\cclrd{t} \ast \aclrd{S})} \vdash e_1 \, e_2 : \tau} 
-\\[1.3em]
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \sigma}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau} 
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma_1, v : \sigma}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \sigma}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau}
+\end{equation*}
+
+{\small Structural rules}
+
+\begin{equation*}
+\tyrule{weak}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
+  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{\textbf{r}} \cons \alift{0}} \vdash e : \tau} 
+\end{equation*}
+\begin{equation*}
 \tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{Q}} \vdash \subst{e}{z,y}{x} : \tau}
-\\[1.3em]
+  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
+\end{equation*}
+\begin{equation*}
 \tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{Q}} \vdash e : \tau}
-\end{array} 
-% ------------------------ 
-%
-% \hspace{-1em}
-%\begin{array}{c}
-%
-% TP: I removed the 'let' rule again because we do not need it to explain the storage axiom here.
-% Also, I think the BLL sample is already used to explain quite a lot of things, so I'd be happier
-% to keep it simple.
-%
-% BTW: The \tyruleCompact macro creates a rule that *looks* differently..
-% (I do not understand why but it makes the line somehow thicker...)
-%
-% \tyruleCompact{let}
-%   {\coctxs{\Gamma_1, v : \sigma}{R \times \langle{t}\rangle} \vdash e_1 : \tau \quad 
-%    \coctxs{\Gamma_2}{S} \vdash e_2 : \sigma}
-%   {\coctxs{\Gamma_1, \Gamma_2}{R \times (t \ast S)} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau} \\[1.8em]
-\end{array}
-\end{align*}
-\vspace{-0.5em}
-\caption{type and coeffect system for bounded reuse}
-\label{fig:bounded-coeff}
+  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+\end{equation*}
+
+
+
+\caption{Coeffect rules for tracking implicit parameters}
+\label{fig:applications-struct-bll}
+\vspace{-1em}
 \end{figure}
 
+% --------------------------------------------------------------------------------------------------
 
 \paragraph{Bounded linear coeffects.}
 The system in Figure~\ref{fig:bounded-coeff} extends the outlined idea into a simple calculus.
