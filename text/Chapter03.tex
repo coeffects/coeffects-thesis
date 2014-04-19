@@ -1705,12 +1705,6 @@ just a single value and is annotated with the scalar. As in the flat system, seq
 is modelled using $\sqcup$ -- but here, we use a scalar-vector extension of the operation. Finally,
 the (\emph{let}) rule follows similar reasoning (and also corresponds to the typing of $(\lambda x.e_2)~e_1$.
 
-\paragraph{Structural typing rules.}
-
-The rules are split into two groups. We first discuss the standard rules.
-
-is good
-
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
@@ -1742,7 +1736,7 @@ is good
 \end{equation*}
 \begin{equation*}
 \tyrule{let}
-  { \coctx{\Gamma_1, x : \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad 
+  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad 
     \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
   {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
 \end{equation*}
@@ -1751,26 +1745,248 @@ is good
 {\small b.) Structural rules for context manipulation}
 \begin{equation*}
 \tyrule{weak}
-  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
-  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{\textbf{r}} \cons \alift{0}} \vdash e : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
+  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{\ident{D}} }} \vdash e : \sigma} 
 \end{equation*}
 \begin{equation*}
 \tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
+  {\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+\quad
+\begin{array}{l}
+\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
+\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\end{array}
 \end{equation*}
-
-
+\begin{equation*}
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}\sqcap\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
+~
+\begin{array}{l}
+\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
+\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
 
 \caption{Structural coeffect liveness analysis}
 \label{fig:applications-struct-live}
 \vspace{-1em}
 \end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Structural typing rules.}
+The structural typing rules are shown in Figure~\ref{fig:applications-struct-live} (b). They mirror
+the rules know from sub-structural type systems (Section~\ref{sec:path-logic}). Weakening (\emph{weak})
+extends the context with a single unused variable $x$ and adds the $\ident{D}$ annotation to the
+vector of coeffects.
+
+The variable is always added to the end as in the (\emph{abs}) rule. However, the exchange rule 
+(\emph{exch}) lets us arbitrarily reorder variables. It flips the variables $x$ and $x'$ and their
+corresponding coeffect annotations in the vector. This is done by requiring that the lengths of the
+remaining, unchanged, parts of the vectors match.
+
+Finally, contraction (\emph{contr}) makes it possible to use a single variable multiple times.
+Given a judgement that contains variables $y$ and $z$, we can derive a judgement for an expression
+where both $z$ and $y$ are replaced by a single variable $x$. Their annotations $\cclrd{s}, \cclrd{t}$
+are combined into $\cclrd{s} \sqcap \cclrd{t}$, which means that $x$ is live if either $z$ or $y$
+were live in the original expression.
+
+\paragraph{Example.} To demonstrate how the system works, we consider the expression
+$(\lambda x \rightarrow v)~y$. This is similar to an example where flat liveness mistakenly marks
+the entire context as live. Despite the fact that the variable $y$ is accessed (syntactically), it
+is not live -- because the function that takes it as an argument always returns $v$.
+
+The typing derivation for the body uses (\emph{var}) and (\emph{abs}). However, we also need (\emph{weak})
+to add the unused variable $x$ to the context:
+%
+\begin{equation*}
+\tyrule{weak}
+{ \tyruler{var}
+    {}
+    { \coctx{v\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash v : \tau } }
+{ \tyruler{abs}
+    { \coctx{v\!:\!\tau, x\!:\!\tau}{\alift{ \cclrd{\ident{L}},\cclrd{\ident{D}} }} \vdash v : \tau }
+    { \coctx{v\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash (\lambda x \rightarrow v) : \tau \xrightarrow{\cclrd{\ident{D}}} \tau }}
+\end{equation*}
+%
+The interesting part is the use of the (\emph{app}) rule in the next step. Although the variable $y$ is live in the expression $y$,
+it is marked as dead in the overall expression, because the function is annotated with $\ident{\cclrd{D}}$:
+%
+\begin{equation*}
+\hspace{-2em}
+\tyrule{app}
+  {
+    \begin{array}{l}
+    \vspace{-1.2em}
+    \coctx{v\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash (\lambda x \rightarrow v) : \tau \xrightarrow{\cclrd{\ident{D}}} \tau 
+    \end{array} &
+    \tyruler{var}{}{\coctx{y\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash y : \tau}
+  }
+  { 
+  \inference
+  	{ \coctx{v\!:\!\tau, y\!:\!\tau}{\alift{ \cclrd{\ident{L}} } \cons\, ({ \cclrd{\ident{D}} \sqcup \alift{\cclrd{\ident{L}}} })} 
+  	     \vdash (\lambda x \rightarrow v)~y : \tau }
+  	{ \coctx{v\!:\!\tau, y\!:\!\tau}{\alift{ \cclrd{\ident{L}}, \cclrd{\ident{D}} }} \vdash (\lambda x \rightarrow v)~y : \tau }  	
+  }
+\end{equation*}
+%
+The application is written in two steps -- the first one directly applies the (\emph{app}) rule
+and the second one simplifies the coeffect annotation. The key part is the use of the scalar-vector 
+operator $\cclrd{\ident{D}} \sqcup \alift{\cclrd{\ident{L}}}$. Using the definition of the scalar-vector
+extension, this equals $\alift{\cclrd{\ident{D}} \sqcup \cclrd{\ident{L}}}$ which is
+$\alift{\cclrd{\ident{D}}}$.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+{\small a.) Semantics of ordinary expressions}
+\begin{equation*}
+\tag{\emph{var}}
+\sem{\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau} = \lambda(x) \rightarrow x
+\end{equation*}
+\vspace{-1.5em}
+\begin{equation*}
+\tag{\emph{const}}
+\sem{\coctx{()}{\alift{}} \vdash c : \tau} = \lambda () \rightarrow \delta(c)
+\end{equation*}
+\vspace{-1.5em}
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{abs}}
+\begin{array}{l}
+\sem{\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda y . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2} = \lambda \textbf{v} \rightarrow\\[-0.25em]
+\qquad\lambda y \rightarrow \sem{\coctx{\Gamma, y \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}~(\textbf{v}, y)
+\end{array}
+\end{equation*}
+\vspace{-1.0em}
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{app-1}}
+\begin{array}{l}
+\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{\ident{L}} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} = 
+  \lambda (\mathbf{v_1}, \mathbf{v_2}) \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2 }~\mathbf{v_1}\\[-0.25em]
+  \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1 }~\mathbf{v_2})
+\end{array}
+\end{equation*}
+\vspace{-1.0em}
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{app-2}}
+\begin{array}{l}
+\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{\ident{D}} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} = 
+  \lambda (\mathbf{v_1}, \mathbf{v_2}) \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2 }~\mathbf{v_1}~
+  \kvd{in}~g~()
+\end{array}
+\end{equation*}
+\vspace{0.5em}
+
+{\small b.) Semantics of structural context manipulation}
+\begin{equation*}
+\tag{\emph{weak}}
+\sem{\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{\ident{D}} }} \vdash e : \sigma} = 
+  \lambda(\textbf{v}, ()) \rightarrow
+    \sem{\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}~\textbf{v}
+\end{equation*}
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{exch}}
+\begin{array}{l}
+\sem{\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma} = 
+  \lambda(\mathbf{v_1}, y, x, \mathbf{v_2}) \rightarrow\\[-0.25em]
+\qquad
+  \sem{\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~
+  (\mathbf{v_1}, x, y, \mathbf{v_2})
+\end{array}
+\end{equation*}
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{contr-1}}
+\begin{array}{l}
+\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{D}}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} = \lambda(\mathbf{v_1}, (), \mathbf{v_2}) \rightarrow \\[-0.25em]
+\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{D}},\cclrd{\ident{D}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma} ~(\mathbf{v_1}, (), (), \mathbf{v_2})
+\end{array}
+\end{equation*}
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{contr-2}}
+\begin{array}{l}
+\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{L}}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} = \lambda(\mathbf{v_1}, x, \mathbf{v_2}) \rightarrow \\[-0.25em]
+\quad\begin{cases}
+~~\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{L}},\cclrd{\ident{L}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~(\mathbf{v_1}, x, x, \mathbf{v_2})\\[-0.25em]
+~~\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{D}},\cclrd{\ident{L}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~(\mathbf{v_1}, (), x, \mathbf{v_2})\\[-0.25em]
+~~\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{L}},\cclrd{\ident{D}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~(\mathbf{v_1}, x, (), \mathbf{v_2})
+\end{cases}
+\end{array}
+\end{equation*}
+\vspace{-0.5em}
+\caption{Semantics of structural liveness}
+\label{fig:applications-struct-livesem}
+\end{figure}
+\vspace{-0.5em}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Semantics.}
+When defining the semantics of flat liveness calculus, we used an indexed form of the option type
+$1 + \tau$ (which is $1$ for dead contexts and $\tau$ for live contexts). In the semantics of 
+expressions, the type wrapped the entire context, \ie~$1+(\tau_1 \times \ldots \times \tau_n)$.
+In the structural version, the semantics wraps individual elements of the free-variable context
+pair: $(1+\tau_1) \times \ldots \times (1+ \tau_n)$. For each variable, the type is indexed by 
+the corresponding annotation. More formally:
+%
+\begin{equation*}
+\begin{array}{r}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau} 
+  ~:~ (\tau'_1 \times \ldots \times \tau'_n) \rightarrow \tau\\[0.5em]
+\textnormal{where}~\tau'_i = \begin{cases}
+\tau_i & (\cclrd{r_i} = \cclrd{\ident{L}})\\
+1      & (\cclrd{r_i} = \cclrd{\ident{D}})
+\end{cases}
+\end{array}
+\end{equation*}
+%
+Note that the product of the free variables is not an ordinary tuple of our language, but a special
+construction. This follows from the asymmetry of $\lambda$-calculus, as discussed in 
+Section~\ref{sec:applications-strucutre-vec}. Functions take just a single input and so they are
+interpreted in the same way as in flat calculus:
+%
+\begin{equation*}
+\sem{\tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2} = \tau_1 \rightarrow \tau_2 \qquad\qquad
+\sem{\tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2} = 1 \rightarrow \tau_2
+\end{equation*}
+%
+The rules that define the semantics are shown in Figure~\ref{fig:applications-struct-livesem}.
+To make the definition simpler, we are somewhat vague when working with products. We write 
+variables of product type such as $\mathbf{v}$ in bold-face and individual values like $x$ in 
+normal face. We freely re-associate products and so $(\mathbf{v}, x)$ should not be seen as a
+nested product, but simply a product with a number of variables represented as another product
+$\mathbf{v}$ with one more variable $x$ at the end. We shall be more precise in Chapter~\ref{ch:structural}.
+
+In (\emph{var}), the context contains just a single variable and so we do not even need to apply
+projection; (\emph{cosnt}) receives no variables and uses global constant lookup function $\delta$.
+In (\emph{abs}), we obtain two parts of the context and combine them into $(\mathbf{v}, x)$. This
+works the same way regardless of whether the variables are live or dead. For simplicity, we omit
+sub-coeffecting, which just turns some of the available values $v_i$ to unit values $()$.
+
+In application, we again need to ``implement'' dead code elimination. When the input parameter
+of the function $g$ is live (\emph{app-1}), we first evaluate $e_2$ and then pass the result to
+$g$. When the parameter is dead (\emph{app-2}), we do not need to evaluate $e_2$ and so all values
+in $\mathbf{v_2}$ can be dead, \ie~$()$.
+
+In the structural rules, (\emph{weak}) receives context containing a dead variable as the last one.
+It drops the $()$ value and evaluates the expression in a context $\mathbf{v}$. Exchange (\emph{exch})
+simply swaps two variables. In contraction, we either duplicate a dead value (\emph{contr-1}),
+or a live value (\emph{contr-2}). In the latter, one of the duplicates may be dead and 
+so we need to consider three separate cases.
+
+\paragraph{Summary.}
+The structural coeffect system for tracking liveness analysis
+
+semantics is ``the other way round''
 
 %---------------------------------------------------------------------------------------------------
 
