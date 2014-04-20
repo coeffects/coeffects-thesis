@@ -1984,15 +1984,225 @@ or a live value (\emph{contr-2}). In the latter, one of the duplicates may be de
 so we need to consider three separate cases.
 
 \paragraph{Summary.}
-The structural coeffect system for tracking liveness analysis
+The structural liveness calculus is a typical example of a system that tracks per-variable 
+annotations. In a number of ways, the system is simpler than the flat coeffect calculi. In
+lambda abstraction, we simply annotate function with the annotation of a matching variable 
+(this rule is the same for all upcoming systems). In application, the \emph{pointwise} composition
+is no longer needed, because the sub-expressions use separate contexts. On the other hand, 
+we had to add weakening, contraction and exchange rules to let us manipulate the contexts.
 
-semantics is ``the other way round''
+The semantics of weakening demonstrates an important point about coeffects that may be quite
+confusing. When we read the \emph{typing rule} from top to bottom, weakening adds a variable
+to the context. When we read the \emph{semantic rule}, weakening drops a variable value from the 
+context! This duality is caused by the fact that coeffects talk about context -- they describe
+how to build the context required by the sub-expressions and so the semantics implements 
+transformation from the context in the (typing) conclusion to the (typing) assumption.
+
+The structural systems discussed in the upcoming sections are remarkably similar to the one
+shown here. We discuss two more examples in details to explore the design space, but we shall
+omit details that are the shared with the system in this section.
 
 %---------------------------------------------------------------------------------------------------
 
-\subsection{Bounded reuse}
+\subsection{Bounded variable use}
 
-Bounded linear logic \cite{girard1992bounded} restricts well-typed terms to polynomial-time algorithms.  
+Liveness analysis checks whether a variable is used or unused. With structural coeffects, we can go
+further and track how many times is the variable accessed. Girard et al. \cite{logic-bounded} coined
+this idea as \emph{bounded linear logic} and use it to restrict well-typed programs to 
+polynomial-time algorithms. We first introduce the system in our, coeffect, style and then 
+relate it with the original formulation.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+{\small a.) Ordinary, syntax-driven rules with sub-coeffecting}
+\begin{equation*}
+\tyrule{var}{}
+  {\coctx{x \!:\! \tau}{\alift{\cclrd{1}}} \vdash x : \tau} 
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2} 
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} 
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+\end{equation*}
+\vspace{0.5em}
+
+{\small b.) Structural rules for context manipulation}
+\begin{equation*}
+\tyrule{weak}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
+  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{0} }} \vdash e : \sigma} 
+\end{equation*}
+\begin{equation*}
+\tyrule{exch}
+  {\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+\quad
+\begin{array}{l}
+\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
+\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
+\begin{equation*}
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
+~
+\begin{array}{l}
+\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
+\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
+
+\caption{Structural coeffect liveness analysis}
+\label{fig:applications-struct-bll}
+\vspace{-1em}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Bounded variable use.} 
+The system discussed in this section tracks the number of times a variable is accessed in the 
+call-by-name evaluation. Although we look at an example that tracks \emph{variable usage}, the same
+system could be used to track access to resources that are always passed as a reference (and behave
+effectively as call-by-name) and so the system is relevant for call-by-value languages too.
+To demonstrate the idea, consider the following term:
+%
+\begin{equation*}
+(\lambda v.x + v + v)~(x+y)
+\end{equation*}
+%
+When evaluated, the body of the function directly accesses $x$ once and then twice indirectly, via
+the function argument. Similarly, $y$ is accessed twice indirectly. Thus, the overall expression uses
+$x$ three times and $y$ twice.
+
+As discussed in Chapter~\ref{ch:structural}, the system preserves type and coeffect annotations under
+the $\beta$-reduction. Reducing the expression in this case gives $x + (x+y) + (x+y)$. This has the 
+same bounds as the original expression -- $x$ is used three times and $y$ twice.
+
+\paragraph{Type system.}
+The type system in Figure~\ref{fig:applications-struct-bll} annotates contexts with vectors of integers.
+The rules have the same structure as those of the system for liveness analysis. The only difference is
+how annotations are combined -- here, we use integer multiplication ($\ast$) and addition ($+$).
+
+Variable access (\emph{var}) annotates a variable with $1$, meaning that it has been used once. An
+unused variable (\emph{weak}) is annotated with $0$. Multiple occurrences of the same variable are 
+introduced by contraction (\emph{contr}), which adds the numbers of the two contracted variables.
+
+As previously, application (\emph{app}) and let binding (\emph{let}) combine two separate contexts.
+The second part applies a function that uses its parameter $\cclrd{t}$-times to an argument that uses
+variables in $\Gamma_2$ at most $\aclrd{\mathbf{s}}$-times (here, $\aclrd{\mathbf{s}}$ is a vector of
+integers with an annotations for each variable in $\Gamma_2$). The sequential composition (modelling
+call-by-name) multiplies the uses, meaning that the total number of uses is $(\cclrd{t} \ast \aclrd{\mathbf{s}})$
+(where $\ast$ is a multiplication of a vector by a scalar). This models the fact that for each use of
+the function parameter, we replicate the variable uses in $e_2$.
+
+Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates
+the number of uses using the pointwise
+$\leq$ relation. We can view any variable as being used a greater
+number of times than it actually is.
+
+\paragraph{Example.} To type check the expression $(\lambda v.x+v+v)~(x+y)$ discussed earlier, we need
+to use abstraction, application, but also the contraction rule. Assuming the type judgement for the body,
+abstractions yields:
+%
+\begin{equation*}
+\tyrule{abs}
+ { \coctx{x\!:\!\mathbb{Z},v:\mathbb{Z}}{\alift{\cclrd{1},\cclrd{2}}} \vdash x+v+v : \mathbb{Z} }
+ { \coctx{x\!:\!\mathbb{Z}}{\alift{\cclrd{1}}} \vdash (\lambda v.x+v+v) : \mathbb{Z} \xrightarrow{\cclrd{2}} \mathbb{Z} }
+\end{equation*}
+%
+To type-check the application, the contexts of $e_1$ and $e_2$ need to contain disjoint variables.
+For this reason, we $\alpha$-rename $x$ to $x'$ in the argument $(x+y)$ and later join $x$ and $x'$ using
+the contraction rule. Assuming $(x'+y)$ is checked in a context that marks $x'$ and $y$ as used once, the 
+application rule yields a judgement that is simplified as follows:
+%
+\begin{equation*}
+\inference
+  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}
+          {\alift{\cclrd{1}} \cons (\cclrd{2} \ast \alift{\cclrd{1},\cclrd{1}}) } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
+{\tyrule{contr}
+  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{1}, \cclrd{2}, \cclrd{2}} } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
+  { \coctx{x\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{3}, \cclrd{2}}} \vdash (\lambda v.x+v+v)~(x+y)  : \mathbb{Z}} }
+\end{equation*}
+%
+The first step performs scalar multiplication, producing the vector
+$\alift{\cclrd{1},\cclrd{2},\cclrd{2}}$. In the second step, we use contraction to join variables 
+$x$ and $x'$ from the function and argument terms respectively.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Semantics.}
+In the previous examples, we defined the semantics -- somewhat informally -- using a simple 
+$\lambda$-calculus language to encode the model. More formally, this could be, for example,
+a Cartesian closed category. In that model, we can reuse variables arbitrarily and so it is not
+a good fit for modelling bounded reuse. Girard et al. \cite{logic-bounded} model their bounded
+linear logic in an (ordinary) linear logic where variables can be used at most once.
+
+Following the same approach, we could model a variable $\tau$, annotated with $\cclrd{r}$ as 
+a product containing $\cclrd{r}$ copies of $\tau$, that is $\tau^{\cclrd{r}}$:
+%
+\begin{equation*}
+\begin{array}{r}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau} 
+  ~:~ (\tau^{\cclrd{r_1}}_1 \times \ldots \times \tau^{\cclrd{r_n}}_n) \rightarrow \tau\\[0.5em]
+\textnormal{where}~\tau^{\cclrd{r_i}}_i = \underbrace{\tau_i \times \ldots \times \tau_i}_{\cclrd{r_i}-\text{times}}
+\end{array}
+\end{equation*}
+%
+The functions are interpreted similarly. A function $\tau_1 \xrightarrow{\cclrd{t}} \tau_2$ is modelled
+as a function taking $\cclrd{t}$-element product of $\tau_1$ values: $\tau_1^{\cclrd{t}} \rightarrow \tau_2$.
+
+The rules that define the semantics of bounded calculus are mostly the same as (or easy to adapt 
+from) the semantic rules of liveness in Figure~\ref{fig:applications-struct-livesem}. The ones that
+differ are those that use sequential composition (application and let binding) and the contraction
+rule, which represents pointwise composition. The bounded reuse calculus rules look as follows:
+
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{app}}
+\begin{array}{l}
+\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} = 
+  \lambda (\mathbf{v_1}, \mathbf{v_2}) \rightarrow \\[-0.25em]
+  \qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }~\mathbf{v_1}\\[-0.25em]
+  \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1 }~\mathbf{v_2})
+\end{array}
+\end{equation*}
+
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{contr}}
+\begin{array}{l}
+\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} =\\[-0.25em] 
+\qquad  \lambda(\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}+\cclrd{t}}), \mathbf{v_2}) \rightarrow \\[-0.25em]
+\qquad\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}\\[-0.25em]
+\qquad\qquad\qquad (\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{t}}), (x_{\cclrd{t}+1}, \ldots, x_{\cclrd{t}+\cclrd{s}} ), \mathbf{v_2})
+\end{array}
+\end{equation*}
+
+
+TODO
+
+\paragraph{Bounded linear logic.}
+
+Bounded linear logic \cite{logic-bounded} restricts well-typed terms to polynomial-time algorithms.  
 This is done by limiting the number of times a value (proposition) can be used. An assumption
 $!_k A$ means that a variable can be used at most $k$ times. 
 We attach annotations to the whole context rather than individual assumptions and so a context
@@ -2016,124 +2226,12 @@ $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$ of the same length as $\Gamma$ (a sid
 In weakening (left), unused propositions are annotated with $0$ (no uses), while in contraction (right), multiple 
 occurrences of a proposition are joined by adding the number of uses.
 
-% --------------------------------------------------------------------------------------------------
+\paragraph{Summary.}
 
-\begin{figure}[t]
-{\small Ordinary rules}
+We really need just: $\ast$, $+$, $1$, $0$, $\leq$
 
-\begin{equation*}
-\tyrule{var}{}
-  {\coctx{x \!:\! \tau}{\alift{1}} \vdash x : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
-\end{equation*}
-\begin{equation*}
-\tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \sigma}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \sigma \xrightarrow{\cclrd{s}} \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau \quad 
-    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \sigma}
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{let}
-  { \coctx{\Gamma_1, v : \sigma}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau \quad 
-    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \sigma}
-  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau}
-\end{equation*}
+composing flat and structural - meta vs. language semantics
 
-{\small Structural rules}
-
-\begin{equation*}
-\tyrule{weak}
-  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
-  {\coctx{\Gamma,x \!:\! \sigma}{\aclrd{\textbf{r}} \cons \alift{0}} \vdash e : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\sigma,z\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
-\end{equation*}
-\begin{equation*}
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\sigma',y\!:\!\sigma,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\sigma,x\!:\!\sigma',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \tau}
-\end{equation*}
-
-
-
-\caption{Coeffect rules for tracking implicit parameters}
-\label{fig:applications-struct-bll}
-\vspace{-1em}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\paragraph{Bounded linear coeffects.}
-The system in Figure~\ref{fig:bounded-coeff} extends the outlined idea into a simple calculus.
-Variable access (\emph{var}) has a singleton context with a singleton coeffect vector
-$\alift{1}$. Weakening (\emph{weak}) extends the free-variable context with an unused variable and 
-the coeffect with an associated scalar $0$. Explicit contraction (\emph{contr}) and
-exchange (\emph{exch}) rules manipulate variables in the context and
-modify the annotations accordingly -- adding the number of uses in
-contraction and switching vector elements in exchange.
-
-For abstraction (\emph{abs}), we know the number of uses of the parameter variable $x$ 
-and attach it to the function type $\sigma \xrightarrow{\cclrd{s}}
-\tau$ as a \emph{latent} coeffect. The remaining variables in $\Gamma$ are 
-annotated with the remaining coeffect vector $\aclrd{R}$, specifying \emph{immediate} coeffects.
-
-Application (\emph{app}) describes call-by-name evaluation.  Applying
-a function that uses its parameter $\cclrd{t}$-times to an argument
-that uses variables in $\Gamma_2$ $\aclrd{S}$-times means that, in
-total, the variables in $\Gamma_2$ will be used $(\cclrd{t} \ast \aclrd{S})$-times. 
-Recall that $\cclrd{t} \ast \aclrd{S}$ is a scalar multiplication of a
-vector. Meanwhile, the variables in $\Gamma_1$ are used just
-$\aclrd{R}$-times when reducing the expression $e_1$ to a function
-value. 
-
-Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates
-the number of uses using the pointwise
-$\leq$ relation. We can view any variable as being used a greater
-number of times than it actually is.
-
-\paragraph{Example.} To demonstrate, consider a term
-$(\lambda v.x+v+v)~(x+y)$. According to the call-by-name intuition, the variable $x$ is used three 
-times -- once directly inside the function and twice via the variable $v$ after 
-substitution. Similarly, $y$ is used 
-twice. Assuming a judgment for the function body, abstraction yields:
-%
-\begin{equation*}
-\tyrule{abs}
- { \coctx{x\!:\!\mathbb{Z},v:\mathbb{Z}}{\alift{\cclrd{1},\cclrd{2}}} \vdash x+v+v : \mathbb{Z} }
- { \coctx{x\!:\!\mathbb{Z}}{\alift{\cclrd{1}}} \vdash (\lambda v.x+v+v) : \mathbb{Z} \xrightarrow{\cclrd{2}} \mathbb{Z} }
-\end{equation*}
-%
-To avoid name clashes, we $\alpha$-rename $x$ to $x'$ and later join $x$ and $x'$ using contraction.
-Assuming $(x'+y)$ is checked in a context that marks $x'$ and $y$ as used once, the application rule yields
-a judgment that is simplified as follows:
-\[
-\hspace{-0.7em}\inference
-  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}
-          {\alift{\cclrd{1}} \cons (\cclrd{2} \ast \alift{\cclrd{1},\cclrd{1}}) } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
-{\inference
-  { \coctx{x\!:\!\mathbb{Z},x'\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{1}, \cclrd{2}, \cclrd{2}} } \vdash (\lambda v.x+v+v)~(x'+y) : \mathbb{Z} }
-  { \coctx{x\!:\!\mathbb{Z},y\!:\!\mathbb{Z}}{\alift{\cclrd{3}, \cclrd{2}}} \vdash (\lambda v.x+v+v)~(x+y)  : \mathbb{Z}} }
-\]
-%
-The first step performs scalar multiplication, producing the vector
-$\alift{\cclrd{1},\cclrd{2},\cclrd{2}}$. In the second step, we use contraction to join variables 
-$x$ and $x'$ from the function and argument terms respectively.
-
-It is worth pointing out that reduction by substitution yields $x+(x+y)+(x+y)$ which has the same coeffect as
-the original. We return to evaluation strategies in Section~\ref{sec:syntax}, and 
-show that structural coeffect systems preserve types and coeffects under $\beta$-reduction. 
 
 % --------------------------------------------------------------------------------------------------
 
