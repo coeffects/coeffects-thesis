@@ -2071,7 +2071,7 @@ relate it with the original formulation.
 \end{array}
 \end{equation*}
 
-\caption{Structural coeffect liveness analysis}
+\caption{Structural coeffect bounded reuse analysis}
 \label{fig:applications-struct-bll}
 \vspace{-1em}
 \end{figure}
@@ -2151,8 +2151,8 @@ $x$ and $x'$ from the function and argument terms respectively.
 
 \paragraph{Semantics.}
 In the previous examples, we defined the semantics -- somewhat informally -- using a simple 
-$\lambda$-calculus language to encode the model. More formally, this could be, for example,
-a Cartesian closed category. In that model, we can reuse variables arbitrarily and so it is not
+$\lambda$-calculus language to encode the model. More formally, this could be a Cartesian closed 
+category. In that model, we can reuse variables arbitrarily and so it is not
 a good fit for modelling bounded reuse. Girard et al. \cite{logic-bounded} model their bounded
 linear logic in an (ordinary) linear logic where variables can be used at most once.
 
@@ -2173,19 +2173,14 @@ as a function taking $\cclrd{t}$-element product of $\tau_1$ values: $\tau_1^{\c
 The rules that define the semantics of bounded calculus are mostly the same as (or easy to adapt 
 from) the semantic rules of liveness in Figure~\ref{fig:applications-struct-livesem}. The ones that
 differ are those that use sequential composition (application and let binding) and the contraction
-rule, which represents pointwise composition. The bounded reuse calculus rules look as follows:
+rule, which represents pointwise composition. 
 
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{app}}
-\begin{array}{l}
-\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} = 
-  \lambda (\mathbf{v_1}, \mathbf{v_2}) \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }~\mathbf{v_1}\\[-0.25em]
-  \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1 }~\mathbf{v_2})
-\end{array}
-\end{equation*}
-
+In the following, we use variable names $\mathbf{v}_i$ for context containing multiple variables (where 
+each variable may be available multiple times), \ie~have a type $\tau_1^{\cclrd{r_1}}\times\ldots\times\tau_m^{\cclrd{r_m}}$;
+We do not explicitly write the sizes of these vectors (number of variables in a context; number of 
+instances of a variable) as these are clear from the coeffect annotations. We assume that $\Gamma_2$ 
+contains $n$ variables and that $\aclrd{s}=\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}$:
+%
 \begin{equation*}
 \hspace{-0.5em}
 \tag{\emph{contr}}
@@ -2193,49 +2188,103 @@ rule, which represents pointwise composition. The bounded reuse calculus rules l
 \sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} =\\[-0.25em] 
 \qquad  \lambda(\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}+\cclrd{t}}), \mathbf{v_2}) \rightarrow \\[-0.25em]
 \qquad\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}\\[-0.25em]
-\qquad\qquad\qquad (\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{t}}), (x_{\cclrd{t}+1}, \ldots, x_{\cclrd{t}+\cclrd{s}} ), \mathbf{v_2})
+\qquad\qquad\qquad (\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}}), (x_{\cclrd{s}+1}, \ldots, x_{\cclrd{s}+\cclrd{t}} ), \mathbf{v_2})
 \end{array}
 \end{equation*}
+%
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{app}}
+\begin{array}{l}
+\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} = \\[-0.25em]
+  \qquad\lambda (\mathbf{v_1}, ((x_{1,1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_1}), \ldots, (x_{n,1}, \ldots, x_{n,\cclrd{t}\ast\cclrd{s}_n}) ) \rightarrow \\[-0.25em]
+  \qquad\qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }~\mathbf{v_1}\\[-0.25em]
+  \qquad\qquad\kvd{let}~\mathbf{y}_1 = ((x_{1,1}, \ldots, x_{1,\cclrd{s}_1}), \ldots, (x_{n,1}, \ldots, x_{1,\cclrd{s}_n})  )\\[-0.25em]
+  \qquad\qquad\kvd{let}~\ldots \\[-0.25em]
+  \qquad\qquad\kvd{let}~\mathbf{y}_{ \cclrd{t} } = ((x_{1,(\cclrd{t}-1)\ast\cclrd{s}_1 + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_1}), \ldots, \\[-0.25em]
+  \hspace{8.2em}                                         (x_{n,(\cclrd{t}-1)\ast\cclrd{s}_n + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_n})  )\\[-0.25em]
+  \qquad\qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}~\mathbf{y}_1, \ldots, 
+    \sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}~\mathbf{y}_{\cclrd{t}})
+\end{array}
+\end{equation*}
+%
+In the (\emph{contr}) rule, the semantic function is called with $\cclrd{s}+\cclrd{t}$ copies of
+a value for the $x$ variable. The values are split between $\cclrd{s}$ and $\cclrd{t}$ separate
+copies of variables $y$ and $z$, respectively.
 
+The (\emph{app}) rule is similar in that it needs to split the input variable context. However,
+it needs to split values of multiple variables -- in $x_{i,j}$, the index $i$ stands for an
+index of the variable while $j$ is an index of one of multiple copies of the value. In the
+semantic function, the second
+part of the context consists of $n$ variables where the multiplicity of each value is specified 
+by the annotation $\cclrd{s}_i$ multiplied by $\cclrd{t}$. The rule needs to evaluate the argument 
+$e_2$ $\cclrd{t}$-times and each call requires $\cclrd{s}_i$ copies of the $i^\textnormal{th}$ 
+variable. To do this, we create contexts $\mathbf{y}_1$ to $\mathbf{y}_{\cclrd{t}}$, each containing
+$\cclrd{s}_i$ copies of the variable (and so we require $\cclrd{s}_i\ast\cclrd{t}$ copies of each 
+variable). Note that the contexts are created such that each value is used exactly once.
 
-TODO
+It is worth noting that the (\emph{var}) rule requires exactly one copy of a variable and so 
+the system tracks precisely the number of uses. However, the (\emph{sub}) rule lets us 
+ignore additional copies of a value. Thus, permitting (\emph{sub}) rule is only possible if the
+underlying model is \emph{affine} rather than \emph{linear}.
 
 \paragraph{Bounded linear logic.}
+The system presented in this section differs from bounded linear logic (BLL) \cite{logic-bounded}.
+Using the terminology from Section~\ref{sec:path-sem-contextdep}, our system is written in the
+\emph{language semantics} style, while BLL is written in the \emph{meta-language} style.
 
-Bounded linear logic \cite{logic-bounded} restricts well-typed terms to polynomial-time algorithms.  
-This is done by limiting the number of times a value (proposition) can be used. An assumption
-$!_k A$ means that a variable can be used at most $k$ times. 
-We attach annotations to the whole context rather than individual assumptions and so a context
-$!_{k_1} A_1, ..., !_{k_n} A_n$ is written as $\coctx{\tau_1, ..., \tau_n}{\langle \cclrd{k_1}, ..., \cclrd{k_n}\rangle}$. 
-This difference is further explained in Section~\ref{sec:related-work}. %For uniformity
-%with later systems, we also write assumptions $A$ as $\tau$ and annotations $K$ as $\cclrd{r}$.
+This means that the terms and types of our system are the terms and types of ordinary 
+$\lambda$-calculus, with the only difference that functions carry coeffect annotations.
+In BLL, the language of types is extended with a type constructor $!_k A$ (where $A$ is
+a proposition, corresponding to a type $\tau$ in our system). The type denotes a value
+$A$ that can be used at most $k$ times. 
 
-Bounded linear logic includes explicit weakening and contraction rules
-that affect the multiplicity. Following the original logical style (but with our notation), these are written as:
+As a result, BLL does not need to attach additional annotation to the variable context 
+as a whole. The requirements are attached to individual variables and so our context
+$\coctx{\tau_1, ..., \tau_n}{\langle \cclrd{k_1}, ..., \cclrd{k_n}\rangle}$ corresponds
+to a BLL assumption $!_{k_1} A_1, ..., !_{k_n} A_n$. 
+
+Using the formulation of bounded logic (and omitting the terms), the weakening and
+contraction rules are written as follows:
+%
 \[
-\inference
-  {\coctx{\Gamma}{\aclrd{R}} \vdash \tau}
-  {\coctx{\Gamma,\sigma}{\aclrd{R} \cons \alift{0}} \vdash \tau} 
+\tyrule{weak}
+  {\Gamma \vdash B}
+  {\Gamma, !_0 A \vdash B}
 \quad
-\inference
-  {\coctx{\Gamma_1,\sigma,\sigma,\Gamma_2}{\aclrd{R}\cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash \tau}
-  {\coctx{\Gamma_1,\sigma,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{Q}} \vdash \tau}
+\tyrule{contr}
+  {\Gamma, !_n A, !_m A \vdash B}
+  {\Gamma, !_{n+m} A \vdash B}
 \]
-The context $\coctx{\Gamma}{\aclrd{R}}$ includes a \emph{coeffect annotation} $\aclrd{R}$ which is a vector
-$\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$ of the same length as $\Gamma$ (a side-condition omitted for brevity).
-In weakening (left), unused propositions are annotated with $0$ (no uses), while in contraction (right), multiple 
-occurrences of a proposition are joined by adding the number of uses.
+%
+The system captures the same idea as the structural coeffect system presented above.
+Variable access in bounded linear logic is simply an operation that produces a value
+$!_n A$ and so the system further introduces \emph{dereliction} rule which lets us 
+treat $!_1 A$ as a value $A$. We further explore difference between \emph{language
+semantics} and \emph{meta-language} and also revisit the BLL example in 
+Chapter~\ref{ch:meta}.
 
 \paragraph{Summary.}
+Comparing the structural coeffect calculus for tracking liveness and for bounded variable reuse
+reveals which parts of the systems differ and which parts are shared. In particular, both systems
+use the same vector operations ($\times$, $\alift{\cclrd{\textnormal{--}}}$) and also share the
+lambda abstraction rule (\emph{abs}). They differ in the primitive values used to annotate used
+and unused variables (\cclrd{L}, \cclrd{D} and $1$, $0$, respectively) and in the operators used
+for sequential composition and contraction ($\sqcup$, $\sqcap$ and $\ast$, $+$, respectively).
+The algebraic structure capturing these operators is developed in Chapter~\ref{ch:structural}.
 
-We really need just: $\ast$, $+$, $1$, $0$, $\leq$
-
-composing flat and structural - meta vs. language semantics
+The brief overview of bounded linear logic shows an alternative approach to tracking properties
+related to individual variables -- we could attach annotations to the variables themselves 
+rather than attaching a \emph{vector} of annotations to the entire context. Our approach has
+two benefits -- it lets you unify flat and structural systems (Chapter~\ref{ch:unified}) and 
+it also makes it possible to build composed systems that mix both flat and structural properties.
 
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Data-flow languages (revisited)}
+\subsection{Data-flow languages revisited}
+
+
 When discussing data-flow languages in the previous section, we said that the context provides 
 past values of variables. This can be viewed as a flat contextual property (the context needs
 to keep all past values), but we can also view it as a structural property. Consider the following
@@ -2253,21 +2302,6 @@ As mentioned earlier, a static analysis for data-flow computations could calcula
 values must be cached. This can be done as a \emph{flat} coeffect analysis that produces just a 
 single number for each function. However, we can design a more precise \emph{structural} analysis
 and track the number of required elements for individual variables.
-
-% % % % % %
-
-\paragraph{Dataflow and data access}
-
-Dataflow languages such as Lucid \cite{wadge1985lucid} describe computations over \emph{streams}.
-An expression is re-evaluated when new inputs are available (push) or when more output
-is demanded (pull).  In causal dataflow, programs can access past
-values of a stream. We consider a language where $\kvd{prev}~e$
-returns the previous value of $e$, where 
-$\kvd{prev}~(\kvd{prev}~e)$ therefore returns the second past value.
-
-An implementation of causal dataflow may cache past values of
-variables as an optimisation. The question is, how many past values
-should be cached?  This can be approximated by a coeffect system.
 
 \paragraph{Dataflow coeffects.} The coeffect system for dataflow is
 similar to the one for bounded reuse in that it tracks a vector
@@ -2332,29 +2366,41 @@ powerful and practically useful, with finer-grained coeffects tracking
 caching requirements per-variable.
 
 % --------------------------------------------------------------------------------------------------
+% variable annotated with 0 (not 1)
+% sub and abs omitted
+% app uses +, not \ast
+% let is default
 
 \begin{figure}[t]
-\[
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{R}\cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{Q}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{R}\cons\alift{\ident{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{Q}} \vdash \subst{e}{y,z}{x} : \tau}
-\]
-\[
-\tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{R}} \vdash e_1 : \sigma \xrightarrow{\cclrd{t}} \tau &
-    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma }
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{R} \cons (\cclrd{t} + \aclrd{S})} \vdash e_1 \, e_2 : \tau} 
-\]
-\[
+\begin{equation*}
 \tyrule{var}{}
-  {\coctx{x\!:\!\tau}{\alift{0}} \vdash x : \tau}
-\quad\;
+  {\coctx{x \!:\! \tau}{\alift{\cclrd{0}}} \vdash x : \tau} 
+\end{equation*}
+\begin{equation*}
 \tyrule{prev}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau}
-  {\coctx{\Gamma}{1 + \aclrd{R}} \vdash \kvd{prev}~e : \tau}  
-\]
-\caption{type and coeffect system for dataflow caching}
-\label{fig:dataflow-coeff}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{1 + \aclrd{\textbf{r}}} \vdash \kvd{prev}~e : \tau}  
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad 
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} + \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} 
+\end{equation*}
+\begin{equation*}
+\tyrule{weak}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
+  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{0} }} \vdash e : \sigma} 
+\end{equation*}
+\begin{equation*}
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\textnormal{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
+\end{equation*}
+
+\caption{Structural coeffect bounded reuse analysis}
+\label{fig:applications-struct-df}
+\vspace{-1em}
 \end{figure}
 
 % --------------------------------------------------------------------------------------------------
