@@ -2467,7 +2467,7 @@ requirements (as in Figure~\ref{fig:applications-flat-liveness}).
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Tainting and provenance}
+\subsection{Security, tainting and provenance}
 Tainting is a mechanism where variables coming from potentially untrusted sources are marked
 (\emph{tainted}) and the use of such variables is disallowed in contexts where untrusted input
 can cause security issues or other problems. Tainting can be done dynamically as a runtime mark
@@ -2483,27 +2483,25 @@ type checking of the following expression in a context containing variables \ide
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{name} = \ident{query}~(\str{"SELECT Name WHERE Id = "}~+~\ident{id})~\kvd{in}\\
+\kvd{let}~\ident{name} = \ident{query}(\str{SELECT Name WHERE Id = \%1}, \ident{id})\\[-0.25em]
 \ident{msg}~+~\ident{name}
 \end{array}
 \end{equation*}
 %
 In this example, \ident{id} must not come directly from a user input, because \ident{query} requires 
-untainted string. Otherwise, the attacker could specify values such as \str{"1; DROP TABLE Users"}. 
+untainted string. Otherwise, the attacker could specify values such as \str{1; DROP TABLE Users}. 
 The variable \ident{msg} may or may not be tainted, because it is not used in protected context 
 (i.e.~to construct an SQL query). 
 
 In runtime checking, all (string) values need to be wrapped in an object that stores Boolean 
 flag (for tainting) or more complex data (for provenance). In static checking, the information
-need to be associated with the variables in the variable context. We use tainting as a motivating
-example for \emph{structural} coeffects in Section~X.
+need to be associated with the variables in the variable context. 
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Security and core dependency calculus}
-
+\paragraph{Core dependency calculus.}
 The checking of tainting is a special case of checking of the \emph{non-interference} property 
-in \emph{secure information flow}. Here, the aim is to guarantee that sensitive information (such
+in \emph{secure information flow}. There, the aim is to guarantee that sensitive information (such
 as credit card number) cannot be leaked to contexts with low secrecy (e.g.~sent via an unsecured
 network channel). Volpano et al. \cite{app-secure-flow} provide the first (provably) sound type 
 system that guarantees non-inference and Sabelfeld et al. \cite{app-secure-information-flow} survey
@@ -2517,11 +2515,12 @@ where $\mathcal{S}$ is a finite set of classes and an ordering. For example a se
 represents low and high secrecy, respectively with $\ident{L} \leq \ident{H}$ meaning that low security
 values can be treated as high security (but not the other way round).
 
+\paragraph{Implicit flows.}
 An important aspect of secure information flow is called \emph{implicit flows}. Consider the following
-example which may assign a new value to $z$:
+example which returns either $y$ or zero, depending on the value of $x$:
 %
 \begin{equation*}
-\kvd{if}~x>0~\kvd{then}~z := y
+\kvd{let}~z = \kvd{if}~x>0~\kvd{then}~y~\kvd{else}~0
 \end{equation*}
 %
 If the value of $y$ is high-secure, then $z$ becomes high-secure after the assignment
@@ -2537,32 +2536,60 @@ in the context where it executes.  The DCC captures, for example, \emph{binding 
 \cite{app-binding-time-analysis}, which detects which parts of programs can be partially evaluated
 (do not depend on user input) and \emph{program slicing} \cite{app-slicing-survey} that identifies
 parts of programs that contribute to the output of an expression.
-	
+
+\paragraph{Coeffect systems.}
+The work outlined in this section is another area where coeffect systems could be applied.
+We do not develop coeffect systems for tracking of tainting, security and provenance in details,
+but briefly mention some examples in the upcoming chapters.
+
+The systems work in the same way as the examples discussed already. For example, consider the
+tainting example with the \ident{query} function calling an SQL database. To capture such 
+tainting, we annotate variables with $\cclrd{\ident{T}}$ for \emph{tainted} and with 
+$\cclrd{\ident{U}}$ for \emph{untainted}. Simply accessing variable does not introduce taint, 
+but using a variable in certain contexts -- such as in arguments of \ident{query} -- does introduce
+a taint. This is captured using the standard application rule (\emph{app}):
+%
+\begin{equation*}
+\tyrule{app}
+  { \coctx{\Gamma}{\aclrd{r}} \vdash \ident{query} : \ident{string} \xrightarrow{\cclrd{\ident{T}}} \ident{Table} \qquad
+    \coctx{\ident{id}:\ident{string}}{ \alift{\cclrd{\ident{U}}}} \vdash \ident{id} : \ident{string} }
+  { \coctx{\Gamma, \ident{id}:\ident{string}}{ \aclrd{r} \cons \alift {\cclrd{\ident{T}}} \vdash \ident{query}(\str{...}, \ident{id}) : \ident{Table} } }
+\end{equation*}
+%
+The derivation assumes that \ident{query} is a standard function that requires the parameters
+to be tainted (it does not have to be a built-in language construct). The argument is a 
+variable and so it is not tainted in the assumptions.
+
+In the conclusion, we need to derive an annotation for the variable \ident{id}. To do this, we
+combine \cclrd{\ident{T}} (from the function) and \cclrd{\ident{U}} (from the argument). In case
+of tainting, the variable is tainted whenever it is already tainted \emph{or} the function marks
+it as tainted. For different kinds of annotations, the composition would work differently -- for
+example, for provenance, we could union the \emph{set} of possible data sources, or even combine 
+\emph{probability distributions} modelling the influence of different sources on the value.
+However, expanding such ideas is beyond the scope of this thesis.
 
 % ==================================================================================================
 
 \section{Beyond passive contexts}
 
-In the systems discussed so far, the context provides additional data (resources, implicit 
-parameters, historical values) or meta-data (security, provenance). However, it is impossible to
-write a function that modifies the context. We use the term \emph{passive} context for such 
-applications. 
+In both flat and structural systems discussed so far, the context provides additional data (resources, 
+implicit parameters, historical values) or meta-data (security, provenance). However, \emph{within} 
+the language, it is impossible to write a function that modifies the context. We use the term 
+\emph{passive} context for such applications. 
 
-However, there is a number of systems where the context may be changed -- not just be evaluating
-certain code block in a different scope (e.g. by wrapping it in $\ident{prev}$ in data-flow), but
-also by calling a function that, for example, acquires new capabilities. While this thesis focuses
-on systems with passive context, we quickly look at the most important examples of the 
-\emph{active} variant.
+There is a number of systems that also capture contextual properties, but that make it possible to 
+\emph{change} the context -- not just be evaluating certain code block in a different scope (e.g. by 
+wrapping it in $\ident{prev}$ in data-flow), but also by calling a function that, for example, acquires 
+new capabilities and returns those to the caller. While this thesis focuses on systems with passive 
+contexts, we briefly consider the most important examples of the \emph{active} variant.
 
 % --------------------------------------------------------------------------------------------------
 
-\paragraph{Calculus of capabilities}
-\label{sec:applications-active-ccc}
-
+\paragraph{Calculus of capabilities.}
 Crary et al. \cite{app-capabilities} introduced the Calculus of Capabilities to provide 
 a sound system with region-based memory management for low-level code that can be easily 
 compiled to assembly language. They build on the work of Tofte and Talpin \cite{app-region-memory}
-who developed an \emph{effect system} (discussed in Section~\ref{sec:path-sem-effects}) that uses
+who developed an effect system (as discussed in Section~\ref{sec:path-sem-effects}) that uses
 lexically scoped \emph{memory regions} to provide an efficient and controlled memory management.
 
 In the work of Tofte and Talpin, the context is \emph{passive}. They extend a simple functional language
@@ -2571,44 +2598,73 @@ using memory in that region and then deallocates the memory of the region:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\
-\quad\kvd{letrgn}~\rho~\kvd{in}\\
-\quad\kvd{let}~\ident{x} = \kvd{ref}_\rho \ident{input}~\kvd{in}~!\ident{x}
+\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\[-0.25em]
+\quad \kvd{letrgn}~\rho~\kvd{in}\\[-0.25em]
+\quad \kvd{let}~\ident{x} = \kvd{ref}_\rho ~\ident{input}~\kvd{in}\\[-0.25em]
+\quad \ident{x} :=\, !\ident{x} + 1;~ !\ident{x}
 \end{array}
 \end{equation*}
 %
 The memory region $\rho$ is a part of the context, but only in the scope of the body of 
-\kvd{letrgn}. It is only available to the last line which allocates a memory cell in the region
-and reads it (before the region is deallocated). There is no way to allocate a region inside a 
-function and pass it back to the caller.
+\kvd{letrgn}. It is only available to the last two lines which allocate a memory cell in the region,
+increment a value in the region and then read it. The region is de-allocated when the execution 
+leaves its lexical scope -- there is no way to allocate a region inside a function and pass it back 
+to the caller.
 
 Calculus of capabilities differs in two ways. First, it allows explicit allocation and deallocation
 of memory regions (and so region lifetimes do not follow strict LIFO ordering). Second, it
-uses continuation-passing style. We ignore the latter aspect and so the following example:
+uses continuation-passing style. We ignore the latter aspect. The following example is almost 
+identical as the previous one:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\
-\quad \kvd{letrgn}~\rho~\kvd{in}\\
-\quad \kvd{let}~\ident{x} = \kvd{ref}_\rho \ident{input}~\kvd{in}~\ident{x}
+\kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\[-0.25em]
+\quad \kvd{letrgn}~\rho~\kvd{in}\\[-0.25em]
+\quad \kvd{let}~\ident{x} = \kvd{ref}_\rho ~\ident{input}~\kvd{in}\\[-0.25em]
+\quad \ident{x} :=\, !\ident{x} + 1;~ \ident{x}
 \end{array}
 \end{equation*}
 %
-The example is almost identical to the previous one, except that it does not return the value
-of reference \ident{x}. Instead, it returns the reference, which is located in a newly allocated
-region. Together with the value, the function returns a \emph{capability} to access the region
-$\rho$.
+The difference is that the example does not return the \emph{value} of a reference using 
+$!\ident{x}$, but returns the reference $\ident{x}$ itself. The reference is allocated in a newly 
+created region $\rho$. Together with the value, the function returns a \emph{capability} to access 
+the region $\rho$.
 
 This is where systems with active context differ. To type check such programs, we do not only need
 to know what context is required to call \ident{calculate}. We also need to know what effects it
-has on the context when it evaluates and the current context meeds to be appropriately adjusted
-after a function call. We briefly consider this problem in Section~X. % future work
+has on the context when it evaluates and the current context meeds to be updated after a function 
+call. 
+
+\paragraph{Active contexts.}
+In a systems with passive contexts, we only need an annotation that specifies the required 
+context. In semantics, this is reflected by having some structure (data type) $\C$ over the
+\emph{input} of the function. Without giving any details, the semantics generally has the 
+following structure:
+%
+\begin{equation*}
+\sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} = \C^{\cclrd{r}} \tau_1 \rightarrow \tau_2
+\end{equation*}
+%
+Systems with active contexts require two annotations -- one that specifies the context required
+before the call is performed and one that specifies how the context changes after the call (this
+could be either a \emph{new} context or \emph{update} to the original context). Thus the structure
+of the semantics would look as follows:
+%
+\begin{equation*}
+\sem{\tau_1 \xrightarrow{\cclrd{r}, \cclrd{s}} \tau_2} = \C^{\cclrd{r}} \tau_1 \rightarrow \M^{\cclrd{s}} \tau_2
+\end{equation*}
+%
+In case of Calculus of Capabilities, both of the structures could be the same and they could
+carry a set of available memory regions. In this thesis, we focus only on passive contexts. 
+However, we briefly consider the problem of active contexts in the Section~X of the future work 
+chapter.
 
 % --------------------------------------------------------------------------------------------------
 
-\paragraph{Software updating}
-Dynamic software updating (DSU) \cite{app-dsu-programs,app-dsu} is the ability to update programs at
-runtime without stopping them. The Proteus system developed by Stoyle et al. \cite{app-dsu-mutatis} 
+\paragraph{Software updating.}
+Another example of a system that uses contextual information actively is dynamic software updating 
+(DSU) \cite{app-dsu-programs,app-dsu}. The DSU systems have the ability to update programs at
+runtime without stopping them. For example, Proteus developed by Stoyle et al. \cite{app-dsu-mutatis} 
 investigates what language support is needed to enable safe dynamic software updating in C-like 
 languages. The system is based on the idea of capabilities.
 
@@ -2626,45 +2682,28 @@ example, calling a function that may update certain types makes it impossible to
 concretely following the function call. This means that DSU uses the context \emph{actively}
 and not just \emph{passively}.
 
-% --------------------------------------------------------------------------------------------------
-
-\paragraph{Thesis perspective}
-
-As demonstrated in this section, there is a huge number of systems and applications that exhibit
-a form of context-dependence. The range includes different static analyses (liveness, provenance), 
-well-known programming language features (implicit parameters and type classes) as well as features
-not widely available (e.g. for distributed programming).
-
-It is impossible to cover all of these topics in a single coherent thesis and so we focus on 
-two key aspects:
-
-\begin{compactitem}
-\item \textbf{Flat vs. structural.} We look at both flat coeffects (single value for entire context) and 
-  structural coeffects (single value per variable). We use liveness, implicit parameters and 
-  data-flow to introduce flat coeffects (Section~X) and liveness, refined data-flow and tainting
-  to talk about structural coeffects (Section~Y).
-  
-\item \textbf{Analysis vs. restriction.} Some of the discussed examples can be viewed as static
-  analyses that obtain some information about programs (i.e.~the number of required past values
-  in data-flow). Other examples provide type system that rules out certain invalid programs 
-  (e.g.~safe locking). We cover this topic when discussing \emph{partial coeffects} in Section~Z.
-  
-\item \textbf{May vs. must analysis.} When discussing liveness, we observed that we can obtain 
-  two different analyses depending on how conditionals are treated. We discuss this topic in 
-  Section~X. % TBD - could be a chapter
-\end{compactitem}
-
-Although we also looked at examples of \emph{active} contextual computations (where developers can
-write functions that modify the context), we do not consider these applications, to keep the 
-material presented in this thesis focused. We briefly discuss them as future work in Section~X.
-
 %===================================================================================================
 
 \section{Summary}
 
-TODO
+This chapter served two purposes. The first aim was to present existing work on programming 
+languages and systems that include some notion of \emph{context}. Because there was no well-known
+abstraction capturing contextual properties, the languages use a wide range of formalisms -- including
+from principled approaches based on comonads, ad-hoc type system extensions and static analyses as
+well as approaches based on monads. We looked at a number of applications inclding Haskell's implicit 
+parameters and type classes, data-flow languages such as Lucid, liveness analysis and also a number of 
+security properties. 
 
-% \section{Missing}
-% ~
-% 
-% indexed/layered/etc. monads, productors or whatever
+The second aim of this chapter was to re-formulate the existing work in a more uniform style and thus
+reveal that all \emph{context-dependent} languages share a common structure. In the upcoming three 
+chapters, we identify the common structure more precisely and develop three calculi to capture it. We 
+will then be able to re-create many of the examples discussed in this chapter by instantiating our 
+unified calculi.
+
+This chapter was divided into two major sections. First, we looked at \emph{flat} systems, which
+track whole-context properties. Next, we look a \emph{structural} systems, which track per-variable
+properties. Both of the variants are useful and important -- for example, implicit parameters can
+only be expressed as \emph{flat} system, but liveness analysis is only useful as \emph{structural}.
+For this reason, we explore both of these variants in this thesis (Chapter~\ref{ch:flat} and 
+Chapter~\ref{ch:structural}, respectively). We can, however, unify the two variants into a single
+system discussed in Chapter~\ref{ch:unified}.
