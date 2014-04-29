@@ -1232,6 +1232,8 @@ where the same context is shared by multiple sub-expressions.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Data-flow languages}
+\label{sec:applications-flat-dataflow}
+
 The Section~\ref{sec:intro-why-array} briefly demonstrated that we can treat array access as an 
 operation that accesses a context. In case of arrays, the context is neighbourhood of a current
 location in the array specified by a cursor. In this section, we make the example more concrete,
@@ -2284,92 +2286,31 @@ it also makes it possible to build composed systems that mix both flat and struc
 
 \subsection{Data-flow languages revisited}
 
-
 When discussing data-flow languages in the previous section, we said that the context provides 
-past values of variables. This can be viewed as a flat contextual property (the context needs
-to keep all past values), but we can also view it as a structural property. Consider the following
-example:
+past values of variables. In Section~\ref{sec:applications-flat-dataflow}, we tracked this as 
+a \emph{flat} property, which gives us a system that keeps the same number of past values for
+all variables. However, data-flow can also be adapted to a structural system which keeps the number 
+of required past values individually for each variable. Consider the 
+following example:
 %
 \begin{equation*}
-\kvd{let}~\ident{offsetZip} = 0~\kvd{fby}~(\ident{left} + \kvd{prev}~\ident{right})
+\kvd{let}~\ident{offsetZip} = \ident{left} + \kvd{prev}~\ident{right}
 \end{equation*}
 %
 The value \ident{offsetZip} adds values of \ident{left} with previous values of \ident{right}.
 To evaluate a current value of the stream, we need the current value of \ident{left} and one past
-value of \ident{right}. 
+value of \ident{right}. Flat system is not able to capture this level-of-detail and simply
+requires $1$ past values of both streams in the variable context.
 
-As mentioned earlier, a static analysis for data-flow computations could calculate how many past 
-values must be cached. This can be done as a \emph{flat} coeffect analysis that produces just a 
-single number for each function. However, we can design a more precise \emph{structural} analysis
-and track the number of required elements for individual variables.
+Turning a flat data-flow system to a structural data-flow system is a change similar to the one
+between flat ans structural liveness. In case of liveness analysis, we included the flat system
+only as an illustration (it is not practically useful). 
 
-\paragraph{Dataflow coeffects.} The coeffect system for dataflow is
-similar to the one for bounded reuse in that it tracks a vector
-of numbers $\aclrd{R}$ as part of the context
-$\coctx{\Gamma}{\aclrd{R}}$. Here, coeffects represent the maximal number of
-past values (\emph{causality depth}) required for a variable. 
-
-Weakening, exchange, abstraction and sub-coeffecting are the same as in bounded linear
-coeffects, but the remaining rules differ. In Figure~\ref{fig:dataflow-coeff},
-accessed variables (\emph{var}) are annotated with
-$0$ meaning that no past value is required (only the
-current one). The (\emph{prev}) rule crates caching requirements --
-it increments the number of required values for all variables
-used in $e$ using scalar-vector addition.
-
-Application and contraction have the same structure as before, 
-but use different operators. If two variables 
-are contracting, requiring $\cclrd{s}$ and $\cclrd{t}$ past
-values, then overall we need at most
-$\ident{max}(\cclrd{s}, \cclrd{t})$ past values (\emph{contr}). That is, 
-two caches are combined with the maximum of the two requirements, 
-which satisfy the smaller requirements. 
-
-In (\emph{app}), the function requires $\cclrd{t}$ past values of
-its parameter.  This means $\cclrd{t}$ past values of
-$e_2$ are needed which in turn requires $\aclrd{S}$ past values of its free
-variables $\Gamma_2$. Thus, we need $\cclrd{t}+\aclrd{S}$ past values of $\Gamma_2$ to perform the
-call (\eg{}, we need $1+\aclrd{S}$ values to
-get $1$ past value of the input $\sigma$, $2+\aclrd{S}$
-values to get $2$ past values of $\sigma$, \emph{etc.}).
-
-
-\paragraph{Example.} As an example, consider a function $\lambda x.\kvd{prev}~(y+x)$ applied to an argument
-$\kvd{prev}~(\kvd{prev}~y)$. The body of the function accesses the past value of two variables, one free
-and one bound:
-\[
-\dfrac
-  {\coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1, 1}} \vdash \kvd{prev}~(y+x) : \mathbb{Z} }
-  {\coctx{y\!:\!\mathbb{Z}}{\alift{1}} \vdash \lambda x . \kvd{prev}~(y+x) : \mathbb{Z} \xrightarrow{\cclrd{1}} \mathbb{Z} }
-\]
-The expression always requires the previous value of $y$ and adds it to
-a previous value of the parameter $x$. Evaluating the value of the
-argument $\kvd{prev}~(\kvd{prev}~y)$ requires two past values of $y$
-and so the overall requirement is $3$ past values:
-\[
-\inference
-  { \coctx{y\!:\!\mathbb{Z}}{\alift{1} } \vdash \lambda x.~(\ldots) \quad  \coctx{x\!:\!\mathbb{Z}}{\alift{2}} \vdash (\kvd{prev}~(\kvd{prev}~x) : \mathbb{Z} }
-{\inference
-  { \coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1,3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~x)) : \mathbb{Z} }
-  { \coctx{y\!:\!\mathbb{Z}}{\alift{3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~y)) : \mathbb{Z} } }
-\]
-The derivation uses (\emph{app}) to get requirements $\alift{1,3}$ and then 
-(\emph{contr}) to take the maximum, showing three past values are sufficient. Reducing 
-the expression by substitution we get $\kvd{prev}~(y+(\kvd{prev}~(\kvd{prev}~y)))$. 
-Semantically, this performs stream lookups $y[1] + y[3]$ where the indices are the 
-number of enclosing $\kvd{prev}$s.% expressions.
-
-We previously used dataflow as an example of
-coeffects~\cite{petricek2013coeffects}, but tracked caching
-requirements on the whole context. The system outlined here is more
-powerful and practically useful, with finer-grained coeffects tracking
-caching requirements per-variable.
+For data-flow, the flat system is less precise, but still practically useful (simplicity may outweigh 
+precision). As discussed in Section~X, the structural system is necessary when we allow arbitrary 
+recursion and cannot (easily) determine the number of required values statically.
 
 % --------------------------------------------------------------------------------------------------
-% variable annotated with 0 (not 1)
-% sub and abs omitted
-% app uses +, not \ast
-% let is default
 
 \begin{figure}[t]
 \begin{equation*}
@@ -2402,6 +2343,127 @@ caching requirements per-variable.
 \label{fig:applications-struct-df}
 \vspace{-1em}
 \end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Type system.} 
+The type system in Figure~\ref{fig:applications-struct-df} annotates the variable context with a
+vector of integers. This is similar as in the bounded reuse system, but the integers \emph{mean} a
+different thing. Consequently, they are also calculated differently. We omit rules that are the
+same for all structural coeffect systems (exchange, lambda abstraction).
+
+In data-flow, we annotate both used variables (\emph{var}) and unused variables (\emph{weak}) with
+$0$, meaning that no past values are required. This is the same as in flat data-flow, but different
+from bounded reuse and liveness (where difference between using and not using a variable matters).
+Primitive requirements are introduced by the (\emph{prev}) rule, which increments the annotation of
+all variables in the context.
+
+In flat data-flow, we identified sequential composition and point-wise composition as two primitive
+operations that were used in the (flat) application. In the structural system, these are used in 
+(\emph{app}) and (\emph{contr}), respectively. Thus application combines coeffect annotations using
+$+$ and contraction using \emph{max}. This contrasts with bounded reuse, which uses $\ast$ and $+$,
+respectively.
+
+\paragraph{Example.} As an example, consider a function $\lambda x.\kvd{prev}~(y+x)$ applied to an argument
+$\kvd{prev}~(\kvd{prev}~y)$. The body of the function accesses the past value of two variables, one free
+and one bound. The (\emph{abs}) rule splits the annotations between the declaration-site and call-site
+of the function:
+%
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{y\!:\!\mathbb{Z}, x\!:\!\mathbb{Z}}{\alift{1, 1}} \vdash \kvd{prev}~(y+x) : \mathbb{Z} }
+  {\coctx{y\!:\!\mathbb{Z}}{\alift{1}} \vdash \lambda x . \kvd{prev}~(y+x) : \mathbb{Z} \xrightarrow{\cclrd{1}} \mathbb{Z} }
+\end{equation*}
+%
+The expression always requires the previous value of $y$ and adds it to a previous value of the 
+parameter $x$. Evaluating the value of the argument $\kvd{prev}~(\kvd{prev}~y)$ requires two past 
+values of $y$ and so the overall requirement for the (free) variable $y$ is $3$ past values. In 
+order to use the contraction rule, we rename $y$ to $y'$ in the argument:
+%
+\begin{equation*}
+\inference
+  { \coctx{y\!:\!\mathbb{Z}}{\alift{1} } \vdash \lambda x.~(\ldots) : \mathbb{Z} \xrightarrow{\cclrd{1}} \mathbb{Z} &
+    \coctx{x\!:\!\mathbb{Z}}{\alift{2}} \vdash (\kvd{prev}~(\kvd{prev}~y') : \mathbb{Z} }
+{\inference
+  { \coctx{y\!:\!\mathbb{Z}, y'\!:\!\mathbb{Z}}{\alift{1,3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~y')) : \mathbb{Z} }
+  { \coctx{y\!:\!\mathbb{Z}}{\alift{3}} \vdash (\lambda x.\kvd{prev}~(y+x))~(\kvd{prev}~(\kvd{prev}~y)) : \mathbb{Z} } }
+\end{equation*}
+%
+The derivation uses (\emph{app}) to get requirements $\alift{1,3}$ and then (\emph{contr}) to take 
+the maximum, showing three past values are sufficient. 
+
+Note that we get the same requirements when we perform $\beta$ reduction of the expression. 
+Substituting the argument for $x$ yields the expression $\kvd{prev}~(y+(\kvd{prev}~(\kvd{prev}~y)))$. 
+Semantically, this performs stream lookups $y[1]$ and $y[3]$ where the indices are the 
+number of enclosing $\kvd{prev}$ constructs.
+
+\paragraph{Semantics.}
+To define the semantics of our structural data-flow language, we can use the same approach as when
+adapting flat liveness to structural liveness. Rather than wrapping the whole context in some wrapper
+(list or option type), we now wrap individual components of the product representing the variables
+in the context. 
+
+The result is similar as the structure used for bounded reuse. The only difference is that, given
+a variable annotated with $\cclrd{r}$, we need $1+\cclrd{r}$ values. That is, we need the current
+value, followed by $\cclrd{r}$ past values:
+%
+\begin{equation*}
+\begin{array}{l}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau} 
+  ~:~ (\tau^{(\cclrd{r_1}+1)}_1 \times \ldots \times \tau^{(\cclrd{r_n}+1)}_n) \rightarrow \tau\\
+\sem{\tau_1 \xrightarrow{\cclrd{s}} \tau_2} ~=~ \tau_1^{(\cclrd{s}+1)} \rightarrow \tau_2
+\end{array}
+\end{equation*}
+%
+Despite the similarity with the semantics for bounded reuse, the values here \emph{represent}
+different things. Rather than providing multiple copies of a value (out of which each can be
+used just once), the pair provides past values (that can be reused and freely accessed).
+To illustrate the behaviour we consider the semantics of the \kvd{prev} construct and of the
+structural contraction rule:
+%
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{prev}}
+\begin{array}{l}
+\sem{\coctx{\Gamma}{\alift{(\cclrd{s}_1 + 1), \ldots, (\cclrd{s}_n + 1)}} \vdash \kvd{prev}~e : \tau} = \\[-0.25em]
+  \qquad\lambda ((x_{1,0}, \ldots, x_{1,{\cclrd{s}_1 + 1}}), \ldots, (x_{n,0}, \ldots, x_{n,{\cclrd{s}_n + 1}})) \rightarrow \\[-0.25em]
+\qquad\qquad\sem{\coctx{\Gamma}{\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}} \vdash e : \tau}\\[-0.25em]
+\qquad\qquad\qquad ((x_{1,0}, \ldots, x_{1,\cclrd{s}_1}), \ldots, (x_{n,0}, \ldots, x_{n,\cclrd{s}_n}))
+\end{array}
+\end{equation*}
+%
+\begin{equation*}
+\hspace{-0.5em}
+\tag{\emph{contr}}
+\begin{array}{l}
+\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\textnormal{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} =\\[-0.25em] 
+\qquad  \lambda(\mathbf{v_1}, (x_0, x_1, \ldots, x_{ \textnormal{max}(\cclrd{s},\cclrd{t}) }), \mathbf{v_2}) \rightarrow \\[-0.25em]
+\qquad\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}\\[-0.25em]
+\qquad\qquad\qquad (\mathbf{v_1}, (x_0, \ldots, x_{\cclrd{s}}), (x_0, \ldots, x_{\cclrd{t}} ), \mathbf{v_2})
+\end{array}
+\end{equation*}
+%
+In (\emph{prev}), the semantic function is called with an argument that stores values of $n$
+variables, such that a variable $x_i$ has values ranging from $x_{i,0}$ to $x_{i,\cclrd{s}_i + 1}$.
+Thus, there is one current value, followed by $\cclrd{s_i} + 1$ past values. The expression $e$
+nested under $\kvd{prev}$ requires only $\cclrd{s_i}$ past values and so the semantics simply
+drops the last value.
+
+In the (\emph{contr}) rule, the semantic function receives $\emph{max}(\cclrd{s}, \cclrd{t})$ values
+of a specific variable $x$. It needs to produce values for two separate variables, $y$ and $z$ that
+require $\cclrd{s}$ and $\cclrd{t}$ past values. Both of these numbers are certainly smaller than 
+(or equal to) the number of values available. Thus we simply take the first values. Unlike in the
+contraction for BLL, the values are duplicated and the same values are used for both variables.
+
+\paragraph{Summary.}
+Two of the structural examples shown so far (liveness and data-flow) extend an earlier flat 
+version of a similar system. We discuss this relation in general later. However, a flat system 
+can generally be turned into a structural one -- although this only gives a useful system when
+the flat version captures properties related to variables.
+
+The data-flow example demonstrates that the a flat system can also be turned into structural 
+system. In general, this only works for systems where lambda abstraction duplicates context
+requirements (as in Figure~\ref{fig:applications-flat-liveness}). 
 
 % --------------------------------------------------------------------------------------------------
 
