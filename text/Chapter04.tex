@@ -1,5 +1,209 @@
-\chapter{Flat coeffect language} 
+%\begin{flushright}{\slshape    
+%Even the most puritanical rationalist will be forced to stop arguing and \\
+%use propaganda [...] because the psychological conditions have disappeared \\
+%that allowed effective argument and therefore influence over the others.} \\ \medskip
+%--- Paul Feyerabend, \emph{Against Method} \cite{philosophy-feyerabend}
+%\end{flushright}
+%\vspace{2em}
+
+% ==================================================================================================
+
+\chapter{Flat coeffect calculus} 
 \label{ch:flat} 
+
+Successful programming language abstractions need to generalize a wide range of recurring
+problems while capturing the key commonalities. These two aims are typically in opposition -- 
+more general abstractions provide smaller value, while less general abstractions cannot be
+used as often.
+
+In the previous chapter, we outlined a number of systems that capture how computations
+access the environment in which they are executed. We identified two kinds of systems --
+\emph{flat} capturing whole-context properties and \emph{structural} capturing per-variable
+properties. As we show in Chapter~\ref{ch:unified}, the systems can be unified using a single 
+abstraction. This is useful when implementing and composing the systems, but such abstraction 
+provides \emph{smaller value} -- \ie~its generality hides useful properties that we can see 
+when we consider the systems separately. For this reason, this and the next chapter discusses 
+\emph{flat} and \emph{structural} systems separately.
+
+% ==================================================================================================
+
+\section{Introduction}
+\label{sec:flat-intro}
+
+Liveness is more similar to data-flow.
+
+Implicit parameters (or resources) are a bit different, but important.
+
+The closest work is Uustalu and Vene
+
+% ==================================================================================================
+
+\section{Flat coeffect calculus}
+\label{sec:flat-calculus}
+
+This section revisits the flat coeffect calculus, which provides a 
+basis for the structural coeffect calculus that we introduce in Section~... We 
+make a number of improvements -- we cover more standard language features and require additional laws
+which allows a more useful equational theory.
+The formulation is general, so as not to restrict the possible uses unnecessarily, but is
+specialised enough to provide useful properties.
+
+The flat coeffect calculus maintains a single annotation of the contextual requirements associated
+with the variable context. It can be instantiated to capture implicit parameters, the system for 
+dataflow and simple liveness analysis.
+
+The expressions are those of the $\lambda$-calculus with \emph{let} binding; assuming $T$ ranges
+over base types, types are extended as follows:
+%
+\begin{equation*}
+\begin{array}{rcl}
+e &::=& x \sep \lambda x.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{in}~e_2\\
+\tau &::=& T \sep \tau_1 \xrightarrow{\cclrd{r}} \tau_2
+\end{array}
+\end{equation*}
+%
+where $T$ ranges over type constants. 
+We discuss pairs and recursion in Sections~\ref{sec:flat-synprop} and \ref{sec:structural-properties}.
+The type $\tau_1 \xrightarrow{\cclrd{r}} \tau_2$
+represents a function from $\tau_1$ to $\tau_2$ that requires additional context $\cclrd{r}$.
+It can be viewed as a pure function that takes $\tau_1$ \emph{with} context $r$. 
+
+%Note that
+%$\ctxtyp{r}{\tau}$ does not exist as syntactic value (although it has a semantic meaning
+%discussed in Section~\ref{sec:flat-semantics}). The annotations $r$ are formed by 
+%an algebraic structure discussed next.
+
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Flat coeffect algebra}
+
+\begin{definition}
+A \emph{\cclrd{flat coeffect algebra}} $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ is a set 
+$\C$ together with elements $\cunit, \czero \in \C$, relation $\cleq$ and binary operations 
+$\cseq, \cpar, \czip$ such that $(\C, \cseq, \cunit)$ and $(\C, \cpar, \czero)$ are monoids,
+$(\C, \cleq)$ is a pre-order and $(\C, \czip)$ is a semigroup. That is, for all $r,s,t\in \C$:
+%
+\begin{equation*}
+\begin{array}{ccr}
+r \;\cseq\; (s \;\cseq\; t) = (r \;\cseq\; s) \;\cseq\; t  &
+\cunit \;\cseq\; r = r = r \;\cseq\; \cunit &
+\textnormal{(monoid)}   
+\\
+r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &
+\czero \;\cpar\; r = r = r \;\cpar\; \czero &
+\textnormal{(monoid)}   
+\\
+\textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t&
+t\; \cleq\; t &
+\textnormal{(pre-order)}   
+\\
+r \;\czip\; (s \;\czip\; t) = (r \;\czip\; s) \;\czip\; t &&
+\textnormal{(assoc)}   
+\end{array}
+\end{equation*}
+%
+In addition, the following distributivity axioms hold:
+\begin{align*}
+\quad (\cclrd{r}\, \cpar\, \cclrd{s}) \;\cseq\; \cclrd{t} & = (\cclrd{r} \,\cseq\, \cclrd{t}) \;\cpar\; (\cclrd{s}\, \cseq\, \cclrd{t}) \\
+\quad \cclrd{t} \;\cseq\; (\cclrd{r}\, \cpar\, \cclrd{s}) & = (\cclrd{t} \,\cseq\, \cclrd{r}) \;\cpar\; (\cclrd{t}\, \cseq\, \cclrd{s})
+\end{align*}
+\end{definition}
+
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Flat coeffect types}
+
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Examples of flat coeffects}
+
+% ==================================================================================================
+
+\section{Categorical motivation}
+\label{sec:flat-semantics}
+
+\subsection{Comonads}
+\subsection{Indexed comonads}
+\subsection{Semantics of flat calculus}
+\subsection{Examples}
+
+% ==================================================================================================
+
+\section{Equational theory}
+\label{sec:flat-syntax}
+
+\subsection{Call-by-value evaluation}
+\subsection{Call-by-name evaluation}
+
+% ==================================================================================================
+
+\section{Syntactic extensions}
+\label{sec:flat-exts}
+
+\subsection{Lambda abstraction}
+\subsection{Constants and pairs}
+\subsection{Recursion}
+
+% ==================================================================================================
+
+\section{Type inference}
+\label{sec:flat-inference}
+
+\subsection{Semi-lattice formulation}
+\subsection{Type inference algorithm}
+
+% ==================================================================================================
+
+\section{Summary}
+
+\section{----------------JUNK!}
+
+
+\begin{figure}[t]
+\begin{equation*}
+\tyrule{var}
+  {x : \tau \in \Gamma}
+  {\coctx{\Gamma}{\aclrd{ 0 }} \vdash x : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{n'}} \vdash e : \tau }
+  {\coctx{\Gamma}{\aclrd{n}} \vdash e : \tau }\quad\quad(\aclrd{n'} \leq \aclrd{n})
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\coctx{\Gamma}{\aclrd{m}} \vdash e_1 : \tau_1 \xrightarrow{\aclrd{p}} \tau_2 &
+   \coctx{\Gamma}{\aclrd{n}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma}{\textnormal{max}(\aclrd{m}, \aclrd{n} + \aclrd{p})} \vdash e_1~e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma}{\aclrd{m}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma, x:\tau_1}{\aclrd{n}} \vdash e_2 : \tau_2}
+  {\coctx{\Gamma}{\aclrd{n}+\aclrd{m}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x:\tau_1}{\aclrd{n}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{n}} \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{n}} \tau_2 }
+\end{equation*}
+
+\caption{Flat coeffect calculus}
+\label{fig:flat-types}
+\end{figure}
+
+% ------------------
+
+\section{Type inference}
+
+
+
+
+% ==================================================================================================
+
+~
+\newpage
+~
 
 %---------------------------------------------------------------------------------------------------
 
