@@ -522,12 +522,318 @@ expression $(\lambda x.e_2)~e_1$.
 \section{Categorical motivation}
 \label{sec:flat-semantics}
 
+The type system of flat coeffect calculus arises as a generalization of the examples discussed in 
+Chapter~\ref{ch:applications}, but we can also obtain it by looking at the categorical semantics
+of context-dependent computations. This is a direction that we explore in this section. Although
+the development presented here is interesting in its own, our main focus is \emph{using} categorical
+semantics to motivate and explain the design of flat coeffect calculus.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Categorical semantics}
+
+As discussed in Section~\ref{sec:path-sem}, categorical semantics interprets terms as morphisms
+in some category. For typed calculi, the semantics defined by $\sem{-}$ usually interprets typing 
+judgements $x_1 \!:\! \tau_1 \ldots x_n \!:\! \tau_n \vdash e: \tau$ as morphisms 
+$\sem{\tau_1} \times \ldots \times \sem{\tau_n} \rightarrow \sem{\tau}$.
+
+As a best known example, Moggi \cite{monad-notions} showed that the semantics of various effectful 
+computations can be captured uniformly using the (\emph{strong}) \emph{monad} structure. In that 
+approach, computations are interpreted as $\tau_1 \times \ldots \times \tau_n \rightarrow \mtyp{}{\tau}$
+for some monad $\mtyp{}{}$. For example, $\mtyp{}{\alpha} = \alpha \cup \{ \bot \}$ models 
+partiality (maybe monad), $\mtyp{}{\alpha} = \mathcal{P}(\alpha)$ models non-determinism (list 
+monad) and $\mtyp{}{\alpha} = (\alpha \times S)^S$ models side-effects (state monad). Here, the 
+structure of a strong monad provides necessary ``plumbing'' for composing monadic computations.
+
+Following similar approach to Moggi, Uustalu and Vene \cite{comonads-notions} showed that 
+(\emph{monoidal}) \emph{comonads} uniformly capture the semantics of various kinds of context-dependent 
+computations~\cite{comonads-notions}. For example, data-flow computations over non-empty lists
+$\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$ are modelled using
+the non-empty list comonad.
+
+The monadic and comonadic model outlined here represents at most a binary analysis of effects or 
+context-dependence. A function $\tau_1 \rightarrow \tau_2$ performs \emph{no} effects (requires no 
+context) whereas $\tau_1 \rightarrow \mtyp{}{\tau_2}$ performs \emph{some} effects and
+$\ctyp{}{\tau_1} \rightarrow \tau_2$ requires \emph{some} context. In the next section, we introduce
+\emph{indexed comonads}, which provide a more precise analysis and let us model computations with
+context requirements $\cclrd{r}$ as functions $\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2$ using
+an \emph{indexed comonad} $\ctyp{\cclrd{r}}{}$.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Introducing comonads}
+
+In category theory, \emph{comonad} is a dual of \emph{monad}. Informally, we get a comonad by 
+taking a monad and ``reversing the arrows''. More formally, one of the equivalent definitions of
+comonad looks as follows:
+
+\begin{definition}
+A \emph{comonad} over a category $\catc$ is a triple $(C, \ident{counit}, \ident{cobind})$ where:
+\begin{compactitem}
+\item $C$ is a mapping on objects (types) $C : \catc \rightarrow \catc$
+\item $\ident{counit}$ is a mapping $\ctyp{}{\alpha} \rightarrow \alpha$ 
+\item $\ident{cobind}$ is a mapping $(\ctyp{}{\alpha} \rightarrow \beta) 
+  \rightarrow (\ctyp{}{\alpha} \rightarrow \ctyp{}{\beta})$
+\end{compactitem}
+such that, for all $f:\ctyp{}{\alpha} \rightarrow \beta$ and $g:\ctyp{}{\beta} \rightarrow \gamma$:
+\begin{align}
+\tag{\emph{left identity}}
+  \ident{cobind}~\ident{counit} &= \idf{}
+  \\
+\tag{\emph{right identity}}
+  \ident{counit} \circ \ident{cobind}~f &= f
+  \\
+\tag{\emph{associativity}}
+  \ident{cobind}~(g \circ \ident{cobind}~f) &= (\ident{cobind}~g) \circ (\ident{cobind}~f)
+\end{align}
+\end{definition}
+
+\noindent
+From the functional programming perspective, we can see $\ctyp{}{}$ as a parametric data type such as
+\ident{NEList}. The $\ident{counit}$ operations extracts a value $\alpha$ from a value that carries 
+additional context $\ctyp{}{\alpha}$. The $\ident{cobind}$ operation turns a context-dependent function 
+$\ctyp{}{\alpha} \rightarrow \beta$ into a function that takes a value with context, applies
+the context-dependent function to value(s) in the context and then propagates the context.
+
+As mentioned earlier, Uustalu and Vene \cite{comonads-notions} use comonads to model data-flow
+computations. They describe infinite (coinductive) streams and non-empty lists as example comonads.
+
+\begin{example}[Non-empty list]
+A non-empty list is a recursive data-type defined as $\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$.
+We write \kvd{inl} and \kvd{inr} for constructors of the left and right cases, respectively. The 
+type \ident{NEList} forms a comonad together with the following \ident{counit} and \ident{cobind} mappings:
+%
+\begin{equation*}
+\begin{array}{rclll}
+\ident{counit}~l &\narrow{=}& h &\quad&\textnormal{when}~l=\kvd{inl}~h\\[-0.25em]
+\ident{counit}~l &\narrow{=}& h &&\textnormal{when}~l=\kvd{inr}~(h, t)\\[0.5em]
+\ident{cobind}\,f~l &\narrow{=}& \kvd{inl}~(f\,l) &&\textnormal{when}~l=\kvd{inl}~h\\[-0.25em]
+\ident{cobind}\,f~l &\narrow{=}& \kvd{inr}~(f\,l,\;\ident{cobind}~f~t) &&\textnormal{when}~l=\kvd{inr}~(h, t)
+\end{array}
+\end{equation*}
+\end{example}
+
+\noindent
+The \ident{counit} operation returns the head of the non-empty list. Note that it is crucial that
+the list is \emph{non-empty}, because we always need to be able to obtain a value. The \ident{cobind}
+defined here returns a list of the same length as the original where, for each element, the 
+function $f$ is applied on a \emph{suffix} list starting from the element. Using a simplified
+notation for list, the result of applying \ident{cobind} to a function that sums elements of a
+list gives the following behaviour:
+%
+\begin{equation*}
+\ident{cobind}~\ident{sum}~(7,6,5,4,3,2,1,0) = (28,21,15,10,6,3,1,0)
+\end{equation*}
+%
+The fact that the function $f$ is applied to a \emph{suffix} is important in order to satisfy the
+\emph{left identity} law, which requires that $\ident{cobind}~\ident{counit}~l = l$.
+
+It is also interesting to examine some data types that do \emph{not} form a comonad. As already
+mentioned, list $\ident{List}~\alpha = 1 + (\alpha \times \ident{List}~\alpha)$ is not a comonad,
+because the \ident{counit} operation is not defined for the value $\kvd{inl}~()$. Similarly,
+the \ident{Maybe} data type defined as $1 + \alpha$ is not a comonad for the same reason.
+However, if we consider flat coeffect calculus for liveness, it appears natural to model computations
+as function $\ident{Maybe}~\tau_1 \rightarrow \tau_2$. To use such model, we first need to 
+generalise comonads to \emph{indexed comonads}.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Generalising to indexed comonads}
+The flat coeffect algebra includes a monoid $(\C, \cseq, \cunit)$, which defines the behaviour of
+sequential composition, where the annotation $\cunit$ represents a variable access. An indexed 
+comonad is formed by a data type (object mapping) $\ctyp{\cclrd{r}}{\alpha}$ where the annotation 
+$\cclrd{r}$ determines what context is required. 
+
+\begin{definition}
+Given a monoid $(\C, \cseq, \cunit)$ with binary operator $\cseq$ and unit $\cunit$, an 
+\emph{indexed comonad} over a category $\catc$ is a triple 
+$(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, \ident{cobind}_{\cclrd{r}, \cclrd{s}})$ where:
+
+\begin{compactitem}
+\item $\ctyp{\cclrd{r}}{}$ for all $\cclrd{r} \in \C$ is a family of object mappings 
+\item $\ident{counit}_{\cunit}$ is a mapping $\ctyp{\cunit}{\alpha} \rightarrow \alpha$ 
+\item $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$ is a mapping $(\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) 
+  \rightarrow (\ctyp{\cclrd{r}\cseq\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta})$
+\end{compactitem}
+such that, for all $f:\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta$ and $g:\ctyp{\cclrd{s}}{\beta} \rightarrow \gamma$
+and the identity $\idf{\cclrd{s}} : \ctyp{\cclrd{s}}\alpha \rightarrow \ctyp{\cclrd{s}}\alpha$:
+\begin{align}
+\tag{\emph{left identity}}
+  \ident{cobind}_{\cunit, \cclrd{s}}~\ident{counit}_{\cunit} &= \idf{}
+  \\
+\tag{\emph{right identity}}
+  \ident{counit}_{\cunit} \circ \ident{cobind}_{\cclrd{r}, \cunit}~f &= f
+  \\
+\tag{\emph{associativity}}
+\hspace{-10em}
+  \ident{cobind}_{\cclrd{r}\cseq\cclrd{s},\cclrd{t}}~(g \circ \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f) &= 
+    (\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g) \circ (\ident{cobind}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}~f)
+\end{align}
+\end{definition}
+
+\noindent
+Rather than defining a single mapping $\ctyp{}{}$, we are now defining a family of mappings 
+$\ctyp{\cclrd{r}}{}$ indexed by a monoid structure. Similarly, the operation $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$ 
+operation is now also formed by a \emph{family} of mappings for different pairs of indices 
+$\cclrd{r}, \cclrd{s}$. To be fully precise, $\ident{cobind}$ is a family of natural transformations 
+and we should include $\alpha, \beta$ as indices, writing $\ident{cobind}_{\cclrd{r},\cclrd{s}}^{\alpha, \beta}$.
+For the purpose of this thesis, it is sufficient to treat $\ident{cobind}$ as a family of
+mappings or, when it does not  introduce ambiguity, view it as a single mapping.
+
+The $\ident{counit}$ operation is not defined for all $\cclrd{r} \in \C$, but only for 
+the unit $\cunit$. We still include the unit as an index writing $\ident{counit}_{\cunit}$, 
+but this is merely for symmetry. Crucially, this means that the operation is defined only
+for some special contexts.
+
+If we look at the indices in the laws, we can see that the left and right identity 
+require $\cunit$ to be the unit of $\cseq$. Similarly, the associativity law implies the 
+associativity of the $\cseq$ operator. 
+
+The category that models sequential composition is formed by the unit arrow $\ident{counit}$ 
+together with the (associative) composition operation that composes computations with 
+contextual requirements as follows:
+%
+\begin{equation*}
+\begin{array}{ccl}
+\textnormal{--}\, \hat{\circ} \,\textnormal{--}&\narrow{:}& (\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2) 
+  \rightarrow (\ctyp{\cclrd{s}}{\tau_2} \rightarrow \tau_3) 
+  \rightarrow (\ctyp{\cclrd{r} \cseq \cclrd{s}}{\tau_1} \rightarrow \tau_3) \\
+g \, \hat{\circ} \, f &\narrow{=}& g \circ (\ident{cobind}_{\cclrd{r}, \cclrd{s}} f)
+\end{array}
+\end{equation*}
+%
+The composition $\hat{\circ}$ best expresses the intention of indexed comonads. Given two functions
+with contextual requirements $\cclrd{r}$ and $\cclrd{s}$, their composition is a function that 
+requires $\cclrd{r}\,\cseq,\cclrd{s}$. The contextual requirements propagate \emph{backwards} and
+are attached to the input of the composed function.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Examples}
+
+Any comonad can be turned into an indexed comonad using a trivial monoid. However, indexed comonads
+are more general and can be used with other data types, including indexed \ident{Maybe}.
+
+\begin{example}[Comonads]
+Any comonad $\ctyp{}{}$ is an indexed comonad with an index provided by a trivial monoid $(\{1\},\ast,1)$
+where $1\ast 1 = 1$ and $\ctyp{1}{}$ is the underlying mapping $\ctyp{}{}$ of the original comonad. The
+operations $\ident{counit}_1$ and $\ident{cobind}_{1,1}$ are defined by the operations $\ident{counit}$
+and $\ident{cobind}$ of the comonad.
+\end{example}
+
+\begin{example}[Indexed option]
+The indexed option comonad is defined over a monoid $(\{ \ident{L},\ident{D} \}, \sqcup,\ident{L})$ 
+where $\sqcup$ is defined as earlier, \ie~$\ident{L} = \cclrd{r} \sqcup \cclrd{s} \Longleftrightarrow \cclrd{r}=\cclrd{s}=\ident{L}$.
+Assuming $1$ is the unit type inhabited by $()$, the mappings are defined as follows:
+\begin{equation*}
+\begin{array}{l}
+\ctyp{\ident{L}}{\alpha} = \alpha\\
+\ctyp{\ident{D}}{\alpha} = 1\\
+\\
+\ident{counit}_{\ident{L}} : \ctyp{\ident{L}}{\alpha} \rightarrow \alpha \\
+\ident{counit}_{\ident{L}}~v = v\\
+\end{array}
+\qquad
+\begin{array}{lcl}
+\multicolumn{3}{l}{
+  \ident{cobind}_{\cclrd{r},\cclrd{s}} ~:~ (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) 
+    \rightarrow (\ctyp{\cclrd{r}\sqcup\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta}) }\\
+\ident{cobind}_{\ident{L},\ident{L}}~f~x &\narrow{=}& f~x\\
+\ident{cobind}_{\ident{L},\ident{D}}~f~() &\narrow{=}& ()\\
+\ident{cobind}_{\ident{D},\ident{L}}~f~() &\narrow{=}& f~()\\
+\ident{cobind}_{\ident{D},\ident{D}}~f~() &\narrow{=}& ()\\
+\end{array}
+\end{equation*}
+\end{example}
+
+\noindent
+The indexed option comonad models the semantics of the liveness coeffect system discussed in 
+\ref{sec:applications-flat-live}, where $\ctyp{\ident{L}}{\alpha} = \alpha$ models a live context 
+and $\ctyp{\ident{D}}{\alpha}=1$ models a dead context which does not contain a value. The \ident{counit}
+operation extracts a value from a live context; \ident{cobind} can be seen as an implementation of 
+dead code elimination. The definition only evaluates $f$ when the result is marked as live and is thus
+required, and it only accesses $x$ if the function $f$ requires its input.
+
+The indexed family $\ctyp{\cclrd{r}}{}$ in the above example is analogous to the \ident{Maybe}
+(or option) data type $\ident{Maybe}\,\alpha = 1 + \alpha$. As mentioned earlier, this type does not 
+permit (non-indexed) comonad structure, because $\ident{counit}~()$ is not defined. This is not a 
+problem with indexed comonads, because \ident{counit} only needs to be defined on live context.
+
+\begin{example}[Indexed product]
+The semantics of implicit parameters
+
+\end{example}
+
+
+
+
+\paragraph{Related work}
+
+Not a family of comonads
+
+Katsumata
+
+\newcommand{\ccat}[0]{\mathcal{C}}
+\newcommand{\cobind}[2]{#1^\dagger_{#2}}
+\newcommand{\cmerge}[0]{ \ident{m} }
+\newcommand{\csplit}[0]{ \ident{n} }
+\newcommand{\counit}[0]{ \varepsilon }
+
+\paragraph{Example}
+Indexed comonad are analogous to comonads (in coKleisli form), but
+with the additional monoidal structure on indices.  Indeed, comonads
+are a special case of indexed comonads with a trivial singleton
+monoid, \eg{}, $(\{1\}, \ast, 1)$ with $1 \ast 1 = 1$ where $\ccat^1$
+is the underlying functor of the comonad and $\counit$ and
+$\cobind{(-)}{1, 1}$ are the usual comonad operations.
+However, as demonstrated next, not all indexed comonads are derived from ordinary comonads.
+
+\paragraph{Example}
+The \emph{indexed partiality comonad} encodes free-variable contexts
+of a computation which are either \emph{live} or \emph{dead} (\ie{}, have
+\emph{liveness} coeffects) with the monoid $(\{\ident{D}, \ident{L}\},
+\sqcap, \ident{L})$, where $\ccat^{\ident L} A = A$ encodes live
+contexts and $\ccat^{\ident D} A = 1$ encodes dead contexts,
+where $1$ is the unit type inhabited by a single value $()$.
+The \emph{counit} operation $\counit{} : \ccat^{\ident{L}} A \rightarrow A$
+is defined $\counit\ x = x$ and \emph{coextend},
+for all $f : \ccat^r A \rightarrow B$, and thus
+$\cobind{f}{r, s} : \; \ccat^{r \sqcap s} A \rightarrow \ccat^s B$,
+is defined:
+%
+\begin{align*}
+\begin{array}{llll}
+\cobind{f}{\ident{D}, \ident{D}} x = () \qquad\qquad & 
+\cobind{f}{\ident{D}, \ident{L}} x = f () \qquad\qquad &
+\cobind{f}{\ident{L}, \ident{D}} x = () \qquad\qquad &
+\cobind{f}{\ident{L}, \ident{L}} x = f~x 
+\end{array}
+\end{align*}
+%
+The indexed family $C^r$ here is analogous to the non-indexed \textsf{Maybe} (or \emph{option})
+data type $\mathsf{Maybe}\ A = A + 1$.  This
+type does not permit a comonad structure since
+$\varepsilon : \mathsf{Maybe}\ A \rightarrow A$ is undefined at $(\textsf{inr} \, ())$. 
+For the indexed comonad, $\counit$ need only be defined
+ for $\ccat^{\ident{L}} A = A$. Thus, indexed comonads capture a broader range of
+ contextual notions of computation than comonads.
+
+ Moreover, indexed comonads are not restricted by the \emph{shape
+   preservation} property of comonads~\cite{orchard12codo}: that
+ a coextended function cannot change the \emph{shape} of the
+ context. For example, in the second case above $f^\dagger_{\ident{D},
+   \ident{L}} : \ccat^{\ident{D}} A \rightarrow \ccat^{\ident{L}} B$
+ where the shape changes from $1$ (empty context) to $B$ (available
+ context). 
 a
 
-\subsection{Comonads}
-\subsection{Indexed comonads}
+\subsection{Indexed monoidal comonads}
+
+!!! 
+
+not a family of comonads
+
 \subsection{Semantics of flat calculus}
-\subsection{Examples}
 
 % ==================================================================================================
 
@@ -576,145 +882,11 @@ a
 \newpage
 ~
 
-%---------------------------------------------------------------------------------------------------
-
-% comonadic semantics
-\newcommand{\iftor}[1]{C^{#1}}
-\newcommand{\iftorhat}[1]{\hat{C}^{#1}}
-
-\newcommand{\cosem}[1]{\llbracket #1 \rrbracket}
-\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
-\newcommand{\ccat}[0]{\mathcal{C}}
-\newcommand{\obj}[1]{\textnormal{obj}(#1)}
-
-\newcommand{\cobind}[2]{#1^\dagger_{#2}}
-\newcommand{\cmerge}[0]{ \ident{m} }
-\newcommand{\csplit}[0]{ \ident{n} }
-\newcommand{\counit}[0]{ \varepsilon }
-
 % ==================================================================================================
 
 \section{Coeffect semantics using indexed comonads}
 \label{sec:comonads}
 
-The approach of \emph{categorical semantics} interprets terms as
-morphisms in some category.  For typed calculi, typing judgments $x_1 : \tau_1 \ldots x_n : \tau_n
-\vdash e: \tau$ are usually mapped to morphisms $\interp{\tau_1} \times \ldots \times
-\interp{\tau_n} \rightarrow \interp{\tau}$. Moggi showed the semantics of various effectful 
-computations can be captured generally using the (\emph{strong}) \emph{monad}
-structure~\cite{monad-notions}. Dually, Uustalu and Vene showed that
-(\emph{monoidal}) \emph{comonads} capture various kinds of context-dependent 
-computation~\cite{comonads-notions}.
-
-We extend Uustalu and Vene's approach to give a semantics for
-the coeffect calculus by generalising comonads to
-\emph{indexed comonads}. We emphasise semantic intuition and
-abbreviate the categorical foundations for space reasons.
-
-\vspace{-1em}
-\paragraph{Indexed comonads.}
-
-Uustalu and Vene's approach interprets well-typed terms 
-as morphisms $C (\tau_1 \times \ldots
-\times \tau_n) \rightarrow \tau$, where $C$ encodes contexts
-and has a comonad structure~\cite{comonads-notions}.
-Indexed comonads comprise a \emph{family} of object mappings 
-$C^r$ indexed by a coeffect $r$ describing the contextual requirements satisfied by
-the encoded context. We interpret judgments $C^r (x_1 : \tau_1, \ldots, x_n : \tau_n) \vdash e : \tau$ as
-morphisms $C^r (\interp{\tau_1} \times \ldots \times \interp{\tau_n}) \rightarrow \interp{\tau}$.
-
-The indexed comonad structure provides a notion of composition
-for computations with different contextual requirements.
-%%
-\begin{definition}
-Given a monoid $(S, \cseq, \cunit)$ with binary operator $\cseq$ and
-unit $\cunit$, an \emph{indexed comonad} over a category $\ccat$
-comprises a family of object mappings $\iftor r$ where for all $r \in S$ and $A \in \obj{\ccat}$ then 
-$\iftor r A \in \obj{\ccat}$ and:
-%%
-\begin{itemize}
-\item a natural transformation $\counit_A : \iftor{\cunit} A \rightarrow A$, called the \emph{counit};
-\item a family of mappings $\cobind{(-)}{r, s}$ from morphisms $\iftor
-  r A \rightarrow B$ to \\ morphisms $\iftor{r \cseq{} s} A
-  \rightarrow \iftor s B$ in $\ccat$, natural in $A,B$, called
-  \emph{coextend};
-\end{itemize}
-%
-\noindent
-such that for all $f : \iftor r \tau_1 \rightarrow \tau_2$ and $g : \iftor s \tau_2 \rightarrow \tau_3$ 
-the following equations hold:
-%
-\renewcommand{\arraycolsep}{1.5em}
-\begin{align*}
-\begin{array}{ccc}
-\counit \circ \cobind{f}{r, \cunit} = f & 
-\cobind{{(\counit)}}{\cunit, r} = \ident{id} & 
-\cobind{(g \circ \cobind{f}{r, s})}{(r \cseq s), t} = \cobind{g}{s, t} \circ \cobind{f}{r, (s \cseq t)} \\
-\end{array}
-\end{align*}
-\end{definition}
-%
-The \emph{coextend} operation gives rise to an associative composition operation for
-computations with contextual requirements (with \emph{counit} as the identity):
-%
-\[
-\hat{\circ} : (\iftor r \tau_1 \rightarrow \tau_2) \rightarrow (\iftor s \tau_2 \rightarrow \tau_3) 
-  \rightarrow (\iftor{r \cseq s} \tau_1 \rightarrow \tau_3) \quad\quad\quad
-g \, \hat{\circ} \, f = g \circ f^\dagger_{r,s}\quad
-\]
-%
-The composition $\hat{\circ}$ best expresses the intention
-of indexed comonads: contextual requirements of the composed
-functions are combined. The properties of
-the composition follow from the indexed comonad laws and the 
-monoid $(S, \oplus, \cunit)$.
-
-\paragraph{Example}
-Indexed comonad are analogous to comonads (in coKleisli form), but
-with the additional monoidal structure on indices.  Indeed, comonads
-are a special case of indexed comonads with a trivial singleton
-monoid, \eg{}, $(\{1\}, \ast, 1)$ with $1 \ast 1 = 1$ where $\iftor 1$
-is the underlying functor of the comonad and $\counit$ and
-$\cobind{(-)}{1, 1}$ are the usual comonad operations.
-However, as demonstrated next, not all indexed comonads are derived from ordinary comonads.
-
-\paragraph{Example}
-The \emph{indexed partiality comonad} encodes free-variable contexts
-of a computation which are either \emph{live} or \emph{dead} (\ie{}, have
-\emph{liveness} coeffects) with the monoid $(\{\ident{D}, \ident{L}\},
-\sqcap, \ident{L})$, where $\iftor{\ident L} A = A$ encodes live
-contexts and $\iftor{\ident D} A = 1$ encodes dead contexts,
-where $1$ is the unit type inhabited by a single value $()$.
-The \emph{counit} operation $\counit{} : \iftor{\ident{L}} A \rightarrow A$
-is defined $\counit\ x = x$ and \emph{coextend},
-for all $f : \iftor r A \rightarrow B$, and thus
-$\cobind{f}{r, s} : \; \iftor{r \sqcap s} A \rightarrow \iftor s B$,
-is defined:
-%
-\begin{align*}
-\begin{array}{llll}
-\cobind{f}{\ident{D}, \ident{D}} x = () \qquad\qquad & 
-\cobind{f}{\ident{D}, \ident{L}} x = f () \qquad\qquad &
-\cobind{f}{\ident{L}, \ident{D}} x = () \qquad\qquad &
-\cobind{f}{\ident{L}, \ident{L}} x = f~x 
-\end{array}
-\end{align*}
-%
-The indexed family $C^r$ here is analogous to the non-indexed \textsf{Maybe} (or \emph{option})
-data type $\mathsf{Maybe}\ A = A + 1$.  This
-type does not permit a comonad structure since
-$\varepsilon : \mathsf{Maybe}\ A \rightarrow A$ is undefined at $(\textsf{inr} \, ())$. 
-For the indexed comonad, $\counit$ need only be defined
- for $\iftor{\ident{L}} A = A$. Thus, indexed comonads capture a broader range of
- contextual notions of computation than comonads.
-
- Moreover, indexed comonads are not restricted by the \emph{shape
-   preservation} property of comonads~\cite{orchard12codo}: that
- a coextended function cannot change the \emph{shape} of the
- context. For example, in the second case above $f^\dagger_{\ident{D},
-   \ident{L}} : \iftor{\ident{D}} A \rightarrow \iftor{\ident{L}} B$
- where the shape changes from $1$ (empty context) to $B$ (available
- context). 
 
 \vspace{-1em}
 \subsection{Monoidal indexed comonads.}
@@ -731,9 +903,9 @@ lax semi-monoidal structure for combining contexts \emph{as well as} an indexed
 by two families of morphisms (given a coeffect algebra with $\vee$ and $\wedge$):
 %
 \begin{itemize}
-\item $\cmerge_{r, s} : \iftor r A \times \iftor s B \rightarrow \iftor{(r \wedge s)}(A \times B)$ natural
+\item $\cmerge_{r, s} : \ccat^r A \times \ccat^s B \rightarrow \ccat^{(r \wedge s)}(A \times B)$ natural
 in $A, B$;
-\item $\csplit_{r, s} : \iftor{(r \vee s)}(A \times B) \rightarrow \iftor r A \times \iftor s B$ natural
+\item $\csplit_{r, s} : \ccat^{(r \vee s)}(A \times B) \rightarrow \ccat^r A \times \ccat^s B$ natural
 in $A, B$;
 \end{itemize}
 %
@@ -784,25 +956,25 @@ operations is a straightforward extension of the work of Uustalu and Vene.
 %The semantics of the coeffect calculus for
 % dynamically-scoped implicit parameters, with coeffect
 %algebra $(\mathcal{P}(\ident{Id}), \cup, \cup, \cup, \emptyset)$, 
-%is provided by the indexed comonad $\iftor rA = A \times (r \rightarrow \tau)$
+%is provided by the indexed comonad $\ccat^rA = A \times (r \rightarrow \tau)$
 %where $r \in \mathcal{P}(\ident{Id})$ with operations:\dnote{The type here is wrong,
 %do we need to store the types too? Maybe should just be a product.}
 %%
 %\vspace{-1.0em}
 %\begin{equation*}
 %\begin{array}{l}
-%\cobind{f}{r, s} \; : \; \iftor{r \cup s} A \rightarrow \iftor s B\\
+%\cobind{f}{r, s} \; : \; \ccat^{r \cup s} A \rightarrow \ccat^s B\\
 %\cobind{f}{r, s} (a, g) = (f(a, g|_r), g|_s)
 %\\[1em]
 %\counit{} (a, g) = a\\
-%%\iota_{r, s} \; : \: \iftor r A \rightarrow \iftor s A\\
+%%\iota_{r, s} \; : \: \ccat^r A \rightarrow \ccat^s A\\
 %\iota_{r, s}(a, g) = (a, g|_s)\quad(\textnormal{if}~\leq r)
 %\end{array}
 %\quad\begin{array}{l}
-%\cmerge_{r, s} : \iftor r A \times \iftor s B \rightarrow \iftor{(r \cup s)}(A \times B)\\
+%\cmerge_{r, s} : \ccat^r A \times \ccat^s B \rightarrow \ccat^{(r \cup s)}(A \times B)\\
 %\cmerge_{r, s} ((a_1, g_1), (a_2, g_2)) = ((a_1, a_2), g_1|_{r \setminus s} \cup g_2 )
 %\\[1em]
-%\csplit_{r, s} : \iftor{(r \cup s)}(A \times B) \rightarrow \iftor r A \times \iftor s B \\
+%\csplit_{r, s} : \ccat^{(r \cup s)}(A \times B) \rightarrow \ccat^r A \times \ccat^s B \\
 %\csplit_{r, s} ((a_1, a_2), g) = ((a_1, g|_r), (a_1, g|_s))
 %\end{array}
 %\end{equation*}
@@ -834,29 +1006,29 @@ operations is a straightforward extension of the work of Uustalu and Vene.
 \vspace{-1em}
 \newcommand{\uu}[1]{\overline{#1}}
 % \begin{equation*} 
-% \cosem{\ctyp{r}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
+% \sem{\ctyp{r}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
 %   \ctyp{r}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau
 % \end{equation*}
 % \vspace{-0.4em}
 \begin{equation*}
 \begin{array}{rcll}
-\cosem{\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2} &=& 
-    \emph{curry} \; (\cosem{\ctyp{r \wedge s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    %&$(1)$
+\sem{\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2} &=& 
+    \emph{curry} \; (\sem{\ctyp{r \wedge s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    %&$(1)$
 \\[0.1em]
-\cosem{\ctyp{r \vee (s \cseq t)}{\Gamma} \vdash e_1~e_2 : \tau} &=& 
-    (\emph{uncurry} \;  \cosem{\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{s}{\tau_1} \rightarrow \tau_2}) \, \circ \\
- & & \quad\; (id \times \cobind{\cosem{\ctyp{t}{\Gamma}\vdash e_2 : \tau_1}}{t,s})
-    \circ \csplit_{r, s \cseq t} \circ \iftor{r \vee (s \cseq t)}\Delta
+\sem{\ctyp{r \vee (s \cseq t)}{\Gamma} \vdash e_1~e_2 : \tau} &=& 
+    (\emph{uncurry} \;  \sem{\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{s}{\tau_1} \rightarrow \tau_2}) \, \circ \\
+ & & \quad\; (id \times \cobind{\sem{\ctyp{t}{\Gamma}\vdash e_2 : \tau_1}}{t,s})
+    \circ \csplit_{r, s \cseq t} \circ \ccat^{r \vee (s \cseq t)}\Delta
 \\[0.1em]
-\cosem{\ctyp{\cunit}{\Gamma} \vdash x_i : \tau_i} &=&
+\sem{\ctyp{\cunit}{\Gamma} \vdash x_i : \tau_i} &=&
     \pi_i \circ \counit                                                                  % &$(3)$
 %\\[0.1em]
-%\cosem{\ctyp{r}{\Gamma} \vdash e : \tau} &=&
-%    \cosem{\ctyp{s}{\Gamma} \vdash e : \tau} \circ \iota_{r, s}                              %   &%$(4)$
+%\sem{\ctyp{r}{\Gamma} \vdash e : \tau} &=&
+%    \sem{\ctyp{s}{\Gamma} \vdash e : \tau} \circ \iota_{r, s}                              %   &%$(4)$
 %\\[0.1em]
-%\cosem{\ctyp{r\vee (r \cseq s)}{\Gamma} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2} &=&
-%    \cosem{\ctyp{r}{(\Gamma, x:\tau_1)} \vdash e_2 : \tau_2} \circ
-% ((\varepsilon \times \cosem{ \ctyp{s}{\Gamma} \vdash e_1 : \tau_1 }) \circ 
+%\sem{\ctyp{r\vee (r \cseq s)}{\Gamma} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2} &=&
+%    \sem{\ctyp{r}{(\Gamma, x:\tau_1)} \vdash e_2 : \tau_2} \circ
+% ((\varepsilon \times \sem{ \ctyp{s}{\Gamma} \vdash e_1 : \tau_1 }) \circ 
 %\iftorhat{r \vee (r \cseq t)}\Delta
 \end{array}
 \end{equation*}
@@ -873,9 +1045,9 @@ $\pi_i$ for projection of the \emph{i}$^{th}$ element of a
 product, usual
 \emph{curry} and \emph{uncurry} operations, and
  $\Delta : A \rightarrow A \times A$ duplicating a
-value. While $\iftor{r}$ is a family of object mappings,
+value. While $\ccat^{r}$ is a family of object mappings,
 it is promoted to a family of functors with the derived morphism mapping 
-$\iftor{r}(f) = \cobind{ (f \circ \counit) }{\cunit, r}$.
+$\ccat^{r}(f) = \cobind{ (f \circ \counit) }{\cunit, r}$.
 
 The semantics of variable access and abstraction are the same as in
 Uustalu and Vene's semantics, modulo coeffects. Abstraction uses $\cmerge_{r, s}$ to merge the outer
@@ -894,7 +1066,7 @@ the parameter of the function subexpression (\emph{cf.} given $f : A \rightarrow
 
 A semantics for sub-coeffecting is omitted, but may be provided
 by an operation 
-$\iota_{r, s} : \iftor r A \rightarrow \iftor s A$ natural in $A$, for all $r, s \in S$ where $s \leq r$,
+$\iota_{r, s} : \ccat^r A \rightarrow \ccat^s A$ natural in $A$, for all $r, s \in S$ where $s \leq r$,
 which transforms a value $C^r A$ to $C^s A$ by
 ignoring some of the encoded context.
 
@@ -1107,7 +1279,7 @@ $(\tau_1 \rightarrow \mtyp{r \oplus s}{\tau_2}) \rightarrow \mtyp{r}{(\tau_1 \ri
 To obtain a pure lambda abstraction
 for coeffects, we need to restrict the $\cmerge_{r, s}$ 
 operation of indexed comonads, so that the first parameter is annotated with $\cunit$ (meaning
-no effects): $\iftor \cunit A \times \iftor r B \rightarrow \iftor{r}(A \times B)$.
+no effects): $\ccat^{\cunit} A \times \ccat^r B \rightarrow \ccat^{r}(A \times B)$.
 
 \newcommand{\cprd}{\times}
 \newcommand{\cvop}{\oplus}

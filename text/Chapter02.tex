@@ -339,6 +339,8 @@ of Moggi), Nanevski, Pfenning and Davies use comonads as part of meta-language, 
 of $\square$ modality, to reason about context-dependent computations (the second style of 
 Moggi). Before looking at the details, we use the following definition of comonad:
 
+\todo{Maybe remove this from here, we repeate it in section 4}
+
 \begin{definition}
 A \emph{comonad} over a category $\catc$ is a triple $(C, \ident{counit}, \ident{cobind})$ where:
 \begin{compactitem}
@@ -347,7 +349,7 @@ A \emph{comonad} over a category $\catc$ is a triple $(C, \ident{counit}, \ident
 \item $\ident{cobind}$ is a mapping $(\ctyp{}{\alpha} \rightarrow \beta) 
   \rightarrow (\ctyp{}{\alpha} \rightarrow \ctyp{}{\beta})$
 \end{compactitem}
-such that, for all $f:\alpha \rightarrow \mtyp{}{\beta}, g:\beta \rightarrow \mtyp{}{\gamma}$:
+such that, for all $f:\ctyp{}{\alpha} \rightarrow \beta$ and $g:\ctyp{}{\beta} \rightarrow \gamma$:
 \begin{align}
 \tag{\emph{left identity}}
   \ident{cobind}~\ident{counit} &= \idf{}
@@ -356,9 +358,11 @@ such that, for all $f:\alpha \rightarrow \mtyp{}{\beta}, g:\beta \rightarrow \mt
   \ident{counit} \circ \ident{cobind}~f &= f
   \\
 \tag{\emph{associativity}}
-  \ident{cobind}~(\ident{cobind}~g \circ f) &= (\ident{cobind}~f) \circ (\ident{cobind}~g)
+  \ident{cobind}~(g \circ \ident{cobind}~f) &= (\ident{cobind}~g) \circ (\ident{cobind}~f)
 \end{align}
 \end{definition}
+
+\todo{The following text is duplicated in chapter 4}
 
 \noindent
 The definition is similar to monad with ``reversed arrows''. Intuitively, the $\ident{counit}$ 
