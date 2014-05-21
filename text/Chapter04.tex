@@ -709,7 +709,7 @@ are attached to the input of the composed function.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Examples of indexed comonads}
+\paragraph{Examples.}
 
 Any comonad can be turned into an indexed comonad using a trivial monoid. However, indexed comonads
 are more general and can be used with other data types, including indexed \ident{Maybe}. 
@@ -818,6 +818,7 @@ When linking effect systems and monads, Wadler and Thiemann \cite{monad-notions}
 comonads}, is defined as follows.
 
 \begin{definition}
+\label{def:flat-family}
 A \emph{family of comonads} is formed by triples $(\ctyp{\cclrd{r}}{}, \ident{cobind}_{\cclrd{r}}, 
   \ident{counit}_{\cclrd{r}})$ for all $\cclrd{r}$ such that each triple forms a comonad. Given 
 $\cclrd{r}, \cclrd{r'}$ such that $\cclrd{r} \leq \cclrd{r'}$, there is also a mapping 
@@ -846,6 +847,82 @@ structure.
 \subsection{Indexed monoidal comonads}
 \label{sec:flat-semantics-monoidal}
 
+Indexed comonads model the semantics of sequential composition, but additional structure is needed
+to model the semantics of the flat coeffect calculus. This is where the duality between monads and 
+comonads can no longer help us, because context is propagated differently than effects in lambda 
+abstraction and application.
+
+Whereas Moggi~\cite{monad-notions} requires \emph{strong} monad to model effectful $\lambda$-calculus, 
+Uustalu and Vene~\cite{comonads-notions} require \emph{lax semi-monoidal} comonad to model 
+$\lambda$-calculus with contextual properties. The structure requires a monoidal operation:
+%
+\begin{equation*}
+\ident{m} : \ctyp{}{\alpha} \times \ctyp{}{\beta} \rightarrow \ctyp{}{(\alpha \times \beta)}
+\end{equation*}
+%
+The \ident{m} operation is needed in the semantics of lambda abstraction. It represents merging of 
+contexts and is used to merge the context of the declaration-site (containing free variables)
+and the call-site (containing bound variable). For example, for implicit parameters, this combines
+the additional parameters defined in the two contexts.
+
+The semantics of flat coeffect calculus requires operations for \emph{merging}, but also for
+\emph{splitting} of contexts. These are provided by \emph{lax} and \emph{oplax} monoidal 
+structures. In addition, we also need a lifting operation (similar to $\iota$ from 
+Definition~\ref{def:flat-family}) to model sub-coeffecting.
+
+\begin{definition}
+Given a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
+an \emph{indexed monoidal comonad} is an indexed comonad over the monoid $(\C, \cseq, \cunit)$
+equipped with families of operations $\ident{merge}_{\cclrd{r},\cclrd{s}}$, $\ident{split}_{\cclrd{r},\cclrd{s}}$ 
+and $\ident{lift}_{\cclrd{r'},\cclrd{r}}$ where:
+%
+\begin{compactitem}
+\item $\ident{merge}_{\cclrd{r},\cclrd{s}}$ is a family of mappings
+  $\ctyp{\cclrd{r}}{\alpha} \times \ctyp{\cclrd{s}}{\beta} \rightarrow \ctyp{\cclrd{r}\czip\cclrd{s}}{(\alpha \times \beta)}$
+\item $\ident{split}_{\cclrd{r},\cclrd{s}}$ is a family of mappings
+  $\ctyp{\cclrd{r}\cpar\cclrd{s}}{(\alpha \times \beta)} \rightarrow \ctyp{\cclrd{r}}{\alpha} \times \ctyp{\cclrd{s}}{\beta}$
+\item $\ident{lift}_{\cclrd{r'},\cclrd{r}}$ is a family of mappings
+  $\ctyp{\cclrd{r'}}{\alpha} \rightarrow \ctyp{\cclrd{r}}{\alpha}$~ for all $\cclrd{r'}, \cclrd{r}$ such that $\cclrd{r}\,\cleq\,\cclrd{r'}$
+\end{compactitem}
+%
+% We should require lift to be comonad morphism
+%
+% \tag{\emph{comonad morphism}}
+%   \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f \circ \ident{lift}_{\cclrd{r'}\cseq\cclrd{s'}, \cclrd{r}\cseq\cclrd{s}} &=
+%   \ident{lift}_{\cclrd{s'}, \cclrd{s}} \circ \ident{cobind}_{\cclrd{r'}, \cclrd{s'}}~(f \circ \ident{lift}_{\cclrd{r'}, \cclrd{r}} )
+%
+% ... but adapting the coherence conditions for counit/cobind is ugly!
+%
+\end{definition}
+
+\noindent
+The $\ident{merge}_{\cclrd{r},\cclrd{s}}$ operation is the most interesting one. Given two comonadic
+values with additional contexts specified by $\cclrd{r}$ and $\cclrd{s}$, it combineds them into a 
+single value with additional context $\cclrd{r}\czip\cclrd{s}$. The $\czip$ operation often represents
+\emph{greatest lower bound}\footnote{The $\czip$ and $\cpar$ operations are the greatest and least upper 
+bounds for the liveness and data-flow examples, but not for implicit parameters. However, they are useful 
+as an informal analogy.}, elucidating the fact that merging may result in the loss of some parts of 
+the contexts $\cclrd{r}$ and $\cclrd{s}$. We look at examples of this operation in the next section.
+
+The $\ident{split}_{\cclrd{r},\cclrd{s}}$ operation splits a single comonadic value (containing a tuple)
+into two separate values. Note that this does not simply duplicate the value, because the additional
+context is also split. To obtain coeffects $\cclrd{r}$ and $\cclrd{s}$, the input needs to provide 
+\emph{at least} $\cclrd{r}$ and $\cclrd{s}$, so the tags are combined using the $\cpar$, which is often 
+the \emph{least upper-bound}\footnotemark[1].
+
+Finally, $\ident{lift}_{\cclrd{r'}, \cclrd{r}}$ is a family of operations that ``forget'' some part of
+a context. This models the sub-coeffecting operation and lets us, for example, forget some of the
+available implicit parameters, or turn a live context (containing a value) into a dead context (empty).
+
+\paragraph{Simpler.}
+
+\paragraph{Examples.}
+
+\subsection{Semantics of flat calculus}
+
+% ==================================================================================================
+
+
 \newcommand{\ccat}[0]{\mathcal{C}}
 \newcommand{\cobind}[2]{#1^\dagger_{#2}}
 \newcommand{\cmerge}[0]{ \ident{m} }
@@ -853,45 +930,6 @@ structure.
 \newcommand{\counit}[0]{ \varepsilon }
 
 
-
-Indexed comonads provide a semantics to sequential composition, but
-additional structure is needed for the semantics of the full coeffect calculus.
-Uustalu and Vene~\cite{comonads-notions} additionally require a (\emph{lax semi-}) \emph{monoidal comonad} 
-structure, which provides a monoidal operation $\mathsf{m} : C A
-\times C B \rightarrow C (A \times B)$ for merging contexts (used in
-the semantics of abstraction).
-
-The semantics of the coeffect calculus requires an indexed
-lax semi-monoidal structure for combining contexts \emph{as well as} an indexed
-\emph{colax} monoidal structure for \emph{splitting} contexts. These are provided
-by two families of morphisms (given a coeffect algebra with $\vee$ and $\wedge$):
-%
-\begin{itemize}
-\item $\cmerge_{r, s} : \ccat^r A \times \ccat^s B \rightarrow \ccat^{(r \wedge s)}(A \times B)$ natural
-in $A, B$;
-\item $\csplit_{r, s} : \ccat^{(r \vee s)}(A \times B) \rightarrow \ccat^r A \times \ccat^s B$ natural
-in $A, B$;
-\end{itemize}
-%
-\noindent
-The $\cmerge_{r, s}$ operation merges contextual computations with
-tags combined by $\wedge$ (greatest lower-bound), elucidating 
-the behaviour of $\cmerge_{r, s}$: that merging may result in 
-the loss of some parts of the contexts $r$ and $s$.
-
-The $\csplit_{r, s}$ operation splits context-dependent computations
-and thus the contextual requirements. To obtain coeffects $r$ and
-$s$, the input needs to provide \emph{at least} $r$ and $s$, so the
-tags are combined using the $\vee$ (least upper-bound).
-
-For the sake of brevity, we elide the indexed versions of the laws required by Uustalu and Vene
-(\eg~most importantly, merging two contexts and then adding the third is
-equivalent to merging the last two and then adding the first; similar rule holds is required
-for splitting).
-
-\subsection{Semantics of flat calculus}
-
-% ==================================================================================================
 
 
 
