@@ -331,6 +331,8 @@ the semantic view.
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Flat coeffect types}
+\label{sec:flat-calculus-types}
+
 The type system for flat coeffect calculus is shown in Figure~\ref{fig:flat-types}. Variables 
 (\emph{var}) and constants (\emph{const}) are annotated with special values provided by the 
 coeffect algebra. Following the top-down syntactic reading, the (\emph{sub}) rule allows us to 
@@ -388,17 +390,17 @@ it is easy to define an extension tracking set of parameters with type annotatio
 \begin{example}[Liveness]
 Let $L=\{ \ident{L}, \ident{D} \}$ be a two-point lattice such that $\ident{D} \sqsubseteq \ident{L}$
 with a join $\sqcup$ and meet $\sqcap$. The flat coeffect algebra for liveness is then formed by
-$(L, \sqcup, \sqcap, \sqcap, \ident{L}, \ident{D}, \sqsubseteq)$.
+$(L, \sqcap, \sqcup, \sqcap, \ident{L}, \ident{D}, \sqsubseteq)$.
 \end{example}
 
 \noindent
 As in Section~\ref{sec:applications-flat-live}, sequential composition $\cseq$ is modelled by 
-the join operation $\sqcup$ and point-wise composition $\cpar$ is modelled by meet $\sqcap$. 
+the meet operation $\sqcap$ and point-wise composition $\cpar$ is modelled by join $\sqcup$. 
 Two-point lattice is a commutative, idempotent monoid. The distributivity 
-$(r \sqcap s) \sqcup t = (r \sqcup t) \sqcap (s \sqcup t)$ does not hold for \emph{every} 
+$(r \sqcup s) \sqcap t = (r \sqcap t) \sqcup (s \sqcap t)$ does not hold for \emph{every} 
 lattice, but it trivially holds for a two-point lattice used here.
 
-The definition uses meet $\sqcap$ for the $\czip$ operator that is used by lambda abstraction.
+The definition uses join $\sqcup$ for the $\czip$ operator that is used by lambda abstraction.
 This means that, when the body is live $\ident{L}$, both declaration-site and call-site are 
 marked as live $\ident{L}$. When the body is dead $\ident{D}$, the declaration-site and call-site
 can be marked as dead $\ident{D}$, or as live $\ident{L}$, which is less precise, but permissible
@@ -535,7 +537,7 @@ semantics to motivate and explain the design of flat coeffect calculus.
 As discussed in Section~\ref{sec:path-sem}, categorical semantics interprets terms as morphisms
 in some category. For typed calculi, the semantics defined by $\sem{-}$ usually interprets typing 
 judgements $x_1 \!:\! \tau_1 \ldots x_n \!:\! \tau_n \vdash e: \tau$ as morphisms 
-$\sem{\tau_1} \times \ldots \times \sem{\tau_n} \rightarrow \sem{\tau}$.
+$\sem{\tau_1 \times \ldots \times \tau_n} \rightarrow \sem{\tau}$.
 
 As a best known example, Moggi \cite{monad-notions} showed that the semantics of various effectful 
 computations can be captured uniformly using the (\emph{strong}) \emph{monad} structure. In that 
@@ -639,6 +641,8 @@ generalise comonads to \emph{indexed comonads}.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Generalising to indexed comonads}
+\label{sec:flat-semantics-idx}
+
 The flat coeffect algebra includes a monoid $(\C, \cseq, \cunit)$, which defines the behaviour of
 sequential composition, where the annotation $\cunit$ represents a variable access. An indexed 
 comonad is formed by a data type (object mapping) $\ctyp{\cclrd{r}}{\alpha}$ where the annotation 
@@ -844,7 +848,7 @@ structure.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Indexed monoidal comonads}
+\subsection{Flat indexed comonads}
 \label{sec:flat-semantics-monoidal}
 
 Indexed comonads model the semantics of sequential composition, but additional structure is needed
@@ -872,7 +876,7 @@ Definition~\ref{def:flat-family}) to model sub-coeffecting.
 
 \begin{definition}
 Given a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
-an \emph{indexed monoidal comonad} is an indexed comonad over the monoid $(\C, \cseq, \cunit)$
+an \emph{flat indexed comonad} is an indexed comonad over the monoid $(\C, \cseq, \cunit)$
 equipped with families of operations $\ident{merge}_{\cclrd{r},\cclrd{s}}$, $\ident{split}_{\cclrd{r},\cclrd{s}}$ 
 and $\ident{lift}_{\cclrd{r'},\cclrd{r}}$ where:
 %
@@ -914,11 +918,282 @@ Finally, $\ident{lift}_{\cclrd{r'}, \cclrd{r}}$ is a family of operations that `
 a context. This models the sub-coeffecting operation and lets us, for example, forget some of the
 available implicit parameters, or turn a live context (containing a value) into a dead context (empty).
 
-\paragraph{Simpler.}
+\paragraph{Alternative definition.}
+Although we do not require this as a general law, in all our systems, it is the case that
+$\cclrd{r} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$ and $\cclrd{s} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$.
+This allows a simpler definition of \emph{indexed flat comonad} by expressing the \ident{split} operation
+in terms of the lifting (sub-coeffecting) as follows:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\ident{map}_{\cclrd{r}}~f &\narrow{=}& \ident{cobind}_{\cclrd{r}, \cclrd{r}}~(f\circ\ident{counit}_{\cunit}) \\
+\ident{split}_{\cclrd{r}, \cclrd{s}}~c &\narrow{=}&
+  ( \ident{map}_{\cclrd{r}}~\ident{fst}~(\ident{lift}_{\cclrd{r}\cpar\cclrd{s}, \cclrd{r}}~c), 
+    \ident{map}_{\cclrd{s}}~\ident{snd}~(\ident{lift}_{\cclrd{r}\cpar\cclrd{s}, \cclrd{s}}~c) )
+\end{array}
+\end{equation*}
+%
+The $\ident{map}_{\cclrd{r}}$ operation is the mapping on functions that corresponds to the object 
+mapping $\ctyp{\cclrd{r}}{}$. The definition is dual to the standard definition of \ident{map} 
+for monads in terms of \ident{bind} and \ident{unit}. The functions \ident{fst} and \ident{snd}
+are first and second projections from a two-element pair. To define the 
+$\ident{split}_{\cclrd{r}, \cclrd{s}}$ operation, we duplicate the argument $c$, then use 
+lifting to throw away additional parts of the context and then transform the values in the 
+context.
+
+This alternative is valid for our examples, but we do not use it for two reasons. Firstly, it 
+requires duplication of the value $c$, which is not required elsewhere in our model. So, using 
+explicit \ident{split}, our model could be embedded in a linear or affine model. Secondly, it
+is similar to the definition that is needed for structural coeffects in Chapter~\ref{ch:structural}
+and so it makes the connection between the two system easier to see.
 
 \paragraph{Examples.}
+All examples of \emph{indexed comonads} discussed in Section~\ref{sec:flat-semantics-idx} can
+be extended into \emph{flat indexed comonads}. 
+
+\begin{example}[Monoidal comonads]
+Just like indexed comonads generalise co\-monads, the additional structure of
+flat indexed comonads generalises symmetric semimonoidal comonads of Uustalu 
+and Vene \cite{comonads-notions}. The flat coeffect algebra is defined as $(\{1\}, \ast, \ast, \ast, 1, 1, =)$
+where $1\ast1=1$ and $1=1$. The additional operation $\ident{merge}_{1,1}$ is provided by the 
+monoidal operation called \ident{m} by Uustalu and Vene. The $\ident{split}_{1,1}$ operation 
+is defined by duplication and $\ident{lift}_{1,1}$ is the identity function.
+\end{example}
+
+\begin{example}[Indexed option]
+Flat coeffect algebra for liveness defines $\cpar$ and $\czip$ as $\sqcup$ and $\sqcap$, respectively 
+and specifies that $\ident{D} \sqsubseteq \ident{L}$. Recall also that the object mapping is defined 
+as $\ctyp{\ident{L}}{\alpha} = \alpha$ and $\ctyp{\ident{D}}{\alpha} = 1$. The additional operations 
+of a flat indexed comonad are defined as follows:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\ident{merge}_{\ident{L}, \ident{L}}~(a, b) &\narrow{=}& (a, b)\\
+\ident{merge}_{\ident{L}, \ident{D}}~(a, ()) &\narrow{=}& ()\\
+\ident{merge}_{\ident{D}, \ident{L}}~((), b) &\narrow{=}& ()\\
+\ident{merge}_{\ident{D}, \ident{D}}~((), ()) &\narrow{=}& ()\\
+\end{array}
+\quad
+\begin{array}{rcl}
+\ident{split}_{\ident{L}, \ident{L}}~(a, b) &\narrow{=}& (a, b)\\
+\ident{split}_{\ident{L}, \ident{D}}~(a, b) &\narrow{=}& (a, ())\\
+\ident{split}_{\ident{D}, \ident{L}}~(a, b) &\narrow{=}& ((), b)\\
+\ident{split}_{\ident{D}, \ident{D}}~() &\narrow{=}& (a, b)\\
+\end{array}
+\quad
+\begin{array}{rcl}
+\ident{lift}_{\ident{L}, \ident{D}}~v &\narrow{=}& ()\\
+\ident{lift}_{\ident{L}, \ident{L}}~v &\narrow{=}& v\\
+\ident{lift}_{\ident{D}, \ident{D}}~() &\narrow{=}& ()\\
+\end{array}
+\end{equation*}
+\end{example}
+
+\noindent
+Without the indexing, the \ident{merge} operations implements \emph{zip} on option values,
+returning an option only when both values are present. The behaviour of the \ident{split} 
+operation is partly determined by the indices. When the input is \emph{dead}, both values have 
+to be dead (this is also the only solution of $\ident{D}=\cclrd{r}\sqcap\cclrd{D}$), but when
+the input is \emph{live}, the operation can perform implicit sub-coeffecting and drop one of
+the values.
+
+Explicit sub-coeffecting using the (\emph{sub}) rule is modelled by the \ident{lift} operation.
+This can turn a \emph{live} value $v$ into a dead value $()$, or it can behave as identity.
+The behaviour is, again, determined by the index.
+
+\begin{example}[Indexed product]
+For implicit parameters, both $\czip$ and $\cpar$ are the $\cup$ operation and the relation
+$\cleq$ is formed by the subset relation $\subseteq$. Recall that the data type $\ctyp{\cclrd{r}}{\alpha}$
+is $\alpha \times (\cclrd{r} \rightarrow R)$ where $R$ is some representation of a parameter value.
+The additional operations are defined as:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\ident{split}_{\cclrd{r}, \cclrd{s}}~((a,b), g) &\narrow{=}& ((a, \restr{g}{\cclrd{r}}), (b, \restr{g}{\cclrd{s}}))\\
+\ident{merge}_{\cclrd{r}, \cclrd{s}}~((a, f), (b, g)) &\narrow{=}& ((a, b), f \uplus g)\\
+\ident{lift}_{\cclrd{r'}, \cclrd{r}}~(a, g) &\narrow{=}& (a, \restr{g}{\cclrd{r}})\\
+\end{array}
+\quad
+\begin{array}{l}
+\textnormal{where}~f \uplus g = \\[-0.25em]
+\quad\restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g 
+\end{array}
+\end{equation*}
+\end{example}
+
+\noindent
+The \ident{split} operation splits the tuple and restricts the function (representing available
+implicit parameters) to the required sub-sets. This corresponds to the definition in terms
+of \ident{lift}, which performs just the restriction. The \ident{merge} operation is more 
+interesting. It uses $\uplus$ operation that we defined when introducing implicit parameters
+in Section~\ref{sec:applications-flat-impl}. It merges the values, preferring the definitions from
+the right-hand side (call-site) over left-hand side (declaration-site). Thus the operation is not
+symmetric.
+
+\begin{example}[Indexed list]
+Our last example provides the semantics of data-flow computations. The flat coeffect algebra 
+is formed by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$. In a 
+non-indexed version, the semantics is provided by a non-empty list. In the indexed semantics,
+the index represents the length of the storing past values. The data type is then a pair of 
+the current value, followed by $n$ past values. The mappings that form the flat indexed comonad 
+are defined as follows:
+
+\begin{equation*}
+\begin{array}{l}
+\ident{counit}_{0}\langle a_0 \rangle = a_0
+\\[0.45em]
+\ident{cobind}_{m, n}~f \langle a_0, \ldots a_{m+n} \rangle = \\[-0.25em]
+\quad \langle f \langle a_0, \ldots, a_m \rangle, \ldots \langle a_{n}, \ldots, a_{m+n} \rangle \rangle
+\\[0.45em]
+\ident{merge}_{m, n} (\langle a_0, \ldots, a_m \rangle, \langle b_0, \ldots, b_n\rangle) = \\[-0.25em]
+\quad \langle (a_0, b_0), \ldots, (a_{\mathit{min}(m,n)}, b_{\mathit{min}(m,n)}) \rangle
+\\[0.45em]
+\ident{split}_{m, n} \langle (a_0, b_0), \ldots, (a_{\mathit{max}(m,n)}, b_{\mathit{max}(m,n)}) \rangle = \\[-0.25em]
+\quad (\langle a_0, \ldots, a_m \rangle, \langle b_0, \ldots, b_n\rangle)
+\\[0.45em]
+\ident{lift}_{n', n} \langle a_0, \ldots, a_n' \rangle = \qquad(\hspace{-0.95em}\textnormal{\footnotesize when}~n\leq n') \\[-0.25em]
+\quad \langle a_0, \ldots, a_n \rangle
+\end{array}
+\begin{array}{l}
+\hspace{-2em}\ctyp{n}{\alpha} = \underbrace{\alpha \times \ldots \times \alpha}_{(n+1)-\textnormal{times}}\\[11em]
+~\\
+\end{array}
+\end{equation*}
+\end{example}
+
+\noindent
+The reader is invited to check that the number of required past elements in each of the mappings
+matches the number specified by the indices. The index specifies the number of \emph{past} elements
+and so the list always contains at least one value. Thus \ident{counit} returns the element of a
+singleton list.
+
+The $\ident{cobind}_{m,n}$ operation requires $m + n$ elements in order to generate $n$ past results 
+of the $f$ function, which itself requires $m$ past values. When combining two lists, 
+$\ident{merge}_{m,n}$ behaves as \emph{zip} and produces a list that has the length of the shorter 
+argument. When splitting a list, $\ident{split}_{m, n}$ needs the maximum of the required lengths. 
+Finally, the lifting operation just drops some number of elements from a list.
+
+% --------------------------------------------------------------------------------------------------
 
 \subsection{Semantics of flat calculus}
+
+In Section~\ref{sec:applications-flat}, we defined the semantics of concrete (flat) context-dependent
+computations including implicit parameters, liveness and data-flow. Using the \emph{flat indexed 
+comonad} structure, we can now define a single uniform semantics that is capable capturing of all 
+our examples, as well as other computations that can be modelled by the structure.
+
+\paragraph{Contexts and functions.}
+The modelling of contexts and functions generalizes the earlier concrete examples. We use the 
+family of mappings $\ctyp{\cclrd{r}}{}$ as an (indexed) data-type that wraps the product of 
+free variables of the context and the arguments of functions:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{r} } \vdash e : \tau} 
+  &:& \ctyp{\cclrd{r}}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau\\
+\sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} &=& \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2
+\end{array}
+\end{equation*}
+
+% --------------------------------------------------------------------------------------------------
+
+\newcommand{\ctx}{\textit{ctx}}
+\begin{figure*}[t]
+
+\begin{equation*}
+\begin{array}{ll}
+\sem{\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }~\ctx =
+  \pi_i~(\ident{counit}_{\cunit}~\ctx) & (\emph{var})
+\\[0.5em]
+\sem{\coctx{\Gamma}{\czero} \vdash c_i : \tau }~\ctx =
+  \delta~(c_i) & (\emph{const})
+\\[0.5em]
+\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau }~\ctx = & (\emph{sub})\\[-0.25em]
+  \hspace{3em}\sem{\coctx{\Gamma}{\cclrd{r'}} \vdash e : \tau }~(\ident{lift}_{\cclrd{r}, \cclrd{r'}}~\ctx)~
+    \hspace{7.5em}(\hspace{-0.7em}\textnormal{\footnotesize when}~\cclrd{r'} \leq \cclrd{r})
+\\[0.5em]
+\sem{\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }~\ctx = \lambda v.& (\emph{abs})\\[-0.25em]
+  \hspace{3em}\sem{\coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\czip\;\cclrd{s}} \vdash e : \tau_2}~(\ident{merge}_{\cclrd{r}, \cclrd{s}}~(\ctx, v))
+\\[0.5em]
+\sem{\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2}~\ctx = & (\emph{app})\\[-0.25em]
+  \hspace{2.5em}
+  \begin{array}{l}  
+  \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}}~
+    (\ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~(\lambda x.(x,x))~\ctx) \\[-0.25em]
+  \kvd{in}~\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}~\ctx_1~
+      (\ident{cobind}_{\cclrd{s}, \cclrd{t}}~\sem{\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }~\ctx_2)
+  \end{array}    
+\end{array}
+\end{equation*}
+
+\caption{Categorical semantics of the flat coeffect calculus}
+\label{fig:flat-semantics}
+\end{figure*}
+
+% --------------------------------------------------------------------------------------------------
+
+
+\paragraph{Expressions.}
+The definition of the semantics is shown in Figure~\ref{fig:flat-semantics}. For readability, we 
+write the definitions in a simple programming language notation as opposed to the point-free 
+categorical style. However, it can be equally written using just the operations of flat indexed 
+comonad together with $i^{th}$ projection from a tuple represented by $\pi_i$, \emph{curry} and 
+\emph{uncurry}, function composition, value duplication ($\Delta : A \rightarrow A \times A$) and 
+function pairing (given $f:A\rightarrow B$ and $g:C\rightarrow D$ then $f\times g : A\times C \rightarrow B \times D$). 
+These operations can be provided by \eg~a Cartesian Closed Category.
+
+The semantics of variable access and abstraction are the same as in the semantics of Uustalu and 
+Vene \cite{comonads-notions}, modulo the indexing. The semantics of variable access (\emph{var}) uses 
+$\ident{counit}_{\cunit}$ to extract product of free-variables from the context and then projection
+$\pi_i$ to obtain the variable value. Abstraction (\emph{abs}) takes the context $\ctx$ and function argument 
+$v$ and merges their additional contexts using $\ident{merge}_{\cclrd{r}, \cclrd{s}}$. Assuming
+the context $\Gamma$ contains variables of types $\sigma_1, \ldots, \sigma_n$, this gives us a 
+value $\ctyp{\cclrd{r}\czip\cclrd{s}}((\sigma_1 \times \ldots \times \sigma_n) \times \tau_1)$.
+Assuming that $n$-element tuples are associated to the left, the wrapped context is equivalent to
+$\sigma_1 \times \ldots \times \sigma_n \times \tau_1$, which can then be passed to the body of the
+function.
+
+The semantics of application is more complex. It first duplicates the free-variable product inside the 
+context (using $\ident{map}_{\cclrd{r}}$ and duplication). Then it splits this context using 
+$\ident{split}_{\cclrd{r}, \cclrd{s} \cpar \cclrd{t}}$. The two contexts contain the same variables
+(as required by sub-expressions $e_1$ and $e_2$), but different coeffect annotations. The first
+context (with index $\cclrd{r}$) is used to evaluate $e_1$, resulting in a function 
+$\ctyp{\cclrd{t}}{\tau_1} \rightarrow \tau_2$. To obtain the result, we compose this with a function
+created by applying $\ident{cobind}_{\cclrd{s}, \cclrd{t}}$ on the semantics of sub-expression
+$e_2$, which is of type $\ctyp{\cclrd{s}\cseq\cclrd{t}}{\sigma_1 \times \ldots \times \sigma_n}
+\rightarrow \ctyp{\cclrd{t}}{\tau_1}$.
+
+Finally, constants (\emph{const}) are modelled by a global dictionary $\delta$ and sub-coeffecting
+is interpreted by dropping additional context from the provided context $\ctx$ using 
+$\ident{lift}_{\cclrd{r}, \cclrd{r'}}$ and providing it to the semantics of the assumption.
+
+\paragraph{Properties.}
+
+The categorical semantics can be used to embed context-dependent computations in functional 
+programming languages, similarly to how monads provide a way of embedding effectful computations.
+More importantly, it also provides validation for the design of the type system developed in 
+Section~\ref{sec:flat-calculus-types}. As stated in the following theorem, the annotations in 
+the type system match those of the semantic functions.
+
+\vspace{2em}
+
+\begin{remark}[Correspondence]
+In all of the typing rules of the flat coeffect system, the context annotations $\cclrd{r}$ of typing 
+judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and function types $\tau_1 \xrightarrow{\cclrd{r}} \tau_2$ 
+correspond to the indices of mappings $\ctyp{\cclrd{r}}{}$ in the corresponding semantic function defined 
+by $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}$.
+\end{remark}
+\begin{proof}
+By analysis of the semantic rules in Figure~\ref{fig:flat-semantics}.
+\end{proof}
+
+\noindent
+Thanks to the indexing, the statement of the remark is significantly stronger than for a 
+non-indexed system, because it provides the justification for our choice of indices in the typing
+rules. In particular, we can see that the annotations follow from the annotations on primitive 
+functions that define the semantics. Also, each function defining the semantics uses a distinct 
+operation of the coeffect algebra and so the type system is the most general possible definition
+(within the comonadic framework we use).
 
 % ==================================================================================================
 
@@ -928,10 +1203,8 @@ available implicit parameters, or turn a live context (containing a value) into 
 \newcommand{\cmerge}[0]{ \ident{m} }
 \newcommand{\csplit}[0]{ \ident{n} }
 \newcommand{\counit}[0]{ \varepsilon }
-
-
-
-
+\newcommand{\llangle}{\langle\hspace{-0.25em}\langle}
+\newcommand{\rrangle}{\rangle\hspace{-0.25em}\rangle}
 
 \section{Equational theory}
 \label{sec:flat-syntax}
@@ -979,154 +1252,6 @@ available implicit parameters, or turn a live context (containing a value) into 
 ~
 
 % ==================================================================================================
-
-
-\paragraph{Example}
-For the indexed partiality comonad, given the liveness coeffect
-algebra $(\{\ident{D}, \ident{L}\}, \sqcap, \sqcup, \sqcap, \ident{L})$,
-the additional lax/colax monoidal operations are:
-%%
-\begin{align*}
-\begin{array}{lll}
-\cmerge_{\ident{L}, \ident{L}} (x, y) = (x, y) 
-  \quad\quad& \csplit_{\ident{D}, \ident{D}} \;\; () \;\;\; = ((), ())
-  \quad\quad& \csplit_{\ident{D}, \ident{L}} (x, y) = ((), y) \\
-\cmerge_{\ident{r}, \ident{s}} \;\,(x, y) = () 
-  & \csplit_{\ident{L}, \ident{D}} (x, y) = (x, ())
-  & \csplit_{\ident{L}, \ident{L}} (x, y) = (x, y)
-\end{array}
-\end{align*}
-
-\paragraph{Example}
-Uustalu and Vene model causal dataflow computations using the
-non-empty list comonad $\ident{NEList}~A = A \times (1 +
-\ident{NEList}~A)$~\cite{comonads-notions}.  Whilst this comonad
-implies a trivial indexed comonad, we define an indexed comonad with
-integer indices for the number of past values demanded of the context.
-
-We define $\ctyp{n}{A} = A \times (A \times \ldots \times A)$ where the first $A$ is the current
-(always available) value, followed by a finite product of $n$ past values. The definition of the
-operations is a straightforward extension of the work of Uustalu and Vene.
-
-%\begin{example}
-%The semantics of the coeffect calculus for
-% dynamically-scoped implicit parameters, with coeffect
-%algebra $(\mathcal{P}(\ident{Id}), \cup, \cup, \cup, \emptyset)$, 
-%is provided by the indexed comonad $\ccat^rA = A \times (r \rightarrow \tau)$
-%where $r \in \mathcal{P}(\ident{Id})$ with operations:\dnote{The type here is wrong,
-%do we need to store the types too? Maybe should just be a product.}
-%%
-%\vspace{-1.0em}
-%\begin{equation*}
-%\begin{array}{l}
-%\cobind{f}{r, s} \; : \; \ccat^{r \cup s} A \rightarrow \ccat^s B\\
-%\cobind{f}{r, s} (a, g) = (f(a, g|_r), g|_s)
-%\\[1em]
-%\counit{} (a, g) = a\\
-%%\iota_{r, s} \; : \: \ccat^r A \rightarrow \ccat^s A\\
-%\iota_{r, s}(a, g) = (a, g|_s)\quad(\textnormal{if}~\leq r)
-%\end{array}
-%\quad\begin{array}{l}
-%\cmerge_{r, s} : \ccat^r A \times \ccat^s B \rightarrow \ccat^{(r \cup s)}(A \times B)\\
-%\cmerge_{r, s} ((a_1, g_1), (a_2, g_2)) = ((a_1, a_2), g_1|_{r \setminus s} \cup g_2 )
-%\\[1em]
-%\csplit_{r, s} : \ccat^{(r \cup s)}(A \times B) \rightarrow \ccat^r A \times \ccat^s B \\
-%\csplit_{r, s} ((a_1, a_2), g) = ((a_1, g|_r), (a_1, g|_s))
-%\end{array}
-%\end{equation*}
-%\end{example}
-
-%The function created using \emph{coextend} expects a function $g$ that is defined for
-%resource names $r \cup s$. We use function restriction $g|_r$ and $g|_s$ to get functions that are 
-%defined on resources required by $f$ and the result of coextend, respectively.
-
-%The operation $\cmerge_{r, s}$ pairs the values and combines the resources available in both contexts. 
-%It combines a function $g_1|_{r\setminus s}$ (defined for resources in $r$ excluding those in $s$) and 
-%function $g_2$ (defined for resources $s$). This definition is not symmetric as it prefers resources 
-%defined in the second context. As a result, the caller of a function can rebind resources defined
-%at the declaration site. 
-
-%Resources show that indexed comonads describe the structure of context more precisely
-%than comonads. A comonad would have to use $TA = A \times (\Omega \rightharpoonup R)$ 
-%with a \emph{partial} function on all resource names. Using indexed comonads, we can ensure that the function
-%is defined on all resources tracked statically in the tag.\dnote{Needs tweaking}
-
-\vspace{-1.5em}
-\subsection{Categorical Semantics. }
-\label{sec:comonads-semantics}
-
-\newcommand{\llangle}{\langle\hspace{-0.25em}\langle}
-\newcommand{\rrangle}{\rangle\hspace{-0.25em}\rangle}
-
-\begin{figure*}[t]
-\vspace{-1em}
-\newcommand{\uu}[1]{\overline{#1}}
-% \begin{equation*} 
-% \sem{\ctyp{r}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
-%   \ctyp{r}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau
-% \end{equation*}
-% \vspace{-0.4em}
-\begin{equation*}
-\begin{array}{rcll}
-\sem{\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2} &=& 
-    \emph{curry} \; (\sem{\ctyp{r \wedge s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    %&$(1)$
-\\[0.1em]
-\sem{\ctyp{r \vee (s \cseq t)}{\Gamma} \vdash e_1~e_2 : \tau} &=& 
-    (\emph{uncurry} \;  \sem{\ctyp{r}{\Gamma} \vdash e_1 : \ctyp{s}{\tau_1} \rightarrow \tau_2}) \, \circ \\
- & & \quad\; (id \times \cobind{\sem{\ctyp{t}{\Gamma}\vdash e_2 : \tau_1}}{t,s})
-    \circ \csplit_{r, s \cseq t} \circ \ccat^{r \vee (s \cseq t)}\Delta
-\\[0.1em]
-\sem{\ctyp{\cunit}{\Gamma} \vdash x_i : \tau_i} &=&
-    \pi_i \circ \counit                                                                  % &$(3)$
-%\\[0.1em]
-%\sem{\ctyp{r}{\Gamma} \vdash e : \tau} &=&
-%    \sem{\ctyp{s}{\Gamma} \vdash e : \tau} \circ \iota_{r, s}                              %   &%$(4)$
-%\\[0.1em]
-%\sem{\ctyp{r\vee (r \cseq s)}{\Gamma} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2} &=&
-%    \sem{\ctyp{r}{(\Gamma, x:\tau_1)} \vdash e_2 : \tau_2} \circ
-% ((\varepsilon \times \sem{ \ctyp{s}{\Gamma} \vdash e_1 : \tau_1 }) \circ 
-%\iftorhat{r \vee (r \cseq t)}\Delta
-\end{array}
-\end{equation*}
-\vspace{-1.5em}
-\caption{Categorical semantics for the coeffect calculus}
-\label{fig:semantics}
-\vspace{-1.0em}
-\end{figure*}
-
-Figure~\ref{fig:semantics} shows the
-categorical semantics of the coeffect calculus
-using additional operations 
-$\pi_i$ for projection of the \emph{i}$^{th}$ element of a 
-product, usual
-\emph{curry} and \emph{uncurry} operations, and
- $\Delta : A \rightarrow A \times A$ duplicating a
-value. While $\ccat^{r}$ is a family of object mappings,
-it is promoted to a family of functors with the derived morphism mapping 
-$\ccat^{r}(f) = \cobind{ (f \circ \counit) }{\cunit, r}$.
-
-The semantics of variable access and abstraction are the same as in
-Uustalu and Vene's semantics, modulo coeffects. Abstraction uses $\cmerge_{r, s}$ to merge the outer
-context with the argument context for the context of the function body.
-The indices of $\cunit$ for
-$\counit$ and $r,s$ for $\cmerge_{r, s}$ match the coeffects
-of the terms.
-The semantics of application is more complex. It first duplicates the
-free-variable values inside the context and then splits this context
-using $\csplit_{r, {s \oplus t}}$. The two contexts (with
-different coeffects) are passed to the two sub-expressions,
-where the argument subexpression, passed a context $(s \oplus t)$,
-is coextended to produce a context $s$ which is passed into
-the parameter of the function subexpression (\emph{cf.} given $f : A \rightarrow (B \rightarrow C)$,
- $g : A \rightarrow B$, then $\emph{uncurry} \, f \, \circ \, (id \times g) \circ \Delta : A \rightarrow C$).
-
-A semantics for sub-coeffecting is omitted, but may be provided
-by an operation 
-$\iota_{r, s} : \ccat^r A \rightarrow \ccat^s A$ natural in $A$, for all $r, s \in S$ where $s \leq r$,
-which transforms a value $C^r A$ to $C^s A$ by
-ignoring some of the encoded context.
-
-% ==========================================================================================
 
 \section{Syntax-based equational theory}
 \label{sec:syntactic}
