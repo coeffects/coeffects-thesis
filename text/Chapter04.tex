@@ -1197,20 +1197,356 @@ operation of the coeffect algebra and so the type system is the most general pos
 
 % ==================================================================================================
 
-
-\newcommand{\ccat}[0]{\mathcal{C}}
-\newcommand{\cobind}[2]{#1^\dagger_{#2}}
-\newcommand{\cmerge}[0]{ \ident{m} }
-\newcommand{\csplit}[0]{ \ident{n} }
-\newcommand{\counit}[0]{ \varepsilon }
-\newcommand{\llangle}{\langle\hspace{-0.25em}\langle}
-\newcommand{\rrangle}{\rangle\hspace{-0.25em}\rangle}
-
 \section{Equational theory}
 \label{sec:flat-syntax}
 
+Each of the concrete coeffect calculi discussed in this chapter has a different notion of context,
+much like various effectful languages have different notions of effects (such as exceptions or
+mutable state). However, in all of the calculi, the context has a number of common properties that 
+are captured by the \emph{flat coeffect algebra}. This means that there are equational properties
+that hold for all of the systems we consider. Further properties hold for systems where the context
+satisfies additional properties. 
+
+In this section, we look at such shared syntactic properties. This accompanies the previous section, 
+which provided a \emph{semantic} justification for the axioms of coeffect algebra with a 
+\emph{syntactic} justification. Operationally, this section can also be viewed as providing a 
+pathway to an operational semantics for two of our systems (implicit parameters and liveness),
+which can be based on syntactic substitution. As we discuss later, the notion of context for
+data-flow is more complex.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Syntactic properties}
+
+Before discussing the syntactic properties of general coeffect calculus formally, it should be 
+clarified what is meant by providing ``pathway to operational semantics'' in this section. We do
+that by contrasting syntactic properties of coeffect systems with more familiar effect systems.
+Assuming $\subst{e_1}{x}{e_2}$ is a standard capture-avoiding syntactic substitution, the following
+equations define four syntactic reductions on the terms:
+%
+\begin{equation*}
+\begin{array}{rllcl}
+(\lambda x.e_1)~e_2 &{\reduce_{\ident{cbn}}}& \subst{e_1}{x}{e_2}   &&(\textit{call-by-name})\\
+(\lambda x.e_1)~v   &{\reduce_{\ident{cbv}}}& \subst{e_1}{x}{v}     &\quad&(\textit{call-by-value})\\
+(\lambda x.e_1)~e_2 &{\reduce_{\ident{seq}}}& \kvd{glet}~x=e_2~\kvd{in}~e_1  &&(\textit{internalized substitution})\\
+e &{\reduce_\eta}& \lambda x.e~x                                    &&(\textit{$\eta$-expansion})
+\end{array}
+\end{equation*}
+%
+The rules capture syntactic reductions that can be performed in a general calculus, without any 
+knowledge of the specific notion of context. The \kvd{glet} notation models explicit sequencing
+of context-dependent computations an is inspired by Filinski \cite{monads-inaction}. In the rest
+of the section, we briefly outline the interpretation of the four rules and then we focus on
+call-by-value (Section~\ref{sec:flat-syntax-cbv}) and call-by-name (Section~\ref{sec:flat-syntax-cbn})
+in more details.
+
+The focus of this work is on the general coeffect system and so we do not discuss the operational
+semantics of the specific notions of context. However, some work in that area has been done
+by Brunel et al. \cite{coeffects-quantitative}.
+
+\paragraph{Call-by-name.} 
+In call-by-name, the argument is syntactically substituted for all occurrences of a variable. It
+can be used as the basis for operational semantics of purely functional languages. However, using
+the rule in effectful languages breaks the \emph{type preservation} property. For example, consider
+a language with effect system where functions are annotated with sets of effects such as $\{ \ident{write} \}$.
+A function $\lambda x.y$ is a effect-free:
+%
+\begin{equation*}
+y\!:\!\tau_1 \vdash \lambda x.y : \tau_1 \xrightarrow{\emptyset} \tau_2 \;\&\; \emptyset
+\end{equation*}
+%
+Substituting an expression $e$ with effects $\{ \ident{write} \}$ for $y$ changes the type of 
+the function by adding latent effects (without changing the immediate effects):
+%
+\begin{equation*}
+\vdash \lambda x.e : \tau_1 \xrightarrow{ \{ \ident{write} \} } \tau_2 \;\&\; \emptyset
+\end{equation*}
+%
+Similarly to effect systems, substituting a context-dependent computation $e$ for a variable $y$ can
+add latent coeffects to the function type. However, this is not the case for \emph{all} flat coeffect
+calculi. For example, call-by-name reduction preserves types and coeffects for the implicit 
+parameters system. This makes the model suitable for languages such as Haskell.
+
+\paragraph{Call-by-value.}
+
+The call-by-value evaluation strategy is often used by effectful languages. Here, an argument is
+first reduced to a \emph{value} before performing the substitution. In effectful languages, 
+value is defined syntactically. For example, in the \emph{Effect} language \cite{monads-effects-marriage},
+values are identifiers $x$ or functions $(\lambda x.e)$.
+
+The notion of \emph{value} in coeffect systems differs from the usual syntactic understanding.
+A function $(\lambda x.e)$ does not delay all context requirements of the body $e$ and may have
+immediate context requirements. Thus we say that $e$ is a value if it is a value in the usual
+sense \emph{and} has not immediate context requirements. We define this formally in 
+Section~\ref{sec:flat-syntax-cbv}.
+
+The call-by-value evaluation strategy holds for a wide range of flat coeffect calculi, including all
+our three examples. However, it is rather weak -- in order to use it, the concrete semantics needs
+to provide a way for reducing context-dependent term $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ to
+a term $\coctx{\Gamma}{\cunit} e' : \tau$ with no context requirements. 
+
+\paragraph{Internalized substitution.}
+
+The (\emph{internalized substitution}) rule models an operational semantics where the language
+provides a construct that models \emph{sequential composition} and expressions can be reduced to 
+a normal form, consisting of a sequenced context-dependent operations. We choose to write the 
+sequencing operation as \kvd{glet} to emphasize that this is a separate primitive and not an 
+ordinary syntactic \kvd{let}. The normal form looks as follows:
+%
+\begin{equation*}
+\kvd{glet}~x_1 = e_1~\kvd{in}~\ldots~\kvd{glet}~x_n = e_n~\kvd{in}~e
+\end{equation*}
+%
+Here, the expressions $e_1, \ldots, e_n, e$ do not contain further nested \kvd{glet} constructs.
+This evaluation strategy provides context-dependent counterpart to operational view of monads
+developed by Filinsky \cite{monads-inaction}. We discuss how expressions reduce to the normal form
+in Section~\ref{sec:flat-syntax-norm}
+
+The (\emph{internalized substitution}) rule is useful when defining a concrete semantics for 
+a language that provides constructs for explicitly providing the context. For example, consider
+a language with implicit parameters where a parameter is defined by $e_1~\kvd{with}~\ident{?p}=e_2$.
+Semantics for such language would provide a reduction rule:
+%
+\begin{equation*}
+(\kvd{glet}~x_1 = \ident{?p}~\kvd{in}~e)~\kvd{with}~\ident{?p}=e_1 ~~\leadsto~~ \kvd{let}~x_1 = e_1~\kvd{in}~e
+\end{equation*}
+%
+Here, the \kvd{glet} construct provides a way of sequentialising the context-requi\-rements so
+that they can be discharged by matching constructs providing the required contexts. As discussed
+earlier, we focus on the general case and so we discuss when a flat coeffect calculus supports
+this form of evaluation (rather than looking at semantics for concrete systems).
+
+\paragraph{Local soundness and completeness.}
+Two desirable properties of calculi, coined by Pfenning and Davies \cite{logic-modal-reconstruction},
+are \emph{local soundness} and \emph{local completeness}. They guarantee that the rules which 
+introduce a function arrow (lambda abstraction) and eliminate it (application) are not too strong
+and sufficiently strong.
+
+The local soundness property is witnessed by (call-by-name) $\beta$-reduction, which we discussed
+already. The local completeness is witnessed by the $\eta$-expansion rule. We discuss the flat
+coeffect algebra conditions under which the reduction holds in Section~\ref{sec:flat-syntax-cbn}.
+
+% --------------------------------------------------------------------------------------------------
+
 \subsection{Call-by-value evaluation}
+\label{sec:flat-syntax-cbv}
+
+
+\begin{definition} 
+An expression $e$ is a \emph{value}, written as $\textit{val}(e)$ if $\coctx{\Gamma}{ \aclrd{\mathsf{VAL}} } \vdash e : \tau$ 
+where $\aclrd{\mathsf{VAL}} : \C^{mksh{\Gamma}}$ is a coeffect indexed by the shape of $\Gamma$ that
+always returns $\cunit$. That is $\aclrd{\mathsf{VAL}} = \lambda \sclrd{n} . \cunit$.
+\end{definition}
+
+
+Recall that a flat coeffect system consists of coeffect scalars $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
+together with a binary operation $\cclrd{\wedge}$ on $\C$. The coeffect algebra is then defined
+as $(\cclrd{\wedge}, \cpar, \czero)$ where $\cclrd{\wedge}$ and $\cpar$ represent splitting and
+merging of context-requirements, respectively.
+
+\begin{lemma}[Call-by-value substitution]
+\label{thm:flat-subst-cbv}
+In a flat coeffect calculus with coeffect scalars $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
+and the $\cclrd{\wedge}$ operator:
+\[
+\begin{array}{l}
+\coctx{\Gamma}{\aclrd{\mathsf{VAL}}} \vdash e_s : \sigma \;\; \wedge \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau\\
+\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} } \vdash \subst{e_r}{x}{e_s} : \tau
+\end{array}
+\]
+\end{lemma}
+\begin{proof}
+By induction over the type derivation, using the fact that both $x$ and $e_s$ are annotated
+with $\cunit$.
+\end{proof}
+
+\noindent
+Lemma~\ref{thm:flat-subst-cbv} holds for all flat coeffect systems, but it is weak. To use it, 
+the operational semantics must provide a way of partially evaluating a term 
+with requirements $\coctx{\Gamma}{\cclrd{r}}$ to a value.
+Assuming $\reduce_{\ident{cbv}}$ is call-by-value reduction using the above definition of value:
+
+\begin{theorem}[Call-by-value reduction]
+In a flat coeffect system, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
+and $e \reduce_{\ident{cbv}} e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
+\end{theorem}
+\begin{proof}
+A direct consequence of Lemma~\ref{thm:flat-subst-cbv}, using the flat coeffect system requirement
+$(\cclrd{r \wedge s}) \,\cleq\, (\cclrd{r}\,\cpar\,\cclrd{s})$ to prove $\beta$-equality.
+\end{proof}
+
 \subsection{Call-by-name evaluation}
+\label{sec:flat-syntax-cbn}
+
+The call-by-name strategy reduces a term $(\lambda x. e_1)~e_2$ where both sub-expressions 
+may have contextual requirements. Assume that $\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2$ and
+$\coctx{\Gamma_1, x :\tau_1}{\cclrd{r}} \vdash e_1 : \tau_1$. 
+
+% TODO
+%
+% The context requirements of the 
+% reduced term $\subst{e_1}{x}{e_2}$ should be the same as the context requirements of 
+% $\kvd{let}~x=e_2~\kvd{in}~e_1$. Thus the context requirements of the result in the substitution 
+% lemma should be $r \fmax (s \fseq r)$.
+
+We call a flat coeffect algebra \emph{top-pointed} if $\cunit$ is the greatest (top) coeffect scalar
+$\C$ and \emph{bottom-pointed} if it is the smallest (bottom) coeffect scalar.
+Liveness analysis is an example of top-pointed coeffects
+as variables are annotated with $\ident{L}$ and $\ident{D} \leq \ident{L}$. 
+
+\begin{lemma}[Top-pointed substitution]
+\label{thm:cbn-substitution-top}
+In a top-pointed flat coeffect calculus with $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
+and the $\cclrd{\wedge}$ operator:
+\[
+\begin{array}{l}
+\coctx{\Gamma}{\cclrd{s}} \vdash e_s : \sigma \;\; \wedge \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau\\
+\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} } \vdash \subst{e_r}{x}{e_s} : \tau
+\end{array}
+\]
+\vspace{-1.5em}
+\end{lemma}
+\begin{proof}
+Using sub-coeffecting ($\cclrd{s} \,\cleq\, \cunit$) and Lemma~\ref{thm:flat-subst-cbv}.
+\end{proof}
+%
+\noindent
+As variables are annotated with the top element $\cunit$, we can substitute a term $e_s$ for any variable and 
+use sub-coeffecting to get the original typing (because $\cclrd{s} \,\cleq\, \cunit$). 
+
+In a bottom pointed coeffect system, substituting $e$ for $x$ increases the context 
+requirements. However, if the system satisfies the strong condition that $\cclrd{\wedge} = \cseq = \cpar$ then
+the context requirements arising from the substitution can be associated with the context
+$\Gamma$. As a result, substitution does not break soundness as in effect systems. The 
+requirement $\cclrd{\wedge} = \cseq = \cpar$ holds for our implicit parameters example 
+(all three operators are set union) and allows the following substitution lemma:
+
+\begin{lemma}[Bottom-pointed substitution]
+\label{thm:cbn-substitution-bot}
+In a bottom-pointed flat coeffect calculus with $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
+and the $\cclrd{\wedge}$ operator where $\cclrd{\wedge} = \cseq = \cpar$ is idempotent and commutative:
+\[
+\begin{array}{l}
+\coctx{\Gamma}{\cclrd{s}} \vdash e_s : \sigma \;\; \wedge \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau\\
+\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} \,\cseq\, \cclrd{s} } \vdash \subst{e_r}{x}{e_s} : \tau
+\end{array}
+\]
+\vspace{-1.5em}
+\end{lemma}
+\begin{proof}
+By induction over $\vdash$, using the idempotent, commutative monoid structure to keep $\cclrd{s}$ with
+the free-variable context.
+\end{proof}
+\noindent
+The structural system is precise enough to keep the coeffects associated with a concrete variable. The flat
+variant described here is flexible enough to let us always re-associate new context requirements with the 
+free-variable context.
+
+The two substitution lemmas show that the call-by-name evaluation strategy can be used for
+certain coeffect calculi, including liveness and implicit parameters.
+Assuming $\reduce_{\ident{cbn}}$ is the standard call-by-name
+reduction, the following theorem holds:
+
+\begin{theorem}[Call-by-name reduction]
+\raggedright
+In a coeffect system that satisfies the conditions for Lemma~\ref{thm:cbn-substitution-top} or
+Lemma~\ref{thm:cbn-substitution-bot}, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
+and $e \rightarrow_{\ident{cbn}} e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
+\end{theorem}
+\begin{proof}
+A direct consequence of Lemma~\ref{thm:cbn-substitution-top} or Lemma~\ref{thm:cbn-substitution-bot}.
+\end{proof}
+
+
+
+ALSO: Something on eta expansion
+
+\subsection{Normal form}
+\label{sec:flat-syntax-norm}
+
+\begin{equation*}
+\tyrule{glet}
+  { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_2 }
+  { \coctx{\Gamma}{\cclrd{r}\;\cpar\;({\cclrd{s}\,\cseq\,\cclrd{r})}} \vdash \kvd{glet}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+
+First transformation
+\begin{equation*}
+(\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3  ~~\leadsto~~ \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3)
+\end{equation*}
+
+Second transformation
+
+\begin{equation*}
+\kvd{glet}~x_2=(\kvd{glet}~x_1 = e_1~\kvd{in}~e_2)~\kvd{in}~e_3  ~~\leadsto~~
+\kvd{glet}~x_1=e_1~\kvd{in}~(\kvd{glet}~x_2=e_2~\kvd{in}~e_3)
+\end{equation*}
+
+or
+
+%
+% TODO: We could have a section about let binding covering the alternative CBV and the let binding
+% we included in the system, but we'd have to clean this up!
+%
+%\subsection{Syntactic let binding}
+%\begin{remark}
+%As mentioned earlier, the bounded reuse coeffect system in Section~\ref{}
+%is for a CBN semantics. Recall the coeffect judgment for \emph{let} in the bounded reuse
+%calculus of Section~\ref{}.
+%%%
+%\begin{align*}
+%{\footnotesize{\trule{let}}}
+%\dfrac
+%{\Gamma ? \B{S} \vdash e_1 : \tau_1 \quad
+%\Gamma, v : \tau_1 ? \B{R} \times T \vdash e_2 : \tau_2}
+%{\Gamma ? \B{R} + (T \ast \B{S}) \vdash \synLet{v}{e_1}{e_2} : \tau_2}
+%\end{align*}
+%%%
+%Therefore, for example, we see that \emph{let} has the coeffects
+%as substitution, for example:
+%%%
+%\begin{align*}
+%& {\footnotesize{\trule{let}}}
+%\dfrac
+%{y : \tau ? \langle{2}\rangle \vdash y + y : \tau \quad
+%y : \tau, v : \tau ? \langle{1, 2}\rangle \vdash y + v + v : \tau_2}
+%{\Gamma ? \langle{5}\rangle \vdash \synLet{v}{y + y}{y + v + v} : \tau_2} \\
+%& \hspace{3.55em} \equiv \; \Gamma ? \langle{5}\rangle \vdash y + (y + y) + (y + y) : \tau_2
+%\end{align*}
+%In a CBV version of bounded reuse however, the \emph{CBV let} rule gives us instead
+%the judgment:
+%%%
+%$$
+%\Gamma ? \langle{3}\rangle \vdash \synLet{v}{y + y}{y + v + v} : \tau_2
+%$$
+%%%
+%\end{remark}
+%
+% 
+%\paragraph{Syntactical let binding}
+%Has the same typing derivation as abstraction/application
+%
+%\[
+%\inference
+% {\inference
+%    { \coctx{\Gamma_1, x : \sigma}{\aclrd{R}\; \amerge \, \alift{\cclrd{t}}} \vdash e_1 : \tau }
+%    { \coctx{\Gamma_1}{\aclrd{R}} \vdash \lambda x . e_1 : \sigma \xrightarrow{\cclrd{t}} \tau }
+%  &
+%    \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma }
+%  {\coctx{\Gamma_1, \Gamma_2}{ \aclrd{R} \;\asplit\; (\cclrd{t} \,\aseq\, \aclrd{S}) } \vdash (\lambda x. e_1)~e_2 : \tau } 
+%\]
+%
+%We can extend the CBV behaviour to \emph{let}, where the bound term
+%is evaluated to a pure value first, discharging any contextual
+%requirements before substitution into the body.
+%
+%\begin{lemma}[CBV \emph{let}]
+%Let $\Gamma, x : \tau' ? \B{R} \times T \vdash e : \tau$ and 
+%$\Gamma ? \B{S} \vdash e' : \tau'$. Then $\Gamma ? \B{R} \sqcup \B{S} \vdash \synLet{x}{e'}{e}
+%: \tau$.
+%\end{lemma}
+
 
 % ==================================================================================================
 
@@ -1251,39 +1587,19 @@ operation of the coeffect algebra and so the type system is the most general pos
 \newpage
 ~
 
+\newcommand{\ccat}[0]{\mathcal{C}}
+\newcommand{\cobind}[2]{#1^\dagger_{#2}}
+\newcommand{\cmerge}[0]{ \ident{m} }
+\newcommand{\csplit}[0]{ \ident{n} }
+\newcommand{\counit}[0]{ \varepsilon }
+\newcommand{\llangle}{\langle\hspace{-0.25em}\langle}
+\newcommand{\rrangle}{\rangle\hspace{-0.25em}\rangle}
+
+
 % ==================================================================================================
 
 \section{Syntax-based equational theory}
 \label{sec:syntactic}
-
-Operational semantics of every context-dependent language differs as the notion of context 
-is always different. However, for coeffect calculi satisfying certain conditions we can 
-define a universal equational theory. This suggests a pathway to an operational semantics for 
-two out of our three examples (the notion of context for data-flow is more complex).
-
-In a pure $\lambda$-calculus, $\beta$ and $\eta$ equality for
-functions (also called \emph{local soundness} and \emph{completeness}
-respectively~\cite{logic-modal-reconstruction})
-describe how pairs of abstraction and application can be eliminated:
-$(\lambda x . e_2) e_1 \equiv_\beta \subst{e_1}{x}{e_2}$ and $(\lambda x . e \, x) 
-\equiv_\eta e$. The $\beta$ equality rule, using the usual Barendregt convention of 
-syntactic substitution, implies a \emph{reduction},
-giving part of an operational semantics for the calculus.
-
-The call-by-name evaluation strategy modelled by $\beta$-reduction is
-not suitable for impure calculi therefore a restricted $\beta$ rule,
-corresponding to call-by-value, is used, \ie~$(\lambda x . e_2) v
-\equiv \subst{e_2}{x}{v}$. Such reduction can be encoded by a
-\emph{let}-binding term, $\kvd{let}~x=e_1~\kvd{in}~e_2$, which
-corresponds to sequential composition of two computations, where the
-resulting pure value of $e_1$ is substituted into
-$e_2$~\cite{monads-inaction,monad-notions}.
-
-%
-% We consider here both a notion of \emph{let}-binding for the coeffect
-% calculus, useful for a CBV evaluation, and a notion of substitution 
-% for a CBV evaluation.
-% 
 
 For an equational theory of coeffects, consider first a notion 
 of \emph{let}-binding equivalent to $(\lambda x . e_2)~e_1$, which

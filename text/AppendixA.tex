@@ -1,0 +1,122 @@
+\chapter{Appendix A} 
+\label{ch:appendix} 
+
+%---------------------------------------------------------------------------------------------------
+
+\section{Internalized substitution}
+
+\subsection{First transformation}
+
+\begin{equation*}
+(\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3 \leadsto \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3)
+\end{equation*}
+
+\begin{equation*}
+\tyrule{app}
+  { \tyrule{glet}
+      { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
+        \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 }
+      { \coctx{\Gamma}{\cclrd{r}\;\cpar\;({\cclrd{s}\,\cseq\,\cclrd{r})}} \vdash \kvd{glet}~x=e_1~\kvd{in}~e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 } &
+    \coctx{\Gamma}{\cclrd{u}} \vdash e_3 : \tau_3  }
+  { \coctx{\Gamma}{(\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})) \;\cpar\; (\cclrd{u}\,\cseq\,\cclrd{t}) } \vdash (\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3 : \tau_2 }
+\end{equation*}
+
+to
+
+\begin{equation*}
+\tyrule{glet}
+  { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
+    \tyrule{app}
+      { \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 & 
+        \coctx{\Gamma}{\cclrd{u}} \vdash e_3 : \tau_3 }
+      { \coctx{\Gamma}{\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})} \vdash e_2~e_3 : \tau_2 } }
+  { \coctx{\Gamma}{ (\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})) \;\cpar\; (\cclrd{s}\,\cseq\,(\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})))  }
+      \vdash \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3) : \tau_2 }
+\end{equation*}
+
+meaning
+\begin{equation*}
+\begin{array}{l}
+(\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})) \;\cpar\; (\cclrd{u}\,\cseq\,\cclrd{t}) =
+\end{array}
+\end{equation*}
+
+\subsection{Second transformation}
+
+
+Second transformation
+
+\begin{equation*}
+\tyrule{glet}
+  { \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s &
+    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_r : \tau_r &
+    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e_t : \tau_t }
+  { \coctx{\Gamma}{
+      \cclrd{t}
+      \;\cpar\;
+      (  (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r}))
+         \,\cseq\, 
+         \cclrd{t} )
+    } 
+    \vdash \kvd{glet}~x_r=(\kvd{glet}~x_s=e_s~\kvd{in}~e_r)~\kvd{in}~e_t : \tau_t }
+\end{equation*}
+
+or
+
+\begin{equation*}
+\tyrule{glet}
+  { \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s &
+    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_r : \tau_r &
+    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e_t : \tau_t }
+  { \coctx{\Gamma}{
+      (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) 
+      \;\cpar\;
+      (  \cclrd{s}
+         \,\cseq\, 
+         (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) )
+    } 
+    \vdash \kvd{glet}~x_s=e_s~\kvd{in}~(\kvd{glet}~x_r=e_r~\kvd{in}~e_t) : \tau_t }
+\end{equation*}
+
+
+\begin{equation*}
+\begin{array}{l}
+  \cclrd{t}
+  \;\cpar\;
+  (  (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r}))
+     \,\cseq\, 
+     \cclrd{t} ) = 
+\\
+  \cclrd{t}
+  \;\cpar\;
+  (\cclrd{r}\,\cseq\, \cclrd{t})
+  \;\cpar\;
+  (\cclrd{s}\,\cseq\,\cclrd{r}\,\cseq\, \cclrd{t}) = 
+\\
+  \cclrd{s}\,\cseq\,\cclrd{r}\,\cseq\, \cclrd{t} 
+\end{array}
+\end{equation*}
+
+\begin{equation*}
+\begin{array}{l}
+  (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) 
+  \;\cpar\;
+  (  \cclrd{s}
+     \,\cseq\, 
+     (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) ) = 
+\\     
+  \cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})
+  \;\cpar\;
+  (\cclrd{s} \,\cseq\, \cclrd{t})
+  \;\cpar\;
+  (\cclrd{s} \,\cseq\, \cclrd{r}\,\cseq\,\cclrd{t})  = 
+\\     
+  \cclrd{s} \,\cseq\, \cclrd{r}\,\cseq\,\cclrd{t}
+\end{array}
+\end{equation*}
+
+require
+
+\begin{equation*}
+\cclrd{r}\;\cpar\;(\cclrd{r} \,\cseq\, \cclrd{s}) = \cclrd{r} \,\cseq\, \cclrd{s}
+\end{equation*}
