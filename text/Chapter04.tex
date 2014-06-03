@@ -1331,48 +1331,95 @@ coeffect algebra conditions under which the reduction holds in Section~\ref{sec:
 \subsection{Call-by-value evaluation}
 \label{sec:flat-syntax-cbv}
 
+As discussed in the previous section, call-by-value reduction can be used for most flat coeffect
+calculi, but it provides a very weak general model \ie~the hard work of reducing context-dependent
+term to a \emph{value} has to be provided for each system. Syntactic category for values is 
+defined as:
+%
+\begin{equation*}
+\begin{array}{llll}
+v\in\mathit{SynVal}   & v &::=& x \sep c \sep (\lambda x.e)\\
+n\in\mathit{NonVal}   & n &::=& e_1\;e_2 \sep \kvd{let}~x=e_1~\kvd{in}~e_2\\
+e\in\mathit{Expr}     & e &::=& v \sep n 
+\end{array}
+\end{equation*}
+%
+The category \emph{SynVal} captures syntactic values, but a context-dependency-free value in 
+coeffect calculus cannot be defined purely syntactically.
 
 \begin{definition} 
-An expression $e$ is a \emph{value}, written as $\textit{val}(e)$ if $\coctx{\Gamma}{ \aclrd{\mathsf{VAL}} } \vdash e : \tau$ 
-where $\aclrd{\mathsf{VAL}} : \C^{mksh{\Gamma}}$ is a coeffect indexed by the shape of $\Gamma$ that
-always returns $\cunit$. That is $\aclrd{\mathsf{VAL}} = \lambda \sclrd{n} . \cunit$.
+An expression $e$ is a \emph{value}, written as $\textit{val}(e)$ if it is a syntactic value,
+\ie~$e \in \mathit{SynVal}$ and it has no context-dependencies, \ie~$\coctx{\Gamma}{ \cunit } \vdash e : \tau$.
 \end{definition}
 
-
-Recall that a flat coeffect system consists of coeffect scalars $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
-together with a binary operation $\cclrd{\wedge}$ on $\C$. The coeffect algebra is then defined
-as $(\cclrd{\wedge}, \cpar, \czero)$ where $\cclrd{\wedge}$ and $\cpar$ represent splitting and
-merging of context-requirements, respectively.
+\noindent
+The call-by-value substitution substitutes a value, with context requirements $\cunit$, for a 
+variable, whose access is also annotated with $\cunit$. Thus, it does not affect the type and
+context-requirements of the term:
 
 \begin{lemma}[Call-by-value substitution]
 \label{thm:flat-subst-cbv}
-In a flat coeffect calculus with coeffect scalars $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
-and the $\cclrd{\wedge}$ operator:
-\[
-\begin{array}{l}
-\coctx{\Gamma}{\aclrd{\mathsf{VAL}}} \vdash e_s : \sigma \;\; \wedge \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau\\
-\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} } \vdash \subst{e_r}{x}{e_s} : \tau
-\end{array}
-\]
+In a flat coeffect calculus with a coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
+given a value $\coctx{\Gamma}{\cunit} \vdash v : \sigma$ and an expression
+$\coctx{\Gamma,  x\!:\!\sigma}{ \cclrd{r}  } \vdash e : \tau$, then substituting $v$ for $x$ does not
+change the type and context requirements: $\coctx{\Gamma}{ \cclrd{r} } \vdash \subst{e}{x}{v} : \tau$.
 \end{lemma}
 \begin{proof}
-By induction over the type derivation, using the fact that both $x$ and $e_s$ are annotated
-with $\cunit$.
+By induction over the type derivation, using the fact that $x$ and $v$ are annotated
+with $\cunit$ and that $\Gamma$ is treated as a set in the flat calculus.
 \end{proof}
 
 \noindent
-Lemma~\ref{thm:flat-subst-cbv} holds for all flat coeffect systems, but it is weak. To use it, 
-the operational semantics must provide a way of partially evaluating a term 
-with requirements $\coctx{\Gamma}{\cclrd{r}}$ to a value.
-Assuming $\reduce_{\ident{cbv}}$ is call-by-value reduction using the above definition of value:
+The substitution lemma~\ref{thm:flat-subst-cbv} holds for all flat coeffect systems. However, 
+proving that call-by-value reduction preserves typing requires an additional constraint on the
+flat coeffect algebra, which relates the $\czip$ and $\cpar$ operations:
+%
+\begin{equation*}
+\cclrd{r}\,\czip\,\cclrd{t}~\;\cleq~\;\cclrd{r}\,\cpar\,\cclrd{t}
+\hspace{10em}\textnormal{(approximation)}
+\end{equation*}
+%
+Intuitively, this specifies that the $\czip$ operation (splitting of context requirements) 
+under-approximates the actual context capabilities while the $\cpar$ operation (combining of
+context requirements) over-approximates the actual context requirements.
+
+The property holds for all three systems we consider -- for implicit parameters, this is 
+an equality; for liveness and data-flow (which both use a lattice), the greatest lower bound 
+is smaller than the least upper bound.
+
+Assuming $\reduce_{\ident{cbv}}$ is call-by-value reduction that reduces the term 
+$(\lambda x.e)\,v$ to a term $\substack{e}{x}{v}$, the type preservation theorem is
+stated as follows:
 
 \begin{theorem}[Call-by-value reduction]
-In a flat coeffect system, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
+In a flat coeffect system with the (\emph{approxi\-mation}) property, 
+if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
 and $e \reduce_{\ident{cbv}} e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
 \end{theorem}
 \begin{proof}
-A direct consequence of Lemma~\ref{thm:flat-subst-cbv}, using the flat coeffect system requirement
-$(\cclrd{r \wedge s}) \,\cleq\, (\cclrd{r}\,\cpar\,\cclrd{s})$ to prove $\beta$-equality.
+Consider the typing derivation for the term $(\lambda x.e)\,v$ before reduction:
+\begin{equation*}
+\inference
+  { \inference
+  { \inference
+      {\coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\czip\;\cclrd{t}} \vdash e : \tau_2}
+      {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 } &
+   \coctx{\Gamma}{\cunit} \vdash v : \tau_1 }
+  {\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cunit \,\cseq\, \cclrd{t})} \vdash (\lambda x.e)\,v : \tau_2} }
+  {\coctx{\Gamma}{\cclrd{r} \;\cpar\; \cclrd{t}} \vdash (\lambda x.e)\,v : \tau_2}
+\end{equation*}
+The last step simplifies the coeffect annotation using the fact that $\cunit$ is a unit of $\cseq$.
+From Lemma~\ref{thm:flat-subst-cbv} $\subst{e}{x}{v}$ has the same coeffect annotation as $e$.
+As $\cclrd{r}\,\czip\,\cclrd{t}\;\cleq\;\cclrd{r}\,\cpar\,\cclrd{t}$, we can apply sub-coeffecting:
+%
+\begin{equation*}
+\tyrule{sub}
+ { \coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\czip\;\cclrd{t}} \vdash \subst{e}{x}{v} : \tau_2 }
+ { \coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\cpar\;\cclrd{t}} \vdash \subst{e}{x}{v} : \tau_2 } 
+\end{equation*}
+%
+Thus, the reduction preserves type and coeffect annotation (although this may not be the
+\emph{only} typing of the original term).
 \end{proof}
 
 \subsection{Call-by-name evaluation}
@@ -1476,8 +1523,15 @@ First transformation
 (\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3  ~~\leadsto~~ \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3)
 \end{equation*}
 
-Second transformation
+This does not work for dataflow, because
 
+(e1 + e2) max (e3 + f)
+e1 + (e2 max (e3 + f))
+
+But it works for the other ones...
+
+
+Second transformation
 \begin{equation*}
 \kvd{glet}~x_2=(\kvd{glet}~x_1 = e_1~\kvd{in}~e_2)~\kvd{in}~e_3  ~~\leadsto~~
 \kvd{glet}~x_1=e_1~\kvd{in}~(\kvd{glet}~x_2=e_2~\kvd{in}~e_3)
