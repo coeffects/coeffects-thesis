@@ -1,3 +1,5 @@
+%!TEX root = ../main.tex
+
 %\begin{flushright}{\slshape    
 %Even the most puritanical rationalist will be forced to stop arguing and \\
 %use propaganda [...] because the psychological conditions have disappeared \\
@@ -1217,6 +1219,7 @@ data-flow is more complex.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Syntactic properties}
+\label{sec:flat-syntax-props}
 
 Before discussing the syntactic properties of general coeffect calculus formally, it should be 
 clarified what is meant by providing ``pathway to operational semantics'' in this section. We do
@@ -1287,8 +1290,8 @@ a term $\coctx{\Gamma}{\cunit} e' : \tau$ with no context requirements.
 
 \paragraph{Internalized substitution.}
 
-The (\emph{internalized substitution}) rule models an operational semantics where the language
-provides a construct that models \emph{sequential composition} and expressions can be reduced to 
+The (\emph{internalized substitution}) rule captures an operational semantics where the language
+provides a construct representing \emph{sequential composition} and expressions can be reduced to 
 a normal form, consisting of a sequenced context-dependent operations. We choose to write the 
 sequencing operation as \kvd{glet} to emphasize that this is a separate primitive and not an 
 ordinary syntactic \kvd{let}. The normal form looks as follows:
@@ -1313,7 +1316,7 @@ Semantics for such language would provide a reduction rule:
 %
 Here, the \kvd{glet} construct provides a way of sequentialising the context-requi\-rements so
 that they can be discharged by matching constructs providing the required contexts. As discussed
-earlier, we focus on the general case and so we discuss when a flat coeffect calculus supports
+tfearlier, we focus on the general case and so we discuss when a flat coeffect calculus supports
 this form of evaluation (rather than looking at semantics for concrete systems).
 
 \paragraph{Local soundness and completeness.}
@@ -1392,6 +1395,7 @@ $(\lambda x.e)\,v$ to a term $\substack{e}{x}{v}$, the type preservation theorem
 stated as follows:
 
 \begin{theorem}[Call-by-value reduction]
+\label{thm:cbv-reduction}
 In a flat coeffect system with the (\emph{approxi\-mation}) property, 
 if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
 and $e \reduce_{\ident{cbv}} e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
@@ -1414,101 +1418,245 @@ As $\cclrd{r}\,\czip\,\cclrd{t}\;\cleq\;\cclrd{r}\,\cpar\,\cclrd{t}$, we can app
 %
 \begin{equation*}
 \tyrule{sub}
- { \coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\czip\;\cclrd{t}} \vdash \subst{e}{x}{v} : \tau_2 }
- { \coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\cpar\;\cclrd{t}} \vdash \subst{e}{x}{v} : \tau_2 } 
+ { \coctx{\Gamma}{\cclrd{r}\;\czip\;\cclrd{t}} \vdash \subst{e}{x}{v} : \tau_2 }
+ { \coctx{\Gamma}{\cclrd{r}\;\cpar\;\cclrd{t}} \vdash \subst{e}{x}{v} : \tau_2 } 
 \end{equation*}
 %
 Thus, the reduction preserves type and coeffect annotation (although this may not be the
 \emph{only} typing of the original term).
 \end{proof}
 
+% --------------------------------------------------------------------------------------------------
+
 \subsection{Call-by-name evaluation}
 \label{sec:flat-syntax-cbn}
 
-The call-by-name strategy reduces a term $(\lambda x. e_1)~e_2$ where both sub-expressions 
-may have contextual requirements. Assume that $\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2$ and
-$\coctx{\Gamma_1, x :\tau_1}{\cclrd{r}} \vdash e_1 : \tau_1$. 
+In the call-by-name reduction of $(\lambda x.e_1)~e_2$, the expression $e_2$ is substituted for all 
+occurrences of the variable $v$ in an expression $e_1$. As discussed in 
+Section~\ref{sec:flat-syntax-props}, the call-by-name strategy does not \emph{in general} preserve 
+the type of a program, but it does preserve the typing in some interesting cases. The typing is
+preserved for different reasons in two of our systems, so we briefly review the concrete examples.
 
-% TODO
+\paragraph{Data-flow.} 
+The type preservation property does not hold for data-flow. This case is similar to the example
+shown earlier with effectful computations. As a minimal example, consider the substitution of 
+$\kvd{prev}~z$ for a variable $y$ in a function $\lambda x.y$:
 %
-% The context requirements of the 
-% reduced term $\subst{e_1}{x}{e_2}$ should be the same as the context requirements of 
-% $\kvd{let}~x=e_2~\kvd{in}~e_1$. Thus the context requirements of the result in the substitution 
-% lemma should be $r \fmax (s \fseq r)$.
+\begin{equation*}
+\begin{array}{rclcl}
+ \coctx{y\!:\!\tau_1,z\!:\!\tau_1}{0} &\narrow{\vdash}& \lambda x.y : \tau_1 \xrightarrow{0} \tau_2 & & (\textnormal{before}) \\
+ \coctx{z\!:\!\tau_1}{1} &\narrow{\vdash}& \lambda x.\kvd{prev}~z : \tau_1 \xrightarrow{1} \tau_2 & & (\textnormal{after}) \\
+\end{array}
+\end{equation*}
+%
+After the substitution, the coeffect of the body is $1$. The rule for lambda abstraction requires
+that $1=\mathit{min}(r,s)$ and so the least solution is to set both $r,s$ to $1$. The substitution
+this affects the coeffects attached both to the function type and the overall context. 
 
+Semantically, the coeffect over-approximates the actual requirements -- the code does not access
+previous value of the argument $x$. This cannot be caputred by a flat coeffect system, but can
+be captured using the structural system discussed in Chapter~\ref{ch:structural}. 
+
+\paragraph{Implicit parameters.} In data-flow, there is no typing for the resulting expression that
+preserves the type of the function. However, this is not the case for all systems. Consider substituting
+an implicit parameter access $\ident{?p}$ for a variable $y$:
+%
+\begin{equation*}
+\begin{array}{rclcl}
+ \coctx{y\!:\!\tau_1}{\emptyset} &\narrow{\vdash}& \lambda x.y : \tau_1 \xrightarrow{\emptyset} \tau_2 & & (\textnormal{before}) \\
+ \coctx{\emptyset}{ \{\ident{?p}\} } &\narrow{\vdash}& \lambda x.\ident{?p} : \tau_1 \xrightarrow{\emptyset} \tau_2 & & (\textnormal{after}) \\
+\end{array}
+\end{equation*}
+%
+The above shows one possible typing of the body -- one that does not change the coeffects of the 
+function type and attaches all additional coeffects (implicit parameters) to the context. In case
+of implicit parameters (and, more generally, systems with set-like annotations) this is always 
+possible. 
+
+\paragraph{Liveness.} In liveness, the type preservation also holds, but for a different reason. Consider
+substituting any expression $e$ of type $\tau_1$ with coeffects $\cclrd{r}$ for a variable $y$:
+%
+\begin{equation*}
+\begin{array}{rclcl}
+ \coctx{y\!:\!\tau_1}{\ident{L}} &\narrow{\vdash}& \lambda x.y : \tau_1 \xrightarrow{\ident{L}} \tau_2 & & (\textnormal{before}) \\
+ \coctx{\emptyset}{\ident{L}} &\narrow{\vdash}& \lambda x.e : \tau_1 \xrightarrow{\ident{L}} \tau_2 & & (\textnormal{after}) \\
+\end{array}
+\end{equation*}
+%
+In the original expression, both the overall context and the function type are annotated with \ident{L}, 
+because the body contains a variable access. An expression $e$ can always be treated as being annotated
+with $\ident{L}$ (because $\ident{L}$ is the top element of the lattice) and so substitution does not
+change any coeffects.
+
+\paragraph{Reduction theorem.}
+The above examples (implicit parameters and liveness) demonstrate two particular kinds of coeffect 
+algebra for which typing preservation holds. Proving the type preservation separately provides 
+more insight into how the systems work and so we choose to consider separately. 
+
+\begin{definition}
 We call a flat coeffect algebra \emph{top-pointed} if $\cunit$ is the greatest (top) coeffect scalar
-$\C$ and \emph{bottom-pointed} if it is the smallest (bottom) coeffect scalar.
-Liveness analysis is an example of top-pointed coeffects
-as variables are annotated with $\ident{L}$ and $\ident{D} \leq \ident{L}$. 
+($\forall r \in \C \;.\; r \,\cleq\, \cunit $) and \emph{bottom-pointed} if it is the smallest (bottom) 
+element ($\forall r \in \C \;.\; r \,\cgeq\, \cunit $).
+\end{definition}
+
+\noindent
+Liveness is an example of top-pointed coeffects as variables are annotated with 
+$\ident{L}$ and $\ident{D} \leq \ident{L}$, while implicit parameters and data-flow are examples
+of bottom-pointed coeffects. For top-pointed flat coeffects, the substitution lemma holds without 
+additional requirements:
 
 \begin{lemma}[Top-pointed substitution]
 \label{thm:cbn-substitution-top}
-In a top-pointed flat coeffect calculus with $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
-and the $\cclrd{\wedge}$ operator:
-\[
+In a top-pointed flat coeffect calculus with an aglebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
+substituting an expression $e_s$ with arbitrary coeffects $\cclrd{s}$ for a variable $x$ in $e_r$ does
+not change the coeffects of $e_r$:
+%
+\begin{equation*}
 \begin{array}{l}
-\coctx{\Gamma}{\cclrd{s}} \vdash e_s : \sigma \;\; \wedge \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau\\
-\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} } \vdash \subst{e_r}{x}{e_s} : \tau
+ \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s \;\; \wedge \;\; 
+   \coctx{\Gamma_1,  x : \tau_s, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau_r\\
+ \quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} } \vdash \subst{e_r}{x}{e_s} : \tau_r
 \end{array}
-\]
-\vspace{-1.5em}
+\end{equation*}
 \end{lemma}
+
 \begin{proof}
-Using sub-coeffecting ($\cclrd{s} \,\cleq\, \cunit$) and Lemma~\ref{thm:flat-subst-cbv}.
+Using sub-coeffecting ($\cclrd{s} \,\cleq\, \cunit$) and a variation of Lemma~\ref{thm:flat-subst-cbv}.
 \end{proof}
 %
 \noindent
-As variables are annotated with the top element $\cunit$, we can substitute a term $e_s$ for any variable and 
-use sub-coeffecting to get the original typing (because $\cclrd{s} \,\cleq\, \cunit$). 
+As variables are annotated with the top element $\cunit$, we can substitute the term $e_s$ 
+for any variable and use sub-coeffecting to get the original typing (because
+$\cclrd{s} \,\cleq\, \cunit$). 
 
 In a bottom pointed coeffect system, substituting $e$ for $x$ increases the context 
-requirements. However, if the system satisfies the strong condition that $\cclrd{\wedge} = \cseq = \cpar$ then
-the context requirements arising from the substitution can be associated with the context
-$\Gamma$. As a result, substitution does not break soundness as in effect systems. The 
-requirement $\cclrd{\wedge} = \cseq = \cpar$ holds for our implicit parameters example 
-(all three operators are set union) and allows the following substitution lemma:
+requirements. However, if the system satisfies the strong condition that $\czip = \cseq = \cpar$ 
+then the context requirements arising from the substitution can be associated with the context
+$\Gamma$, leaving the context requirements of a function value unchanged. As a result, substitution 
+does not break soundness as in effect systems. The requirement $\czip = \cseq = \cpar$ holds for 
+our implicit parameters example (all three operators are set union) and for other set-like 
+coeffects. It allows the following substitution lemma:
 
 \begin{lemma}[Bottom-pointed substitution]
 \label{thm:cbn-substitution-bot}
-In a bottom-pointed flat coeffect calculus with $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ 
-and the $\cclrd{\wedge}$ operator where $\cclrd{\wedge} = \cseq = \cpar$ is idempotent and commutative:
-\[
+In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ 
+where $\czip = \cseq = \cpar$ and the operation is also idempotent and commutative:
+%
+\begin{equation*}
 \begin{array}{l}
-\coctx{\Gamma}{\cclrd{s}} \vdash e_s : \sigma \;\; \wedge \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau\\
-\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} \,\cseq\, \cclrd{s} } \vdash \subst{e_r}{x}{e_s} : \tau
+\coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s \;\; \wedge \;\; 
+\coctx{\Gamma_1,  x : \tau_s, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau_r\\
+\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} \,\cseq\, \cclrd{s} } \vdash \subst{e_r}{x}{e_s} : \tau_r
 \end{array}
-\]
-\vspace{-1.5em}
+\end{equation*}
+
 \end{lemma}
 \begin{proof}
 By induction over $\vdash$, using the idempotent, commutative monoid structure to keep $\cclrd{s}$ with
-the free-variable context.
+the free-variable context. See Appendix~?.
 \end{proof}
+
 \noindent
-The structural system is precise enough to keep the coeffects associated with a concrete variable. The flat
-variant described here is flexible enough to let us always re-associate new context requirements with the 
-free-variable context.
+The flat system discussed here is \emph{flexible enough} to let us always re-associate new context 
+requirements (arising from the substitution) with the free-variable context. In contrast, the 
+structural system discussed in Chapter~\ref{ch:structural} is \emph{precise enough} to keep the 
+coeffects associated with individual variables -- thus preserving typing in a complementary way.
 
 The two substitution lemmas show that the call-by-name evaluation strategy can be used for
-certain coeffect calculi, including liveness and implicit parameters.
-Assuming $\reduce_{\ident{cbn}}$ is the standard call-by-name
-reduction, the following theorem holds:
+certain coeffect calculi, including liveness and implicit parameters. Assuming
+$\reduce_{\ident{cbn}}$ is the standard call-by-name reduction, the following subject reduction
+theorem holds:
 
 \begin{theorem}[Call-by-name reduction]
-\raggedright
 In a coeffect system that satisfies the conditions for Lemma~\ref{thm:cbn-substitution-top} or
 Lemma~\ref{thm:cbn-substitution-bot}, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
 and $e \rightarrow_{\ident{cbn}} e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
 \end{theorem}
 \begin{proof}
-A direct consequence of Lemma~\ref{thm:cbn-substitution-top} or Lemma~\ref{thm:cbn-substitution-bot}.
+
+For top-pointed coeffect algebra (using Lemma~\ref{thm:cbn-substitution-top}), the proof is similar
+to the one in Theorem~\ref{thm:cbv-reduction}, using the facts that $\cclrd{s} \cleq \cunit$
+and $r \,\czip\, t \;=\; r \,\cpar\, t$.
+For bottom-pointed coeffect algebra, consider the typing derivation for the term
+$(\lambda x.e)\,v$ before reduction:
+%
+\begin{equation*}
+\inference
+  { \inference
+      {\coctx{\Gamma, x:\tau_s}{\cclrd{r}} \vdash e_r : \tau_r}
+      {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e_r : \tau_s \xrightarrow{\cclrd{r}} \tau_r } &
+   \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s }
+  {\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{r})} \vdash (\lambda x.e_r)\,e_s : \tau_r }
+\end{equation*}
+%
+The derivation uses the idempotence of $\czip$ in the first step, followed by the 
+(\emph{app}) rule. The type of the term after substitution, using Lemma~\ref{thm:cbn-substitution-bot} is:
+%
+\begin{equation*}
+\inference
+  { \coctx{\Gamma, x:\tau_s}{\cclrd{r}} \vdash e_r : \tau_r & 
+    \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s }
+  { \coctx{\Gamma, x:\tau_r}{\cclrd{r}\;\cseq\;\cclrd{s}} \vdash \subst{e_r}{x}{e_s} : \tau_s }
+\end{equation*}
+%
+From the assumptions of Lemma~\ref{thm:cbn-substitution-bot}, we know that $\cseq\,=\,\cpar$
+and the operation is idempotent, so trivially:
+$\cclrd{r}\;\cseq\;\cclrd{s} = \cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{r})$
 \end{proof}
 
+\paragraph{Expansion theorem.}
+The $\eta$-expansion (local completeness) is similar to $\beta$-reduction (local soundness) in that
+it holds for some flat coeffect systems, but not for all. Out of the examples we discuss, it 
+holds for implicit parameters, but does not hold for liveness and data-flow.
 
+Recall that $\eta$-expansion turns $e$ into $\lambxa x.e~x$. In the case of liveness, the 
+expression $e$ may require no variables (both immediate and latent coeffects are marked as
+$\ident{D}$). However, the resulting expression $\lambda x.e~x$ accesses a variable, 
+marking the context and function argument as live. In case of data-flow, the coeffects are
+made larger by the lambda abstraction. We remedy this limitation in the next chapter.
 
-ALSO: Something on eta expansion
+However, the $\eta$-expansion preserves the type for implicit parameters and, more generally,
+for any flat coeffect algebra where $\cpar \,=\, \czip$. Assuming $\rightarrow_\eta$ is the 
+standard $\eta$-reduction:
 
-\subsection{Normal form}
+\begin{theorem}[$\eta$-expansion]
+\label{thm:cbn-substitution-bot}
+In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ 
+where $\czip = \cpar$, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2$ 
+and $e \rightarrow_\eta e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 $.
+\end{theorem}
+\begin{proof}
+The following derivation shows that $\lambda x.e~x$ has the same type as $e$:
+\begin{equation*}
+\inference
+  { \inference
+    { \coctx{\Gamma}{\cclrd{r}} \vdash e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 &
+      \coctx{x:\tau_1}{\cunit} \vdash x:\tau_1 }
+    { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\cpar\; (\cunit \,\cseq\, \cclrd{s}) } \vdash e~x : \tau_2 } }
+  { \inference
+    { \inference
+      { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\cpar\; \cclrd{s} } \vdash e~x : \tau_2 }
+      { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\czip\; \cclrd{s} } \vdash e~x : \tau_2 } }
+    { \coctx{\Gamma}{ \cclrd{r} } \vdash \lambda x.e~x : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 } }
+\end{equation*}
+\end{proof}
+
+\noindent
+The derivation starts with the expression $e$ and derives the type for $\lambda x.e~x$. The
+application yields context requirements $\cclrd{r}\,\cpar\,\cclrd{s}$. In order to recover the
+original typing, this must be equal to $\cclrd{r}\,\czip\,\cclrd{s}$. Note that the derivation
+is showing just one possible typing -- the expression $\lambda x.e~x$ has other types -- but
+this is sufficient for showing type preservation.
+
+In summary, flat coeffect calculi do not \emph{in general} permit call-by-name evaluation, but
+there are several cases where call-by-name evaluation can be used. Among the examples we discuss,
+these include liveness and implicit parameters. Moreover, for implicit parameters (and more
+generally, any set-like flat coeffect algebra), the $\eta$-expansion holds as well, giving us
+both local soundness and local completeness as coined by Pfenning and Davies \cite{logic-modal-reconstruction}.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Normal form?}
 \label{sec:flat-syntax-norm}
 
 \begin{equation*}
@@ -1522,6 +1670,25 @@ First transformation
 \begin{equation*}
 (\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3  ~~\leadsto~~ \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3)
 \end{equation*}
+
+%
+% (e2 + (e1 * e2)) + (e3 * f)
+% ----(glet)------
+% ----------(app)------------
+%
+% = e2 + e1*e2 + e3*f
+
+% 
+% (e2 + (e3 * f)) + ((e2 + (e3 * f)) * e1)
+% ----(app)------    ----(app)-----
+% ---------------(glet)-------------------
+%
+% = e2 + e3*f + e2*f + e1*e3*f
+
+% Data-flow: (e1 + e2) max (e3 + f) = e1 + (e2 max (e3 + f))    XXXXX
+% Liveness:  e2 ^ (e3 v f) = e2 ^ (e3 v f)
+% Resources: OK
+
 
 This does not work for dataflow, because
 
@@ -1537,7 +1704,24 @@ Second transformation
 \kvd{glet}~x_1=e_1~\kvd{in}~(\kvd{glet}~x_2=e_2~\kvd{in}~e_3)
 \end{equation*}
 
-or
+
+% e3 + ((e2 + (e1 * e2)) * e3)
+%       ------(glet)---
+% ---------(glet)-------------
+%
+% = e3 + e2*e3 + e1*e2*e3
+
+% (e2 + (e3 * e2)) + (e1 * (e2 + (e3 * e2)))
+% -----(glet)-----         -----(glet)-----
+% ------------------(glet)------------------
+%
+% = e2 + e3*e2 + e1*e2 + e1*e2*e3
+
+% Data-flow: e3 + (e2 + e1) = (e2 + e3) + e1
+% Liveness:  e3 = e3
+% Resources: OK
+
+
 
 %
 % TODO: We could have a section about let binding covering the alternative CBV and the let binding
