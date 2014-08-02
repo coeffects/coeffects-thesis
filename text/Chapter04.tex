@@ -2078,23 +2078,6 @@ The above properties follow from the laws of the flat coeffect algebra. In addit
 $\cpar$ operation is symmetric (which is the case for all our examples in this chapter), it 
 also holds that $\ident{swap}~(e_1, e_2) \equiv (e_2, e_1)$.
 
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Language with recursion}
-
-\begin{equation*}
-\tyrule{loop}
-  { \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \ident{bool} &
-    \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \ident{unit} }
-  { \coctx{\Gamma}{\cclrd{r} \;\cseq\; (\cclrd{s} \,\cseq\, \cclrd{r})^{\cclrd{*}} } \vdash \kvd{while}~e_1~\kvd{do}~e_2 : \ident{unit} }
-\end{equation*}
-
-\begin{equation*}
-\tyrule{rec}
-  { \coctx{\Gamma, x:\tau_1 \xrightarrow{\cclrd{\phi}} \tau_2}{\cclrd{s}} \vdash e : \tau_1 \xrightarrow{\cclrd{r}} \tau_2 }
-  { \coctx{\Gamma}{\cclrd{s^{\ast}}} \vdash \kvd{fix}~x. e : \tau_1 \xrightarrow{\ident{fix}~\cclrd{\phi}.\cclrd{r}} \tau_2 }
-\end{equation*}
-
 % ==================================================================================================
 
 \section{Related work}
