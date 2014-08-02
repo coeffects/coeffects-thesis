@@ -58,14 +58,11 @@ chapter are as follows:
   
 \item We give the equational theory of the calculus and discuss type-preservation for call-by-name
   and call-by-value reduction (Section~\ref{sec:flat-syntax}). We also extend the calculus
-  with pairs and recursion (Section~\ref{sec:flat-exts}).
+  with subtyping and pairs (Section~\ref{sec:flat-exts}).
   
 \item We present the semantics of the calculus in terms of \emph{indexed comonads}, which is a
   generalization of comonads, a category-theoretical dual of monads (Section~\ref{sec:flat-semantics}).
   The semantics provides deeper insight into how (and why) the calculus works.
-
-\item We develop an alternative presentation of the system in terms of a simple structure 
-  (semi-lattice) and use it to develop a type inference algorithm for flat coeffect calculus.
 \end{itemize}
 
 %---------------------------------------------------------------------------------------------------
@@ -109,7 +106,7 @@ e &::=& x \sep \lambda x.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{in}~e_2\\
 \end{array}
 \end{equation*}
 %
-We discuss pairs and recursion in Section~\ref{sec:flat-exts}. The type $\tau_1 \xrightarrow{\cclrd{r}} \tau_2$
+We discuss subtyping and pairs in Section~\ref{sec:flat-exts}. The type $\tau_1 \xrightarrow{\cclrd{r}} \tau_2$
 represents a function from $\tau_1$ to $\tau_2$ that requires additional context $\cclrd{r}$.
 It can be viewed as a pure function that takes $\tau_1$ \emph{with} or \emph{wrapped in} a 
 context $r$. 
@@ -223,8 +220,7 @@ preserve the coeffect.
 \item For the $\czip$ operation, we require associativity and idempotence. The idempotence
 requirement makes it possible to duplicate the coeffects and place the same requirement on both
 call-site and declaration-site, \ie~it makes the (\emph{abs-df}) rule admissible. In some cases, 
-the operator forms a monoid with the unit being the greatest element of the set. This alternative is 
-discussed when we consider recursion (Section~\ref{sec:flat-exts}).
+the operator forms a monoid with the unit being the greatest element of the set. 
 \end{itemize}
 
 It is worth noting that the operators $\cpar$ and $\czip$ are dual in some of the systems. For 
@@ -354,7 +350,7 @@ context-requirements of the function $\cclrd{s}\, \cseq \,\cclrd{t}$.
 The type system also includes a rule for let-binding. The rule is \emph{not} equivalent to the
 derivation for $(\lambda x.e_2)~e_1$, but it represents one admissible typing derivation. We
 return to let-binding after looking a number of examples. Additional constructs such 
-as recursion and tuples are covered in Section~\ref{sec:flat-exts}.
+as pairs are covered in Section~\ref{sec:flat-exts}.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -1811,9 +1807,9 @@ and finally, to guarantee intuitive syntactic properties for constructs such as
 $\lambda$-abstraction and pairs in context-aware calculi.
 
 In this section, we look at the last point. We discuss what syntactic equivalences are permitted
-by the properties of $\czip$, we extend the calculus with pairs and units and discuss their 
-syntactic properties and, finall, we consider properties arising from recursion. In the following
-section, we further develop subtyping relation for the calculus.
+by the properties of $\czip$ and we extend the calculus with pairs and units and discuss their 
+syntactic properties. In the following section, we further develop subtyping relation for the 
+calculus.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2006,58 +2002,98 @@ not matter how the context requirements are satisfied.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Constants and pairs}
-
-The flat coeffect calculus annotates constants with $\czero$ (which is needed, e.g.~for liveness).
-To support pairs, we add the following rule for the constructor $(e_1, e_2)$:
-%
+\begin{figure}[t]
 \begin{equation*}
-\rulefcl{pair}
-  {\coctx{r}{\Gamma} \vdash e_1 : \tau_1 & \coctx{s}{\Gamma} \vdash e_2 : \tau_2}
-  {\coctx{r \fmax s}{\Gamma} \vdash (e_1, e_2) : \tau_1 \times \tau_2 }
+\tyrule{pair}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 & \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2}
+  {\coctx{\cclrd{r}\,\cpar\,\cclrd{s}}{\Gamma} \vdash (e_1, e_2) : \tau_1 \times \tau_2 }
 \end{equation*}
-%
-The operator $\fmax$ combines context requirements of the two sub-expressions. It models
-the case when the available context is split and passed to two independent expressions. The rule
-for projection is uninteresting, because $\pi_i$ can be viewed as a pure function.
-
-In a language with a constant $() : \ident{unit}$ and pairs, we would expect the following 
-isomorphisms to hold:
-%
 \begin{equation*}
-(e_1, (e_2, e_3)) \simeq ((e_1, e_2), e_3)
-\quad
-(e_1, e_2) \simeq (e_2, e_1)
-\quad
-((), e) \simeq e
+\tyrule{proj}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau_1 \times \tau_2 }
+  {\coctx{\Gamma}{\cclrd{r}} \vdash \pi_i~e : \tau_{i} }
 \end{equation*}
-%
-The coeffect is not a part of the type of pairs, so the types are isomorphic. The isomorphism
-of the context requirements is guaranteed by the fact that $(S, \cpar, \czero)$ is a bounded
-semilattice using associativity, symmetry and boundedness, respectively.
+\begin{equation*}
+\tyrule{unit}
+  {}
+  {\coctx{\Gamma}{\czero} \vdash () : \ident{unit} }
+\end{equation*}
+
+\caption{Typing rules for pairs and units}
+\label{fig:flat-ext-types}
+\end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
-$(\C, \cseq, \cunit)$ is monoid
+\subsection{Language with pairs and unit}
 
-$(\C, \cpar, \czero)$ is monoid
+The calculus introduced in Section~\ref{sec:flat-calculus} consisted only of variables, abstraction, 
+application and let binding to show the key aspects of flat coeffect systems. Here, we extend it 
+with pairs and the unit value to sketch how it can be turned into a full programming language.
+The syntax of the language is extended as follows:
+%
+\begin{equation*}
+\begin{array}{rcl}
+e &::=& \ldots \sep () \sep e_1, e_2 \\
+\tau &::=& \ldots \sep \ident{unit} \sep \tau \times \tau
+\end{array}
+\end{equation*}
+%
+The typing rules for pairs and the unit value are shown in Figure~\ref{fig:flat-ext-types}.
+The unit value (\emph{unit}) is annotated with the $\czero$ coeffect (the same as other constants).
+Pairs, created using the $(e_1, e_2)$ expression, are annotated with a coeffect that combines
+the coeffects of the two sub-expressions using the \emph{point-wise} operator $\cpar$. The operator
+models the case when the (same) available context is split and passed to two independent 
+sub-expressions. This matches the semantics of pairs discussed shortly. Finally, the (\emph{proj})
+rule is uninteresting, because $\pi_i$ can be viewed as a pure function.
 
-$(\C, \czip)$ is a band (associative, idempotent)
+\paragraph{Properties.}
+Pairs and the unit value in a lambda calculus should form a monoid -- associativity means that 
+the expression $(e_1, (e_2, e_3))$ should be isomorphic to $((e_1, e_2), e_3)$ and that
+$((), e) \simeq e \simeq (e, ())$, where the isomorphism appropriately transforms the values,
+without affecting other properties (here coeffects) of the expression. 
 
-$(r \cpar s) \cseq t = (r \cseq t) \cpar (s \cseq t)$
+In the following, we assume that \ident{assoc} is a pure function transforming a pair $(x_1, (x_2, x_3))$ 
+to a pair $((x_1, x_2), x_3)$. We write $e \equiv e'$ when for all $\Gamma, \tau$ and $\cclrd{r}$,
+it is the case that $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ if and only if
+$\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
 
-$t \cseq (r \cpar s) = (t \cseq r) \cpar (t \cseq s)$
+\begin{theorem}
+For a flat coeffect calculus with pairs and units, the following holds:
+%
+\begin{equation*}
+\begin{array}{rclcl}
+ \ident{assoc}~(e_1, (e_2, e_3)) &\equiv& ((e_1, e_2), e_3) &\qquad\qquad&(\emph{associativity}) \\
+ \pi_1~(e, ()) &\equiv& e &&(\emph{right unit})\\
+ \pi_2~((), e) &\equiv& e &&(\emph{left unit})\\
+\end{array} 
+\end{equation*}
+\end{theorem}
+\begin{proof}
+Follows from the fact that $(\C, \cpar, \czero)$ is a monoid and \ident{assoc}, $\pi_1$ and
+$\pi_2$ are pure functions (treated as contstants in the langauge).
+\end{proof}
 
+The above properties follow from the laws of the flat coeffect algebra. In addition, if the 
+$\cpar$ operation is symmetric (which is the case for all our examples in this chapter), it 
+also holds that $\ident{swap}~(e_1, e_2) \equiv (e_2, e_1)$.
 
-\subsection{Recursion}
+% --------------------------------------------------------------------------------------------------
 
-% ==================================================================================================
+\subsection{Language with recursion}
 
-\section{Type inference}
-\label{sec:flat-inference}
+\begin{equation*}
+\tyrule{loop}
+  { \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \ident{bool} &
+    \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \ident{unit} }
+  { \coctx{\Gamma}{\cclrd{r} \;\cseq\; (\cclrd{s} \,\cseq\, \cclrd{r})^{\cclrd{*}} } \vdash \kvd{while}~e_1~\kvd{do}~e_2 : \ident{unit} }
+\end{equation*}
 
-\subsection{Semi-lattice formulation}
-\subsection{Type inference algorithm}
+\begin{equation*}
+\tyrule{rec}
+  { \coctx{\Gamma, x:\tau_1 \xrightarrow{\cclrd{\phi}} \tau_2}{\cclrd{s}} \vdash e : \tau_1 \xrightarrow{\cclrd{r}} \tau_2 }
+  { \coctx{\Gamma}{\cclrd{s^{\ast}}} \vdash \kvd{fix}~x. e : \tau_1 \xrightarrow{\ident{fix}~\cclrd{\phi}.\cclrd{r}} \tau_2 }
+\end{equation*}
 
 % ==================================================================================================
 
@@ -2066,63 +2102,6 @@ $t \cseq (r \cpar s) = (t \cseq r) \cpar (t \cseq s)$
 \subsection{What can be monad}
 \label{sec:flat-related-monads}
 
-% ==================================================================================================
-
-\section{Summary}
-
-\section{----------------JUNK!}
-
-This paper follows the approaches of effect systems \cite{effects-gifford,effects-talpin-et-al,monads-effects-marriage}
-and categorical semantics based on monads and comonads \cite{monad-notions,comonads-notions}. Syntactically,
-\emph{coeffects} differ from \emph{effects} in that they model systems where $\lambda$-abstraction 
-may split contextual requirements between the declaration-site and call-site.
-
-Our \emph{indexed (monoidal) comonads} (\S\ref{sec:comonads}) fill the gap between (non-indexed)
-\emph{(monoidal) comonads} of Uustalu and Vene \cite{comonads-notions}
-and indexed monads of Atkey~\cite{monads-parameterised-notions}, Wadler and Thiemann
-\cite{monads-effects-marriage}. Interestingly, \emph{indexed} comonads are \emph{more
-general} than comonads, capturing more notions of context-dependence (\S\ref{sec:motivation}).
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\paragraph{Comonads and modal logics.}
-
-Bierman and de Paiva \cite{logic-intuitionistic-modal} model the
-$\square$ modality of an intuitionistic S4 modal logic using monoidal
-comonads, which links our calculus to modal logics.  This link can be
-materialized in two ways.
-
-Pfenning et al. and Nanevski et al.  derive term languages using the Curry-Howard
-correspondence~\cite{logic-modal-reconstruction,logic-intuitionistic-modal,logic-cmtt},
-building a \emph{metalanguage} (akin to Moggi's monadic metalanguage
-\cite{monad-notions}) that includes $\square$ as a type
-constructor. For example, in \cite{logic-modal-reconstruction}, the
-modal type $\Box \tau$ represents closed terms.
-In contrast, the \emph{semantic} approach uses monads or comonads
-\emph{only} as a semantics.  This has been employed by Uustalu and
-Vene and (again) Moggi \cite{monad-notions,comonads-notions}.  We
-follow the semantic approach.
-
-Nanevski et al. extend an S4 term language to a \emph{contextual}
-modal type theory (CMTT)~\cite{logic-cmtt}.
-The \emph{context} is a set of variables required by a computation, which
-makes CMTT useful for meta-programming and staged computations. Our contextual types are
-indexed by a coeffect algebra, which is more general and can capture
-variable contexts, but also integers, two-point lattices, \emph{etc.}.
-
-The work on CMTT suggests two extensions to coeffects. The first is
-developing the logical foundations. We briefly considered special cases
-of our system that permits local soundness in \S\ref{sec:syntactic} and
-local completeness can be treated similarly. The second problem is 
-developing the coeffects \emph{metalanguage}. The use of coeffect algebras
-would provide an additional flexibility over CMTT, allowing a wider range 
-of applications.
-
-% --------------------------------------------------------------------------------------------------
-
-\vspace{-1em}
-\paragraph{Relating effects and coeffects.} 
 The difference between effects and coeffects is mainly in the (\emph{abs}) rule. While the 
 semantic model (monads vs. comonads) is very different, we can consider extending the two to 
 obtain equivalent syntactic rules. To allow splitting of implicit parameters in lambda abstraction, 
@@ -2132,36 +2111,6 @@ To obtain a pure lambda abstraction
 for coeffects, we need to restrict the $\cpar_{r, s}$ 
 operation of indexed comonads, so that the first parameter is annotated with $\cunit$ (meaning
 no effects): $\C^{\cunit} A \times \C^r B \rightarrow \C^{r}(A \times B)$.
-
-\newcommand{\cprd}{\times}
-\newcommand{\cvop}{\oplus}
-
-\vspace{-1em}
-\paragraph{Structural coeffects.} To make the liveness analysis practical, we need to associate
-information with individual variables (rather than the entire context). We can generalize the 
-calculus from this paper by adding a product operation $\times$ to the coeffect algebra.
-A variable context $x:\tau_1, y:\tau_2, z:\tau_3$ is then annotated with
-$r\times s \times t$ where each component of the tag corresponds to a single variable. The system
-then needs to be extended with structural rules such as:
-%
-\begin{equation*}
-\inference[(\emph{abs})]
-  {\ctyp{r \cprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
-\quad
-\inference[(\emph{contr})]
-  {\ctyp{r \cprd s}{(x:\tau_1, y:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r \cvop s }{(z:\tau_1)} \vdash \subst{\subst{e}{x}{z}}{y}{z} : \tau_2 }
-\end{equation*}
-%
-The context-requirements associated with function are exactly those linked to the specific
-variable of the lambda abstraction. Rules such as contraction manipulate variables and perform
-a corresponding operation on the indices.
-
-The structural coeffect system is related to bunched typing \cite{types-bunched} (but generalizes
-it by adding indices). We are currently investigating how to use structural coeffects to capture 
-fine-grained context-dependence properties such as secure information flow \cite{app-secure-flow}
-or, more generally, those captured by dependency core calculus \cite{types-dcc}.
 
 % ==================================================================================================
 

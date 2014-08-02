@@ -14,6 +14,16 @@ primitive operations of the indexed comonad.
 \section{Introduction}
 \label{sec:metalanguage-intro}
 
+% ==================================================================================================
+
+\section{Type inference}
+\label{sec:flat-inference}
+
+\subsection{Semi-lattice formulation}
+\subsection{Type inference algorithm}
+
+% ==================================================================================================
+
 \section{Type system}
 \ExecuteMetaData[rules/rules.tex]{cml-types}
 
@@ -31,5 +41,87 @@ primitive operations of the indexed comonad.
 This chapter is closely related to Contextual Modal Type Theory (CMTT) of Nanevski et al. However
 they develop their language using model logic as a basis, while we use categorical foundations 
 as the basis - leading to a different system.
+
+\section{Also related work}
+\section{Summary}
+
+This paper follows the approaches of effect systems \cite{effects-gifford,effects-talpin-et-al,monads-effects-marriage}
+and categorical semantics based on monads and comonads \cite{monad-notions,comonads-notions}. Syntactically,
+\emph{coeffects} differ from \emph{effects} in that they model systems where $\lambda$-abstraction 
+may split contextual requirements between the declaration-site and call-site.
+
+Our \emph{indexed (monoidal) comonads} (\S\ref{sec:comonads}) fill the gap between (non-indexed)
+\emph{(monoidal) comonads} of Uustalu and Vene \cite{comonads-notions}
+and indexed monads of Atkey~\cite{monads-parameterised-notions}, Wadler and Thiemann
+\cite{monads-effects-marriage}. Interestingly, \emph{indexed} comonads are \emph{more
+general} than comonads, capturing more notions of context-dependence (\S\ref{sec:motivation}).
+
+% --------------------------------------------------------------------------------------------------
+
+\vspace{-1em}
+\paragraph{Comonads and modal logics.}
+
+Bierman and de Paiva \cite{logic-intuitionistic-modal} model the
+$\square$ modality of an intuitionistic S4 modal logic using monoidal
+comonads, which links our calculus to modal logics.  This link can be
+materialized in two ways.
+
+Pfenning et al. and Nanevski et al.  derive term languages using the Curry-Howard
+correspondence~\cite{logic-modal-reconstruction,logic-intuitionistic-modal,logic-cmtt},
+building a \emph{metalanguage} (akin to Moggi's monadic metalanguage
+\cite{monad-notions}) that includes $\square$ as a type
+constructor. For example, in \cite{logic-modal-reconstruction}, the
+modal type $\Box \tau$ represents closed terms.
+In contrast, the \emph{semantic} approach uses monads or comonads
+\emph{only} as a semantics.  This has been employed by Uustalu and
+Vene and (again) Moggi \cite{monad-notions,comonads-notions}.  We
+follow the semantic approach.
+
+Nanevski et al. extend an S4 term language to a \emph{contextual}
+modal type theory (CMTT)~\cite{logic-cmtt}.
+The \emph{context} is a set of variables required by a computation, which
+makes CMTT useful for meta-programming and staged computations. Our contextual types are
+indexed by a coeffect algebra, which is more general and can capture
+variable contexts, but also integers, two-point lattices, \emph{etc.}.
+
+The work on CMTT suggests two extensions to coeffects. The first is
+developing the logical foundations. We briefly considered special cases
+of our system that permits local soundness in \S\ref{sec:syntactic} and
+local completeness can be treated similarly. The second problem is 
+developing the coeffects \emph{metalanguage}. The use of coeffect algebras
+would provide an additional flexibility over CMTT, allowing a wider range 
+of applications.
+
+% --------------------------------------------------------------------------------------------------
+
+\newcommand{\cprd}{\times}
+\newcommand{\cvop}{\oplus}
+
+\vspace{-1em}
+\paragraph{Structural coeffects.} To make the liveness analysis practical, we need to associate
+information with individual variables (rather than the entire context). We can generalize the 
+calculus from this paper by adding a product operation $\times$ to the coeffect algebra.
+A variable context $x:\tau_1, y:\tau_2, z:\tau_3$ is then annotated with
+$r\times s \times t$ where each component of the tag corresponds to a single variable. The system
+then needs to be extended with structural rules such as:
+%
+\begin{equation*}
+\inference[(\emph{abs})]
+  {\ctyp{r \cprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
+  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
+\quad
+\inference[(\emph{contr})]
+  {\ctyp{r \cprd s}{(x:\tau_1, y:\tau_1)} \vdash e : \tau_2}
+  {\ctyp{r \cvop s }{(z:\tau_1)} \vdash \subst{\subst{e}{x}{z}}{y}{z} : \tau_2 }
+\end{equation*}
+%
+The context-requirements associated with function are exactly those linked to the specific
+variable of the lambda abstraction. Rules such as contraction manipulate variables and perform
+a corresponding operation on the indices.
+
+The structural coeffect system is related to bunched typing \cite{types-bunched} (but generalizes
+it by adding indices). We are currently investigating how to use structural coeffects to capture 
+fine-grained context-dependence properties such as secure information flow \cite{app-secure-flow}
+or, more generally, those captured by dependency core calculus \cite{types-dcc}.
 
 \section{Summary}
