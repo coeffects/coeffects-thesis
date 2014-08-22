@@ -139,7 +139,7 @@ e &::=& x \sep \lambda x.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{in}~e_2\\
 %
 In the previous chapter, the free variable context $\Gamma$ has been treated as a set. In the 
 structural coeffect calculus, the order of variables matters. Thus we treat free variable context
-as a vector with a uniqueness condition. We also write $\xlift{\textnormal{--}}$ for the length
+as a vector with a uniqueness condition. We also write $\xlift{-}$ for the length
 of the vector:
 %
 \begin{equation*}
@@ -221,7 +221,7 @@ $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ equipped with the following addition
   structural coeffect scalars indexed by vector lengths $\sclrd{m}, \sclrd{n} \in \sclrd{\mathbb{N}}$.
 
 \item An operation that constructs a vector from scalars indexed by the vector length
-  $\alift{\textnormal{--}}_{\sclrd{n}} : \C \times \ldots \times \C \rightarrow \C^{\sclrd{n}}$
+  $\alift{-}_{\sclrd{n}} : \C \times \ldots \times \C \rightarrow \C^{\sclrd{n}}$
   and an operation that returns the vector length such that 
   $\slift{\aclrd{\textbf{r}}} = \sclrd{n}$ for $\aclrd{\textbf{r}} : \C^{\sclrd{n}}$
 
@@ -553,36 +553,130 @@ The structure created using $-\xtimes-$ can be manipulated only using operations
 the \emph{strucutral indexed comonad}, which operate over variable contexts contained in an 
 indexed comonad $\ctyp{\aclrd{\textbf{r}}}$.
 
-vectors
+In what follows, we model (finite) vectors of length $n$ as $\tau_1 \xtimes \ldots \xtimes \tau_n$.
+We assume that the use of the operator can be freely re-associated. If an operation requires an 
+input in the form $(\tau_1 \xtimes \ldots \xtimes \tau_i) \xtimes (\tau_{i+1} \xtimes \ldots \xtimes \tau_n)$,
+we call it with $(\tau_1 \xtimes \ldots \xtimes \tau_n)$ as an argument and assume that the 
+appropriate transformation is inserted.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Indexed comonads, revisited}
+
+The semantics of structural coeffect calculus reuses the definition of \emph{indexed comonad} almost
+without a change. The additional structure that is required for context manipulation (merging and 
+splitting) is different and is provided by the \emph{structural indexed comonad} structure that we
+introduce in this section.
+
+Recall the definition from Section~\ref{sec:flat-semantics-idx}, which defines an indexed comonad 
+over a monoid $(\C, \cseq, \cunit)$ as a triple $(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, 
+\ident{cobind}_{\cclrd{r}, \cclrd{s}})$. The triple consists of a family of object mappings $\ctyp{\cclrd{r}{}}$,
+and two mappings that involve context-dependent morphisms of the form $\ctyp{\cclrd{r}} \tau \rightarrow \tau'$.
+
+In the structural coeffect calculus, we work with morphisms of the form $\ctyp{\cclrd{r}} \tau \rightarrow \tau'$
+representing function values (appearing in the language), but also of the form
+$\ctyp{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}}{(\tau_1 \xtimes \ldots \xtimes \tau_n)} \rightarrow \tau$, 
+modelling expressions in a context. To capture this, we need to generalize some of the indices from
+\emph{coeffect scalars} $\cclrd{r}, \cclrd{s}, \cclrd{t}$ to \emph{coeffect vectors} $\aclrd{r}, \aclrd{s}, \aclrd{t}$.
+
+\begin{definition}
+Given a monoid $(\C, \cseq, \cunit)$ with a point-wise extension of the $\cseq$ operator to a vector 
+(written as $\cclrd{t}\,\aseq\,\aclrd{\textbf{s}}$) and an operation lifting scalars to vectors 
+$\alift{-}$, an \emph{indexed comonad} over a category $\catc$ is a triple 
+$(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, \ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}})$:
+
+\begin{compactitem}
+\item $\ctyp{\aclrd{\textbf{r}}}{}$ for all $\aclrd{\textbf{r}} \in \bigcup_{\sclrd{m}\in \sclrd{\mathbb{N}}} \C^{\sclrd{m}}$ is a family of object mappings 
+\item $\ident{counit}_{\cunit}$ is a mapping $\ctyp{\alift{\cunit}}{\alpha} \rightarrow \alpha$ 
+\item $\ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}$ is a mapping $(\ctyp{\aclrd{\textbf{r}}}{\alpha} \rightarrow \beta) 
+  \rightarrow (\ctyp{\cclrd{s}\aseq\aclrd{\textbf{r}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{s}}}{\beta})$
+\end{compactitem}
+\end{definition}
+
+\noindent
+The object mapping $\ctyp{\aclrd{\textbf{r}}}$ is now indexed by a vector rather than by a scalar 
+$\ctyp{\cclrd{r}}$ as in the previous chapter. This new definition supersedes the old one, because a 
+flat coeffect annotation can be seen as singleton vectors.
+
+The operation $\ident{counit}_{\cunit}$ operates on a singleton-vector. This means that it will always
+return a single variable value rather than a vector created using $-\xtimes-$. The $\ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}$
+operation is, perhaps surprisingly, indexed by a coeffect vector and a coeffect scalar. This assymmetry
+is explained by the fact that the input function ($\ctyp{\aclrd{\textbf{r}}}{\alpha} \rightarrow \beta$)
+takes a vector of variables, but always produces just a single value. Thus the resulting function 
+also takes a vector of variables, but always returns a context with singleton variable vector.
+In other words, $\alpha$ may contain $\xtimes$, but $\beta$ may not, because the coeffect calculus has
+no way of constructing values containing $\xtimes$.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Structural indexed comonads}
 
-Given a monoid $(\C, \cseq, \cunit)$ with binary operator $\cseq$ and unit $\cunit$, an 
-\emph{indexed comonad} over a category $\catc$ is a triple 
-$(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, \ident{cobind}_{\cclrd{r}, \cclrd{s}})$ where....
+The flat indexed comonad structure extends indexed comonads with operations 
+$\ident{merge}_{\cclrd{r},\cclrd{s}}$ and $\ident{split}_{\cclrd{r},\cclrd{s}}$ 
+that combine or split the additional (flat) context and are annotated with the flat 
+coeffect operations $\czip$ and $\cpar$, respectively. In the structural version, we use
+corresponding operations that operate on variable vectors represented using $\xtimes$ and
+are annotated with a tensor $\atimes$ which mirrors the variable structure.
 
+The following definition also includes $\ident{lift}_{\cclrd{r'},\cclrd{r}}$, which is similar as
+before and models sub-coeffecting and also $\ident{dup}_{\cclrd{r}, \cclrd{s}}$ which models
+duplication of a variable in a context needed for the semantics of contraction:
 
 \begin{definition}
-Given a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
-an \emph{flat indexed comonad} is an indexed comonad over the monoid $(\C, \cseq, \cunit)$
-equipped with families of operations $\ident{merge}_{\cclrd{r},\cclrd{s}}$, $\ident{split}_{\cclrd{r},\cclrd{s}}$ 
-and $\ident{lift}_{\cclrd{r'},\cclrd{r}}$ where:
+Given a structural coeffect algebra formed by $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$
+with operations $\alift{-}$ and $\aseq$, a \emph{structural indexed comonad} is an indexed comonad over 
+the monoid $(\C, \cseq, \cunit)$ equipped with families of operations $\ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$, 
+$\ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$,
+$\ident{dup}_{\cclrd{r}, \cclrd{s}}$ and $\ident{lift}_{\cclrd{r'},\cclrd{r}}$ where:
 %
 \begin{compactitem}
-\item $\ident{merge}_{\cclrd{r},\cclrd{s}}$ is a family of mappings
-  $\ctyp{\cclrd{r}}{\alpha} \times \ctyp{\cclrd{s}}{\beta} \rightarrow \ctyp{\cclrd{r}\czip\cclrd{s}}{(\alpha \times \beta)}$
-\item $\ident{split}_{\cclrd{r},\cclrd{s}}$ is a family of mappings
-  $\ctyp{\cclrd{r}\cpar\cclrd{s}}{(\alpha \times \beta)} \rightarrow \ctyp{\cclrd{r}}{\alpha} \times \ctyp{\cclrd{s}}{\beta}$
+\item $\ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$ is a family of mappings
+  $\ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta} \rightarrow \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)}$
+\item $\ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$ is a family of mappings
+  $\ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)} \rightarrow \ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta}$
+\item $\ident{dup}_{\cclrd{r}, \cclrd{s}}$ is a family of mappings
+  $\ctyp{\alift{\cclrd{r} \cpar \cclrd{s}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{r}, \cclrd{s}}}{(\alpha \xtimes \alpha)}$
 \item $\ident{lift}_{\cclrd{r'},\cclrd{r}}$ is a family of mappings
-  $\ctyp{\cclrd{r'}}{\alpha} \rightarrow \ctyp{\cclrd{r}}{\alpha}$~ for all $\cclrd{r'}, \cclrd{r}$ such that $\cclrd{r}\,\cleq\,\cclrd{r'}$
+  $\ctyp{\alift{\cclrd{r'}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{r}}}{\alpha}$~ for all $\cclrd{r'}, \cclrd{r}$ such that $\cclrd{r}\,\cleq\,\cclrd{r'}$
 \end{compactitem}
+%
+Such that the following equalities hold:
+\begin{equation*}
+\begin{array}{l}
+  \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} \circ \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} \equiv \ident{id} \\
+  \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} \circ \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} \equiv \ident{id} 
+\end{array}
+\end{equation*}
+
 \end{definition}
+
+\noindent
+The operations differ from those of the flat indexed comonad in that the \ident{merge} and 
+\ident{split} operations are required to be inverse functions and to preserve the additional 
+information about the context. This was not required for the flat system where the operations
+could under- or over-approximate. Note that the operations use $\xtimes$ to combine or
+split the contained values. This means that they operate on free-variable vectors rather than 
+on ordinary products.
+
+The \ident{dup} mapping is a new operation that was not required for a flat calculus. It 
+takes a variable context with a single variable annotated with $\cclrd{r}\cpar\cclrd{s}$,
+duplicates the value of the variable $\alpha$ and splits the additional context between the two
+new variables. In flat calculus, this operation has been expressed using ordinary tuple 
+construction, which is not possible here -- the returned context needs to contain a 
+two-element vector $\alpha \xtimes \alpha$.
+
+Finally, the \ident{lift} mapping is almost the same as in the flat version. It
+operates on a singleton vector, which is equivalent to operating on a scalar as before.
+The operation could easily be extended to a vector in a point-wise way, but we keep it simple
+and perform sub-coeffecting separately on individual variables.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Examples}
+~
+\newpage
+~
+
 
 % --------------------------------------------------------------------------------------------------
 
