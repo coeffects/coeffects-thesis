@@ -22,7 +22,20 @@ properties. The systems are adapted from existing work, but the uniform presenta
 chapter is a novel contribution. The fact that we find a common structure in all systems presented 
 here lets us develop unified coeffect calculi in the upcoming three chapters.
 
-%===================================================================================================
+
+
+
+% ===================================================================================================
+%	                                                               
+% 	  ###    #                           #                         
+% 	 #   #   #                           #                         
+% 	 #      ####   # ##   #   #   ###   ####   #   #  # ##    ###  
+% 	  ###    #     ##  #  #   #  #   #   #     #   #  ##  #  #   # 
+% 	     #   #     #      #   #  #       #     #   #  #      ##### 
+% 	 #   #   #  #  #      #  ##  #   #   #  #  #  ##  #      #     
+% 	  ###     ##   #       ## #   ###     ##    ## #  #       ###  
+%
+% ===================================================================================================
 
 \section{Structure of coeffect systems}
 
@@ -211,7 +224,20 @@ We note that an environment $\Gamma$ containing $n$ uniquely named, typed variab
 but we continue to write `$,$' for the product, so $\Gamma_1, x\!:\!\tau, \Gamma_2$ should 
 be seen as $\Gamma_1 \times \langle x\!:\!\tau\rangle \times \Gamma_2$.
 
-%===================================================================================================
+
+
+
+% ===================================================================================================
+%	                            
+% 	 #####   ##            #    
+% 	 #        #            #    
+% 	 #        #     ###   ####  
+% 	 ####     #        #   #    
+% 	 #        #     ####   #    
+% 	 #        #    #   #   #  # 
+% 	 #       ###    ####    ##  
+%	                            
+% ===================================================================================================
 
 \section{Flat coeffect systems}
 \label{sec:applications-flat}
@@ -463,8 +489,8 @@ $4$ is a more precise typing modelling the same situation.
 {\small Where $\uplus$ and $\restr{f}{\aclrd{r}}$ are auxiliary definitions:}
 \begin{equation*}
 \begin{array}{rcl}
-\restr{f}{\aclrd{r}} &=& \{ (p,v) \;|\; (p,v) \in f, \;p \in \aclrd{r} \}\\[-0.25em]
-f \uplus g &=& \restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g 
+ \restr{f}{\aclrd{r}} &=& \{ (p,v) \;|\; (p,v) \in f, \;p \in \aclrd{r} \}\\[-0.25em]
+ f \uplus g &=& \restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g 
 \end{array}
 \end{equation*}
 
@@ -1603,9 +1629,23 @@ operations on coeffect annotations is an interesting extension which we discuss 
 The extension also lets us capture systems with effect-style lambda abstraction such as safe
 locking.
 
+
+
+
+% ==================================================================================================
+%	                                                                      
+% 	  ###    #                           #                           ##   
+% 	 #   #   #                           #                            #   
+% 	 #      ####   # ##   #   #   ###   ####   #   #  # ##    ###     #   
+% 	  ###    #     ##  #  #   #  #   #   #     #   #  ##  #      #    #   
+% 	     #   #     #      #   #  #       #     #   #  #       ####    #   
+% 	 #   #   #  #  #      #  ##  #   #   #  #  #  ##  #      #   #    #   
+% 	  ###     ##   #       ## #   ###     ##    ## #  #       ####   ###  
+%	                                                                      
 % ==================================================================================================
 
 \section{Structural coeffect systems}
+\label{sec:applications-structural}
 
 In structural coeffect systems, the additional information are associated with individual variables.
 This is very often information about how the variables are used, or, in which contexts they are 

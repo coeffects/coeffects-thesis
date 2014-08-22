@@ -27,6 +27,19 @@ is  \emph{less powerful} -- \ie~its generality hides useful properties that we c
 when we consider the systems separately. For this reason, this and the next chapter discusses 
 \emph{flat} and \emph{structural} systems separately.
 
+
+
+
+% ==================================================================================================
+%                                                                                      
+%     ###           #                       #                 #       #                 
+%      #            #                       #                 #                         
+%      #    # ##   ####   # ##    ###    ## #  #   #   ###   ####    ##     ###   # ##  
+%      #    ##  #   #     ##  #  #   #  #  ##  #   #  #   #   #       #    #   #  ##  # 
+%      #    #   #   #     #      #   #  #   #  #   #  #       #       #    #   #  #   # 
+%      #    #   #   #  #  #      #   #  #  ##  #  ##  #   #   #  #    #    #   #  #   # 
+%     ###   #   #    ##   #       ###    ## #   ## #   ###     ##    ###    ###   #   # 
+%                                                                                     
 % ==================================================================================================
 
 \section{Introduction}
@@ -77,7 +90,7 @@ in the structure, as explained in the previous chapter, most importantly in lamb
 
 Wadler and Thiemann famously show a correspondence between effect systems to monads 
 \cite{monads-effects-marriage}, relating effectful functions $\tau_1 \xrightarrow{\sigma} \tau_2$ 
-to monadic computations $M^\sigma \tau_1 \rightarrow \tau_2$. In this chapter, we show a similar
+to monadic computations $\tau_1 \rightarrow M^\sigma \tau_2$. In this chapter, we show a similar
 correspondence between \emph{coeffect systems} and \emph{comonads}. However, due to the asymmetry 
 of $\lambda$-calculus, this is not a simple mechanical dualization.
 
@@ -88,6 +101,19 @@ data-flow) in terms of comonadic functions $C \tau_1 \rightarrow \tau_2$. Our \e
 comonads} annotate the structure with information about the required context, \ie~$C^\sigma \tau_1 \rightarrow \tau_2$.
 This is similar to the recent work on \emph{parameterized monads} by Katsumata \cite{monads-parametric}.
 
+
+
+
+% ==================================================================================================
+%                                                            
+%       ###           ##                   ##                 
+%      #   #           #                    #                 
+%      #       ###     #     ###   #   #    #    #   #   ###  
+%      #          #    #    #   #  #   #    #    #   #  #     
+%      #       ####    #    #      #   #    #    #   #   ###  
+%      #   #  #   #    #    #   #  #  ##    #    #  ##      # 
+%       ###    ####   ###    ###    ## #   ###    ## #  ####  
+%                                                           
 % ==================================================================================================
 
 \section{Flat coeffect calculus}
@@ -355,6 +381,7 @@ as pairs are covered in Section~\ref{sec:flat-exts}.
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Examples of flat coeffects}
+\label{sec:flat-calculus-examples}
 
 The flat coeffect calculus generalizes the flat systems discussed in 
 Section~\ref{sec:applications-flat} of the previous chapter. We can instantiate it to a specific
@@ -518,6 +545,20 @@ an additional axiom, although the above examples provide reasonable basis for re
 that the specialized annotation for let binding is the least possible annotation for the 
 expression $(\lambda x.e_2)~e_1$.
 
+
+
+
+% ==================================================================================================
+%                                              
+%      #####  #                                 
+%        #    #                                 
+%        #    # ##    ###    ###   # ##   #   # 
+%        #    ##  #  #   #  #   #  ##  #  #   # 
+%        #    #   #  #####  #   #  #      #  ## 
+%        #    #   #  #      #   #  #       ## # 
+%        #    #   #   ###    ###   #          # 
+%                                         #   # 
+%                                          ###                                                                         
 % ==================================================================================================
 
 \section{Categorical motivation}
@@ -1194,6 +1235,20 @@ functions that define the semantics. Also, each function defining the semantics 
 operation of the coeffect algebra and so the type system is the most general possible definition
 (within the comonadic framework we use).
 
+
+
+% ==================================================================================================
+%                                                                   
+%       ###                  #                    #       #          
+%      #   #                 #                    #                  
+%      #      #   #  # ##   ####    ###    ###   ####    ##     ###  
+%       ###   #   #  ##  #   #         #  #   #   #       #    #   # 
+%          #  #  ##  #   #   #      ####  #       #       #    #     
+%      #   #   ## #  #   #   #  #  #   #  #   #   #  #    #    #   # 
+%       ###       #  #   #    ##    ####   ###     ##    ###    ###  
+%             #   #                                                  
+%              ###                                                   
+%
 % ==================================================================================================
 
 \section{Equational theory}
@@ -1795,6 +1850,19 @@ This means that \emph{internalized sequencing} provides a basis for operational 
 liveness and implicit parameters, but not for data-flow languages. For other coeffect systems,
 the conditions in Appendix~? have to be re-examined.
 
+
+
+
+% ==================================================================================================
+%
+%      #####          #                            #                        
+%      #              #                                                     
+%      #      #   #  ####    ###   # ##    ###    ##     ###   # ##    ###  
+%      ####    # #    #     #   #  ##  #  #        #    #   #  ##  #  #     
+%      #        #     #     #####  #   #   ###     #    #   #  #   #   ###  
+%      #       # #    #  #  #      #   #      #    #    #   #  #   #      # 
+%      #####  #   #    ##    ###   #   #  ####    ###    ###   #   #  ####  
+%
 % ==================================================================================================
 
 \section{Syntactic properties and extensions}
@@ -2078,23 +2146,94 @@ The above properties follow from the laws of the flat coeffect algebra. In addit
 $\cpar$ operation is symmetric (which is the case for all our examples in this chapter), it 
 also holds that $\ident{swap}~(e_1, e_2) \equiv (e_2, e_1)$.
 
+
+
+
+% ==================================================================================================
+%                                                 
+%      ####           ##            #                # 
+%      #   #           #            #                # 
+%      #   #   ###     #     ###   ####    ###    ## # 
+%      ####   #   #    #        #   #     #   #  #  ## 
+%      # #    #####    #     ####   #     #####  #   # 
+%      #  #   #        #    #   #   #  #  #      #  ## 
+%      #   #   ###    ###    ####    ##    ###    ## # 
+%
 % ==================================================================================================
 
 \section{Related work}
-
-\subsection{What can be monad}
 \label{sec:flat-related-monads}
+
+Most of the related work has been already discussed in Chapter~\ref{ch:pathways} or throughout
+the chapter. In this section, we look in more details at the relationship between coeffects,
+comonads and monads.
+
+\subsection{When coeffect is not a monad}
+Coeffect systems differ from effect systems in three important ways:
+
+\begin{itemize}
+\item Semantically, coeffects capture very different notions of computation. As demonstrated in 
+  Chapter~\ref{ch:pathways}, coeffects track additional contextual properties required by a
+  computation, many of which cannot be captured by a monad (\eg~liveness or data-flow).
+
+\item Syntactically, coeffect calculi use a richer algebraic structure with point-wise composition,
+  sequential composition and context merging $(\cpar, \cseq, \czip)$ while most effect systems
+  only use a single operation for sequential composition (monadic bind).
+
+\item Syntactically, the second difference is in the lambda abstraction (\emph{abs}). In 
+  coeffect systems, the context requirements of the body can be split between declaration-site
+  and call-site, while monadic effect systems delay all effects.
+\end{itemize}
+
+\noindent
+Despite the differences, our implicit parameters example can be also represented by a monad.
+Semantically, the \emph{reader} monad is equivalent to the \emph{product} comonad. Syntactically,
+we use the $\cup$ operation for all three operations of the coeffect algebra. However, the last
+point requires us to extend monadic lambda abstraction.
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{When coeffect is a monad}
+As discussed in \ref{sec:applications-flat-impl} ...
+
+Product comonad
+
+$C_{\cclrd{r}}\tau = \tau \times (\cclrd{r} \rightarrow \sigma)$
+
+Reader monad
+
+$M_{\cclrd{r}}\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau$
+
+\begin{equation*}
+\begin{array}{l}
+ \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2 = \\
+ (\tau_1 \times (\cclrd{r} \rightarrow \sigma)) \rightarrow \tau_2 \\
+ \tau_1 \rightarrow ((\cclrd{r} \rightarrow \sigma) \rightarrow \tau_2) \\
+ \tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2} \\
+\end{array}
+\end{equation*}
 
 The difference between effects and coeffects is mainly in the (\emph{abs}) rule. While the 
 semantic model (monads vs. comonads) is very different, we can consider extending the two to 
 obtain equivalent syntactic rules. To allow splitting of implicit parameters in lambda abstraction, 
 the reader monad needs an operation that eagerly performs some effects of a function: 
-$(\tau_1 \rightarrow \mtyp{r \oplus s}{\tau_2}) \rightarrow \mtyp{r}{(\tau_1 \rightarrow \mtyp{s}{\tau_2})}$.
+
+\begin{equation*}
+(\tau_1 \rightarrow \mtyp{\cclrd{r} \cseq \cclrd{s}}{\tau_2}) \rightarrow 
+  \mtyp{\cclrd{r}}{(\tau_1 \rightarrow \mtyp{\cclrd{s}}{\tau_2})}
+\end{equation*}
+
 To obtain a pure lambda abstraction
 for coeffects, we need to restrict the $\cpar_{r, s}$ 
 operation of indexed comonads, so that the first parameter is annotated with $\cunit$ (meaning
 no effects): $\C^{\cunit} A \times \C^r B \rightarrow \C^{r}(A \times B)$.
 
+\begin{equation*}
+\begin{array}{rcl}
+ \sem{\lambda x.e} &=& \ident{unit}~(\lambda x. \sem{e}) \\
+ \sem{\lambda x.e} &=& \ident{unit}~(\lambda x. \sem{e}) \\
+\end{array}
+\end{equation*}
 % ==================================================================================================
 
 \section{Conclusions}

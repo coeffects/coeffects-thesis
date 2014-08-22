@@ -53,6 +53,13 @@
 \newcommand{\cleq}{ \textcolor{cclr}{\leq} }
 \newcommand{\cgeq}{ \textcolor{cclr}{\geq} }
 
+\newcommand{\atimes}{ \textcolor{aclr}{\times} }
+\newcommand{\aseq}{ \textcolor{aclr}{\circledast}} % Should be the same as \cseq 
+
+
+\newcommand{\xtimes}{\hat{\times}}
+
+
 % Ordinary context where colouring is done by hand 
 \newcommand{\coctx}[2]{ #1 \,\text{\scriptsize @}\, {{\text{$#2$}}}  }
 
@@ -61,13 +68,14 @@
 
 \newcommand{\alift}[1]{ \textcolor{aclr}{\langle} #1 \textcolor{aclr}{\rangle}} 
 
-\definecolor{sclr}{rgb}{0.5,0,0.0}
+\definecolor{sclr}{rgb}{0.3,0,0.6}
 \newcommand{\sclrd}[1]{ \textcolor{sclr}{#1} }
 
 \newcommand{\C}{ {\textcolor{cclr}{\mathcal{C}}} }
 \newcommand{\M}{ {\textcolor{cclr}{\mathcal{M}}} }
 
-\newcommand{\slift}[1]{{\sclrd{[}#1\sclrd{]}}}
+\newcommand{\slift}[1]{{\aclrd{\textit{len}(}#1\aclrd{)}}}
+\newcommand{\xlift}[1]{{\textit{len}(#1)}}
 
 \newcommand{\reduce}{\longrightarrow}
 
@@ -161,21 +169,16 @@
 
 % \part{The Showcase} % Second part of the thesis
 
-\include{text/Chapter01}
-\include{text/Chapter02}
-\include{text/Chapter03}
-\include{text/Chapter04}
-%\include{text/Chapter05}
+%\include{text/Chapter01}
+%\include{text/Chapter02}
+%\include{text/Chapter03}
+%\include{text/Chapter04}
+\include{text/Chapter05}
 %\include{text/Chapter06}
 %\include{text/Chapter07}
 %\include{text/Chapter08}
 
-
-aaa?
-
 \include{text/AppendixA} % Appendix A
-
-bbb!
 
 %----------------------------------------------------------------------------------------
 %	THESIS CONTENT - APPENDICES

@@ -1,3 +1,5 @@
+%!TEX root = ../main.tex
+
 \chapter{Unified coeffect language} 
 \label{ch:unified} 
 
@@ -17,7 +19,7 @@
 \newcommand{\m}{\mathsf{m}}
 \newcommand{\n}{\mathsf{n}}
 
-
+\newcommand{\interp}[1]{\sem{#1}}
 \newcommand{\shortar}[4]{\ar@{}[#3]^(.1){}="#1"^(.8){}="#2"\ar_{#4}"#1";"#2"}
 \newcommand{\shortaro}[4]{\ar@{}[#3]^(.1){}="#1"^(.8){}="#2"\ar^{#4}"#1";"#2"}
 \newcommand{\shortarn}[6]{\ar@{}[#3]^(#5){}="#1"^(#6){}="#2"\ar_{#4}"#1";"#2"}
@@ -50,7 +52,6 @@
 
 \newcommand{\amerge}{ \textcolor{aclr}{ \mathbin{\rotatebox[origin=c]{-90}{$\ltimes$}} } }
 \newcommand{\asplit}{ \textcolor{aclr}{ \mathbin{\rotatebox[origin=c]{90}{$\ltimes$}} } }
-\newcommand{\aseq}{ \textcolor{aclr}{\circledast}} % Should be the same as \cseq 
 % Tomas: I prefer \circledast here because it is a circled (lifted) version of \cseq 
 % { \textcolor{aclr}{\bullet}}
 \newcommand{\azero}{ \textcolor{aclr}{\bot} }
@@ -639,7 +640,6 @@ but that would require treating $\amerge$ as a partial function.
 
 \section{Equational theory}
 \label{sec:syntax}
-\newcommand{\reduce}{\leadsto}
 
 Each of the concrete coeffect systems discussed in this paper has a different notion of 
 context-dependence, much like various effectful languages have different notions of effects
