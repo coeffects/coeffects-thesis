@@ -1018,7 +1018,7 @@ of a flat indexed comonad are defined as follows:
 \ident{split}_{\ident{L}, \ident{L}}~(a, b) &\narrow{=}& (a, b)\\
 \ident{split}_{\ident{L}, \ident{D}}~(a, b) &\narrow{=}& (a, ())\\
 \ident{split}_{\ident{D}, \ident{L}}~(a, b) &\narrow{=}& ((), b)\\
-\ident{split}_{\ident{D}, \ident{D}}~() &\narrow{=}& (a, b)\\
+\ident{split}_{\ident{D}, \ident{D}}~() &\narrow{=}& ((), ()))\\
 \end{array}
 \quad
 \begin{array}{rcl}
@@ -1083,7 +1083,7 @@ are defined as follows:
 \ident{counit}_{0}\langle a_0 \rangle = a_0
 \\[0.45em]
 \ident{cobind}_{m, n}~f \langle a_0, \ldots a_{m+n} \rangle = \\[-0.25em]
-\quad \langle f \langle a_0, \ldots, a_m \rangle, \ldots \langle a_{n}, \ldots, a_{m+n} \rangle \rangle
+\quad \langle f \langle a_0, \ldots, a_m \rangle, \ldots, f \langle a_{n}, \ldots, a_{m+n} \rangle \rangle
 \\[0.45em]
 \ident{merge}_{m, n} (\langle a_0, \ldots, a_m \rangle, \langle b_0, \ldots, b_n\rangle) = \\[-0.25em]
 \quad \langle (a_0, b_0), \ldots, (a_{\mathit{min}(m,n)}, b_{\mathit{min}(m,n)}) \rangle
@@ -1091,7 +1091,7 @@ are defined as follows:
 \ident{split}_{m, n} \langle (a_0, b_0), \ldots, (a_{\mathit{max}(m,n)}, b_{\mathit{max}(m,n)}) \rangle = \\[-0.25em]
 \quad (\langle a_0, \ldots, a_m \rangle, \langle b_0, \ldots, b_n\rangle)
 \\[0.45em]
-\ident{lift}_{n', n} \langle a_0, \ldots, a_n' \rangle = \qquad(\hspace{-0.95em}\textnormal{\footnotesize when}~n\leq n') \\[-0.25em]
+\ident{lift}_{n', n} \langle a_0, \ldots, a_{n'} \rangle = \qquad(\hspace{-0.95em}\textnormal{\footnotesize when}~n\leq n') \\[-0.25em]
 \quad \langle a_0, \ldots, a_n \rangle
 \end{array}
 \begin{array}{l}
@@ -1137,7 +1137,6 @@ free variables of the context and the arguments of functions:
 
 % --------------------------------------------------------------------------------------------------
 
-\newcommand{\ctx}{\textit{ctx}}
 \begin{figure*}[t]
 
 \begin{equation*}

@@ -446,7 +446,7 @@ algebra. This is the case, for example, for the bounded variable use.
 
 \begin{example}[Structural liveness]
 The structural coeffect algebra for liveness is formed by
-$(L, \sqcap, \sqcup, \ident{L}, \ident{D}, \sqsubseteq)$, where $L=\{ \ident{L}, \ident{D} \}$ is 
+$(\mathcal{L}, \sqcap, \sqcup, \ident{L}, \ident{D}, \sqsubseteq)$, where $\mathcal{L}=\{ \ident{L}, \ident{D} \}$ is 
 the same two-point lattice as in the flat version, that is $\ident{D} \sqsubseteq \ident{L}$
 with a join $\sqcup$ and meet $\sqcap$. 
 \end{example}
@@ -672,20 +672,7 @@ and perform sub-coeffecting separately on individual variables.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Examples}
-~
-\newpage
-~
-
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Semantics of structural caluculus}
-
-\newcommand{\ctx}{\textit{ctx}}
-
-\begin{figure*}[t]
-
+\begin{figure*}[!t]
 \begin{equation*}
 \begin{array}{ll}
  \sem{\coctx{x\!:\!\tau}{\alift{\cunit}} \vdash x : \tau }~\ctx =
@@ -714,19 +701,21 @@ and perform sub-coeffecting separately on individual variables.
 \sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}~\ctx = & (\emph{sub})\\
   \hspace{2em}
   \sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s'}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}~
-  (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}}, \aclrd{\textbf{q}}}~\ident{lift}_{\cclrd{s}, \cclrd{s'}}~\ctx)
+  (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}}, \alift{\cclrd{s'}}, \aclrd{\textbf{q}}}~\ident{lift}_{\cclrd{s}, \cclrd{s'}}~\ctx)
 \\[0.5em]
 \sem{\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} 
-        \atimes \alift{\cclrd{t},\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}~\ctx = & (\emph{exch})\\
-  \hspace{2em}
-  \sem{\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}~
-  (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{t},\cclrd{s}}, \aclrd{\textbf{q}}}~\ident{swap}_{\cclrd{t},\cclrd{s}}~\ctx)
+        \atimes \alift{\cclrd{t},\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}~\ctx = & (\emph{exch})\\[-0.25em]
+  \hspace{2em}  \sem{\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}
+     {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\\[-0.25em]
+  \hspace{4em}  (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{t},\cclrd{s}}, 
+     \alift{\cclrd{s},\cclrd{t}}, \aclrd{\textbf{q}}}~\ident{swap}_{\cclrd{t},\cclrd{s}}~\ctx)
 \\[0.5em]
 \sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} 
-        \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}~\ctx = & (\emph{contr})\\
-  \hspace{2em}
-  \sem{\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}~
-  (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}\,\cpar\,\cclrd{t}}, \aclrd{\textbf{q}}}~\ident{dup}_{\cclrd{s}, \cclrd{t}}~\ctx)
+        \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}~\ctx = & (\emph{contr})\\[-0.25em]
+  \hspace{2em}  \sem{\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}
+      {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\\[-0.25em]
+  \hspace{4em}  (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}\,\cpar\,\cclrd{t}}, 
+      \alift{\cclrd{s},\cclrd{t}}, \aclrd{\textbf{q}}}~\ident{dup}_{\cclrd{s}, \cclrd{t}}~\ctx)
 \end{array}
 \end{equation*}
 \\[0.5em]
@@ -751,318 +740,357 @@ and perform sub-coeffecting separately on individual variables.
         (\ctx_1, \ident{merge}_{\aclrd{\textbf{s'}}, \aclrd{\textbf{t}}}~(f~\ctx_2, \ctx_3))
 \end{array}
 \end{equation*}
-
 \caption{Categorical semantics of the structural coeffect calculus}
 \label{fig:struct-semantics}
 \end{figure*}
 
-~
-\newpage
+% --------------------------------------------------------------------------------------------------
 
-- variable access gets single-variable context and so it just projects the value
-- application does not duplicate before splitting - it splits directly (to get two sub-contexts)
-- abs is pretty much the same
-- weakening just drops a value with ``ign'' annotation - we write this using pseuod-pattern matching, but it could be special operation in the category
-- sub, exchange and contraction are quite similar - they extract and then merge
-~ 
-\newpage
+\subsection{Semantics of structural caluculus}
 
+The concrete semantics for liveness and bounded variable use shown in 
+Sections~\ref{sec:applications-struct-live} and \ref{sec:applications-struct-bll}
+suggests that semantics of structural coeffect calculi tend to be more complex 
+than semantics of flat coeffect calculi. The complexity comes from the fact
+that we need a more expressive representation of the variable context -- \eg~a vector
+of optional values -- and that the structural system needs to pass separate variable contexts
+to the sub-expressions.
 
+The latter aspect is fully captured by the semantics shown in this section. The
+earlier point is left to the concrete notion of structural coeffect. Our model still gives
+us the flexibility of defining the concrete representation of variable vectors. We explore
+a number of examples in Section~\ref{sec:struct-semantics-examples} and start by looking
+at the unified categorical semantics defined in terms of \emph{structural indexed comonads}.
 
-
-
-
-
-\newcommand{\ctimes}{ \hat{\times} }
-\newcommand{\cdupl}[0]{ \Delta } %{ \Upsilon }
-
-\newcommand{\csprd}[0]{ \times }
-\newcommand{\csvop}[0]{ \vee }
-\newcommand{\cmerge}[0]{ \cpar }
-\newcommand{\csplit}[0]{ \czip }
-
-% alculus names and rule names
-\newcommand{\clflt}{$\lambda_{\textnormal{\sffamily Cf}}$}
-\newcommand{\clstr}{$\lambda_{\textnormal{\sffamily Cs}}$}
-
-\newcommand{\ruleft}[1]{\textsf{\clflt\small{-T#1}}}
-\newcommand{\rulefs}[1]{\textsf{\clflt\small{-S#1}}}
-\newcommand{\rulest}[1]{\textsf{\clstr\small{-T#1}}}
-\newcommand{\ruless}[1]{\textsf{\clstr\small{-S#1}}}
-\newcommand{\rulessc}[1]{\textsf{\clstr\small{-SC#1}}}
-
-\newcommand{\cobind}[1]{{#1}^\dagger}
-\newcommand{\obj}[0]{obj}
-\newcommand{\ccat}[0]{C}
-
-\begin{figure*}[t]
-\newcommand{\uu}[1]{\overline{#1}}
+\paragraph{Contexts and functions.}
+In the structural coeffect calculus, expressions in context are interpreted as functions taking
+a vector (represented using $-\xtimes-$) wrapped in a structure indexed with a vector of annotations
+such as $\ctyp{\aclrd{\textbf{r}}}$. Functions take only a single variable as an input and so the
+structure is annotated with a scalar, such as $\ctyp{\cclrd{r}}$, which we treat as being equivalent
+to a singleton vector annotation $\ctyp{\alift{\cclrd{r}}}$:
+%
 \begin{equation*}
-\sem{\ctyp{r_1 \csprd \ldots \csprd r_n}{(x_1 : \tau_1 \times \ldots \times x_n : \tau_n)} \vdash e : \tau} : 
-  \ctyp{r_1 \csprd \ldots \csprd r_n}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau
-\end{equation*}
-\begin{equation*}
-\begin{array}{rcll}
-\sem{\ctyp{0}{\Gamma} \vdash x_i : \tau_i} &=&
-    \epsilon_0                                                                   &\quad$\ruless{var}$
-\\[0.32em]
-\sem{\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2} &=& 
-    \Lambda (\sem{\ctyp{r \csprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2} \circ \cmerge_{r, s})    &\quad$\ruless{fun}$
-\\[0.32em]
-\sem{\ctyp{s \csprd (r \csvop t)}{(\Gamma_1, \Gamma_2)} \vdash e_1~e_2 : \tau} &=& 
-    (\lambda (\gamma_1, \gamma_2) \rightarrow
-    \sem{\ctyp{s}{\Gamma_1} \vdash e_1 : \ctyp{r}{\tau_1} \rightarrow \tau_2}~\gamma_1~
-    (\cobind{\sem{\ctyp{t}{\Gamma_2}\vdash e_2 : \tau_1}}{t,r}~\gamma_2)) \circ \csplit_{s,(r \vee t)}  &\quad$\ruless{app}$
-\\[0.32em]
-\sem{\ctyp{r'}{\Gamma'} \vdash e : \tau} &=&
-    \sem{\ctyp{r}{\Gamma} \vdash e : \tau} \circ \sem{\ctxtrans{\ctyp{r'}{\Gamma'}}{\ctyp{r}{\Gamma}}}       &\quad$\ruless{ctx}$
+\begin{array}{rcl}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau} 
+  &:& \ctyp{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} }{(\tau_1 \xtimes \ldots \xtimes \tau_n)} \rightarrow \tau\\
+\sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} &=& \ctyp{\alift{\cclrd{r}}}{\tau_1} \rightarrow \tau_2
 \end{array}
 \end{equation*}
+%
+Note that the instances of flat indexed comonad ignored the fact that the variable 
+context wrapped in the data structure is a product. This is not generally the case for the 
+structural indexed comonads -- the definitions shown in Section~\ref{sec:struct-semantics-examples}
+are given specifically for $\ctyp{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} }{(\tau_1 \xtimes \ldots \xtimes \tau_n)}$
+rather than more generally for $\ctyp{\aclrd{\textbf{r}}}{\alpha}$. The need for examining the structure
+of the variable context is another reason for using $-\xtimes-$ when interpreting expressions in contexts.
 
-\begin{equation*}
-\begin{array}{rclll}
-\sem{\ctxtrans{\ctyp{r'\csprd s}{(\Gamma_1', \Gamma_2)}}{\ctyp{r \csprd s}{(\Gamma_1, \Gamma_2)}}}
-&=& \cmerge_{r, s} \circ (\sem{\ctxtrans{\ctyp{r'}{\Gamma_1'}}{\ctyp{r}{\Gamma_1}}} \times \ident{id})~\circ \csplit_{r', s}\quad&\quad\quad\quad& % spaces to align
-\textnormal{\rulessc{nest}}
-\\[0.8em]
-\sem{\ctxtrans{\ctyp{r\csprd s}{(\Gamma_1, \Gamma_2)} }{ \ctyp{s\csprd r}{(\Gamma_2, \Gamma_1)}}}
-&=& \cmerge_{s, r} \circ \ident{swap} \circ \csplit_{r, s}&&
-\textnormal{\rulessc{exch}}
-\\[0.8em]
-\sem{\ctxtrans{\ctyp{r \csprd 1}{(\Gamma, ())}}{\ctyp{r}{\Gamma}}}
-&=&\ident{fst} \circ \csplit_{r, 1}&&
-\textnormal{\rulessc{empty}}
-\\[0.8em]
-\sem{\ctxtrans{ \ctyp{r\csprd 0}{(\Gamma, x:\tau)} }{ \ctyp{r}{\Gamma}}}
-&=&\ident{fst} \circ \csplit_{r, 0}&&
-\textnormal{\rulessc{weak}}
-\\[0.8em]
-\sem{\ctxtrans{\ctyp{r \csvop s}{(x:\tau)}}{
-    \ctyp{r \csprd s}{(x:\tau, x:\tau)}}}
-&=&\cmerge_{r, s} \circ \cdupl_{r, s}&&
-\textnormal{\rulessc{contr}}
-\\[0.8em]
-\sem{\ctxtrans{\ctyp{r\csprd (s\csprd t)}{(\Gamma_1, (\Gamma_2, \Gamma_3))}}{
-    \ctyp{(r\csprd s)\csprd t}{((\Gamma_1, \Gamma_2), \Gamma_3)}}}\;
-&=& \cmerge_{r \csprd s, t} \circ (\cmerge_{r, s} \times \ident{id}) \circ \ident{assoc}_1 \circ
-        (\ident{id} \times \csplit_{s, t}) \circ \csplit_{r, s \csprd t}&&
-\textnormal{\rulessc{assoc}}
-\\[0.8em]
-\sem{\ctxtrans{\ctyp{r}{\Gamma}}{\ctyp{s}{\Gamma}}}
-&=&
-\iota_{r, s}
-&&
-\textnormal{\rulessc{sub}}
-\end{array}
-\end{equation*}
+\paragraph{Expressions.}
+The semantics of strucutural coeffect calculi is shown in Figure~\ref{fig:struct-semantics}. As in
+the previous chapter, the semantics is written in a programming language style using constructs
+such as let-binding rather than using a categorical (point-free) notation. As before, the semantics
+can be written using standard primitives (currying, uncurrying, function pairing etc.).
 
+The following summarizes how the standard syntax-driven rules work, highlighting the differences
+from the flat version:
 
-\caption{Categorical semantics for~\clstr}
-\label{fig:structural-semantics}
-\vspace{-0.5em}
-\end{figure*}
+\begin{itemize}
+\item When accessing a variable (\emph{var}), the context now contains \emph{only} the accessed
+  variable and so the semantics is just $\ident{counit}_{\cunit}$ without a projection.
+  Constants (\emph{const}) are interpreted using a global dictionary $\delta$ as earlier.
 
+\item The semantics of flat function application first duplicated the context so that the same 
+  variables can be passed to both sub-expressions. This is no longer needed -- the 
+  (\emph{app}) rule splits the variables \emph{including} the additional context into two parts.
+  Passing the first context to the semantics of $e_1$ gives us a function
+  $\ctyp{\alift{\cclrd{t}}}{\tau_1} \rightarrow \tau_2$. 
+
+  The argument for the function is obtained by applying $\ident{cobind}_{\cclrd{t}, \aclrd{\textbf{s}}}$ 
+  to the semantics of $e_2$. The resulting function 
+  $\ctyp{\cclrd{t}\aseq\aclrd{\textbf{s}}}{(\ldots \xtimes \ldots \xtimes \ldots)} \rightarrow \ctyp{\alift{\cclrd{t}}}{\tau_1}$
+  is then called with the latter part of the context to obtain argument for the first function.
+
+\item The semantic of function abstraction (\emph{abs}) is syntactically the same as in the 
+  flat version -- the only difference is that we now merge a free-variable context with a 
+  singleton vector, both at the level of variable assignments and at the level of coeffect 
+  annotations.
+\end{itemize}
+
+The semantics for the non-syntax-driven rules performs transformations on the 
+free-variable context. Weakening (\emph{weak}) splits the context and ignores the part corresponding
+to the removed variable. If we were modelling the semantics in a language with a linear 
+type system, this would require an additional operation for ignoring a context annotated with 
+$\aclrd{\czero}$.
+
+The remaining rules perform a transformation anywhere inside the free-variable vector. 
+To simplify writing the semantics, we define a helper operation 
+$\ident{nest}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{s'}}, \aclrd{\textbf{t}}}$
+that splits the variable vector into three parts, transforms the middle part and then 
+merges them, using the newly transformed middle part.
+
+The transformations on the middle part are quite simple. The (\emph{sub}) rule 
+uses $\ident{lift}_{\cclrd{s}, \cclrd{s'}}$ to discard some of the available additional context;
+the (\emph{exch}) rule swaps two single-variable contexts and the (\emph{contr}) rule
+uses the $\ident{dup}_{\cclrd{s}, \cclrd{t}}$ operation to duplicate a varaible while 
+splitting its additional context.
+
+\paragraph{Properties.}
+
+As in the flat calculus, the main reason for defining the categorical semantics in this chapter
+is to provide validation for the design of the calculus. As we show in the next section, the 
+discussed examples (liveness, data-flow, bounded variable reuse) form \emph{structural indexed
+comonads} and so the calculus captures them correctly if the coeffect annotations in the typing
+rules match the indices in the semantics. More formally:
+
+\begin{remark}[Correspondence]
+In all of the typing rules of the structural coeffect system, the context annotations $\aclrd{\textbf{r}}$ 
+and $\cclrd{s}$ of typing judgements $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ and function types 
+$\tau_1 \xrightarrow{\cclrd{s}} \tau_2$  correspond to the indices of mappings $\ctyp{\aclrd{\textbf{r}}}{}$ 
+and $\ctyp{\alift{\cclrd{s}}}{}$ in the corresponding semantic function defined 
+by $\sem{\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}$.
+\end{remark}
+\begin{proof}
+By analysis of the semantic rules in Figure~\ref{fig:struct-semantics}.
+\end{proof}
+
+\noindent
+As in the flat calculus, the primitive operations of the structural indexed comonad are all 
+annotated with different operations provided by the coeffect annotations. This means that the
+semantics uniquely determines the structure of the typing rules of the strucutral coeffect
+calculus. Thanks to the correspondence between the product structure $\atimes$ of the annotations
+and the variable context $\xtimes$, the correspondence property also guarantees that variable
+values are split correctly, as required by the structural nature of the type system.
 
 % --------------------------------------------------------------------------------------------------
 
+\subsection{Examples of structural indexed comonads}
+\label{sec:struct-semantics-examples}
 
-\section{Semantics of structural coeffects}
-\label{sec:structural-semantics}
+The categorical semantics for structural coeffect calculus can be easily instantiated to give
+a semantics of a concrete calculus. In this section, we look at the three examples discussed
+throughout this chapter -- structural liveness and data-flow and bounded variable reuse. 
+Some aspects of the earlier two examples will be similar to flat versions discussed in
+Section~\ref{sec:flat-semantics} -- they are based on the same data structures (option and a 
+list, respectively), but the data structures are composed differently. Generally speaking -- 
+rather than having a data structure over a product of variables, we now have 
+a vector of variables over a specific data structure.
 
-The semantics of structural coeffect calculus \clstr~can be defined similarly to the semantics of
-\clflt. The most notable difference is that the structure of coeffect tag now mirrors the structure
-of the variable context. Thus an expression $\ctyp{r \csprd s}{(\Gamma_1, \Gamma_2)} \vdash e : \tau$ 
-is modelled as a function $\ctyp{r \csprd s}{(\Gamma_1 \ctimes \Gamma_2)} \rightarrow \tau$. 
+The abstract semantics does not specify how vectors of variables should be represented, so this can
+vary in concrete instantiations. In all our examples, we represent a vector of variables as a 
+product written using $\times$. To distinguish between products representing vectors and ordinary
+products (\eg~a product of contexts returned by \ident{split}), we write vectors using 
+$\langle a, \ldots, b \rangle$ rather than using parentheses.
 
-As discussed in \ref{sec:structural-types}, the variable context $\Gamma$ in structural coeffect
-system is not a simple finite product, but instead a binary tree. To model this, we do not use
-ordinary products in the domain of the semantic function, but instead use a special 
-constructor $\ctimes$. This way, we can guarantee that the variable structure corresponds to 
-the tag structure. 
+\paragraph{Data-flow.}
+It is interesting to note that the semantics of data-flow and bounded variable both keep
+a product of multiple values for each variable, so they are both built around an \emph{indexed list}
+data structure. However, their \ident{cobind} and \ident{dup} operations work differently. We start
+by looking at the structure modelling data-flow computations (variables written in bold face such
+as $\mathbf{a}_1$ range over vectors while $a_1$ ranges over individual values).
 
-\subsection{Structural tagged comonads}
-\label{sec:structural-tagged-comonads}
-
-To model composition of functions, we reuse the definition of \emph{tagged comonads} from 
-Section~\ref{sec:tagged-comonads} without any change. This means that composing morphisms
-$T^r \tau_1 \rightarrow \tau_2$ with $T^s \tau_2 \rightarrow \tau_3$ still gives us a morphism
-$T^{r \csvop s} \tau_1 \rightarrow \tau_3$ and we use the $\csvop$ operation to combine the 
-context-requirements.
-
-However, functions that do not exist in context have only a single input variable (with a 
-single corresponding tag). To model complex variable contexts, we need two additional
-operations that allow manipulation with the variable context. Similarly to the model of \clflt,
-we also require operations that model duplication and sub-coeffecting:
-
-\begin{definition}[Structural tagged comonad]
-Given a structural coeffect tag structure $(S, \csprd, \csvop, 0, 1)$ a \emph{structural tagged comonad} is a 
-tagged comonad over $(S, \csvop, 0)$ comprising of $T^r$, $\epsilon_0$ and
-$\cobind{(-)}{r, s}$ together with a mapping $- \ctimes -$ from a pair of objects 
-$\obj{\ccat} \times \obj{\ccat}$ to an object $\obj{\ccat}$ and families of mappings:
+\begin{example}[Indexed list for data-flow]
+The indexed list model of data-flow computations is defined over a structural coeffect
+algebra $(\mathbb{N}, +, \mathit{max}, 0, 0, \leq)$. The data type $\ctyp{\langle n_1, \ldots, n_k\rangle}$
+is indexed by required number of past variables for each individual variable. It is defined
+over a vector of variables $\alpha_1 \xtimes \ldots \xtimes \alpha_k$ and it keeps a product
+containing a current value followed by $n_i$ past values:
 %
 \begin{equation*}
-\begin{array}{rcl}
-\cmerge_{r, s} &:& T^r A \times T^s B \rightarrow T^{(r \csprd s)}(A \ctimes B)\\
-\csplit_{r, s} &:& T^{(r \csprd s)}(A \ctimes B) \rightarrow T^r A \times T^s N\\
-\end{array}
+\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \xtimes \ldots \xtimes \alpha_k)} = 
+\underbrace{(\alpha_1 \times \ldots \times \alpha_1)}_{(n_1+1)-\textnormal{times}} \times \ldots \times
+  \underbrace{(\alpha_k \times \ldots \times \alpha_k)}_{(n_k+1)-\textnormal{times}}
 \end{equation*}
 %
-% Delta is still defineable
-% ?? \cdupl_{r, s}  &:& T^{(r \csvop s)}A \rightarrow T^r A \times T^s A\\
-%
-And with a family of mappings $\iota_{r, s} : T^r A \rightarrow T^s A$ for all $r, s \in S$ such that $r \vee s = r$.
-%
-%  TODO: laws?
-%
-\end{definition}
-
-The family of mappings $\iota_{r, s}$ is the same as for \emph{flat} coeffects
-and it can still be used to define a family of mappings that represents \emph{duplicating}
-of variables while splitting the additional coeffect tags:
+The mappings that define the structural indexed comonad include the \ident{split} and \ident{merge}
+operations that are shared by the other two examples (discussed below):
 %
 \begin{equation*}
 \begin{array}{l}
-\cdupl_{r, s} : T^{(r \vee s)}A \rightarrow T^r A \times T^s A\\
-\cdupl_{r, s}(\gamma) = (\iota_{(r\vee s), r}~\gamma, \iota_{(r\vee s), s}~\gamma)
+\ident{merge}_{\langle m_1, \ldots, m_k \rangle, \langle n_1, \ldots n_l \rangle} 
+  (\langle \mathbf{a_1}, \ldots, \mathbf{a_k} \rangle, \langle \mathbf{b_1}, \ldots, \mathbf{b_l}\rangle) = \\[-0.25em]
+\quad \langle \mathbf{a_1}, \ldots, \mathbf{a_k}, \mathbf{b_1}, \ldots, \mathbf{b_l}\rangle
+\\[0.45em]
+\ident{split}_{\langle m_1, \ldots, m_k \rangle, \langle n_1, \ldots n_l \rangle} 
+   \langle \mathbf{a_1}, \ldots, \mathbf{a_k}, \mathbf{b_1}, \ldots, \mathbf{b_l}\rangle = \\[-0.25em]
+\quad (\langle \mathbf{a_1}, \ldots, \mathbf{a_k} \rangle, \langle \mathbf{b_1}, \ldots, \mathbf{b_l}\rangle)
 \end{array}
 \end{equation*}
 %
-The type of the $\cmerge_{r,s}$ operation looks similar to the one used for \emph{flat} coeffects,
-but with two differences. Firstly, it combines tags using $\csprd$ instead of $\vee$, 
-which corresponds to the fact that the variable context now consists of two parts (a tree node).
-Secondly, to model the tree node, the resulting context is modelled as $A \ctimes B$
-(instead of $A \times B$ as previously).
-
-To model structural coeffects, we also need $\csplit_{r, s}$, which serves as the dual
-of $\cmerge_{r, s}$. It represents \emph{splitting} of context containing multiple 
-variables. The operation was not needed for \clflt, because there \emph{splitting} could
-be defined in terms of \emph{duplication} provided by $\cdupl_{r, s}$. For \clstr,
-the situation is different. The $\csplit_{r, s}$ operation takes a context annotated
-with $r \csprd s$ that carries $A \ctimes B$.
-
-Examples of \emph{structural tagged comonads} are shown in Section~\ref{sec:structural-tainting}.
-Before looking at them, we finish our discussion of categorical semantics.
-
-\paragraph{Categorical notes.}
-The mapping $T^r$ can be extended to an endo-functor $\hat{T}^r$ in the same way as in
-Section~\ref{sec:tagged-comonads}. However, we still cannot freely manipulate the 
-variables in the context. Given a context modelled as $T^{r \csprd s}(A \ctimes B)$,
-we can lift a morphism $f$ to $\hat{T}^{r \csprd s}(f)$, but we cannot manipulate the
-variables, because $A \ctimes B$ is not a product and does not have projections $\pi_i$.
-
-This also explains why $\csplit$ cannot be defined in terms of $\cdupl$. Even if we 
-could apply $\cdupl_{r, s}$ on the input (if the tag $r \csprd s$ coincided
-with tag $r \csvop s$) we would still not be able to obtain $T^r A$ from $T^r (A \ctimes B)$.
-
-This restriction is intentional -- at the semantic level, it prevents manipulations
-with the context that would break the correspondence between tag structure and the
-product structure.
-
-\subsection{Categorical semantics}
-The categorical semantics of \clstr is shown in Figure~\ref{fig:structural-semantics}.
-It uses the \emph{structural tagged comonad} structure introduced in the previous section,
-together with the helper operation $\cdupl_{r, s}$ and the following simple helper 
-operations:
+The remaining mappings that are required by structural indexed comonad and capture the
+essence of data-flow computations are defined as:
+%
 \begin{equation*}
-\begin{array}{rcl}
-\ident{assoc} &=& \lambda (\delta_r, (\delta_s, \delta_t)) \rightarrow ((\delta_r, \delta_s), \delta_t)\\
-\ident{swap}  &=& \lambda (\gamma_1, \gamma_2) \rightarrow (\gamma_2, \gamma_1)\\
-f \times g &=& \lambda (x, y) \rightarrow (f~x, g~y)
+\begin{array}{l}
+\ident{counit}_{0}~\langle \langle a_0 \rangle \rangle = a_0
+\\[0.45em]
+\ident{cobind}_{m, \langle n_1, \ldots, n_k \rangle}~f~
+  \langle \langle a_{1,0}, \ldots a_{1,m+{n_1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,m+{n_k}} \rangle \rangle = \\[-0.25em]
+\quad \langle\langle\; f \langle \langle a_{1,0}, \ldots a_{1,{n_1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,{n_k}} \rangle \rangle, ~\ldots~, \\[-0.25em]
+\quad ~~~\; f \langle \langle a_{1,m}, \ldots a_{1,m+{n_1}} \rangle, \ldots, \langle a_{k,m}, \ldots a_{k,m+{n_k}} \rangle \rangle~\; \rangle\rangle
+\\[0.45em]
+\ident{dup}_{m, n} \langle \langle a_1, \ldots, a_{\mathit{max}(m,n)} \rangle \rangle =
+   \langle \langle a_1, \ldots, a_m \rangle, \langle a_1, \ldots, a_n \rangle \rangle
+\\[0.45em]
+\ident{lift}_{k', k} \langle\langle a_0, \ldots, a_{k'} \rangle\rangle = 
+  \langle\langle a_0, \ldots, a_k \rangle\rangle \qquad\qquad(\hspace{-0.95em}\textnormal{\footnotesize when}~k\leq k')
 \end{array}
 \end{equation*}
+\end{example}
 
-When compared with the semantics of \clflt (Figure~\ref{fig:flat-semantics}), there is a number of 
-notable differences. Firstly, the rule \ruless{var} is now interpreted as $\epsilon_0$ without 
-the need for projection $\pi_i$. When accessing a variable, the context contains only the accessed
-variable. The \ruless{fun} rule has the same structure -- the only difference is that we use the
-$\csprd$ operator for combining context tags instead of $\vee$ (which is a result of the change of
-type signature in $\cmerge_{r, s}$).
+The definition of the indexed list data structure relies on the fact that the number of annotations
+corresponds to the number of variables combined using $-\xtimes-$. It then creates a vector of lists
+containing $n_i+1$ values for $i$-\textit{th} variable (the annotation represents the number of 
+required \emph{past} values so one more value is required).
 
-The rule \ruless{app} now uses the operation $\csplit_{s, (r \csvop t)}$ instead of $\cdupl_{s, (r \csvop t)}$,
-which means that it splits the context instead of duplicating it. This makes the system more 
-structural -- the expressions use disjunctive parts of the context -- and also explains why the
-composed coeffect tag is $s \csprd (r \csvop t)$.
+The \ident{split} and \ident{merge} operations are defined separately, because they are not specific
+to the example. They operate on the top-level vectors of variables (without looking at the 
+representation of the variable). This means that we can re-use the same definitions for the following
+two examples (with the only difference that $\mathbf{a_i}, \mathbf{b_i}$ will represent options
+rather than lists).
 
-The only rule from \clflt~that was not syntax-directed (\rulefs{sub}) is now generalized to a number
-of non-syntax-directed rules \rulessc{} that perform various manipulations with the context. The semantics
-of $\sem{ \ctxtrans{\ctyp{r_1}{\Gamma_1}}{\ctyp{r_2}{\Gamma_2}} }$ is a function that, when given a context
-$\ctyp{r_1}{\Gamma_1}$ produces a new context $\ctyp{r_2}{\Gamma_2}$. The semantics in \ruless{ctx} then 
-takes a context, converts it to a new context which is compatible with the original expression $e$.
-The context manipulation rules work as follows:
+The mappings that explain how data-flow computations work are \ident{cobind} (representing sequential
+composition) and \ident{dup} (representing context sharing or parallel composition). In \ident{cobind},
+we get $k$ vectors corresponding to $k$ variables, each with $m+n_i$ values. The operation calls 
+$f$ $m$-times to obtain $m$ past values required as the result of type $\ctyp{\langle m \rangle} \beta$.
 
-\begin{itemize}
-\item The \rulessc{nest} and \rulessc{exch} rules use $\csplit_{r, s}$ to split the context into a product
-  of contexts, then perform some operation with the contexts -- transform one and swap them, respectively.
-  Finally, they re-construct a single context using $\cmerge_{r, s}$.
+The \ident{dup} operation needs to produce a two-varaible context containing $m$ and $n$ values,
+respectively, of the input variable. The input provides $\mathit{max}(m, n)$ values, so the definition
+is simply a matter of restriction. Finally, \ident{counit} extracts the (only) value of the (only) variable
+and \ident{lift} drops additional past values that are not required.
 
-\item The \rulessc{empty} and \rulessc{weak} rules have the same semantics. They both split the context
-  and discard one part (containing either an unused variable or an empty context).
+\paragraph{Bounded reuse.}
+As mentioned earlier, the semantics of calculus for bounded reuse is also based on the indexed list 
+structure. Rather than representing possibly different past values that can be shared (\emph{c.f.}~\ident{dup}), 
+the list now represents multiple copies of the same value that cannot be shared.
 
-\item If we interpreted \rulessc{contr} by applying functor $T^{r\csvop s}$ to a function that duplicates
-  a variable, the resulting context would be $\ctyp{r \csvop s}(x:\tau, x:\tau)$, which would break the
-  correspondence between coeffect tag and context variable structure. However, that interpretation would be
-  incorrect, because we use $\ctimes$ instead of normal product for variable contexts. As a result, the
-  rule has to be interpreted as a composition of $\cdupl_{r, s}$ and $\cmerge_{r, s}$, which also turns
-  a tag $r \csvop s$ into $r \csprd s$.
-
-\item The \rulessc{assoc} rule is similar to \rulessc{exch} in the sense that it de-constructs the context,
-  manipulates it (using \ident{assoc}) and then re-constructs it.
-
-\item Finally, the \rulessc{sub} rule interprets sub-coeffecting on the context associated with a single
-  variable using the primitive natural transformation $\iota_{r, s}$.
-\end{itemize}
-
-\paragraph{Alternative: Separate variables.} As an alternative, we could model an expression by
-attaching the context separately to individual variables. This an expression
-$\ctyp{r \csprd s}{(\Gamma_1, \Gamma_2)} \vdash e : \tau$ would be modelled as 
-$\ctyp{r}{\Gamma_1} \times \ctyp{s}{\Gamma_2} \rightarrow \tau$. However, this 
-approach largely complicates the definition of application (where tag of all 
-variables in a context is affected). Moreover, it makes it impossible to express
-\clflt~in terms of \clstr~as discussed in Section~\ref{sec:generalization}.
-
-\paragraph{Alternative: Without sub-coeffecting.} The semantics presented above uses the natural
-transformation $\iota_{r, s}$, which represents sub-coeffecting, to define the duplication
-operation $\cdupl_{r, s}$. However, structural coeffect calculus \clstr does not require 
-sub-coeffecting in the same way as flat \clflt (where it is required for subject reduction).
-
-This means that it is possible to define a variant of the system that does not have the \rulest{sub} 
-typing rule. Then the semantics does not need the $\iota_{r, s}$ transformation, but instead,
-the following natural transformation has to be provided:
+\begin{example}[Indexed list for bounded reuse]
+The indexed list model of bounded variable reuse is defined over a structural coeffect
+algebra $(\mathbb{N}, \ast, +, 1, 0, \leq)$. The data type $\ctyp{\langle n_1, \ldots, n_k\rangle}$ 
+is a vector containing $n_i$ values of $i$-\textit{th} variable:
 %
 \begin{equation*}
-\cdupl_{r, s} : T^{(r \vee s)}A \rightarrow T^r A \times T^s A
+\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \xtimes \ldots \xtimes \alpha_k)} = 
+\underbrace{(\alpha_1 \times \ldots \times \alpha_1)}_{n_1-\textnormal{times}} \times \ldots \times
+  \underbrace{(\alpha_k \times \ldots \times \alpha_k)}_{n_k-\textnormal{times}}
 \end{equation*}
 %
-This variant of the system could be used to define a system that ensures that all provided 
-context is used and is not over-approximated. This difference is similar to the difference between
-affine type systems (where a variable can be used at most once) and linear type systems 
-(where a variable has to be used exactly once).
+The \ident{merge} and \ident{split} operations are defined as in \emph{indexed list for data-flow}.
+The operations that capture the behaviour of bounded reuse are defined as:
+%
+\begin{equation*}
+\begin{array}{l}
+\ident{counit}_{1}~\langle \langle a_0 \rangle \rangle = a_0
+\\[0.45em]
+\ident{lift}_{k', k} \langle\langle a_0, \ldots, a_{k'} \rangle\rangle = 
+  \langle\langle a_0, \ldots, a_k \rangle\rangle \qquad\qquad(\hspace{-0.95em}\textnormal{\footnotesize when}~k\leq k')
+\\[0.45em]
+\ident{dup}_{m, n} \langle \langle a_1, \ldots, a_{m+n} \rangle \rangle = 
+\quad \langle \langle a_1, \ldots, a_m \rangle, \langle a_{m+1}, \ldots, a_{m+n} \rangle \rangle
+\\[0.45em]
+\ident{cobind}_{m, \langle n_1, \ldots, n_k \rangle}~f~
+  \langle \langle a_{1,0}, \ldots a_{1,m\ast{n_1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,m\ast{n_k}} \rangle \rangle = \\[-0.25em]
+\quad \langle\; f \langle \langle a_{1,0}, \ldots a_{1,{n_1 - 1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,{n_k - 1}} \rangle \rangle, ~\ldots~, \\[-0.25em]
+\quad ~~ f \langle \langle a_{1,(m-1)\ast n_1}, \ldots a_{1,(m-1) \ast n_1} \rangle, \ldots, 
+                   \langle a_{k,m\ast n_k - 1}, \ldots a_{k,m\ast n_k - 1} \rangle \rangle~\; \rangle
+\end{array}
+\end{equation*}
+\end{example}
 
+\noindent
+The \ident{counit} and \ident{lift} operations are defined as previously -- variable access 
+extracts the only value of the only variable and sub-coeffecting allows discarding multiple
+copies of a value that are not needed.
+
+In the bounded variable reuse system, variable sharing is annotated with $+$ (in contrast with
+\textit{max} used in data-flow). The \indent{dup} operation thus splits the $m+n$ available
+values between two vectors of length $m$ and $n$, without \emph{sharing} a value. The 
+\ident{cobind} operation works similarly -- it splits $m\ast n_i$ available values of each
+variable into $m$ vectors containing $n_i$ copies and then calls the $f$ function $m$-times to 
+obtain $m$ resulting values without sharing any input value.
+
+\paragraph{Liveness.}
+In both data-flow and bounded reuse, the data type is defined as a vector of values obtained
+by applying some parameterized data type (indexed list) to types of individual variables. We can
+generalize this pattern and define $\ctyp{\langle l_1, \ldots, l_n \rangle}$ in terms of 
+$D^{l}$ where $D^{l}$ is a simpler indexed data type. For liveness, the definition lets us 
+reuse the mapping used when defining the semantics of flat liveness. However, we cannot fully
+define the semantics of the structural version in terms of the flat version -- the 
+\ident{cobind} operation is different and we need to provide the \ident{dup} operation.
+
+\begin{example}[Structural indexed option]
+Given a structural coeffect algebra formed by $(\{ \ident{L}, \ident{D} \}, \sqcap, \sqcup, \ident{L}, \ident{D}, \sqsubseteq)$
+and the indexed option data type $D^l$, such that $D^{\ident{D}}\alpha = 1$ and $D^{\ident{L}}\alpha=\alpha$,
+the data type for structural indexed option comonad is:
+%
+\begin{equation*}
+\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \xtimes \ldots \xtimes \alpha_k)} = 
+  D^{n_1} \alpha_1 \times \ldots \times D^{n_k} \alpha_k
+\end{equation*}
+%
+The \ident{merge} and \ident{split} operations are defined as earlier. The remaining operations
+model variable liveness as follows:
+%
+\begin{equation*}
+\begin{array}{l}
+\ident{cobind}_{\ident{L}, \langle l_1, \ldots, l_n \rangle}~f~\langle a_1, \ldots, a_n \rangle = \langle f~\langle a_1, \ldots, a_n \rangle \rangle \\[-0.25em]
+\ident{cobind}_{\ident{D}, \langle \ident{D}, \ldots, \ident{D} \rangle}~f~\langle (), \ldots, () \rangle = \langle \ident{D} \rangle
+\\[0.5em]
+\hspace{-0.5em}
+\begin{array}{lll}
+~\\[-0.85em]
+\ident{dup}_{\ident{D}, \ident{D}} \langle () \rangle &\narrow{=}& \langle (), () \rangle \\[-0.25em]
+\ident{dup}_{\ident{L}, \ident{D}} \langle a \rangle &\narrow{=}& \langle a, () \rangle \\[-0.25em]
+\ident{dup}_{\ident{D}, \ident{L}} \langle a \rangle &\narrow{=}& \langle (), a \rangle \\[-0.25em]
+\ident{dup}_{\ident{L}, \ident{L}} \langle a \rangle &\narrow{=}& \langle a, a \rangle 
+\end{array}
+\qquad\quad
+\begin{array}{lll}
+\ident{counit}_{\ident{L}}~\langle a \rangle &\narrow{=}& a
+\\[0.45em]
+\ident{lift}_{\ident{L}, \ident{L}} \langle a \rangle &\narrow{=}& \langle a \rangle \\[-0.25em]
+\ident{lift}_{\ident{L}, \ident{D}} \langle a \rangle &\narrow{=}& \langle () \rangle \\[-0.25em]
+\ident{lift}_{\ident{D}, \ident{D}} \langle () \rangle &\narrow{=}& \langle () \rangle \\[-0.25em]
+\end{array}
+\end{array}
+\end{equation*}
+\end{example}
+
+\noindent
+When the expected result of the \ident{cobind} operation is dead (second case), the operation can
+ignore all inputs and directly return the unit value $()$. Otherwise, it passes the vector of 
+input variables to $f$ as-is -- no matter whether the individual values are live or dead. The
+\ident{L} annotation is a unit with respect to $\cap$ and so the annotations expected by $f$ are
+the same as those required by the result of \ident{cobind}.
+
+The \ident{dup} operation resembles with the flat version of \ident{split} -- this is expected as
+duplication in the flat calculus is performed by first duplicating the variable context (using 
+\ident{map}) and then applying \ident{split}. Here, the duplication returns a pair which may or
+may not contain value, depending on the annotations.
+
+Finally, \ident{counit} extracts a value which is always present as guaranteed by the type
+$\ctyp{\langle \ident{L} \rangle}{\alpha} \rightarrow \alpha$. The lifting operation models 
+sub-coeffecting which may drop an available value (second case) or behaves as identity.
+
+
+% ==================================================================================================
+%                                                                   
+%       ###                  #                    #       #          
+%      #   #                 #                    #                  
+%      #      #   #  # ##   ####    ###    ###   ####    ##     ###  
+%       ###   #   #  ##  #   #         #  #   #   #       #    #   # 
+%          #  #  ##  #   #   #      ####  #       #       #    #     
+%      #   #   ## #  #   #   #  #  #   #  #   #   #  #    #    #   # 
+%       ###       #  #   #    ##    ####   ###     ##    ###    ###  
+%             #   #                                                  
+%              ###                                                   
+%
+% ==================================================================================================
+
+\section{Equational theory}
+\label{sec:struct-syntax}
+
+??
 
 \newpage
-~
-\newpage
-~
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1079,8 +1107,18 @@ affine type systems (where a variable can be used at most once) and linear type 
 %                                      
 % ==================================================================================================
 
+\newcommand{\ctimes}{ \hat{\times} }
+\newcommand{\cdupl}[0]{ \Delta } %{ \Upsilon }
 
-% --------------------------------------------------------------------------------------------------
+\newcommand{\csprd}[0]{ \times }
+\newcommand{\csvop}[0]{ \vee }
+\newcommand{\cmerge}[0]{ \cpar }
+\newcommand{\csplit}[0]{ \czip }
+
+\newcommand{\clflt}{$\lambda_{\textnormal{\sffamily Cf}}$}
+\newcommand{\clstr}{$\lambda_{\textnormal{\sffamily Cs}}$}
+\newcommand{\rulest}[1]{\textsf{\clstr\small{-T#1}}}
+
 
 \subsection{Properties of reductions}
 \label{sec:structural-metatheory}
