@@ -1089,79 +1089,204 @@ sub-coeffecting which may drop an available value (second case) or behaves as id
 \label{sec:struct-syntax}
 
 Similarly to the flat version, each concrete instance of the structural coeffect calculus has a 
-different notion of context. As before, the properties of the flat coeffect algebra guarantee that 
-certain equational properties hold for all instances of the calculus.
+different notion of context and thus a different operational interpretation. As before, the 
+properties of the flat coeffect algebra guarantee that certain equational properties hold for 
+all instances of the calculus. 
 
-\subsection{From flat to structural coeffects}
+We start the discussion by briefly considering the key aspects
+that make the equational theory of flat and structural coeffects different.
 
-The discussion of equational theory for flat calculus in Section~\ref{sec:flat-syntax} considered
-different reductions that can be used as a basis for operational semantics for calculi satisfying
-different additional properties, as none of the techniques works universally. The structural 
-coeffect calculus has more desirable equational properties -- in particular, both $\beta$-reduction
-and $\eta$-expansion can be proved using just the properties of strucutral coeffect algebra. Thus
-this section focuses on these reductions. 
+\subsection{From flat coeffects to structural coeffects}
+\label{sec:struct-syntax-intro}
+
+When discussing equational theory for the flat calculus in Section~\ref{sec:flat-syntax}, we 
+noted that no single technique works universally for all flat coeffect calculi. We considered
+multiple different reductions that can be used as the basis for operational semantics for
+calculi satisfying different additional properties. 
+
+The structural coeffect calculus has more desirable equational properties. In particular, 
+we can prove both $\beta$-reduction and $\eta$-expansion using just the properties of strucutral 
+coeffect algebra. For this reason, we focus on these two reductions in this section.
 Using the terminology of Pfenning and Davies \cite{logic-modal-reconstruction},
-the structural coeffect calculus satisfies both are \emph{local soundness} and \emph{local completeness}. 
+the structural coeffect calculus satisfies both the \emph{local soundness} and 
+the \emph{local completeness} properties.
 
+\paragraph{Substitution for flat coeffects.} 
+The more interesting variant of the substitution lemma for flat coeffects 
+(Lemma~\ref{thm:cbn-substitution-bot}) required all operations of the flat coeffect algebra
+to coincide. This enables the substitution to preserve the type of expressions, because all
+additional requirements arising as the result of the substitution can be associated with the
+declaration context. For example, consider the following example where implicit parameter 
+$\ident{?offset}$ is substituted for the variable $y$:
+%
+\begin{equation*}
+\begin{array}{rclcll}
+ \coctx{y\!:\!\ident{int}}{\cclrd{\emptyset}} &\narrow{\vdash}& \lambda x.y + \ident{?total} &\narrow{:}&
+   \ident{int} \xrightarrow{\cclrd{ \{ \ident{?total} \} }} \ident{int} & \qquad(\textnormal{before}) \\
+\coctx{()}{\cclrd{ \{ \ident{?offset} \} }} &\narrow{\vdash}& \lambda x.\ident{?offset} + \ident{?total} &\narrow{:}&
+  \ident{int} \xrightarrow{\cclrd{ \{ \ident{?total} \} }} \ident{int} & \qquad(\textnormal{after})
+\end{array}  
+\end{equation*}
+%
+The typing judgement obtained in (\emph{after}) preserves the type of the expression
+(function value) from the original typing (\emph{before}). This is possible thanks to the
+non-determinism involved in lambda abstraction -- as all operators of the flat coeffect
+algebra used here are $\cup$, we can place the additional requirement on the outer context.
+Note that this is not the \emph{only} possible typing, but it is \emph{permissible} typing.
 
-% The structural coeffect calculus clstr~associates information with individual variables. This means
-% that when an expression requires certain context, we know from what scope it comes -- the
-% context must be provided by a scope that defines the associated variable, which is either a
-% lambda abstraction or global scope. This distinguishes the structural system from the flat system
-% where context could have been provided by any scope and the lambda rule allowed arbitrary 
-% splitting of context requirements between the two scopes (or declaration and caller site).
+Here, the flat coeffect calculus gives us typing with limited \emph{precision}, but 
+enough \emph{flexibility} to prove the substitution lemma.
 
-\subsection{Holes substitution lemma}
+\paragraph{Substitution for structural coeffects.}
+In contrast, the substitution lemma for structural coeffects can be proven ecause 
+structural coeffect systems provide enough \emph{precision} to identify exactly with 
+which variable should a context requirement be associated.
 
-if
+The following example shows a situation similar to the previous one -- here, we use
+structural data-flow calculus (with the \kvd{prev} construct to obtain previous
+value of an expression) and we substitute $w+z$ for $y$:
+%
+\begin{equation*}
+\begin{array}{rclcll}
+ \coctx{y\!:\!\ident{int}}{ \alift{\cclrd{2}} } 
+  &\narrow{\vdash}& \lambda x.\kvd{prev}~(x + \kvd{prev}~y) &\narrow{:}&
+   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & \quad(\textnormal{before}) \\
+\coctx{w\!:\!\ident{int}, z\!:\!\ident{int}}{\cclrd{2}\cclrd{\ast}\alift{\cclrd{1},\cclrd{1}}} 
+  &\narrow{\vdash}& \lambda x.\kvd{prev}~(x + \kvd{prev}~(w+z))) &\narrow{:}&
+   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & \quad(\textnormal{after}) \\
+\coctx{w\!:\!\ident{int}, z\!:\!\ident{int}}{\alift{\cclrd{2},\cclrd{2}}} 
+  &\narrow{\vdash}& \lambda x.\kvd{prev}~(x + \kvd{prev}~(w+z))) &\narrow{:}&
+   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & \quad(\textnormal{final})
+\end{array}  
+\end{equation*}
+%
+The type of the function does not change, because the structural type system associates
+the annotation $\cclrd{1}$ with the bound variable $x$ and the substitution does not 
+affect how the variable $x$ is used.
+
+The other aspect demonstrated in the example is how the coeffect of the substituted 
+variable affects the free-variable context of the substituted expression. Here, the
+original variable $y$ is annotated with $\cclrd{2}$ and we substitute it for an
+expression $w+z$ with free variables $w,z$ annotated with $\alift{\cclrd{1}, \cclrd{1}}$.
+The substitution applies the operation $\aseq$ (modelling sequential composition) to 
+the annotation of the new context -- in the above example
+$\cclrd{2}\cclrd{\ast}\alift{\cclrd{1}, \cclrd{1}}=\alift{\cclrd{2}, \cclrd{2}}$.
+
+\subsection{Holes and substitution lemma}
+
+As demonstrated in the previous section, reduction (and substitution) in the structural coeffect 
+calculus may need to replace a \emph{single} variable with a \emph{vector} of variables. 
+Furthermore, we may also need to substitute for multiple variables in the variable context.
+
+For example, the expression $\lambda x.x+x$ is type-checked by type-checking $x_1 + x_2$,
+contracting $x_1$ and $x_2$ and then applying lambda abstraction. During the reduction 
+$(\lambda x.x+x)~(y+z)$ we thus need to substitute $y_1+z_1$ for $x_1$ and $y_2+z_2$ for $x_2$.
+This is similar to substitution lemma in other structural variants of $\lambda$-calculus,
+for example in the bunched typing system \cite{substruct-bunched}.
+To express the substitution lemma, we define the notion of a \emph{context with holes}
+
+\begin{definition}[Context with holes]
+A \emph{context with holes} is a context such as $\coctx{x_1\!:\!\tau_1, \ldots, x_k\!:\!\tau_k}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_k}}}$,
+where some of the variable typings $x_i\!:\!\tau_i$ and corresponding coeffects $\cclrd{r_i}$ 
+are replaced by \emph{holes} written as $-$.
 
 \begin{equation*}
-\coctx{\Gamma_s}{\aclrd{\textbf{s}}} \vdash e_s : \tau_s
+~\Delta[\,\coctx{-}{-}\,]_n = \Delta[\,\underbrace{\coctx{-}{-} \,|\, \ldots \,|\, \coctx{-}{-}}_{ n-\textit{times} } \,]
 \end{equation*}
-
-and
-
 \begin{equation*}
-\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{x_1\!:\!\tau_s}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
-  \coctx{x_k\!:\!\tau_s}{\alift{\cclrd{s_k}}}\,] \vdash e_r : \tau_r
-\end{equation*}
-
-then
-
-\begin{equation*}
-\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{\Gamma_s}{\cclrd{s_1}\aseq\,\aclrd{\textbf{r}}} \,|\, \ldots \,|\, 
-  \coctx{\Gamma_s}{\cclrd{s_k}\aseq\,\aclrd{\textbf{r}}}\,] \vdash \subst{\subst{e_r}{x_1}{e_s}\ldots}{x_k}{e_s} : \tau_r
-\end{equation*}
-
-\subsection{Structural coeffect systems}
-\label{prop:structural}
-
-For structural coeffect systems, recall that coeffects are vectors
-with $\czip = \cpar = \cons$ (vector concatenation) and $\czero =
-\langle{}\rangle$ (the empty vector), thus coeffect annotations
-comprise the \emph{free monoid} \ie, lists over the coeffect scalars
-(although we continue using the vector terminology). We first show
-substitution:
-
-\begin{lemma}[Substitution lemma] 
-\label{thm:structural-subst}
-In a structural coeffect calculus with a coeffect scalar structure $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$: 
-\[
-\begin{array}{l}
-\coctx{\Gamma}{\aclrd{S}} \vdash e_s : \sigma  
-\;\;  \wedge  \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{\aclrd{R_1} \cons\; \alift{\cclrd{r}} \cons\; \aclrd{R_2} } \vdash e_r : \tau\\
-\quad \Rightarrow \; \coctx{\Gamma_1,\Gamma,\Gamma_2}{\aclrd{R_1} \cons\; (\cclrd{r} \,\aseq\, \aclrd{S}) \cons\; \aclrd{R_2}} \vdash \subst{e_r}{x}{e_s} : \tau
-\end{array}
-\]
-\vspace{-1.5em}
-\label{lemm:structural-subst}
-\end{lemma}
-\begin{proof}
-By induction over the $e_2$ derivation using the free monoid structure ($\C, \cons, \langle{}\rangle$)
-and coeffect scalar axioms (full proof~\cite{appendix}). %Full proof in the Appendix.
-\end{proof}
+\begin{array}{lcl}
+ \Delta[\,\coctx{-}{-}\,]_n &\narrow{:=}&
+   \coctx{-, \Gamma}{\alift{-} \atimes \aclrd{\textbf{s}} }
+   \qquad \textnormal{where}~\coctx{\Gamma}{\aclrd{\textbf{s}}} \in \Delta[\,\coctx{-}{-}\,]_{n-1} \\
+ \Delta[\,\coctx{-}{-}\,]_n &\narrow{:=}&
+   \coctx{x\!:\!\tau, \Gamma}{\alift{\cclrd{r}} \atimes \aclrd{\textbf{s}} }
+   \qquad \textnormal{where}~\coctx{\Gamma}{\aclrd{\textbf{s}}} \in \Delta[\,\coctx{-}{-}\,]_n \\
+ \Delta[\,\coctx{-}{-}\,]_0 &\narrow{:=}&
+   \coctx{()}{\alift{}}
+\end{array} 
+\end{equation*} 
+\end{definition}
 
 \noindent
+A context with $n$ holes may either start with a hole, followed by a context with $n-1$ holes, or it may
+start with a variable followed by a context with $n$ holes. Note that the definition ensures that
+the location of variable holes correspond to the locations of coeffect annotation holes. Given a context
+with holes, we can fill the holes with other contexts using the \emph{hole filling} operation and
+obtain an ordinary coeffect-annotated context.
+
+\begin{definition}[Hole filling] Given a context with $n$ holes $\coctx{\Delta}{\textbf{s}} \in 
+\Delta[\,\coctx{-}{-}\,]_n$, the hole filling operation written as 
+$\coctx{\Delta}{\textbf{s}}[\,\coctx{\Gamma_1}{\aclrd{\mathbf{r_1}}} \,|\, \ldots \,|\, \coctx{\Gamma_n}{\aclrd{\mathbf{r_n}}} \,]$,
+which replaces the holes by the specified variables and corresponding coeffect annotations, is defined as:
+%
+\begin{equation*}
+\begin{array}{rcl}
+ \coctx{-, \Delta}{\alift{-} \atimes \textbf{s} }
+    ~[\,\coctx{\Gamma_1}{\aclrd{\textbf{r}_1}} \,|\, \coctx{\Gamma_2}{\aclrd{\textbf{r}_2}} \,|\, \ldots \,] &\narrow{=}&
+      \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}_1} \atimes \aclrd{\textbf{r}_2} } \\
+ && \qquad \hspace{-9.3em} \textnormal{where}~\coctx{\Gamma_2}{\aclrd{\textbf{r}_2}} =
+     \coctx{\Delta}{\textbf{s}}[\, \coctx{\Gamma_2}{\aclrd{\textbf{r}_2}} \,|\, \ldots \,] 
+\\[0.5em]
+ \coctx{x_1\!:\!\tau, \Delta}{\alift{\cclrd{r_1}} \atimes \textbf{s} }
+    ~[\,\coctx{\Gamma_1}{\aclrd{\textbf{r}_1}} \,|\, \coctx{\Gamma_2}{\aclrd{\textbf{r}_2}} \,|\, \ldots \,] &\narrow{=}&
+      \coctx{x_1\!:\!\tau, \Gamma_2}{\alift{\cclrd{r_1}} \atimes \aclrd{\textbf{r}_2} } \\
+ && \qquad \hspace{-9.3em} \textnormal{where}~\coctx{\Gamma_2}{\aclrd{\textbf{r}_2}} =
+     \coctx{\Delta}{\textbf{s}}[\,\coctx{\Gamma_1}{\aclrd{\textbf{r}_1}} \,|\, \coctx{\Gamma_2}{\aclrd{\textbf{r}_2}} \,|\, \ldots \,] 
+\\[0.5em]
+ \coctx{()}{\alift{}}~[~] &\narrow{=}& \coctx{()}{\alift{}}
+\end{array} 
+\end{equation*} 
+\end{definition}
+
+\noindent
+When we substitute an expression with coeffects $\aclrd{\textbf{t}}$ (associated with variables $\Gamma$)
+for a variable that has coeffects $\cclrd{s}$, the resulting coeffects of $\Gamma$ need to 
+combine $\aclrd{\textbf{t}}$ and $\cclrd{s}$. Unlike in the flat coeffect systems, the structural 
+substitution does not require all coeffect algebra operations to coincide and so the combination
+is more interesting than in the bottom-pointed substitution for flat coeffects, where it used
+the only available operator (Lemma~\ref{thm:cbn-substitution-bot}).
+
+Substitution can be seen as sequential composition. Informally -- we first need to obtain the 
+value of the expression (requiring $\aclrd{\textbf{t}}$) and then use it in context with 
+requirements $\cclrd{s}$. Thus the free variables of the expression \emph{after} substitution
+are annotated with $\cclrd{s} \aseq \aclrd{\textbf{t}}$, using the (scalar-vector extension)
+of the sequential composition operator $\cseq$.
+
+\begin{lemma}[Multi-nary substitution]
+Given an expression with multiple holes filled by variables $x_i\!:\!\tau_i$ with coeffects $\cclrd{s_k}$:
+%
+\begin{equation*}
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{x_1\!:\!\tau_1}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+  \coctx{x_k\!:\!\tau_k}{\alift{\cclrd{s_k}}}\,] \vdash e_r : \tau_r
+\end{equation*}
+%
+and a expressions $e_i$ with free-variable contexts $\Gamma_i$ annotated with $\aclrd{\mathbf{t_i}}$:
+%
+\begin{equation*}
+\coctx{\Gamma_1}{\aclrd{\textbf{t}_1}} \vdash e_1 : \tau_1 
+\quad \ldots \quad
+\coctx{\Gamma_k}{\aclrd{\textbf{t}_k}} \vdash e_k : \tau_k
+\end{equation*}
+%
+then substituting the expressions $e_i$ for variables $x_i$ results in an expression with a context
+where the original holes are filled by contexts $\Gamma_i$ with coeffects $\cclrd{s_i} \aseq \aclrd{\mathbf{t_i}}$:
+%
+\begin{equation*}
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{\Gamma_s}{\cclrd{s_1}\aseq\,\aclrd{\textbf{t}_1}} \,|\, \ldots \,|\, 
+  \coctx{\Gamma_s}{\cclrd{s_k}\aseq\,\aclrd{\textbf{t}_k}}\,] \vdash \subst{\subst{e_r}{x_1}{e_1}\ldots}{x_k}{e_k} : \tau_r
+\end{equation*}
+\end{lemma}
+\begin{proof}
+By induction over $\vdash$, using the multi-nary aspect of the substitution 
+in the proof of the contraction case. See Appendix~?.
+\end{proof}
+
+\subsection{Reduction and expansion}
+
+\todo{Exterminate!}
+
+~
+
 Because of the vector (free monoid) structure, coeffects $\aclrd{R_1}$, $\aclrd{R_2}$, and 
 $\langle{\cclrd{r}}\rangle$ for the receiving term $e_r$ are uniquely associated with $\Gamma_1$, $\Gamma_2$, and
 $x$ respectively. Therefore, substituting $e_s$ (which has coeffects $S$) for $x$ introduces
@@ -1222,181 +1347,6 @@ the exact immediate requirements of $\lambda x . e x$ to match those of $e$.
 
 \newpage
 
-
-
-% ==================================================================================================
-%
-%                               ##      
-%      ####                     ##      
-%        ##                     ##      
-%        ##   ##   ##  ## ###   ##  ##  
-%        ##   ##   ##  ###  ##  ## ##   
-%    ##  ##   ##   ##  ##   ##  ####    
-%    ##  ##   ##  ###  ##   ##  ## ##   
-%     ####     ### ##  ##   ##  ##  ##  
-%                                      
-% ==================================================================================================
-
-\newcommand{\ctimes}{ \hat{\times} }
-\newcommand{\cdupl}[0]{ \Delta } %{ \Upsilon }
-
-\newcommand{\csprd}[0]{ \times }
-\newcommand{\csvop}[0]{ \vee }
-\newcommand{\cmerge}[0]{ \cpar }
-\newcommand{\csplit}[0]{ \czip }
-
-\newcommand{\clflt}{$\lambda_{\textnormal{\sffamily Cf}}$}
-\newcommand{\clstr}{$\lambda_{\textnormal{\sffamily Cs}}$}
-\newcommand{\rulest}[1]{\textsf{\clstr\small{-T#1}}}
-
-
-
-\paragraph{Internalized substitution.}
-Before looking at properties of the evaluation, we consider let binding, which can be 
-viewed as internalized substitution. The typing rule \rulest{let} can be derived from 
-application and abstraction as follows. 
-
-\begin{lemma}[Definition of let binding]
-If $\ctyp{r}{\Gamma} \vdash (\lambda x.e_2)~e_1 : \tau_2$
-then $\ctyp{r}{\Gamma} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2$.
-\end{lemma}
-\begin{proof}
-The premises and conclusions of a typing derivation of $(\lambda x.e_2)~e_1$
-correspond with the typing rule \rulest{let}:
-\begin{equation*}
-\inference[]
-  {\inference
-    {\ctyp{r \csprd s}{(\Gamma_1, v:\tau_1)} \vdash e_2 : \tau_2 & v \notin \Gamma_1}
-    {\ctyp{r}{\Gamma_1} \vdash \lambda v.e_2 : \ctyp{s}{\tau_1} \rightarrow \tau_2 } &
-   \ctyp{t}{\Gamma_2} \vdash e_1 : \tau_1 }
-  {\ctyp{r \csprd (s \csvop t)}{(\Gamma_1, \Gamma_2)} \vdash (\lambda v.e_2)~e_1 : \tau_2}\qedhere
-\end{equation*}
-\end{proof}
-
-The term $e_2$ which is substituted in $e_1$ is checked in a different variable
-and coeffect context $\ctyp{t}{\Gamma_2}$. This is common in sub-structural systems where
-a variable cannot be freely used repeatedly. The context $\Gamma_2$ is used in place of 
-the variable that we are substituting for. The let binding captures substitution for a 
-specific variable (the context is of a form $\ctyp{r \csprd s}{\Gamma, v:\tau}$).
-For a general substitution, we need to define the notion of context with a hole.
-
-\newcommand{\chole}[4]{\ctyp{#1}{#2}[#3|#4]}
-\paragraph{Substitution and holes.}
-In \clstr, the structure of the variable context is not a set, but a tree. When substituting
-for a variable, we need to replace the variable in the context with the context of the
-substituted expression. In general, this can occur anywhere in the tree. To formulate the
-statement, we define contexts with holes, written $\Delta[-]$. Note that there is a hole
-in the free variable context and in a corresponding part of the coeffect tag:
-
-\begin{equation*}
-\begin{array}{rcl}
-\Delta[-] &::=& \ctyp{1}{()} \\
-       & \sep & \ctyp{r}{(x:\tau)}\\
-       & \sep & \ctyp{-}{(-)} \\
-       & \sep & \ctyp{r_1 \csprd r_2}{(\Gamma_1, \Gamma_2)}\quad~~(\textnormal{where}~\ctyp{r_i}{\Gamma_i} \in \Delta[-])\\
-\end{array}
-\end{equation*}
-%
-Assuming we have a context with hole $\ctyp{r}{\Gamma} \in \Delta[-]$, the hole filling 
-operation $\chole{r}{\Gamma}{r'}{\Gamma'}$ fills the hole in the variable context with 
-$\Gamma'$ and the corresponding coeffect tag hole with $r'$. The operation is defined in 
-Figure~\ref{fig:structural-hole-fill}. Using contexts with holes, we can now formulate the
-general substitution lemma for \clstr.
-
-\begin{figure}
-
-\begin{equation*}
-\begin{array}{rcl}
-                              \chole{1}{()}{r'}{\Gamma'} &=& \ctyp{1}{()}\\
-                        \chole{r}{(x:\tau)}{r'}{\Gamma'} &=& \ctyp{r}{(x:\tau)}\\
-                             \chole{-}{(-)}{r'}{\Gamma'} &=& \ctyp{r'}{\Gamma'}\\
-\chole{r_1 \csprd r_2}{(\Gamma_1, \Gamma_2)}{r'}{\Gamma'} &=& \ctyp{r_1' \csprd r_2'}{(\Gamma_1', \Gamma_2')}\\
-&\multicolumn{2}{l} {
-  \textnormal{where}~~\ctyp{r_i'}{\Gamma_i'} = \chole{r_i}{\Gamma_i}{r'}{\Gamma'}
-}
-\end{array}
-\end{equation*}
-\caption{The definition of hole filling operation for $\Delta[-]$}
-\label{fig:structural-hole-fill}
-\vspace{-2em}
-\end{figure}
-
-\begin{lemma}[Substitution Lemma]
-\label{thm:structural-subst}
-If $\chole{r}{\Gamma}{R}{v:\tau'} \vdash e : \tau$ and $\ctyp{S}{\Gamma'} \vdash e' : \tau'$
-then $\chole{r}{\Gamma}{R \csvop S}{\Gamma'} \vdash \subst{e}{v}{e'} : \tau$.
-\end{lemma} 
-\begin{proof}
-Proceeds by rule induction over $\vdash$ using the properties of structural coeffect tag structure
-$(S, \csvop, 0, \csprd, 1)$ (see Appendix~\ref{app:structural-substitution}).
-\end{proof}
-
-\begin{theorem}[Subject reduction]
-\label{thm:structural-reduction}
-If $\ctyp{r}{\Gamma} \vdash e_1 : \tau$ and $e_1 \twoheadrightarrow_\beta e_2$ then 
-$\ctyp{r}{\Gamma} \vdash e_2 : \tau$.
-\end{theorem}
-\begin{proof}
-Direct consequence of Lemma~\ref{thm:structural-subst} (see Appendix~\ref{app:structural-reduction}).
-\end{proof}
-
-\paragraph{Local soundness and completeness.}
-As with the previous calculus, we want to guarantee that the introduction and
-elimination rules (\rulest{fun} and \rulest{app}) are appropriately strong. 
-This can be done by showing \emph{local soundness} and \emph{local completeness},
-which correspond to $\beta$-reduction and $\eta$-expansion. Former is a special
-case of subject reduction and the latter is proved by a simple derivation:
-%
-\begin{theorem}[Local soundness]
-If $\ctyp{r}{\Gamma} \vdash (\lambda x.e_2)~e_1 : \tau$ then
-$\ctyp{r}{\Gamma} \vdash \subst{e_2}{x}{e_1} : \tau$.
-\end{theorem}
-\begin{proof}
-Special case of subject reduction (Theorem~\ref{thm:structural-reduction}).
-\end{proof}
-%
-\begin{theorem}[Local completeness]
-If $\ctyp{r}{\Gamma} \vdash f : \ctyp{s}{\tau_1} \rightarrow \tau_2$ then
-$\ctyp{r}{\Gamma} \vdash \lambda x.f x : \ctyp{s}{\tau_1} \rightarrow \tau_2$.
-\end{theorem}
-\begin{proof} The property is proved by the following typing derivation:
-%
-\begin{equation*}
-\inference
-  {\inference
-     {\ctyp{r}{\Gamma} \vdash f : \ctyp{s}{\tau_1} \rightarrow \tau_2 &
-      \ctyp{0}{(x:\tau_1)} \vdash x : \tau_1 }
-     {\ctyp{r \csprd (s \csvop 0)}{(\Gamma, x:\tau_1)} \vdash f~x : \tau_2}}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.f x : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
-\qedhere
-\end{equation*}
-\end{proof}
-%
-In the last step, we use the \emph{lower bound} property of structural coeffect tag, which
-guarantees that $s\csvop0 = s$. Recall that in \clflt, the typing derivation for
-$\lambda x.f x$ required for local completeness was not the only possible derivation.
-In the last step, it was possible to split the coeffect tag arbitrarily between the 
-context and the function type. 
-
-In the \clstr~calculus, this is not, in general, the case. The $\csprd$ operator is not required 
-to be associative and to have units and so a unique splitting may exist.  For example, if we
-define $\csprd$ as the operator of a \emph{free magma}, then it is invertible and for a given
-$t$, there are unique $r$ and $s$ such that $t = r \csprd s$. However, if the $\csprd$ operation 
-has additional properties, then there may be other possible derivation.
-
-% ==================================================================================================
-
-\section{Examples of structural coeffects}
-
-\subsection{Example: Liveness analysis}
-\label{sec:structural-neededness}
-
-\subsection{Example: Data-flow (revisited) }
-\label{sec:structural-tainting}
-
-\todo{Also, consider additional language features that we consider for flat coeffects
-  (mainly recursion and possibly conditionals)}
-  
 \section{Conclusions}
 
 \todo{ (...) }
