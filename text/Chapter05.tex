@@ -1088,7 +1088,137 @@ sub-coeffecting which may drop an available value (second case) or behaves as id
 \section{Equational theory}
 \label{sec:struct-syntax}
 
-??
+Similarly to the flat version, each concrete instance of the structural coeffect calculus has a 
+different notion of context. As before, the properties of the flat coeffect algebra guarantee that 
+certain equational properties hold for all instances of the calculus.
+
+\subsection{From flat to structural coeffects}
+
+The discussion of equational theory for flat calculus in Section~\ref{sec:flat-syntax} considered
+different reductions that can be used as a basis for operational semantics for calculi satisfying
+different additional properties, as none of the techniques works universally. The structural 
+coeffect calculus has more desirable equational properties -- in particular, both $\beta$-reduction
+and $\eta$-expansion can be proved using just the properties of strucutral coeffect algebra. Thus
+this section focuses on these reductions. 
+Using the terminology of Pfenning and Davies \cite{logic-modal-reconstruction},
+the structural coeffect calculus satisfies both are \emph{local soundness} and \emph{local completeness}. 
+
+
+% The structural coeffect calculus clstr~associates information with individual variables. This means
+% that when an expression requires certain context, we know from what scope it comes -- the
+% context must be provided by a scope that defines the associated variable, which is either a
+% lambda abstraction or global scope. This distinguishes the structural system from the flat system
+% where context could have been provided by any scope and the lambda rule allowed arbitrary 
+% splitting of context requirements between the two scopes (or declaration and caller site).
+
+\subsection{Holes substitution lemma}
+
+if
+
+\begin{equation*}
+\coctx{\Gamma_s}{\aclrd{\textbf{s}}} \vdash e_s : \tau_s
+\end{equation*}
+
+and
+
+\begin{equation*}
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{x_1\!:\!\tau_s}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+  \coctx{x_k\!:\!\tau_s}{\alift{\cclrd{s_k}}}\,] \vdash e_r : \tau_r
+\end{equation*}
+
+then
+
+\begin{equation*}
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{\Gamma_s}{\cclrd{s_1}\aseq\,\aclrd{\textbf{r}}} \,|\, \ldots \,|\, 
+  \coctx{\Gamma_s}{\cclrd{s_k}\aseq\,\aclrd{\textbf{r}}}\,] \vdash \subst{\subst{e_r}{x_1}{e_s}\ldots}{x_k}{e_s} : \tau_r
+\end{equation*}
+
+\subsection{Structural coeffect systems}
+\label{prop:structural}
+
+For structural coeffect systems, recall that coeffects are vectors
+with $\czip = \cpar = \cons$ (vector concatenation) and $\czero =
+\langle{}\rangle$ (the empty vector), thus coeffect annotations
+comprise the \emph{free monoid} \ie, lists over the coeffect scalars
+(although we continue using the vector terminology). We first show
+substitution:
+
+\begin{lemma}[Substitution lemma] 
+\label{thm:structural-subst}
+In a structural coeffect calculus with a coeffect scalar structure $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$: 
+\[
+\begin{array}{l}
+\coctx{\Gamma}{\aclrd{S}} \vdash e_s : \sigma  
+\;\;  \wedge  \;\; \coctx{\Gamma_1,  x : \sigma, \Gamma_2}{\aclrd{R_1} \cons\; \alift{\cclrd{r}} \cons\; \aclrd{R_2} } \vdash e_r : \tau\\
+\quad \Rightarrow \; \coctx{\Gamma_1,\Gamma,\Gamma_2}{\aclrd{R_1} \cons\; (\cclrd{r} \,\aseq\, \aclrd{S}) \cons\; \aclrd{R_2}} \vdash \subst{e_r}{x}{e_s} : \tau
+\end{array}
+\]
+\vspace{-1.5em}
+\label{lemm:structural-subst}
+\end{lemma}
+\begin{proof}
+By induction over the $e_2$ derivation using the free monoid structure ($\C, \cons, \langle{}\rangle$)
+and coeffect scalar axioms (full proof~\cite{appendix}). %Full proof in the Appendix.
+\end{proof}
+
+\noindent
+Because of the vector (free monoid) structure, coeffects $\aclrd{R_1}$, $\aclrd{R_2}$, and 
+$\langle{\cclrd{r}}\rangle$ for the receiving term $e_r$ are uniquely associated with $\Gamma_1$, $\Gamma_2$, and
+$x$ respectively. Therefore, substituting $e_s$ (which has coeffects $S$) for $x$ introduces
+the context dependencies specified by $S$ which are composed with the requirements $r$ on $x$. 
+Using the substitution lemma, we can demonstrate $\beta$-equality:
+%
+\begin{equation*}
+\inference{
+  \inference{\coctx{\Gamma_1, x : \sigma}{\aclrd{R} \cons \langle{\cclrd{r}}\rangle} \vdash e_1 : \tau}
+             {\coctx{\Gamma_1}{\aclrd{R}} \vdash \lambda x . e_1 : \sigma \xrightarrow{\cclrd{r}} \tau} &
+           \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma}
+  {\coctx{\Gamma_1,\Gamma_2}{\aclrd{R} \cons (\cclrd{r} \,\aseq\, \aclrd{S})} \vdash (\lambda x . e_1) e_2 
+\equiv
+\subst{e_1}{x}{e_2} : \tau}
+\end{equation*}
+%%
+\noindent
+As a result, $\beta$-reduction preserves the type and coeffects of a term.
+This gives the following subject reduction property:
+
+\begin{theorem}[Subject reduction]
+In a structural coeffect calculus, if $\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau$ and
+$e \reduce_\beta e'$ then $\coctx{\Gamma}{\aclrd{R}} \vdash e' : \tau$.
+\end{theorem}
+\begin{proof}
+Following from Lemma~\ref{thm:structural-subst} and $\beta$-equality.  
+\end{proof}
+
+\noindent
+Structural coeffect systems also exhibit $\eta$-equality, therefore satisfying both
+\emph{local soundness} and \emph{local completeness} conditions set by Pfenning and Davies
+\cite{logic-modal-reconstruction}. This means that abstraction does not introduce too much, 
+and application does not eliminate too much.
+%
+\begin{equation*}
+\inference{
+  \inference 
+    {\coctx{\Gamma}{\aclrd{R}} \vdash e : \sigma \xrightarrow{s} \tau & 
+     \coctx{x:\sigma}{\alift{\cunit}} \vdash x : \sigma}
+    {\coctx{\Gamma, x:\sigma}{\aclrd{R} \,\cons\, (\cclrd{s} \,\aseq\, \alift{\cunit})} \vdash e \, x : \tau}}
+  {\coctx{\Gamma}{\aclrd{R}} \vdash \lambda x.e~x  \equiv e 
+: \sigma \xrightarrow{\cclrd{s}} \tau}
+\end{equation*}
+%
+The last step uses the fact that 
+$\cclrd{s} \,\aseq\, \alift{\cunit} = \alift{\cclrd{s} \,\cseq\, \cunit} = \alift{\cclrd{s}}$ 
+arising from the monoid $(\C, \cseq, \cunit)$ of the scalar coeffect structure.
+
+This highlights another difference between coeffects and effects, as $\eta$-equality does
+not hold for many notions of effect. For example, in a language with output
+effects, $e = (\textsf{print \texttt{"hi"}}; (\lambda x . x))$ has different effects to 
+its $\eta$-converted form $\lambda x . e x$ because the immediate effects of $e$ are
+hidden by the purity of $\lambda$-abstraction. In the coeffect calculus, the (abs) rule
+allows immediate contextual requirements of $e$ to ``float outside'' of the enclosing
+$\lambda$. Furthermore, the free monoid nature of $\cons$ in structural systems allows 
+the exact immediate requirements of $\lambda x . e x$ to match those of $e$. 
+
 
 \newpage
 
@@ -1120,23 +1250,6 @@ sub-coeffecting which may drop an available value (second case) or behaves as id
 \newcommand{\rulest}[1]{\textsf{\clstr\small{-T#1}}}
 
 
-\subsection{Properties of reductions}
-\label{sec:structural-metatheory}
-Similarly to the flat version, the \clstr~calculus is defined abstractly. We cannot define its
-operational meaning, because that will differ for every concrete application. For example,
-when tracking array accesses, variables are interpreted as arrays and $\pastval{a}{n}$ denotes
-access to a specified element. 
-
-Just like previously, we can state general properties of the reductions. As the syntax of expressions
-is the same for \clstr~as for \clflt, the substitution and reduction $\twoheadrightarrow_\beta$ 
-are also the same and can be found in Figure~\ref{fig:flat-substred}.
-
-The structural coeffect calculus \clstr~associates information with individual variables. This means
-that when an expression requires certain context, we know from what scope it comes -- the
-context must be provided by a scope that defines the associated variable, which is either a
-lambda abstraction or global scope. This distinguishes the structural system from the flat system
-where context could have been provided by any scope and the lambda rule allowed arbitrary 
-splitting of context requirements between the two scopes (or declaration and caller site).
 
 \paragraph{Internalized substitution.}
 Before looking at properties of the evaluation, we consider let binding, which can be 
