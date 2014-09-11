@@ -1,3 +1,5 @@
+%!TEX root = ../main.tex
+
 % ==================================================================================================
 
 \chapter{Context-aware systems} 
@@ -88,7 +90,7 @@ As shown in the next section, contextual properties do not follow this pattern.
 \[
 \tyrule{abs-pure}
   { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2}
-  { \Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 1}
+  { \Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2}
 \;\;
 \tyrule{abs-eff}
   { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2 \,\&\, \aclrd{\sigma} }
@@ -572,9 +574,10 @@ matches the usual monadic semantics using the reader monad. Note that the declar
 is ignored and the body is called with only the dictionary provided by the call-site. This is
 a consequence of the fact that monadic functions are always pure values created using \emph{unit}.
 
-As we discuss later in Section~3.?, the reader monad can be extended to model rebinding.
-However, later examples in this chapter, such as liveness in Section~\ref{sec:applications-flat-live}
-show that other context-aware computations cannot be captured by \emph{any} monad.
+As we discuss later in Section~\ref{sec:flat-related-monads}, the reader monad can be extended 
+to model rebinding. However, later examples in this chapter, such as liveness in 
+Section~\ref{sec:applications-flat-live} show that other context-aware computations 
+cannot be captured by \emph{any} monad.
 
 %---------------------------------------------------------------------------------------------------
 

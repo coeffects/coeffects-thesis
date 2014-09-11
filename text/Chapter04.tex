@@ -2161,13 +2161,19 @@ also holds that $\ident{swap}~(e_1, e_2) \equiv (e_2, e_1)$.
 % ==================================================================================================
 
 \section{Related work}
-\label{sec:flat-related-monads}
+\label{sec:flat-related}
 
-Most of the related work has been already discussed in Chapter~\ref{ch:pathways} or throughout
-the chapter. In this section, we look in more details at the relationship between coeffects,
-comonads and monads.
+Most of the related work leading to coeffects has already been discussed in Chapter~\ref{ch:pathways} 
+and we covered work related to individual concepts throughout the chapter. In this section, we
+do not repeat the discussion present elsewhere -- we discuss one specific question that often 
+arises when discussing coeffects and that is \emph{when is coeffect (not) an effect?}
 
-\subsection{When coeffect is not a monad}
+We start with a quick overview of the ways in which effects and coeffects differ and then
+we briefly look at one (but illustrative) example where the two concepts overlap. We focus 
+mainly on the equivalence between the \emph{categorical semantics}, which reveals the nature
+of the computations -- rather than considering just the syntactic aspects of the type system.
+
+\subsection{When is coeffect not a monad}
 Coeffect systems differ from effect systems in three important ways:
 
 \begin{itemize}
@@ -2192,62 +2198,185 @@ point requires us to extend monadic lambda abstraction.
 
 % -------------------------------------------------------------------------------------------------
 
-\subsection{When coeffect is a monad}
-As discussed in \ref{sec:applications-flat-impl} ...
+\subsection{When is coeffect a monad}
+\label{sec:flat-related-monads}
 
-Product comonad
+As discussed in Section~\ref{sec:applications-flat-impl}, one of our examples, implicit 
+parameters, can be also captured by a monad. However, \emph{just} a monad is not enough
+because lambda abstraction in effect systems does not provide a way of splitting the context
+requirements between declaration-site and call-site (or combining the implicit parameters
+available in the scope where the function is deined and those specified by the caller).
 
-$C_{\cclrd{r}}\tau = \tau \times (\cclrd{r} \rightarrow \sigma)$
-
-Reader monad
-
-$M_{\cclrd{r}}\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau$
-
+\paragraph{Categorical relationship.}
+Before looking at the necessary extensions, consider the two ways of modelling implicit 
+parameters. We assume that the function $\cclrd{r} \rightarrow \sigma$ is a lookup function
+for reading implicit parameter values that is defined on a set $\cclrd{r}$. The two definitions
+are:
+%
+\begin{equation*}
+\begin{array}{lll}
+ \ctyp{\cclrd{r}}\tau = \tau \times (\cclrd{r} \rightarrow \sigma) &~\hspace{10em}~& (\emph{product comonad}) \\
+ \mtyp{\cclrd{r}}\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau && (\emph{reader monad})
+\end{array} 
+\end{equation*}
+%
+The \emph{product comonad} simply pairs the value $\tau$ with the lookup function, while
+the \emph{reader monad} is a function that, given a lookup function, produces a $\tau$ value.
+As noted by Orchard \cite{comonads-vs-monads}, when used to model computation semantics, the 
+two representations are equivalent:
+%
+\begin{remark}
+Computations modelled as $\ctyp{\cclrd{r}}{\tau_1}\rightarrow\tau_2$ using the product comonad
+are isomorphic to computations modelled as $\tau_1\rightarrow\mtyp{\cclrd{r}}{\tau_2}$ using
+the currying/uncurrying isomoprhism.
+\end{remark}
+\begin{proof}
+The isomorphism is demonstrated by the following equation:
 \begin{equation*}
 \begin{array}{l}
  \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2 = \\
  (\tau_1 \times (\cclrd{r} \rightarrow \sigma)) \rightarrow \tau_2 \\
  \tau_1 \rightarrow ((\cclrd{r} \rightarrow \sigma) \rightarrow \tau_2) \\
- \tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2} \\
+ \tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2} \hspace{23em}\qedhere \\
 \end{array}
 \end{equation*}
+\end{proof}
 
-The difference between effects and coeffects is mainly in the (\emph{abs}) rule. While the 
-semantic model (monads vs. comonads) is very different, we can consider extending the two to 
-obtain equivalent syntactic rules. To allow splitting of implicit parameters in lambda abstraction, 
-the reader monad needs an operation that eagerly performs some effects of a function: 
+\noindent
+The equivalence holds for monads and comonads (as well as \emph{indexed} monads
+and comonads), but it does not extend to \emph{flat} indexed comonads which also provide
+the $\ident{merge}_{\cclrd{r}, \cclrd{s}}$ operation to model context merging.
 
+\paragraph{Delaying effects in monads.} 
+In the syntax of the language, the above difference is manifested in the (\emph{abs}) rules for 
+monadic effect systems and comonadic coeffect systems. The following listing shows the two rules 
+side-by-side, using the coeffect notation for both of them:
+%
 \begin{equation*}
-(\tau_1 \rightarrow \mtyp{\cclrd{r} \cseq \cclrd{s}}{\tau_2}) \rightarrow 
-  \mtyp{\cclrd{r}}{(\tau_1 \rightarrow \mtyp{\cclrd{s}}{\tau_2})}
+\tyrule{cabs}
+  { \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}\,\cclrd{\cup}\,\cclrd{s}} \vdash e : \tau_2 }
+  { \coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
+\quad
+\tyrule{mabs}
+  { \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}\,\cclrd{\cup}\,\cclrd{s}} \vdash e : \tau_2 }
+  { \coctx{\Gamma}{\cclrd{\emptyset}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{r}\,\cclrd{\cup}\,\cclrd{s}} \tau_2 }
+\qquad
+\end{equation*}
+%
+In the comonadic (\emph{cabs}) rule, the implicit parameters of the body are split. However,
+the monadic rule (\emph{mabs}) places all requirements on the call-site. This follows from the
+fact that monadic semantics uses the \ident{unit} operation in the interpretation of lambda abstraction:
+%
+\begin{equation*}
+\sem{\lambda x.e} \;=\; \ident{unit}~(\lambda x. \sem{e})
+\end{equation*}
+%
+The type of $\ident{unit}$ is $\alpha\rightarrow\mtyp{\alpha}{\cclrd{\emptyset}}$, but in this specific
+case, the $\alpha$ is instantiated to be $\tau_1\rightarrow\mtyp{\cclrd{r \cup s}}{\tau_2}$ and so this
+use of \ident{unit} has a type:
+%
+\begin{equation*}
+\ident{unit}~:~(\tau_1\rightarrow\mtyp{\cclrd{r \cup s}}{\tau_2}) \rightarrow \mtyp{\cclrd{\emptyset}}(\tau_1\rightarrow\mtyp{\cclrd{r \cup s}}{\tau_2})
+\end{equation*}
+%
+In order to split the implicit parameters of the body ($\cclrd{r \cup s}$ on the left-hand side) between 
+the declaration-site ($\cclrd{\emptyset}$ on the outer $\mtyp{}$ on the right-hand side) and the 
+call-site ($\cclrd{r \cup s}$ on the inner $\mtyp{}$ on the right-hand side), we need an operation
+(which we call \ident{delay}) with the following signature:
+%
+\begin{equation*}
+\ident{delay}_{\cclrd{r}, \cclrd{s}}~:~(\tau_1\rightarrow\mtyp{\cclrd{r \cup s}}{\tau_2}) \rightarrow \mtyp{\cclrd{r}}(\tau_1\rightarrow\mtyp{\cclrd{s}}{\tau_2})
+\end{equation*}
+%
+The operation reveals the difference between effects and coeffects -- intuitively, given a function
+with effects $\cclrd{r \cup s}$, it should execute the effects $\cclrd{r}$ when wrapping the 
+function, \emph{before} the function actually perforsm the effectful operation with the effects.
+The remaining effects $\cclrd{s}$ are delayed as usual, while effects $\cclrd{r}$ are removed
+from the effect annotation of the body.
+
+Another important aspect of the signature is that the function needs to be indexed by the coeffect
+annotations $\cclrd{r}, \cclrd{s}$. The indices determine how the input context requirements
+$\cclrd{r \cup s}$ are split -- and thus guarantee determinism of the function. 
+
+The operation cannot be implemented in a useful way for most standard monads, but the 
+reader monad is, indeed, an exception. It is not difficult to see how it can be implemented
+when we expand the definitions of $\mtyp{\cclrd{r}}\tau$:
+%
+\begin{equation*}
+\ident{delay}_{\cclrd{r}, \cclrd{s}}~:~
+(\tau_1\rightarrow(\cclrd{r \cup s} \rightarrow \sigma) \rightarrow \tau_2) \rightarrow 
+((\cclrd{r} \rightarrow \sigma) \rightarrow \tau_1\rightarrow(\cclrd{s} \rightarrow \sigma) \rightarrow \tau_2)
 \end{equation*}
 
-To obtain a pure lambda abstraction
-for coeffects, we need to restrict the $\cpar_{r, s}$ 
-operation of indexed comonads, so that the first parameter is annotated with $\cunit$ (meaning
-no effects): $\C^{\cunit} A \times \C^r B \rightarrow \C^{r}(A \times B)$.
+\paragraph{Restricting coeffects in comonads.} 
+As just demonstrated, we can extend monads so that the reader monad is capable of capturing
+the semantics of implicit parameters, including the splitting of implicit parameter requirements
+in lambda abstraction. Can we also go the other way round and \emph{restrict} the comonadic
+semantics so that all requirements are delayed as in the (\emph{mabs}) rule, thus modelling 
+fully dynamically scoped parameters?
 
+This is, indeed, also possible. Recall that the semantics of lambda abstraction in the flat
+coeffect calculus is modelled using $\ident{merge}_{\cclrd{r}, \cclrd{s}}$. The operation takes
+two contexts (wrapped in a comonad $\ctyp{\cclrd{r}}\alpha$), combines their carried values and
+additional contextual information (implicit parameters). To obtain the (\emph{mabs}) rule, we 
+can restrict the first parameter, which corresponds to the declaration-site context:
+%
 \begin{equation*}
-\begin{array}{rcl}
- \sem{\lambda x.e} &=& \ident{unit}~(\lambda x. \sem{e}) \\
- \sem{\lambda x.e} &=& \ident{unit}~(\lambda x. \sem{e}) \\
-\end{array}
+\begin{array}{rcll}
+ \ident{merge}_{\cclrd{r}, \cclrd{s}} &\narrow{:}& \ctyp{\cclrd{r}}\alpha \times \ctyp{\cclrd{s}}\beta \rightarrow \ctyp{\cclrd{r \cup s}}(\alpha \times \beta)
+ &\hspace{4em}(\textit{normal}) \\
+ \ident{merge}_{\cclrd{r}, \cclrd{s}} &\narrow{:}& \ctyp{\cclrd{\emptyset}}\alpha \times \ctyp{\cclrd{s}}\beta \rightarrow \ctyp{\cclrd{s}}(\alpha \times \beta)
+ &\hspace{4em}(\textit{restricted})
+\end{array} 
 \end{equation*}
+%
+In the (\emph{restricted}) version of the operation, the declaration-site context requires
+no implicit parameters and so all implicit parameters have to be satisfied by the call-site.
+The semantics using the restricted version corresponds to the (\emph{mabs}) rule shown above.
+
+The idea of restricting the operations of the coeffect calculus semantics could be used more
+generally. We could allow any of the coeffect algebra operations $\cseq, \czip, \cpar$ to be
+\emph{partial} and thus the restricted (fully dynamically-scoped) version of implicit parameters
+could be obtained just by changing the definition of $\czip$. Similarly, we could obtain \eg~a
+fully lexically-scoped version of the system. Similar idea has been used for the
+semantics of effectful computations by Tate~\cite{effects-producer-semantics}.
+
 % ==================================================================================================
-
+%                                                                             
+%        ###                         ##                    #                        
+%       #   #                         #                                             
+%       #       ###   # ##    ###     #    #   #   ###    ##     ###   # ##    ###  
+%       #      #   #  ##  #  #   #    #    #   #  #        #    #   #  ##  #  #     
+%       #      #   #  #   #  #        #    #   #   ###     #    #   #  #   #   ###  
+%       #   #  #   #  #   #  #   #    #    #  ##      #    #    #   #  #   #      # 
+%        ###    ###   #   #   ###    ###    ## #  ####    ###    ###   #   #  ####  
+%                                                                             
+% ==================================================================================================                                                                             
 \section{Conclusions}
 
-We examined three simple calculi with associated
-static analyses (liveness analysis, implicit parameters, and dataflow
-analysis). These were unified in the \emph{coeffect calculus},
-providing a general coeffect system parameterised by an
-algebraic structure describing the propagation of context
-requirements throughout a program.
+This chapter presented the \emph{flat coeffect calculus} -- a unified system for tracking 
+contextual properties that are \emph{whole-context}, meaning that they are related to the 
+execution environment or the enitre context in which computations are executed.
+This is the first of the two \emph{coeffect calculi} developed in this thesis.
 
-We model the semantics of coeffect calculus using \emph{indexed comonad} -- a novel structure, which
-is more powerful than (monoidal) comonads. Indices of the indexed comonad operations manifest the 
-semantic propagation of context such that the propagation of information in the general coeffect
-type system corresponds exactly to the semantic propagation of context in our categorical model.
+The flat coeffect calculus is parameterized by a \emph{flat coeffect algebra} that captures
+the structure of the information tracked by the type system. We demonstrated how to 
+instantiate the system to capture three specific systems discussed earlier in 
+Chapter~\ref{ch:applications}, namely liveness, data-flow and implicit parameters.
 
-We consider the analysis of context to be essential, not least for the examples here but 
-also given increasingly rich and diverse distributed systems.
+Next, we introduced the notion of \emph{flat indexed comonad}, which is a generalization of
+comonad, equipped with additional operations needed to provide categorical semantics of the 
+flat coeffect calculus. The indices of the flat indexed comonad operations correspond to the
+coeffect annotations in the type system and provide a foundation for the design of the 
+calculus. 
+
+Finally, we discussed the equational theory for flat coeffect calculus. Although each 
+concrete instance of flat coeffect calculus models different notion of context, there are
+syntactic properties that hold for all flat coeffect systems satisfying certain additional
+conditions. In particular, two \emph{subject reduction} theorems prove that the operational
+semantics for two classes of flat coeffect calculi (including liveness and implicit parameters) 
+can be based on call-by-name reduction.
+
+In the upcoming chapter, we move from \emph{flat} coeffect calculi, tracking whole-context
+properties to \emph{structural} coeffect calculi, tracking per-variable information, thus
+covering systems from the second half of Chapter~\ref{ch:applications}.
