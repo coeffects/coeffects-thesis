@@ -1,5 +1,16 @@
-\chapter{Coeffect meta-language} 
-\label{ch:meta} 
+%!TEX root = ../main.tex
+
+\chapter{Conclusions} 
+\label{ch:conclusions} 
+
+%---------------------------------------------------------------------------------------------------
+
+How to make this practical?
+
+codo notation / computation expressions
+
+embedding algebraic things
+
 
 %---------------------------------------------------------------------------------------------------
 
@@ -11,31 +22,54 @@ primitive operations of the indexed comonad.
 
 %===================================================================================================
 
+\newcommand{\munit}{\mathsf{e}}
+\newcommand{\mseq}[0]{ \oplus }
+
+
 \section{Introduction}
-\label{sec:metalanguage-intro}
+
+\section{Meta-language}
+\label{sec:conclusions-meta} 
+
+\begin{figure}
+\begin{equation*}
+\tyrule{var}
+  {x : \alpha \in \Gamma}
+  {\Gamma \vdash x : \alpha }
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\Gamma \vdash e_1 : \alpha \rightarrow \beta &
+   \Gamma \vdash e_2 : \alpha }
+  {\Gamma \vdash e_1~e_2 : \beta}
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\Gamma, x:\alpha \vdash e : \beta}
+  {\Gamma \vdash \lambda x.e : \alpha \rightarrow \beta }
+\end{equation*}
+\begin{equation*}
+\tyrule{letbox}
+  {\Gamma \vdash e_1 : \ctyp{r \mseq s}{\alpha} & \Gamma, x : \ctyp{r}{\alpha} \vdash e_2 : \beta }
+  {\Gamma \vdash \kvd{let~box}~x=e_1~\kvd{in}~e_2 : \ctyp{s}{\beta}}
+\end{equation*}
+\begin{equation*}
+\tyrule{eval}
+  {\Gamma \vdash e : \ctyp{\munit}{\alpha}}
+  {\Gamma \vdash !e : \alpha}
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\Gamma \vdash e : \ctyp{s}{\alpha} }
+  {\Gamma \vdash e : \ctyp{r}{\alpha} }
+\;(s\leq r)  
+\end{equation*}
+
+\caption{Type system for the coeffect meta-language cml}
+\label{fig:cml-types}
+\end{figure}
 
 % ==================================================================================================
-
-\section{Type inference}
-\label{sec:flat-inference}
-
-\subsection{Semi-lattice formulation}
-\subsection{Type inference algorithm}
-
-% ==================================================================================================
-
-\section{Type system}
-\ExecuteMetaData[rules/rules.tex]{cml-types}
-
-\section{Operational properties}
-
-\section{Categorical semantics}
-
-\section{Applications}
-
-\subsection{Meta-programming}
-
-\subsection{Mobile computations}
 
 \section{Related work}
 This chapter is closely related to Contextual Modal Type Theory (CMTT) of Nanevski et al. However
@@ -43,7 +77,6 @@ they develop their language using model logic as a basis, while we use categoric
 as the basis - leading to a different system.
 
 \section{Also related work}
-\section{Summary}
 
 This paper follows the approaches of effect systems \cite{effects-gifford,effects-talpin-et-al,monads-effects-marriage}
 and categorical semantics based on monads and comonads \cite{monad-notions,comonads-notions}. Syntactically,
@@ -91,37 +124,5 @@ local completeness can be treated similarly. The second problem is
 developing the coeffects \emph{metalanguage}. The use of coeffect algebras
 would provide an additional flexibility over CMTT, allowing a wider range 
 of applications.
-
-% --------------------------------------------------------------------------------------------------
-
-\newcommand{\cprd}{\times}
-\newcommand{\cvop}{\oplus}
-
-\vspace{-1em}
-\paragraph{Structural coeffects.} To make the liveness analysis practical, we need to associate
-information with individual variables (rather than the entire context). We can generalize the 
-calculus from this paper by adding a product operation $\times$ to the coeffect algebra.
-A variable context $x:\tau_1, y:\tau_2, z:\tau_3$ is then annotated with
-$r\times s \times t$ where each component of the tag corresponds to a single variable. The system
-then needs to be extended with structural rules such as:
-%
-\begin{equation*}
-\inference[(\emph{abs})]
-  {\ctyp{r \cprd s}{(\Gamma, x:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r}{\Gamma} \vdash \lambda x.e : \ctyp{s}{\tau_1} \rightarrow \tau_2 }
-\quad
-\inference[(\emph{contr})]
-  {\ctyp{r \cprd s}{(x:\tau_1, y:\tau_1)} \vdash e : \tau_2}
-  {\ctyp{r \cvop s }{(z:\tau_1)} \vdash \subst{\subst{e}{x}{z}}{y}{z} : \tau_2 }
-\end{equation*}
-%
-The context-requirements associated with function are exactly those linked to the specific
-variable of the lambda abstraction. Rules such as contraction manipulate variables and perform
-a corresponding operation on the indices.
-
-The structural coeffect system is related to bunched typing \cite{types-bunched} (but generalizes
-it by adding indices). We are currently investigating how to use structural coeffects to capture 
-fine-grained context-dependence properties such as secure information flow \cite{app-secure-flow}
-or, more generally, those captured by dependency core calculus \cite{types-dcc}.
 
 \section{Summary}

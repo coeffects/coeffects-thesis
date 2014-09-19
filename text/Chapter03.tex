@@ -838,7 +838,8 @@ and placed on \emph{both} the declaration-site and the call-site.
 In addition to the work discussed already, ML5 \cite{app-distributed-ml5} is another important work 
 that looks at tracking of execution environments. It uses modalities of modal S4 to represent the 
 environment -- this approach is similar to coeffects, both from the practical perspective, but also 
-through deeper theoretical links. We return to this topic in Chapter~\ref{ch:meta}.
+through deeper theoretical links. We return to this topic in Section~\ref{sec:conclusions-meta} of
+the final chapter.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -893,10 +894,8 @@ Liveness analysis is a \emph{may} analysis meaning that it marks variable as liv
 \emph{may} be used and as dead if it is \emph{definitely} not used. This means that the variable
 \ident{input} is \emph{live} in the example above. A \emph{must} analysis would mark the variable
 only if it was used in both of the branches (this is sometimes called \emph{neededness}).
-
 The distinction between \emph{may} and \emph{must} analyses demonstrates the importance of 
 interaction between contextual properties and certain language constructs such as conditionals.
-We discuss this in Section~\ref{sec:flat-conditionals}
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1705,7 +1704,7 @@ as a vector. There are two important points:
 \item We choose to attach a vector of annotations to a vector of variables, rather than attaching
   individual annotations to individual variables. This lets us unify and combine flat and 
   structural systems as discussed in Chapter~\ref{ch:unified}, but the alternative is briefly
-  explored in Chapter~\ref{ch:meta}.
+  explored in Section~\ref{sec:conclusions-meta}.
 \end{itemize}
 
 \paragraph{Type system.}
@@ -2309,8 +2308,7 @@ The system captures the same idea as the structural coeffect system presented ab
 Variable access in bounded linear logic is simply an operation that produces a value
 $!_n A$ and so the system further introduces \emph{dereliction} rule which lets us 
 treat $!_1 A$ as a value $A$. We further explore difference between \emph{language
-semantics} and \emph{meta-language} and also revisit the BLL example in 
-Chapter~\ref{ch:meta}.
+semantics} and \emph{meta-language} in Section~\ref{sec:conclusions-meta}.
 
 \paragraph{Summary.}
 Comparing the structural coeffect calculus for tracking liveness and for bounded variable reuse
@@ -2632,6 +2630,8 @@ contexts, we briefly consider the most important examples of the \emph{active} v
 % --------------------------------------------------------------------------------------------------
 
 \paragraph{Calculus of capabilities.}
+\label{sec:applications-active-ccc}
+
 Crary et al. \cite{app-capabilities} introduced the Calculus of Capabilities to provide 
 a sound system with region-based memory management for low-level code that can be easily 
 compiled to assembly language. They build on the work of Tofte and Talpin \cite{app-region-memory}

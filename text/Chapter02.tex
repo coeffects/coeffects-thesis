@@ -14,12 +14,10 @@ Thanks to the Curry-Howard-Lambek correspondence, we can approach coeffects from
 type theory, logic and also category theory. This chapter gives an overview of the most 
 important directions.
 
-We start by revisiting practical applications and existing language features that are related to 
-coeffects (Section~\ref{sec:path-apps}), then we look at coeffects as the dual of effect systems
-(Section~\ref{sec:path-eff}) and extend the duality to category theory, looking at the categorical 
-dual of monads known as \emph{comonads} (Section~\ref{sec:path-sem}). Finally we look at logically 
-inspired type systems that are closely related to our structural coeffects 
-(Section~\ref{sec:path-logic}).
+We start by looking at coeffects as the dual of effect systems (Section~\ref{sec:path-eff}). Next,
+we extend the duality to category theory, looking at the categorical dual of monads known as 
+\emph{comonads} (Section~\ref{sec:path-sem}). Finally we look at logically inspired type systems 
+that are closely related to our structural coeffects (Section~\ref{sec:path-logic}).
 
 This chapter serves two purposes. Firstly, it provides a high-level overview of the  related work, 
 although technical details are often postponed until later. Secondly it recasts existing ideas in 
@@ -114,7 +112,7 @@ The (\emph{fun}) rule is different -- the resources requirements of the body $\s
 are split between the \emph{immediate context-requirements} associated with the current context 
 $\Gamma @ \sigma_1$ and the \emph{latent context-requirements} of the function.
 
-As demonstrated by examples in the Chapter~\ref{ch:introduction}, this means that the resource
+As demonstrated by examples in the Chapter~\ref{ch:intro}, this means that the resource
 can be captured when a function is declared (e.g.~when it is constructed on the server-side
 where database access is available), or when a function is called (e.g.~when a function created
 on server-side requires access to current time-zone, it can use the resource available on the
