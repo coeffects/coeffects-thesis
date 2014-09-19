@@ -21,14 +21,13 @@
 \usepackage{amsthm}
 \usepackage{catchfilebetweentags}
 
-\newtheorem{example}{Example}
-\newtheorem{remark}{Remark}
-\newtheorem{definition}{Definition}
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
-\newtheorem{proposition}{Proposition}
-
-
+\newcounter{mythmcounter}
+\newtheorem{example}[mythmcounter]{Example}
+\newtheorem{remark}[mythmcounter]{Remark}
+\newtheorem{definition}[mythmcounter]{Definition}
+\newtheorem{theorem}[mythmcounter]{Theorem}
+\newtheorem{lemma}[mythmcounter]{Lemma}
+\newtheorem{proposition}[mythmcounter]{Proposition}
 
 % source code & types
 \ExecuteMetaData[rules/rules.tex]{rule-definitions}

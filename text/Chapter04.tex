@@ -1629,7 +1629,7 @@ For top-pointed coeffect algebra (using Lemma~\ref{thm:cbn-substitution-top}), t
 to the one in Theorem~\ref{thm:cbv-reduction}, using the facts that $\cclrd{s} \cleq \cunit$
 and $r \,\czip\, t \;=\; r \,\cpar\, t$.
 For bottom-pointed coeffect algebra, consider the typing derivation for the term
-$(\lambda x.e)\,v$ before reduction:
+$(\lambda x.e_r)\,e_s$ before reduction:
 %
 \begin{equation*}
 \inference
@@ -1671,24 +1671,23 @@ for any flat coeffect algebra where $\cpar \,=\, \czip$. Assuming $\rightarrow_\
 standard $\eta$-reduction:
 
 \begin{theorem}[$\eta$-expansion]
-\label{thm:cbn-substitution-bot}
 In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ 
 where $\czip = \cpar$, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2$ 
 and $e \rightarrow_\eta e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 $.
 \end{theorem}
 \begin{proof}
-The following derivation shows that $\lambda x.e~x$ has the same type as $e$:
+The following derivation shows that $\lambda x.f~x$ has the same type as $f$:
 \begin{equation*}
 \inference
   { \inference
-    { \coctx{\Gamma}{\cclrd{r}} \vdash e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 &
+    { \coctx{\Gamma}{\cclrd{r}} \vdash f : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 &
       \coctx{x:\tau_1}{\cunit} \vdash x:\tau_1 }
-    { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\cpar\; (\cunit \,\cseq\, \cclrd{s}) } \vdash e~x : \tau_2 } }
+    { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\cpar\; (\cunit \,\cseq\, \cclrd{s}) } \vdash f~x : \tau_2 } }
   { \inference
     { \inference
-      { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\cpar\; \cclrd{s} } \vdash e~x : \tau_2 }
-      { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\czip\; \cclrd{s} } \vdash e~x : \tau_2 } }
-    { \coctx{\Gamma}{ \cclrd{r} } \vdash \lambda x.e~x : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 } }
+      { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\cpar\; \cclrd{s} } \vdash f~x : \tau_2 }
+      { \coctx{\Gamma, x:\tau_1}{\cclrd{r} \;\czip\; \cclrd{s} } \vdash f~x : \tau_2 } }
+    { \coctx{\Gamma}{ \cclrd{r} } \vdash \lambda x.f~x : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 } }
 \end{equation*}
 \end{proof}
 

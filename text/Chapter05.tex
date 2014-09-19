@@ -1,6 +1,6 @@
 %!TEX root = ../main.tex
 
-\chapter{Structural coeffect language} 
+\chapter{Structural coeffect calculus} 
 \label{ch:structural}
 
 As already discussed, the aim of this thesis is to identify abstractions for context-aware
@@ -406,6 +406,7 @@ let binding that gives a \emph{more precise} typing than combination of abstract
 application. This is not the case for structural coeffects.
 
 \begin{remark}[Let binding]
+\label{thm:structural-letbinding}
 In a structural coeffect calculus, the typing of $(\lambda x.e_2)~e_1$ is equivalent
 to the typing of $\kvd{let}~x=e_1~\kvd{in}~e_2$.
 \end{remark}
@@ -1091,7 +1092,8 @@ sub-coeffecting which may drop an available value (second case) or behaves as id
 Similarly to the flat version, each concrete instance of the structural coeffect calculus has a 
 different notion of context and thus a different operational interpretation. As before, the 
 properties of the flat coeffect algebra guarantee that certain equational properties hold for 
-all instances of the calculus. 
+all instances of the calculus. In this section, we look at these common properties that we get
+``for free'' in all structural coeffect calculi.
 
 We start the discussion by briefly considering the key aspects
 that make the equational theory of flat and structural coeffects different.
@@ -1100,9 +1102,10 @@ that make the equational theory of flat and structural coeffects different.
 \label{sec:struct-syntax-intro}
 
 When discussing equational theory for the flat calculus in Section~\ref{sec:flat-syntax}, we 
-noted that no single technique works universally for all flat coeffect calculi. We considered
-multiple different reductions that can be used as the basis for operational semantics for
-calculi satisfying different additional properties. 
+noted that no single technique of specifying syntactic reduction works universally for all 
+flat coeffect calculi. We considered multiple different options (call-by-name, call-by-value, 
+internalized substitution) that can be used as the basis for operational semantics for
+different calculi that satisfy different additional properties. 
 
 The structural coeffect calculus has more desirable equational properties. In particular, 
 we can prove both $\beta$-reduction and $\eta$-expansion using just the properties of strucutral 
@@ -1112,7 +1115,7 @@ the structural coeffect calculus satisfies both the \emph{local soundness} and
 the \emph{local completeness} properties.
 
 \paragraph{Substitution for flat coeffects.} 
-The more interesting variant of the substitution lemma for flat coeffects 
+The less obvious (\emph{top-pointed}) variant of the substitution lemma for flat coeffects 
 (Lemma~\ref{thm:cbn-substitution-bot}) required all operations of the flat coeffect algebra
 to coincide. This enables the substitution to preserve the type of expressions, because all
 additional requirements arising as the result of the substitution can be associated with the
@@ -1138,13 +1141,13 @@ Here, the flat coeffect calculus gives us typing with limited \emph{precision}, 
 enough \emph{flexibility} to prove the substitution lemma.
 
 \paragraph{Substitution for structural coeffects.}
-In contrast, the substitution lemma for structural coeffects can be proven ecause 
+In contrast, the substitution lemma for structural coeffects can be proven because 
 structural coeffect systems provide enough \emph{precision} to identify exactly with 
 which variable should a context requirement be associated.
 
 The following example shows a situation similar to the previous one -- here, we use
-structural data-flow calculus (with the \kvd{prev} construct to obtain previous
-value of an expression) and we substitute $w+z$ for $y$:
+structural data-flow calculus (writing $\kvd{prev}~e$ to obtain previous value of the 
+expression $e$) and we substitute $w+z$ for $y$:
 %
 \begin{equation*}
 \begin{array}{rclcll}
@@ -1176,14 +1179,15 @@ $\cclrd{2}\cclrd{\ast}\alift{\cclrd{1}, \cclrd{1}}=\alift{\cclrd{2}, \cclrd{2}}$
 
 As demonstrated in the previous section, reduction (and substitution) in the structural coeffect 
 calculus may need to replace a \emph{single} variable with a \emph{vector} of variables. 
-Furthermore, we may also need to substitute for multiple variables in the variable context.
+More importantly, because the system uses explicit contraction, we may also need to substitute 
+for multiple variables in the variable context at the same time.
 
-For example, the expression $\lambda x.x+x$ is type-checked by type-checking $x_1 + x_2$,
-contracting $x_1$ and $x_2$ and then applying lambda abstraction. During the reduction 
-$(\lambda x.x+x)~(y+z)$ we thus need to substitute $y_1+z_1$ for $x_1$ and $y_2+z_2$ for $x_2$.
+Consider the expression $\lambda x.x+x$. It is type-checked by type-checking $x_1 + x_2$,
+contracting $x_1$ and $x_2$ and then applying lambda abstraction. During the reduction of 
+$(\lambda x.x+x)~(y+z)$ we need to substitute $y_1+z_1$ for $x_1$ and $y_2+z_2$ for $x_2$.
 This is similar to substitution lemma in other structural variants of $\lambda$-calculus,
-for example in the bunched typing system \cite{substruct-bunched}.
-To express the substitution lemma, we define the notion of a \emph{context with holes}
+such as the bunched typing system \cite{substruct-bunched}. To express the substitution 
+lemma, we define the notion of a \emph{context with holes}:
 
 \begin{definition}[Context with holes]
 A \emph{context with holes} is a context such as $\coctx{x_1\!:\!\tau_1, \ldots, x_k\!:\!\tau_k}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_k}}}$,
@@ -1210,7 +1214,7 @@ are replaced by \emph{holes} written as $-$.
 \noindent
 A context with $n$ holes may either start with a hole, followed by a context with $n-1$ holes, or it may
 start with a variable followed by a context with $n$ holes. Note that the definition ensures that
-the location of variable holes correspond to the locations of coeffect annotation holes. Given a context
+the locations of variable holes correspond to the locations of coeffect annotation holes. Given a context
 with holes, we can fill the holes with other contexts using the \emph{hole filling} operation and
 obtain an ordinary coeffect-annotated context.
 
@@ -1249,10 +1253,14 @@ the only available operator (Lemma~\ref{thm:cbn-substitution-bot}).
 Substitution can be seen as sequential composition. Informally -- we first need to obtain the 
 value of the expression (requiring $\aclrd{\textbf{t}}$) and then use it in context with 
 requirements $\cclrd{s}$. Thus the free variables of the expression \emph{after} substitution
-are annotated with $\cclrd{s} \aseq \aclrd{\textbf{t}}$, using the (scalar-vector extension)
-of the sequential composition operator $\cseq$.
+are annotated with $\cclrd{s} \,\aseq\, \aclrd{\textbf{t}}$, using the (scalar-vector extension)
+of the sequential composition operator $\cseq$. This suggests that, to evaluate each of the variables
+annotated with coeffects in the vector $\aclrd{\textbf{t}}$, we first need to evaluate the substituted
+expression with coeffects $\cclrd{s}$, followed by the rest of the expression with coeffects specified
+by $\aclrd{\textbf{t}}$.
 
 \begin{lemma}[Multi-nary substitution]
+\label{thm:structural-substitution}
 Given an expression with multiple holes filled by variables $x_i\!:\!\tau_i$ with coeffects $\cclrd{s_k}$:
 %
 \begin{equation*}
@@ -1283,70 +1291,151 @@ in the proof of the contraction case. See Appendix~?.
 
 \subsection{Reduction and expansion}
 
-\todo{Exterminate!}
+In the previous chapter, we discussed call-by-value separately from call-by-name, because the
+proof of call-by-value substitution has fewer prerequisites. In this section, we consider full
+$\beta$-reduction (local soundness), which encompasses both types of evaluation and 
+$\eta$-expansion (local completeness). Both of the properties hold for a system with any
+structural coeffect algebra.
 
-~
+\paragraph{Reduction theorem}
+In a full $\beta$-reduction,
+written as $\rightarrow_\beta$, we replace the redex $(\lambda x.e_2)~e_1$ by the
+expression $\subst{e_r}{x}{e_s}$ anywhere inside a term. The subject reduction theorem
+guarantees that this does not change the type of the term.
 
-Because of the vector (free monoid) structure, coeffects $\aclrd{R_1}$, $\aclrd{R_2}$, and 
-$\langle{\cclrd{r}}\rangle$ for the receiving term $e_r$ are uniquely associated with $\Gamma_1$, $\Gamma_2$, and
-$x$ respectively. Therefore, substituting $e_s$ (which has coeffects $S$) for $x$ introduces
-the context dependencies specified by $S$ which are composed with the requirements $r$ on $x$. 
-Using the substitution lemma, we can demonstrate $\beta$-equality:
-%
-\begin{equation*}
-\inference{
-  \inference{\coctx{\Gamma_1, x : \sigma}{\aclrd{R} \cons \langle{\cclrd{r}}\rangle} \vdash e_1 : \tau}
-             {\coctx{\Gamma_1}{\aclrd{R}} \vdash \lambda x . e_1 : \sigma \xrightarrow{\cclrd{r}} \tau} &
-           \coctx{\Gamma_2}{\aclrd{S}} \vdash e_2 : \sigma}
-  {\coctx{\Gamma_1,\Gamma_2}{\aclrd{R} \cons (\cclrd{r} \,\aseq\, \aclrd{S})} \vdash (\lambda x . e_1) e_2 
-\equiv
-\subst{e_1}{x}{e_2} : \tau}
-\end{equation*}
-%%
-\noindent
-As a result, $\beta$-reduction preserves the type and coeffects of a term.
-This gives the following subject reduction property:
-
-\begin{theorem}[Subject reduction]
-In a structural coeffect calculus, if $\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau$ and
-$e \reduce_\beta e'$ then $\coctx{\Gamma}{\aclrd{R}} \vdash e' : \tau$.
+\begin{theorem}[$\beta$-reduction]
+In a structural coeffect system with a structural coeffect algebra formed by 
+$(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and operations $\alift{-}$ and $\aseq$,
+if $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ 
+and $e \rightarrow_{\beta} e'$ using the full $\beta$-reduction then
+$\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e' : \tau$.
 \end{theorem}
 \begin{proof}
-Following from Lemma~\ref{thm:structural-subst} and $\beta$-equality.  
+Consider the typing derivation for the redex $(\lambda x.e_r)\,e_s$ before the reduction
+(note that this is similar to the typing of let binding discussed in Remark~\ref{thm:structural-letbinding},
+but we do not swap the two parts of the free-variable context):
+%
+\begin{equation*}
+\inference
+  { \begin{array}{l}\coctx{\Gamma_s}{\aclrd{\textbf{s}}} \vdash e_s : \tau_s\vspace{-2em}\end{array} &
+    \inference
+      { \coctx{\Gamma_r, x\!:\!\tau_s}{\aclrd{\textbf{r}}\;\atimes\,\alift{\cclrd{t}}} \vdash e_r : \tau_r }
+      { \coctx{\Gamma_r}{\aclrd{\textbf{r}}} \vdash \lambda x.e_r : \tau_s \xrightarrow{\cclrd{t}} \tau_r} \vspace{0.2em} }
+  { \coctx{\Gamma_r, \Gamma_s}{\aclrd{\textbf{r}} \;\atimes\; (\cclrd{t} \,\aseq\, \aclrd{\textbf{s}})} \vdash (\lambda x.e_r)~e_s : \tau_r }
+\end{equation*}
+%
+For the substitution lemma, we first rewrite the typing judgement for $e_r$, \ie~
+$\coctx{\Gamma_r, x\!:\!\tau_s}{\aclrd{\textbf{r}}\;\atimes\,\alift{\cclrd{t}}} \vdash e_r : \tau_r$
+as a context with a single hole filled by the $x$ variable:
+$\coctx{\Gamma_r, -}{\aclrd{\textbf{r}}\;\atimes\,-}~[\,\coctx{x\!:\!\tau_s}{\alift{\cclrd{t}}}\,] \vdash e_r : \tau_r$.
+Now we can perform the substitution using Lemma~\ref{thm:structural-substitution}:
+%
+\begin{equation*}
+\inference
+  { \coctx{\Gamma_r, -}{\aclrd{\textbf{r}}\;\atimes-}~[\,\coctx{x\!:\!\tau_s}{\alift{\cclrd{t}}}\,] \vdash e_r : \tau_r & 
+    \coctx{\Gamma_s}{\aclrd{\textbf{s}}} \vdash e_s : \tau_s }
+  { \inference
+      { \coctx{\Gamma_r, -}{\aclrd{\textbf{r}}\;\atimes-}~[\,\coctx{\Gamma_s}{\cclrd{t}\,\aseq\,\aclrd{\textbf{s}} }\,] \vdash \subst{e_r}{x}{e_s} : \tau_r }
+      { \coctx{\Gamma_r, \Gamma_s}{\aclrd{\textbf{r}}\,\atimes\,(\cclrd{t}\,\aseq\,\aclrd{\textbf{s}})} \vdash \subst{e_r}{x}{e_s} : \tau_r } }
+\end{equation*}
+%
+The last step applies the hole filling operation, showing that substitution preserves 
+the type of the term.
 \end{proof}
 
 \noindent
+Because of the vector (free monoid) structure, coeffect annotations $\aclrd{\textbf{r}}$, 
+$\aclrd{\textbf{s}}$, and $\alift{\cclrd{t}}$ are uniquely associated with $\Gamma_r$, 
+$\Gamma_s$, and $x$ respectively. Therefore, substituting $e_s$ (which has coeffects 
+$\aclrd{\textbf{s}}$) for $x$ introduces the context dependencies specified by $\aclrd{\textbf{s}}$
+which are composed with the existing requirements $\cclrd{t}$ on $x$. 
+
+\paragraph{Expansion theorem}
 Structural coeffect systems also exhibit $\eta$-equality, therefore satisfying both
-\emph{local soundness} and \emph{local completeness} conditions set by Pfenning and Davies
-\cite{logic-modal-reconstruction}. This means that abstraction does not introduce too much, 
-and application does not eliminate too much.
-%
+\emph{local soundness} and \emph{local completeness}. Informally, this means that 
+abstraction does not introduce too much, and application does not eliminate too much.
+
+\begin{theorem}[$\eta$-expansion]
+In a structural coeffect system with a structural coeffect algebra formed by 
+$(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and operations $\alift{-}$ and $\aseq$,
+if $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ 
+and $e \rightarrow_{\eta} e'$ using the full $\eta$-reduction then
+$\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e' : \tau$.
+\end{theorem}
+\begin{proof}
+The following derivation shows that $\lambda x.f~x$ has the same type as $f$:
 \begin{equation*}
-\inference{
-  \inference 
-    {\coctx{\Gamma}{\aclrd{R}} \vdash e : \sigma \xrightarrow{s} \tau & 
-     \coctx{x:\sigma}{\alift{\cunit}} \vdash x : \sigma}
-    {\coctx{\Gamma, x:\sigma}{\aclrd{R} \,\cons\, (\cclrd{s} \,\aseq\, \alift{\cunit})} \vdash e \, x : \tau}}
-  {\coctx{\Gamma}{\aclrd{R}} \vdash \lambda x.e~x  \equiv e 
-: \sigma \xrightarrow{\cclrd{s}} \tau}
+\inference
+  { \inference
+    { \coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash f : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 &
+      \coctx{x:\tau_1}{\alift{\cunit}} \vdash x:\tau_1 }
+    { \coctx{\Gamma, x:\tau_1}{\aclrd{\textbf{r}} \;\atimes\;(\cclrd{s}\,\aseq\,\alift{\cunit}) } \vdash f~x : \tau_2 } }
+  { \inference
+    { \coctx{\Gamma, x:\tau_1}{\aclrd{\textbf{r}} \;\atimes\,\alift{\cclrd{s}} } \vdash f~x : \tau_2 }
+    { \coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash \lambda x.f~x : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 } }
 \end{equation*}
 %
-The last step uses the fact that 
+The second step uses the fact that 
 $\cclrd{s} \,\aseq\, \alift{\cunit} = \alift{\cclrd{s} \,\cseq\, \cunit} = \alift{\cclrd{s}}$ 
 arising from the monoid $(\C, \cseq, \cunit)$ of the scalar coeffect structure.
+\end{proof}
 
-This highlights another difference between coeffects and effects, as $\eta$-equality does
-not hold for many notions of effect. For example, in a language with output
-effects, $e = (\textsf{print \texttt{"hi"}}; (\lambda x . x))$ has different effects to 
-its $\eta$-converted form $\lambda x . e x$ because the immediate effects of $e$ are
-hidden by the purity of $\lambda$-abstraction. In the coeffect calculus, the (abs) rule
-allows immediate contextual requirements of $e$ to ``float outside'' of the enclosing
-$\lambda$. Furthermore, the free monoid nature of $\cons$ in structural systems allows 
-the exact immediate requirements of $\lambda x . e x$ to match those of $e$. 
+\noindent
+The $\eta$-expansion property discussed in this section highlights another difference 
+between coeffects and effects. The $\eta$-equality property does not hold for many notions 
+of effect. For example, in a language with output effects, $e = (\textsf{print \texttt{"hi"}}; (\lambda x . x))$ 
+has different effects to its $\eta$-converted form $\lambda x . e x$ because the immediate 
+effects of $e$ are hidden by the purity of $\lambda$-abstraction. In the coeffect calculus, 
+the (\emph{abs}) rule allows immediate contextual requirements of $e$ to ``float outside'' 
+of the enclosing $\lambda$. Furthermore, the free monoid nature of $\atimes$ in structural 
+coeffect systems allows the exact immediate requirements of $\lambda x . e x$ to match 
+those of $e$. 
 
-
-\newpage
+                                                                          
+% ==================================================================================================
+%
+%     ###                         ##                    #                 
+%    #   #                         #                                      
+%    #       ###   # ##    ###     #    #   #   ###    ##     ###   # ##  
+%    #      #   #  ##  #  #   #    #    #   #  #        #    #   #  ##  # 
+%    #      #   #  #   #  #        #    #   #   ###     #    #   #  #   # 
+%    #   #  #   #  #   #  #   #    #    #  ##      #    #    #   #  #   # 
+%     ###    ###   #   #   ###    ###    ## #  ####    ###    ###   #   # 
+%
+% ==================================================================================================
+                                                                          
 
 \section{Conclusions}
 
-\todo{ (...) }
+This chapter completes the key development of this thesis -- the presentation of unified calculi
+for context-aware computations that capture the motivating examples introduced in 
+Chapter~\ref{ch:applications}. In the previous chapter, we focused on the first category of 
+contet-aware computations and we developed \emph{flat coeffect calculus} that captures
+\emph{whole-context} properties. This chapter develops \emph{structural coeffect calculus},
+capturing \emph{per-variable} contextual properties. The system provides a precise 
+analysis of liveness and data-flow and allows other interesting uses such as tracking of variable
+accesses based on bounded linear logic.
+
+Following the structure of the previous chapter, the structural coeffect calculus is parameterized
+by a \emph{structural coeffect algebra}. The two definitions are similar -- both require operations 
+$\cseq$ and $\cpar$ that model sequential and point-wise composition, respectively. For flat 
+coeffects, we further require $\czip$ to model context merging. For structural coeffects, we 
+instead use a vector (free monoid) with the $\atimes$ operation -- which serves a similar purpose
+as $\czip$.
+
+In order to keep track of separate annotations for each variable, we use a system with 
+explicit structural rules (contraction, weakening and exchange) that manipulate the structure
+of variables and the structure of annotations at the same time.
+
+The chapter presents two technical results. The first is the semantics of structural coeffect
+calculus in terms of \emph{structural indexed comonads}. The semantics serves two purposes --
+it unifies our three example calculi (bounded reuse, data-flow and liveness) and it demonstrates
+suitability of the type system. The second technical result is equational theory for structural
+coeffect calculi. In particular, we show that $\beta$-reduction and $\eta$-expansion preserve
+the typing for any structural coeffect calculi. These two strong properties are desirable for
+programming languages, but are often not satisfied (\eg~by effectful langauges).
+
+Two questions remain opened for the upcoming chapter. Firstly, is there a way to present 
+flat and structural coeffect calculi in a uniform way as a single system? Secondly, can we
+simplify the definitions to make type inference easier and add other practical language
+aspects such as recursion?
