@@ -1,18 +1,128 @@
 %!TEX root = ../main.tex
 
-\chapter{Conclusions} 
+\chapter{Further work and conclusions} 
 \label{ch:conclusions} 
 
-%---------------------------------------------------------------------------------------------------
+The main goal of this thesis is to demonstrate that there is a unified notion of \emph{context}
+that captures many common scenarios in computer programming. The examples we explore include
+many notions of context important in modern software development (including distributed and
+cross-platform development) as well as context studied in fundamental programming language 
+research (including data-flow, linear logics and variable liveness).
 
-How to make this practical?
+This thesis demonstrates that all these notions of context have something in common. In 
+particular, they can be modelled by our flat or structural coeffect calculi. Although the 
+results presented in this thesis are mainly of a theoretical nature, we, indeed, believe that 
+coeffects should be integrated in main-stream programming languages.
 
-codo notation / computation expressions
+In this chapter, we present further work in two directions. Firstly, we outline one possible
+approach for practical implementations of coeffects (Section~\ref{sec:conclusions-impl}). 
+Secondly, we discuss an alternative approach to defining coeffect systems which highlights
+the relationship between our work and related work arising from modal logics 
+(Section~\ref{sec:conclusions-meta}). Finally, the Section~\ref{sec:conclusions-summary} summarizes
+and concludes the thesis.
 
-embedding algebraic things
 
 
-%---------------------------------------------------------------------------------------------------
+% =================================================================================================
+%                                                                   
+%      ####                         #       #                   ##   
+%      #   #                        #                            #   
+%      #   #  # ##    ###    ###   ####    ##     ###    ###     #   
+%      ####   ##  #      #  #   #   #       #    #   #      #    #   
+%      #      #       ####  #       #       #    #       ####    #   
+%      #      #      #   #  #   #   #  #    #    #   #  #   #    #   
+%      #      #       ####   ###     ##    ###    ###    ####   ###  
+%                                                                
+% =================================================================================================
+
+\section{Towards practical coeffects}
+\label{sec:conclusions-impl}
+
+As discussed earlier, the main focus of this thesis is the development of the much needed 
+\emph{theory of context-aware computations} and so discussing the details of a practical 
+implementation of coeffect tracking is beyond the scope of the thesis. However, this section
+briefly outlines one possible pathway towards this goal.
+
+Many of the examples of contextual computation that we discussed earlier (\eg~implicit
+parameters \cite{app-implicit-parameters} or distributed computations 
+\cite{app-distributed-ml5,app-distributed-links}) have been implemented as a single-purpose
+programming language feature. However, the main contribution of this thesis is that it captures
+\emph{multiple} different notions of context-aware computations using just a \emph{single}
+common abstraction. For this reason, we advocate that future practical implementations of
+coeffects should not be single-purpose language features, but instead reusable abstractions that
+can be instantiated with a concrete \emph{coeffect algebra} specified by the user.
+
+In order to do this, programming languages need to provide two features; one that allows 
+embedding of context-aware computations themselves in programs (akin to the ``do'' notation
+in Haskell) and one that allows tracking of the contextual information in the type system.
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Embedding contextual computations}
+
+The embedding of \emph{contextual} computations in programming languages can learn from better 
+explored emedding of \emph{effectful} computations. In purely functional programming languages
+such as Haskell, effectful computations are embedded by \emph{implementing} them and inserting the
+necessary (monadic) plumbing. This is made easier by the ``do'' notation that inserts the monadic
+operations automatically.
+
+The recently proposed ``codo'' notation \cite{comonads-codo} provides a similar plumbing for
+context-aware computations based on comonads. The notation is close to the semantics of our 
+flat coeffect calculus (Chapter~\ref{ch:flat}). Extending it to support calculi based on the
+structural coeffect calculus (Chapter~\ref{ch:structural}) is an interesting futrue work -- 
+this requires explicitly manipulating individual context variables and application of structural
+rules (which is not needed in flat coeffects).
+
+In ML-like languages, effects (and many coeffects) are built-in into the language semantics, 
+but they can still use a special notation for explicitly marking effectful (coeffectful) 
+blocks of code. In F\#, this is done using \emph{computation expressions}  \cite{app-computation-zoo}
+that differ from the ``do'' notation in two ways. First, they support wider range of 
+constructs, making it possible to wrap existing F\# code in a block without other changes.
+Second, they support other abstractions including monads, applicative functors and monad
+transformers. It would be interesting to see if computation expressions can be extended to
+handle computations based on flat/structural indexed comonads.
+
+Finally, more lightweight syntax for effectful computation can be obtained using
+techniques that automatically insert the necessary monadic plumbing (wihtout using any
+special syntax). This has been done in the context of effecful computations \cite{monads-lightweight-ml}
+and similar approach would be worth exploring for coeffects.
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Coeffect annotations as types}
+
+The other aspect of practical implementation of coeffects is tracking the context requirements
+(coeffect annotations) in the type system. To achieve this, the type system needs to be able to 
+capture the different examples of coeffect algebras. The structures used in this thesis include sets 
+(with union or interesection), natural numbers (with addition, maximum, minimum and multiplication),
+two-point lattice (for liveness) and free monoids (vectors of annotations).
+
+A recent work on embedding effect systems in Haskell \cite{effects-embedding} shows that the
+recent additions to the Haskell type system are powerful enough to implement structures such
+as sets at the type level.  
+
+\cite{types-dependent-ml}
+\cite{types-units-of-measure}
+\cite{app-inforich}
+
+
+% =================================================================================================
+%                                                                                             
+%    #   #          #                    ##                                                    
+%    #   #          #                     #                                                    
+%    ## ##   ###   ####    ###            #     ###   # ##    ## #  #   #   ###    ## #   ###  
+%    # # #  #   #   #         #  #####    #        #  ##  #  #  #   #   #      #  #  #   #   # 
+%    #   #  #####   #      ####           #     ####  #   #   ##    #   #   ####   ##    ##### 
+%    #   #  #       #  #  #   #           #    #   #  #   #  #      #  ##  #   #  #      #     
+%    #   #   ###     ##    ####          ###    ####  #   #   ###    ## #   ####   ###    ###  
+%                                                            #   #                #   #        
+%                                                             ###                  ###         
+% =================================================================================================
+
+\section{Meta-language}
+\label{sec:conclusions-meta} 
+
+Related and further work has been discussed throughout, but one important thing remains.
 
 Both flat coeffect calculus and structural coeffect calculus (presented in the past two chapters)
 use indexed comonads to define the semantics of the langauge. In this section, we follow the 
@@ -20,18 +130,12 @@ meta-language style and embed indexed comonads into the language -- the type con
 $\ctyp{r}{\alpha}$ becomes a first-class value and we add language constructs corresponding to
 primitive operations of the indexed comonad.
 
-%===================================================================================================
 
 \newcommand{\munit}{\mathsf{e}}
 \newcommand{\mseq}[0]{ \oplus }
 
 
-\section{Introduction}
-
-\section{Meta-language}
-\label{sec:conclusions-meta} 
-
-\begin{figure}
+%\begin{figure}
 \begin{equation*}
 \tyrule{var}
   {x : \alpha \in \Gamma}
@@ -65,9 +169,9 @@ primitive operations of the indexed comonad.
 \;(s\leq r)  
 \end{equation*}
 
-\caption{Type system for the coeffect meta-language cml}
-\label{fig:cml-types}
-\end{figure}
+%\caption{Type system for the coeffect meta-language cml}
+%\label{fig:cml-types}
+%\end{figure}
 
 % ==================================================================================================
 
@@ -126,3 +230,5 @@ would provide an additional flexibility over CMTT, allowing a wider range
 of applications.
 
 \section{Summary}
+\label{sec:conclusions-summary}
+
