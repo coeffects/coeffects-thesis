@@ -1337,7 +1337,7 @@ Section~\ref{sec:flat-syntax-cbv}.
 The call-by-value evaluation strategy holds for a wide range of flat coeffect calculi, including all
 our three examples. However, it is rather weak -- in order to use it, the concrete semantics needs
 to provide a way for reducing context-dependent term $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ to
-a term $\coctx{\Gamma}{\cunit} e' : \tau$ with no context requirements. 
+a term $\coctx{\Gamma}{\cunit} \vdash e' : \tau$ with no context requirements. 
 
 \paragraph{Internalized sequencing.}
 
@@ -1591,7 +1591,8 @@ coeffects. It allows the following substitution lemma:
 \begin{lemma}[Bottom-pointed substitution]
 \label{thm:cbn-substitution-bot}
 In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ 
-where $\czip = \cseq = \cpar$ and the operation is also idempotent and commutative:
+where $\czip = \cseq = \cpar$ and the operation is also idempotent and commutative and
+$\cclrd{r}\,\cleq\,\cclrd{r'} \Rightarrow \forall\cclrd{s}.\cclrd{r}\,\cseq\,\cclrd{s}\;\cleq\;\cclrd{r'}\,\cseq\,\cclrd{s}$ then:
 %
 \begin{equation*}
 \begin{array}{l}
@@ -1604,7 +1605,7 @@ where $\czip = \cseq = \cpar$ and the operation is also idempotent and commutati
 \end{lemma}
 \begin{proof}
 By induction over $\vdash$, using the idempotent, commutative monoid structure to keep $\cclrd{s}$ with
-the free-variable context. See Appendix~?.
+the free-variable context. See Appendix~\ref{sec:appendix-flat-cbn}.
 \end{proof}
 
 \noindent

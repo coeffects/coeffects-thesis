@@ -3,6 +3,148 @@
 \chapter{Appendix A} 
 \label{ch:appendix} 
 
+This appendinx provides additional details for some of the proofs for equational theory
+of flat coeffect calculus from Chapter~\ref{ch:flat} and structural coeffect calculus
+from Chapter~\ref{ch:structural}.
+
+\section{Substitution for flat coeffects}
+\label{sec:appendix-flat-cbn}
+In Section~\ref{sec:flat-syntax-cbn}, we stated that, for a bottom-pointed flat coeffect
+algebra (\ie~$\forall r \in \C \;.\; r \,\cgeq\, \cunit $), the call-by-name substitution 
+preserves type if all operators of the flat coeffect algebra coincide (Lemma~\ref{thm:cbn-substitution-bot}).
+This section provides the corresponding proof.
+
+\begin{lemma*}[Bottom-pointed substitution]
+In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ 
+where $\czip = \cseq = \cpar$ and the operation is also idempotent and commutative and
+$\cclrd{r}\,\cleq\,\cclrd{r'} \Rightarrow \forall\cclrd{s}.\cclrd{r}\,\cseq\,\cclrd{s}\;\cleq\;\cclrd{r'}\,\cseq\,\cclrd{s}$ then:
+%
+\begin{equation*}
+\begin{array}{l}
+ \coctx{\Gamma}{\cclrd{S}} \vdash e_s : \tau_s \;\; \wedge \;\; 
+ \coctx{\Gamma_1,  x : \tau_s, \Gamma_2}{ \cclrd{r}  } \vdash e_r : \tau_r\\
+\quad \Rightarrow \;\; \coctx{\Gamma_1,\Gamma,\Gamma_2}{ \cclrd{r} \,\cseq\, \cclrd{S} } \vdash \subst{e_r}{x}{e_s} : \tau_r
+\end{array}
+\end{equation*}
+
+\end{lemma*}
+\begin{proof}
+Assume that $\coctx{\Gamma}{\cclrd{S}} \vdash e_s : \tau_s$ and we are substituting a term $e_s$ for 
+a variable $x$. Note that we use upper-case $\cclrd{S}$ to distinguish the coeffect of the expression
+that is being substituted into an expression. Using structural induction over $\vdash$:
+
+\paragraph{(var)} Given the following derivation using (\emph{var}):
+\[
+\inference
+  { }
+  {\coctx{\Gamma_1, y:\tau, \Gamma_2}{\cunit} \vdash y : \tau }
+\]
+There are two cases depending on whether $y$ is the variable $x$ or not:
+\begin{itemize}
+\item[--] If $y=x$ then also $\tau = \tau_s$ and thus $\subst{y}{x}{e_s} = e_s$. Using the assumption,
+implicit weakening and the fact that $\cunit$ is a unit of $\cseq$:
+\[
+\inference
+ {\inference 
+  {\coctx{\Gamma}{\cclrd{S}} \vdash \subst{y}{x}{e_s} : \tau_s }
+  {\coctx{\Gamma_1, \Gamma, \Gamma_2}{\cclrd{S}} \vdash \subst{y}{x}{e_s} : \tau } }
+ {\coctx{\Gamma_1, \Gamma, \Gamma_2}{\cunit\,\cseq\,\cclrd{S}} \vdash \subst{y}{x}{e_s} : \tau } 
+\]
+\item[--] If $y\neq x$ then $\subst{y}{x}{e_s} = y$. Using the fact that $\cunit$ is the bottom element
+and sub-coeffecting:
+\[
+\inference
+  {\coctx{\Gamma_1, y:\tau, \Gamma_2}{\cunit} \vdash y : \tau }
+  {\coctx{\Gamma_1, y:\tau, \Gamma_2}{\cunit\,\cseq\,\cclrd{S}} \vdash y : \tau }
+\]
+\end{itemize}
+
+\paragraph{(const)} Similar to the (\emph{var}) case when the variable is not substituted.
+
+\paragraph{(sub)} Given the following typing derivation using (\emph{sub}):
+\[
+\inference
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{r'}} \vdash e : \tau }
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{r}} \vdash e : \tau }\quad\quad(\cclrd{r'} \cleq \cclrd{r})
+\]
+From the induction hypothesis, we have that
+$\coctx{\Gamma_1,\Gamma,\Gamma_2}{\cclrd{r'}\,\cseq\,\cclrd{S}} \vdash \subst{e}{x}{e_s} : \tau$.
+The condition on $\cleq$ means that $\cclrd{r'}\,\cseq\,\cclrd{S}\;\cleq\;\cclrd{r}\,\cseq\,\cclrd{S}$
+and so we can apply the (\emph{sub}) rule to obtain
+$\coctx{\Gamma_1,\Gamma,\Gamma_2}{\cclrd{r}\,\cseq\,\cclrd{S}} \vdash \subst{e}{x}{e_s} : \tau$.
+
+\paragraph{(abs)} Given the following typing derivation using (\emph{abs}):
+\[
+\inference
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2, y:\tau_1}{\cclrd{r}\;\czip\;\cclrd{s}} \vdash e : \tau_2}
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{r}} \vdash \lambda y.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
+\]
+Assume w.l.o.g. that $x\neq y$. From the induction hypothesis, we have that:
+\[
+\coctx{\Gamma_1,\Gamma,\Gamma_2, y:\tau_1}{ \cclrd{r} \,\cseq\, \cclrd{s} } \vdash \subst{e}{x}{e_s} : \tau_2
+\]
+Now using the fact that $\czip\,=\,\cseq$, associativity and commutativity and (\emph{abs}):
+\[
+\inference
+ {\inference
+  {\coctx{\Gamma_1,\Gamma,\Gamma_2, y:\tau_1}{ (\cclrd{r} \,\czip\, \cclrd{s})\,\cseq\,\cclrd{S} } \vdash \subst{e}{x}{e_s} : \tau_2}
+  {\coctx{\Gamma_1,\Gamma,\Gamma_2, y:\tau_1}{ (\cclrd{r} \,\cseq\, \cclrd{S})\,\czip\,\cclrd{s} } \vdash \subst{e}{x}{e_s} : \tau_2}}
+ {\inference
+  {\coctx{\Gamma_1,\Gamma,\Gamma_2}{\cclrd{r} \,\cseq\, \cclrd{S}} \vdash \lambda y.(\subst{e}{x}{e_s}) : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
+  {\coctx{\Gamma_1,\Gamma,\Gamma_2}{\cclrd{r} \,\cseq\, \cclrd{S}} \vdash \subst{(\lambda y.e)}{x}{e_s} : \tau_1 \xrightarrow{\cclrd{s}} \tau_2} }
+\]
+
+\paragraph{(app)} Given the following typing derivation using (\emph{app}):
+\[
+\inference
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 &
+   \coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{s}} \vdash e_2 : \tau_1 }
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2}
+\]
+From the induction hypothesis, we have that:
+\[
+\begin{array}{l}
+ \coctx{\Gamma_1, \Gamma, \Gamma_2}{\cclrd{r}\,\cseq\,\cclrd{S}} \vdash \subst{e_1}{x}{e_s} : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \\
+ \coctx{\Gamma_1, \Gamma, \Gamma_2}{\cclrd{s}\,\cseq\,\cclrd{S}} \vdash \subst{e_2}{x}{e_s} : \tau_1
+\end{array}\quad(*)
+\]
+Now using (\emph{app}) rule and the fact that $\cpar\,=\,\cseq$, associativity, commutativity and idempotence
+(note that all three properties are needed):
+\[
+\inference
+ { (*) }
+ {\inference
+   { \coctx{\Gamma_1,\Gamma,\Gamma_2}{(\cclrd{r}\,\cseq\,\cclrd{S}) \;\cpar\; ((\cclrd{s}\,\cseq\,\cclrd{S}) \,\cseq\, \cclrd{t})} 
+       \vdash \subst{e_1}{x}{e_s}~\subst{e_2}{x}{e_s} : \tau_2}
+   { \coctx{\Gamma_1,\Gamma,\Gamma_2}{(\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t}))\;\cseq\;\cclrd{S}} 
+       \vdash \subst{(e_1~e_2)}{x}{e_s} : \tau_2} }
+\]
+
+\paragraph{(let)} Given the following typing derivation using (\emph{let}):
+\[
+\inference
+  { \coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{r}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma_1,x:\tau_s,\Gamma_2, y:\tau_1}{\cclrd{s}} \vdash e_2 : \tau_2}
+  {\coctx{\Gamma_1,x:\tau_s,\Gamma_2}{\cclrd{s} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{r})} \vdash \kvd{let}~y=e_1~\kvd{in}~e_2 : \tau_2 }
+\]
+From the induction hypothesis, we have that:
+\[
+\begin{array}{l}
+ \coctx{\Gamma_1, \Gamma, \Gamma_2}{\cclrd{r}\,\cseq\,\cclrd{S}} \vdash \subst{e_1}{x}{e_s} : \tau_1 \\
+ \coctx{\Gamma_1, \Gamma, \Gamma_2, y:\tau_1}{\cclrd{s}\,\cseq\,\cclrd{S}} \vdash \subst{e_2}{x}{e_s} : \tau_2
+\end{array}\quad(\dagger)
+\]
+Now using (\emph{let}) rule and similarly to the (\emph{app}) case:
+\[
+\inference
+ { (\dagger) }
+ { \inference
+   { \coctx{\Gamma_1, \Gamma, \Gamma_2}{(\cclrd{s}\,\cseq\,\cclrd{S}) \;\cpar\; ((\cclrd{s}\,\cseq\,\cclrd{S}) \,\cseq\, (\cclrd{r}\,\cseq\,\cclrd{S}))} 
+         \vdash \kvd{let}~y=\subst{e_1}{x}{e_s}~\kvd{in}~\subst{e_2}{x}{e_s} : \tau_2 } 
+   { \coctx{\Gamma_1, \Gamma, \Gamma_2}{(\cclrd{s} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{r})) \,\cseq\, \cclrd{S}} 
+         \vdash \subst{(\kvd{let}~y=e_1~\kvd{in}~e_2)}{x}{e_s} : \tau_2 } }
+\]
+\end{proof}
 
 %
 % (e2 + (e1 * e2)) + (e3 * f)
@@ -40,120 +182,120 @@
 
 %---------------------------------------------------------------------------------------------------
 
-\section{Internalized substitution}
+% \section{Internalized substitution}
 
-\subsection{First transformation}
+% \subsection{First transformation}
 
-\begin{equation*}
-(\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3 \leadsto \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3)
-\end{equation*}
+% \begin{equation*}
+% (\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3 \leadsto \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3)
+% \end{equation*}
 
-\begin{equation*}
-\tyrule{app}
-  { \tyrule{glet}
-      { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
-        \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 }
-      { \coctx{\Gamma}{\cclrd{r}\;\cpar\;({\cclrd{s}\,\cseq\,\cclrd{r})}} \vdash \kvd{glet}~x=e_1~\kvd{in}~e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 } &
-    \coctx{\Gamma}{\cclrd{u}} \vdash e_3 : \tau_3  }
-  { \coctx{\Gamma}{(\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})) \;\cpar\; (\cclrd{u}\,\cseq\,\cclrd{t}) } \vdash (\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3 : \tau_2 }
-\end{equation*}
+% \begin{equation*}
+% \tyrule{app}
+%   { \tyrule{glet}
+%       { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
+%         \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 }
+%       { \coctx{\Gamma}{\cclrd{r}\;\cpar\;({\cclrd{s}\,\cseq\,\cclrd{r})}} \vdash \kvd{glet}~x=e_1~\kvd{in}~e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 } &
+%     \coctx{\Gamma}{\cclrd{u}} \vdash e_3 : \tau_3  }
+%   { \coctx{\Gamma}{(\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})) \;\cpar\; (\cclrd{u}\,\cseq\,\cclrd{t}) } \vdash (\kvd{glet}~x=e_1~\kvd{in}~e_2)~e_3 : \tau_2 }
+% \end{equation*}
 
-to
+% to
 
-\begin{equation*}
-\tyrule{glet}
-  { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
-    \tyrule{app}
-      { \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 & 
-        \coctx{\Gamma}{\cclrd{u}} \vdash e_3 : \tau_3 }
-      { \coctx{\Gamma}{\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})} \vdash e_2~e_3 : \tau_2 } }
-  { \coctx{\Gamma}{ (\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})) \;\cpar\; (\cclrd{s}\,\cseq\,(\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})))  }
-      \vdash \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3) : \tau_2 }
-\end{equation*}
+% \begin{equation*}
+% \tyrule{glet}
+%   { \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 &
+%     \tyrule{app}
+%       { \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_2 : \tau_3 \xrightarrow{\cclrd{t}} \tau_2 & 
+%         \coctx{\Gamma}{\cclrd{u}} \vdash e_3 : \tau_3 }
+%       { \coctx{\Gamma}{\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})} \vdash e_2~e_3 : \tau_2 } }
+%   { \coctx{\Gamma}{ (\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})) \;\cpar\; (\cclrd{s}\,\cseq\,(\cclrd{r}\;\cpar\;(\cclrd{u}\,\cseq\,\cclrd{t})))  }
+%       \vdash \kvd{glet}~x=e_1~\kvd{in}~(e_2~e_3) : \tau_2 }
+% \end{equation*}
 
-meaning
-\begin{equation*}
-\begin{array}{l}
-(\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})) \;\cpar\; (\cclrd{u}\,\cseq\,\cclrd{t}) =
-\end{array}
-\end{equation*}
+% meaning
+% \begin{equation*}
+% \begin{array}{l}
+% (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})) \;\cpar\; (\cclrd{u}\,\cseq\,\cclrd{t}) =
+% \end{array}
+% \end{equation*}
 
-\subsection{Second transformation}
-
-
-Second transformation
-
-\begin{equation*}
-\tyrule{glet}
-  { \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s &
-    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_r : \tau_r &
-    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e_t : \tau_t }
-  { \coctx{\Gamma}{
-      \cclrd{t}
-      \;\cpar\;
-      (  (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r}))
-         \,\cseq\, 
-         \cclrd{t} )
-    } 
-    \vdash \kvd{glet}~x_r=(\kvd{glet}~x_s=e_s~\kvd{in}~e_r)~\kvd{in}~e_t : \tau_t }
-\end{equation*}
-
-or
-
-\begin{equation*}
-\tyrule{glet}
-  { \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s &
-    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_r : \tau_r &
-    \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e_t : \tau_t }
-  { \coctx{\Gamma}{
-      (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) 
-      \;\cpar\;
-      (  \cclrd{s}
-         \,\cseq\, 
-         (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) )
-    } 
-    \vdash \kvd{glet}~x_s=e_s~\kvd{in}~(\kvd{glet}~x_r=e_r~\kvd{in}~e_t) : \tau_t }
-\end{equation*}
+% \subsection{Second transformation}
 
 
-\begin{equation*}
-\begin{array}{l}
-  \cclrd{t}
-  \;\cpar\;
-  (  (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r}))
-     \,\cseq\, 
-     \cclrd{t} ) = 
-\\
-  \cclrd{t}
-  \;\cpar\;
-  (\cclrd{r}\,\cseq\, \cclrd{t})
-  \;\cpar\;
-  (\cclrd{s}\,\cseq\,\cclrd{r}\,\cseq\, \cclrd{t}) = 
-\\
-  \cclrd{s}\,\cseq\,\cclrd{r}\,\cseq\, \cclrd{t} 
-\end{array}
-\end{equation*}
+% Second transformation
 
-\begin{equation*}
-\begin{array}{l}
-  (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) 
-  \;\cpar\;
-  (  \cclrd{s}
-     \,\cseq\, 
-     (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) ) = 
-\\     
-  \cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})
-  \;\cpar\;
-  (\cclrd{s} \,\cseq\, \cclrd{t})
-  \;\cpar\;
-  (\cclrd{s} \,\cseq\, \cclrd{r}\,\cseq\,\cclrd{t})  = 
-\\     
-  \cclrd{s} \,\cseq\, \cclrd{r}\,\cseq\,\cclrd{t}
-\end{array}
-\end{equation*}
+% \begin{equation*}
+% \tyrule{glet}
+%   { \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s &
+%     \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_r : \tau_r &
+%     \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e_t : \tau_t }
+%   { \coctx{\Gamma}{
+%       \cclrd{t}
+%       \;\cpar\;
+%       (  (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r}))
+%          \,\cseq\, 
+%          \cclrd{t} )
+%     } 
+%     \vdash \kvd{glet}~x_r=(\kvd{glet}~x_s=e_s~\kvd{in}~e_r)~\kvd{in}~e_t : \tau_t }
+% \end{equation*}
 
-require
+% or
 
-\begin{equation*}
-\cclrd{r}\;\cpar\;(\cclrd{r} \,\cseq\, \cclrd{s}) = \cclrd{r} \,\cseq\, \cclrd{s}
-\end{equation*}
+% \begin{equation*}
+% \tyrule{glet}
+%   { \coctx{\Gamma}{\cclrd{s}} \vdash e_s : \tau_s &
+%     \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{r}} \vdash e_r : \tau_r &
+%     \coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e_t : \tau_t }
+%   { \coctx{\Gamma}{
+%       (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) 
+%       \;\cpar\;
+%       (  \cclrd{s}
+%          \,\cseq\, 
+%          (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) )
+%     } 
+%     \vdash \kvd{glet}~x_s=e_s~\kvd{in}~(\kvd{glet}~x_r=e_r~\kvd{in}~e_t) : \tau_t }
+% \end{equation*}
+
+
+% \begin{equation*}
+% \begin{array}{l}
+%   \cclrd{t}
+%   \;\cpar\;
+%   (  (\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r}))
+%      \,\cseq\, 
+%      \cclrd{t} ) = 
+% \\
+%   \cclrd{t}
+%   \;\cpar\;
+%   (\cclrd{r}\,\cseq\, \cclrd{t})
+%   \;\cpar\;
+%   (\cclrd{s}\,\cseq\,\cclrd{r}\,\cseq\, \cclrd{t}) = 
+% \\
+%   \cclrd{s}\,\cseq\,\cclrd{r}\,\cseq\, \cclrd{t} 
+% \end{array}
+% \end{equation*}
+
+% \begin{equation*}
+% \begin{array}{l}
+%   (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) 
+%   \;\cpar\;
+%   (  \cclrd{s}
+%      \,\cseq\, 
+%      (\cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})) ) = 
+% \\     
+%   \cclrd{t}\;\cpar\;(\cclrd{r}\,\cseq\,\cclrd{t})
+%   \;\cpar\;
+%   (\cclrd{s} \,\cseq\, \cclrd{t})
+%   \;\cpar\;
+%   (\cclrd{s} \,\cseq\, \cclrd{r}\,\cseq\,\cclrd{t})  = 
+% \\     
+%   \cclrd{s} \,\cseq\, \cclrd{r}\,\cseq\,\cclrd{t}
+% \end{array}
+% \end{equation*}
+
+% require
+
+% \begin{equation*}
+% \cclrd{r}\;\cpar\;(\cclrd{r} \,\cseq\, \cclrd{s}) = \cclrd{r} \,\cseq\, \cclrd{s}
+% \end{equation*}
