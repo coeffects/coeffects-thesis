@@ -139,13 +139,13 @@ e &::=& x \sep \lambda x.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{in}~e_2\\
 %
 In the previous chapter, the free variable context $\Gamma$ has been treated as a set. In the 
 structural coeffect calculus, the order of variables matters. Thus we treat free variable context
-as a vector with a uniqueness condition. We also write $\xlift{-}$ for the length
+as a vector with a uniqueness condition. We also write $\xlen{-}$ for the length
 of the vector:
 %
 \begin{equation*}
 \begin{array}{rcl}
  \Gamma &\narrow{=}& \langle x_1\!:\tau_1, \ldots, x_n\!:\!\tau_n \rangle \qquad \textnormal{such that}~~\forall i, j ~.~ i \neq j \implies x_i \neq x_j\\
- \xlift{\Gamma} &\narrow{=}& n
+ \xlen{\Gamma} &\narrow{=}& n
 \end{array}
 \end{equation*}
 %
@@ -160,7 +160,7 @@ The free variable contexts are annotated with vectors of structural coeffect sca
 we write the vectors of coeffects as $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$. Meta-variables ranging 
 over vectors are written as $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ (using bold face 
 and colour to distinguish them from scalar meta-variables) and the length of a coeffect vector
-is written as $\slift{\aclrd{\textbf{r}}}$. The structure for working with vectors
+is written as $\alen{\aclrd{\textbf{r}}}$. The structure for working with vectors
 of coeffects is provided by the \emph{structural coeffect algebra} definition below. 
 
 % -------------------------------------------------------------------------------------------------
@@ -173,6 +173,7 @@ modelling sequential composition of computations and a monoid $(\C, \cpar, \czer
 point-wise composition, as well as a relation $\cleq$ that defines sub-coeffecting.
 
 \begin{definition}
+\label{def:structural-scalar}
 A \emph{\cclrd{structural coeffect scalar}} $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ is a set 
 $\C$ together with elements $\cunit, \czero \in \C$, relation $\cleq$ and binary operations 
 $\cseq, \cpar$ such that $(\C, \cseq, \cunit)$ and $(\C, \cpar, \czero)$ are monoids and
@@ -223,7 +224,7 @@ $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ equipped with the following addition
 \item An operation that constructs a vector from scalars indexed by the vector length
   $\alift{-}_{\sclrd{n}} : \C \times \ldots \times \C \rightarrow \C^{\sclrd{n}}$
   and an operation that returns the vector length such that 
-  $\slift{\aclrd{\textbf{r}}} = \sclrd{n}$ for $\aclrd{\textbf{r}} : \C^{\sclrd{n}}$
+  $\alen{\aclrd{\textbf{r}}} = \sclrd{n}$ for $\aclrd{\textbf{r}} : \C^{\sclrd{n}}$
 
 \item A point-wise extension of the $\cseq$ operator written as $\cclrd{t} \,\aseq\, \aclrd{\textbf{s}}$
   such that\\ $\cclrd{t} \,\aseq\, \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} = 
@@ -343,7 +344,7 @@ or semantically, where the same context is shared.
 \begin{equation*}
 \tyrule{weak}
   {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
-  {\coctx{\Gamma,x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{ \czero }} \vdash e : \tau} 
+  {\coctx{\Gamma,x \!:\! \tau_1}{\aclrd{\textbf{r}} \atimes \alift{ \czero }} \vdash e : \tau} 
 \end{equation*}
 \begin{equation*}
 \tyrule{exch}
@@ -351,8 +352,8 @@ or semantically, where the same context is shared.
   {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{t},\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}
 \quad
 \begin{array}{l}
- \xlift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
- \xlift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+ \xlen{\Gamma_1} = \alen{\aclrd{\textbf{r}}}\\[-0.25em]
+ \xlen{\Gamma_2} = \alen{\aclrd{\textbf{s}}}
 \end{array}
 \end{equation*}
 \begin{equation*}
@@ -362,8 +363,8 @@ or semantically, where the same context is shared.
   {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
 ~
 \begin{array}{l}
- \xlift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
- \xlift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+ \xlen{\Gamma_1} = \alen{\aclrd{\textbf{r}}}\\[-0.25em]
+ \xlen{\Gamma_2} = \alen{\aclrd{\textbf{s}}}
 \end{array}
 \end{equation*}
 
@@ -694,7 +695,7 @@ and perform sub-coeffecting separately on individual variables.
 \hspace{2em}\sem{\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}} \vdash e : \tau_2}
   ~(\ident{merge}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}}}~(\ctx, v))
 \\[0.5em]
-\sem{\coctx{\Gamma,x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{ \czero }} \vdash e : \tau}~\ctx = & (\emph{weak}) \\
+\sem{\coctx{\Gamma,x \!:\! \tau_1}{\aclrd{\textbf{r}} \atimes \alift{ \czero }} \vdash e : \tau}~\ctx = & (\emph{weak}) \\
   \hspace{2em}
   \kvd{let}~(\ctx_1, \_) = \ident{split}_{\aclrd{\textbf{r}}, \alift{\czero}}~\ctx~~\kvd{in}~~
   \sem{\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}~\ctx_1
