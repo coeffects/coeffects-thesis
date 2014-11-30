@@ -184,6 +184,8 @@ $\textit{min}(\aclrd{n}, \aclrd{m}) \leq \aclrd{m}$ and $\textit{min}(\aclrd{n},
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Flat coeffect algebra}
+\label{sec:flat-calculus-algebra}
+
 To make the flat coeffect system general enough, the algebra consists of three operations.
 Two of them, $\cseq$ and $\cpar$, represent the \emph{sequential} and \emph{point-wise} composition, 
 respectively and the third one, $\czip$ represents context \emph{merging}. The term merging should be 
@@ -196,27 +198,24 @@ variable access and constant access and a relation that defines the ordering.
 \begin{definition}
 A \emph{\cclrd{flat coeffect algebra}} $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ is a set 
 $\C$ together with elements $\cunit, \czero \in \C$, relation $\cleq$ and binary operations 
-$\cseq, \cpar, \czip$ such that $(\C, \cseq, \cunit)$ and $(\C, \cpar, \czero)$ are monoids,
-$(\C, \cleq)$ is a pre-order and $(\C, \czip)$ is a band (idempotent semigroup). That is, 
-for all $r,s,t\in \C$:
+$\cseq, \cpar, \czip$ such that $(\C, \cseq, \cunit)$ is a monoid, $(\C, \cpar, \czero)$ is an
+idempotent monoid, $(\C, \cleq)$ is a pre-order and $(\C, \czip)$ is a band (idempotent semigroup). 
+That is, for all $r,s,t\in \C$: 
 %
 \begin{equation*}
-\begin{array}{ccr}
-r \;\cseq\; (s \;\cseq\; t) = (r \;\cseq\; s) \;\cseq\; t  &
-\cunit \;\cseq\; r = r = r \;\cseq\; \cunit &
-\textnormal{(monoid)}   
+\begin{array}{ccc}
+r \;\cseq\; (s \;\cseq\; t) = (r \;\cseq\; s) \;\cseq\; t &&
+\cunit \;\cseq\; r = r = r \;\cseq\; \cunit 
 \\
-r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &
-\czero \;\cpar\; r = r = r \;\cpar\; \czero &
-\textnormal{(monoid)}   
+r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &&
+\czero \;\cpar\; r = r = r \;\cpar\; \czero 
 \\
-r \;\czip\; (s \;\czip\; t) = (r \;\czip\; s) \;\czip\; t &
-r\; \czip\; r = r &
-\textnormal{(band)}   
+r \;\czip\; (s \;\czip\; t) = (r \;\czip\; s) \;\czip\; t &&
+r\; \czip\; r = r \qquad\quad
+r\; \cpar\; r = r 
 \\
-\textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t&
-t\; \cleq\; t &
-\textnormal{(pre-order)}   
+\textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t &~~~~&
+t\; \cleq\; t 
 \end{array}
 \end{equation*}
 %
@@ -238,10 +237,11 @@ common properties of the three examples, without unnecessarily restricting the s
 functions. The laws of a monoid are required in order to form a category structure in the 
 categorical model (Section~\ref{sec:flat-semantics}).
 
-\item The monoid $(\C, \cpar, \czero)$ represents \emph{point-wise} composition, \ie~the case when the
-same context is passed to multiple (independent) computations. The monoid laws guarantee 
-that usual syntactic transformations on tuples and the unit value (Section~\ref{sec:flat-exts})
-preserve the coeffect. 
+\item The idempotent monoid $(\C, \cpar, \czero)$ represents \emph{point-wise} composition, 
+\ie~the case when the same context is passed to multiple (independent) computations. The monoid 
+laws guarantee that usual syntactic transformations on tuples and the unit value 
+(Section~\ref{sec:flat-exts}) preserve the coeffect. Idempotence holds for all our examples
+and allows us to unify the flat and structural systems in Chapter~\ref{ch:unified}.
 
 \item For the $\czip$ operation, we require associativity and idempotence. The idempotence
 requirement makes it possible to duplicate the coeffects and place the same requirement on both
@@ -249,6 +249,7 @@ call-site and declaration-site, \ie~it makes the (\emph{abs-df}) rule admissible
 the operator forms a monoid with the unit being the greatest element of the set. 
 \end{itemize}
 
+\noindent
 It is worth noting that the operators $\cpar$ and $\czip$ are dual in some of the systems. For 
 example, in data-flow computations, they are \emph{max} and \emph{min} respectively. However, this
 duality does not hold for implicit parameters. Using the syntactic reading, they represent 
@@ -264,7 +265,7 @@ sub-coeffecting rule of the type system. When the monoid $(\C, \cpar, \czero)$ i
 and commutative monoid (semi-lattice), the $\cleq$ relation can be defined in terms of $\cpar$ as:
 %
 \begin{equation*}
-r \;\cleq\; s \;\Longleftrightarrow\; r \;\cpar\; s \;=\; s
+\cclrd{r} \;\cleq\; \cclrd{s} \;\Longleftrightarrow\; \cclrd{r} \;\cpar\; \cclrd{s} \;=\; \cclrd{s}
 \end{equation*}
 %
 This definition is consistent with all three examples that motivate flat coeffect calculus, but
@@ -278,6 +279,7 @@ when this is the case, we are able to prove certain properties of the calculus.
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Understanding flat coeffects}
+\label{sec:flat-calculus-undestanding}
 
 Before looking at the type system in Figure~\ref{fig:flat-types}, let us clarify how the rules
 should be understood. The coeffect calculus provides both analysis of context dependence (type 
@@ -1983,6 +1985,7 @@ and turn the resulting $\tau_2$ into the required result of type $\tau_2'$.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Alternative lambda abstraction}
+\label{sec:flat-exts-lambda}
 
 In Section~\ref{sec:flat-calculus-lambda}, we discussed how to reconcile two typings for
 lambda abstraction (for implicit parameters, the lambda function splits context requirements

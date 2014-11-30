@@ -206,7 +206,7 @@ over $\C$ is a tuple $\alift{ \cclrd{r_1}, \ldots, \cclrd{r_n} }$ of scalars.
 We use bold-face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ for vectors and lower-case
 letters $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars\footnote{For better readability, the thesis
 also distinguishes different structures using colours. However ignoring the colour does not introduce 
-any ambiguity.}. We also say that a \emph{shape} of a vector $\slift{\aclrd{\textbf{r}}}$ (or more generally any container) 
+any ambiguity.}. We also say that a \emph{shape} of a vector $\slen{\aclrd{\textbf{r}}}$ (or more generally any container) 
 is the set of \emph{positions} in a vector. So, a vector of length $n$ has shape $\{ 1, 2, \ldots, n \}$. 
 We discuss containers and shapes further in Chapter~\ref{ch:unified} and also discuss how our use
 relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
@@ -1800,8 +1800,8 @@ the (\emph{let}) rule follows similar reasoning (and also corresponds to the typ
   {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
 \quad
 \begin{array}{l}
-\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
-\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
 \end{array}
 \end{equation*}
 \begin{equation*}
@@ -1810,8 +1810,8 @@ the (\emph{let}) rule follows similar reasoning (and also corresponds to the typ
   {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}\sqcap\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
 ~
 \begin{array}{l}
-\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
-\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
 \end{array}
 \end{equation*}
 
@@ -2103,8 +2103,8 @@ relate it with the original formulation.
   {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
 \quad
 \begin{array}{l}
-\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
-\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
 \end{array}
 \end{equation*}
 \begin{equation*}
@@ -2113,8 +2113,8 @@ relate it with the original formulation.
   {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
 ~
 \begin{array}{l}
-\slift{\Gamma_1} = \slift{\aclrd{\textbf{r}}}\\[-0.25em]
-\slift{\Gamma_2} = \slift{\aclrd{\textbf{s}}}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
 \end{array}
 \end{equation*}
 
