@@ -17,10 +17,10 @@ and can be instantiated to track both flat and structural properties (Section~\r
 
 Although the results presented in this thesis are mainly of a theoretical nature, we indeed 
 believe that coeffects should be integrated in main-stream programming languages. In the second
-part of this chapter, we outline one possible approach for practical implementations of coeffects 
-(Section~\ref{sec:unified-impl}). Finally, we discuss an alternative approach to defining coeffect 
+part of this chapter, we discuss an alternative approach to defining coeffect 
 systems which highlights the relationship between our work and related work arising from modal logics 
-(Section~\ref{sec:unified-meta}). 
+(Section~\ref{sec:unified-meta}). Finally, we outline one possible approach for practical
+implementations of coeffects (Section~\ref{sec:unified-impl}).
 
 % ==================================================================================================
 
@@ -770,6 +770,244 @@ annotations) of the object that wrap the free-variable context.
 
 
 % =================================================================================================
+%                                                                                             
+%    #   #          #                    ##                                                    
+%    #   #          #                     #                                                    
+%    ## ##   ###   ####    ###            #     ###   # ##    ## #  #   #   ###    ## #   ###  
+%    # # #  #   #   #         #  #####    #        #  ##  #  #  #   #   #      #  #  #   #   # 
+%    #   #  #####   #      ####           #     ####  #   #   ##    #   #   ####   ##    ##### 
+%    #   #  #       #  #  #   #           #    #   #  #   #  #      #  ##  #   #  #      #     
+%    #   #   ###     ##    ####          ###    ####  #   #   ###    ## #   ####   ###    ###  
+%                                                            #   #                #   #        
+%                                                             ###                  ###         
+% =================================================================================================
+
+\section{Coeffect meta-language}
+\label{sec:unified-meta} 
+
+In Section~\ref{sec:path-sem-langs}, we discussed two ways of using monads in programming
+language semantics introduced by Moggi \cite{monad-notions}. The first approach is to use
+monads in the \emph{semantics} of an effectful language. The second approach is to extend the
+language with (additional) monadic constructs that can then be used for writing effectful
+monads explicitly.
+
+In this thesis, we focused on the first approach. In both flat and structural coeffect calculi,
+the term language is that of simply-typed $\lambda$-calculus, and we used (flat or structural)
+indexed comonads to give the semantics for the language and to derive type system for it.
+
+In this section, we briefly discuss the alternative approach. That is, we embed indexed
+comonads into a $\lambda$-calculus as additional constructs. To do that, we introduce the
+type constructor $\ctyp{\cclrd{r}}{\tau}$ which represents a value $\tau$ wrapped in additional
+context (semantically, this corresponds to an indexed comonad) and we add language constructs
+that correspond to the operations of indexed comonads.
+
+This section provides a brief sketch of coeffect meta-language to highlight the relationship
+between coeffects and important related work on contextual modal type theory (CMTT) \cite{logic-cmtt}.
+Developing the system further is an interesting future research direction.
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Coeffects and contextual modal type theory}
+
+As discussed in Section~\ref{sec:path-sem-contextdep}, context-aware computations are related
+to modal logics -- comonads have been used to model the $\square$ modality and as a basis for
+meta-languages that include $\square$ as a type constructor
+\cite{logic-intuitionistic-modal,logic-modal-reconstruction,logic-intuitionistic-modal,logic-cmtt}.
+Nanevski et al. \cite{logic-cmtt} extend an S4 term language to a contextual modal type theory (CMTT).
+From the perspective of this thesis, CMTT can be viewed as a \emph{meta-language} version of our
+coeffect calculus.
+
+\paragraph{Context in CMTT and coeffects.}
+Aside from the fact that coeffect calculi use comonads for \emph{semantics} and CMTT embeds
+comonads (the $\square$ modality) into the meta-language, there are two important differences.
+
+Firstly, the \emph{context} in CMTT is a set of variables required by a computation, which
+makes CMTT useful for meta-programming and staged computations. In coeffect calculi, the context
+requirements are formed by a coeffect algebra, which is more general and can capture
+variable contexts, but also integers, two-point lattices, \emph{etc.}
+
+Secondly, CMTT uses different intuitive understanding of the comonad (type constructor) and
+the associated operations. In categorical semantics of coeffect calculi, the $\ctyp{\cclrd{r}}{\tau}$
+constructor refers to a value of type $\tau$ \emph{together} with additional context specified
+by $\cclrd{r}$ (\eg~list of past values or additional resources). In contrast in 
+CMTT\footnote{To avoid using different notations, we write $\ctyp{\Psi}{\tau}$ instead of the 
+original $[\Psi]{\tau}$} the type $\ctyp{\Psi}{\tau}$ models a value that \emph{requires} the 
+context $\Psi$ in order to produce value $\tau$. This also changes the interpretation of the 
+two operations of a comonad:
+\begin{equation*}
+\begin{array}{rcl}
+ \ident{counit} &\narrow{:}& \ctyp{\cunit}{\alpha} \rightarrow \alpha\\
+ \ident{cobind} &\narrow{:}& (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) \rightarrow 
+    \ctyp{\cclrd{r}\cseq\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta}
+\end{array}
+\end{equation*}
+Both readings are possible, but they give quite different meanings to the operations:
+
+\begin{itemize}
+\item \emph{Coeffect interpretation.} The \ident{counit} operation extracts a value 
+  and does not require any additional context; the \ident{cobind} operation requires
+  context $\cclrd{r}\,\cseq\,\cclrd{s}$, uses the part specified by $\cclrd{r}$ to 
+  evaluate the function, ending with a value $\beta$ together with remaining context
+  $\cclrd{s}$.
+\item \emph{CMTT interpretation.} The \ident{counit} operation evaluates a computation 
+  that requires no additional context to obtain a $\alpha$ value; given a function that
+  turns a computation requiring context $\cclrd{r}$ into a value $\beta$, the \ident{cobind}
+  operation can turn a computation that requires context $\cclrd{r}\,\cseq\,\cclrd{s}$ 
+  into a computation that requires just $\cclrd{s}$ and contains $\beta$ (a part of the
+  context requirements is eliminated by the function).
+\end{itemize}
+
+\noindent
+Although the different reading does not affect formal properties of the systems, it is important
+to understand the difference when discussing the two systems. 
+
+The sketch of a coeffect meta-language in the following section attempts to bridge the gap
+between coeffects and CMTT. Just like CMTT, it embeds comonads as language constructs, but
+it annotates them with a (flat) coeffect algebra, thus it generalizes CMTT which tracks only
+sets of variables. Future work on the coeffect meta-language would thus be an interesting 
+development for both coeffect systems and CMTT.
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Coeffect meta-language}
+
+The coeffect meta-langauge could be designed using both flat and structural indexed comonads.
+For simplicity, this section only discusses the flat variant. The syntax of types and terms
+of the langauge includes the type constructor $\ctyp{\cclrd{r}}{\tau}$ and four expression forms:
+%
+\begin{equation*}
+\begin{array}{rcl}
+ \tau &\narrow{::=}& \alpha \sep \tau_1 \rightarrow \tau_2 \sep \ctyp{\cclrd{r}}{\tau}\\
+ e &\narrow{::=}& v \sep \lambda x.e \sep e_1~e_2 \sep !e    \\[-0.25em]
+  &        \sep& \kvd{let\;box}~x=e_1~\kvd{in}~e_2           \\[-0.25em]
+  &        \sep& \kvd{split}~e_1~\kvd{into}~x,y~\kvd{in}~e_2 \\[-0.25em]
+  &        \sep& \kvd{merge}~e_1, e_2~\kvd{into}~x~\kvd{in}~e_2 
+\end{array}
+\end{equation*}
+%
+The $!e$ and $\kvd{let\;box}$ constructs correspond to the \ident{counit} and \ident{cobind}
+operation of the comonad. To define meta-langauge for flat indexed comonads, we also include 
+\kvd{split} and \kvd{merge} that embed the corresponding operations. 
+
+\paragraph{Types for coeffect meta-language.}
+The type system for the language is shown in Figure~\ref{fig:conclusions-cml}. The first part
+shows the usual typing rules for simply-typed $\lambda$-calculus. For simplicity, we omit typing 
+rules for pairs, but those need to be present as the \kvd{merge} operation works on tuples.
+
+The second part of the typing rules is more interesting. The (\emph{counit}) operation extracts
+a value from a comonadic context and corresponds to variable access in coeffect calculi. The
+\kvd{let\;box} construct (\emph{cobind}) takes an input $e_1$ with context $\cclrd{r}\,\cseq\,\cclrd{s}$
+and a computation that turns a variable $x$ with a context $\cclrd{r}$ into a value $\tau_2$.
+The result is a computation that produces a $\tau_2$ value with the remaining context specified
+by $\cclrd{s}$. Note that the expression $e_2$ and $e_1$ corresponds to the first and second
+arguments of the \ident{cobind} operation. The keyword \kvd{let\;box} is chosen following 
+CMTT\footnote{The rule is similar to the \ident{letbox} rule for ICML \cite[p. 14]{logic-cmtt},
+although it differs because of our generalization of comonads where \ident{bind} composes
+coeffect annotations rather than requiring the same annotation everywhere.}.
+
+The \kvd{split} and \kvd{merge} constructs follow a similar pattern. They both apply some 
+transformation on one or two values in a context and then add the new value as a fresh variable
+to the variable context. For simplicity, we omit sub-coeffecting, but it could be easily added 
+following the pattern used elsewhere.
+
+% -------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+
+{\small a.) Typing rules for the simply typed $\lambda$-calculus}
+
+\begin{equation*}
+\tyrule{var}
+  {x : \tau \in \Gamma}
+  {\Gamma \vdash x : \tau }
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  {\Gamma \vdash e_1 : \tau_2 \rightarrow \tau_1 &
+   \Gamma \vdash e_2 : \tau_2 }
+  {\Gamma \vdash e_1~e_2 : \tau_1 }
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\Gamma, x:\tau_1 \vdash e : \tau_2}
+  {\Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 }
+\end{equation*}
+
+\vspace{1em}
+{\small b.) Additional typing rules arising from \emph{flat indexed comonads}}
+
+\begin{equation*}
+\tyrule{cobind}
+  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}\,\cseq\,\cclrd{s}}{\tau_1} & \Gamma, x : \ctyp{\cclrd{r}}{\tau_1} \vdash e_2 : \tau_2 }
+  {\Gamma \vdash \kvd{let\;box}~x=e_1~\kvd{in}~e_2 : \ctyp{\cclrd{s}}{\tau_2}}
+\end{equation*}
+\begin{equation*}
+\tyrule{counit}
+  {\Gamma \vdash e : \ctyp{\cunit}{\tau}}
+  {\Gamma \vdash !e : \tau}
+\end{equation*}
+\begin{equation*}
+\tyrule{split}
+  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}\,\cpar\,\cclrd{s}}{\tau_1} &
+   \Gamma, x:\ctyp{\cclrd{r}}{\tau_1}, y:\ctyp{\cclrd{s}}{\tau_1} \vdash e_2 : \tau_2 }
+  {\Gamma \vdash \kvd{split}~e_1~\kvd{into}~x,y~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+\begin{equation*}
+\tyrule{merge}
+  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}}{\tau_1} &
+   \Gamma \vdash e_2 : \ctyp{\cclrd{s}}{\tau_2} \\
+   \Gamma, x:\ctyp{\cclrd{r}\,\czip\,\cclrd{s}}{(\tau_1 \times \tau_2)} \vdash e_2 : \tau_3 }
+  {\Gamma \vdash \kvd{merge}~e_1, e_2~\kvd{into}~x~\kvd{in}~e_2 : \tau_3 }
+\end{equation*}
+
+\caption{Type system for the (flat) coeffect meta-language}
+\label{fig:conclusions-cml}
+\end{figure}
+
+% -------------------------------------------------------------------------------------------------
+
+\subsection{Embedding flat coeffect calculus}
+
+The \emph{meta-language} approach of embedding comonads in a language is more general than the
+\emph{semantics} approach. This thesis focuses on a narrower use that better guides the design of
+a type system for context-aware programming languages. 
+
+However, it is worth noting that 
+(flat) coeffect calculus can be embedded in the meta-language described above. This may be 
+desirable, \eg~when using the meta-language for reasoning about context-aware computations. 
+We briefly consider the embedding as it illuminates the relationship between coeffects and
+CMTT (although it is not possible to embed coeffect calculi in CMTT because of the more general
+annotations structure).
+
+Given a typing judgement $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ in a flat coeffect calculus,
+we define $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}_v$ as its emebdding in the coeffect
+meta-language. Note that the translation is indexed by $v$, which is a name of variable used 
+to represent the entire variable context of the source language. The translation is defined in
+Figure~\ref{fig:conclusions-embed}. The embedding resembles the semantics discussed in 
+Section~\ref{sec:flat-semantics}. This is not surprising as the meta-language directly mirrors
+the operations of a monad.
+
+% -------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\begin{equation*}
+\begin{array}{l}
+ \sem{ \coctx{\Gamma}{\cunit}\vdash x_i : \tau_i }_v = \pi_i (!v) \\[0.25em]
+ \sem{ \coctx{\Gamma}{\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{t})} \vdash e_1~e_2 : \tau_2 }_v =\\[-0.25em]
+   \qquad \kvd{split}~v~\kvd{into}~v_s, v_{rt}~\kvd{in} \\[-0.25em]
+   \qquad \sem{ \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }_{v_s}
+      ~(\kvd{let\;box}~v_r = v_{rt}~\kvd{in}~\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_2 : \tau_1}_{v_r}) \\[0.25em]
+ \sem{ \coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e:\tau_1 \xrightarrow{\cclrd{s}} \tau_2 }_v = \lambda x. \\[-0.25em]
+   \qquad \kvd{merge}~v,x~\kvd{into}~v_{rs}~\kvd{in}~\sem{ \coctx{(\Gamma,x:\tau_1)}{\cclrd{r}\,\czip\,\cclrd{s}} \vdash e : \tau_2 }_{v_{rs}}
+\end{array}
+\end{equation*}
+\caption{Embedding flat coeffect calculus in coeffect meta-language }
+\label{fig:conclusions-embed}
+\end{figure}
+
+
+
+% =================================================================================================
 %                                                                   
 %      ####                         #       #                   ##   
 %      #   #                        #                            #   
@@ -1006,242 +1244,6 @@ thesis. In particular, it uses better-known structures and is simpler. However, 
 it as it rules out one of the important motivating examples (implicit parameters) and, even with
 the simplification, solving constraints with $\cseq$ and $\cleq$ is still an open question.
 
-
-% =================================================================================================
-%                                                                                             
-%    #   #          #                    ##                                                    
-%    #   #          #                     #                                                    
-%    ## ##   ###   ####    ###            #     ###   # ##    ## #  #   #   ###    ## #   ###  
-%    # # #  #   #   #         #  #####    #        #  ##  #  #  #   #   #      #  #  #   #   # 
-%    #   #  #####   #      ####           #     ####  #   #   ##    #   #   ####   ##    ##### 
-%    #   #  #       #  #  #   #           #    #   #  #   #  #      #  ##  #   #  #      #     
-%    #   #   ###     ##    ####          ###    ####  #   #   ###    ## #   ####   ###    ###  
-%                                                            #   #                #   #        
-%                                                             ###                  ###         
-% =================================================================================================
-
-\section{Coeffect meta-language}
-\label{sec:unified-meta} 
-
-In Section~\ref{sec:path-sem-langs}, we discussed two ways of using monads in programming
-language semantics introduced by Moggi \cite{monad-notions}. The first approach is to use
-monads in the \emph{semantics} of an effectful language. The second approach is to extend the
-language with (additional) monadic constructs that can then be used for writing effectful
-monads explicitly.
-
-In this thesis, we focused on the first approach. In both flat and structural coeffect calculi,
-the term language is that of simply-typed $\lambda$-calculus, and we used (flat or structural)
-indexed comonads to give the semantics for the language and to derive type system for it.
-
-In this section, we briefly discuss the alternative approach. That is, we embed indexed
-comonads into a $\lambda$-calculus as additional constructs. To do that, we introduce the
-type constructor $\ctyp{\cclrd{r}}{\tau}$ which represents a value $\tau$ wrapped in additional
-context (semantically, this corresponds to an indexed comonad) and we add language constructs
-that correspond to the operations of indexed comonads.
-
-This section provides a brief sketch of coeffect meta-language to highlight the relationship
-between coeffects and important related work on contextual modal type theory (CMTT) \cite{logic-cmtt}.
-Developing the system further is an interesting future research direction.
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Coeffects and contextual modal type theory}
-
-As discussed in Section~\ref{sec:path-sem-contextdep}, context-aware computations are related
-to modal logics -- comonads have been used to model the $\square$ modality and as a basis for
-meta-languages that include $\square$ as a type constructor
-\cite{logic-intuitionistic-modal,logic-modal-reconstruction,logic-intuitionistic-modal,logic-cmtt}.
-Nanevski et al. \cite{logic-cmtt} extend an S4 term language to a contextual modal type theory (CMTT).
-From the perspective of this thesis, CMTT can be viewed as a \emph{meta-language} version of our
-coeffect calculus.
-
-\paragraph{Context in CMTT and coeffects.}
-Aside from the fact that coeffect calculi use comonads for \emph{semantics} and CMTT embeds
-comonads (the $\square$ modality) into the meta-language, there are two important differences.
-
-Firstly, the \emph{context} in CMTT is a set of variables required by a computation, which
-makes CMTT useful for meta-programming and staged computations. In coeffect calculi, the context
-requirements are formed by a coeffect algebra, which is more general and can capture
-variable contexts, but also integers, two-point lattices, \emph{etc.}
-
-Secondly, CMTT uses different intuitive understanding of the comonad (type constructor) and
-the associated operations. In categorical semantics of coeffect calculi, the $\ctyp{\cclrd{r}}{\tau}$
-constructor refers to a value of type $\tau$ \emph{together} with additional context specified
-by $\cclrd{r}$ (\eg~list of past values or additional resources). In contrast in 
-CMTT\footnote{To avoid using different notations, we write $\ctyp{\Psi}{\tau}$ instead of the 
-original $[\Psi]{\tau}$} the type $\ctyp{\Psi}{\tau}$ models a value that \emph{requires} the 
-context $\Psi$ in order to produce value $\tau$. This also changes the interpretation of the 
-two operations of a comonad:
-\begin{equation*}
-\begin{array}{rcl}
- \ident{counit} &\narrow{:}& \ctyp{\cunit}{\alpha} \rightarrow \alpha\\
- \ident{cobind} &\narrow{:}& (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) \rightarrow 
-    \ctyp{\cclrd{r}\cseq\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta}
-\end{array}
-\end{equation*}
-Both readings are possible, but they give quite different meanings to the operations:
-
-\begin{itemize}
-\item \emph{Coeffect interpretation.} The \ident{counit} operation extracts a value 
-  and does not require any additional context; the \ident{cobind} operation requires
-  context $\cclrd{r}\,\cseq\,\cclrd{s}$, uses the part specified by $\cclrd{r}$ to 
-  evaluate the function, ending with a value $\beta$ together with remaining context
-  $\cclrd{s}$.
-\item \emph{CMTT interpretation.} The \ident{counit} operation evaluates a computation 
-  that requires no additional context to obtain a $\alpha$ value; given a function that
-  turns a computation requiring context $\cclrd{r}$ into a value $\beta$, the \ident{cobind}
-  operation can turn a computation that requires context $\cclrd{r}\,\cseq\,\cclrd{s}$ 
-  into a computation that requires just $\cclrd{s}$ and contains $\beta$ (a part of the
-  context requirements is eliminated by the function).
-\end{itemize}
-
-\noindent
-Although the different reading does not affect formal properties of the systems, it is important
-to understand the difference when discussing the two systems. 
-
-The sketch of a coeffect meta-language in the following section attempts to bridge the gap
-between coeffects and CMTT. Just like CMTT, it embeds comonads as language constructs, but
-it annotates them with a (flat) coeffect algebra, thus it generalizes CMTT which tracks only
-sets of variables. Future work on the coeffect meta-language would thus be an interesting 
-development for both coeffect systems and CMTT.
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Coeffect meta-language}
-
-The coeffect meta-langauge could be designed using both flat and structural indexed comonads.
-For simplicity, this section only discusses the flat variant. The syntax of types and terms
-of the langauge includes the type constructor $\ctyp{\cclrd{r}}{\tau}$ and four expression forms:
-%
-\begin{equation*}
-\begin{array}{rcl}
- \tau &\narrow{::=}& \alpha \sep \tau_1 \rightarrow \tau_2 \sep \ctyp{\cclrd{r}}{\tau}\\
- e &\narrow{::=}& v \sep \lambda x.e \sep e_1~e_2 \sep !e    \\[-0.25em]
-  &        \sep& \kvd{let\;box}~x=e_1~\kvd{in}~e_2           \\[-0.25em]
-  &        \sep& \kvd{split}~e_1~\kvd{into}~x,y~\kvd{in}~e_2 \\[-0.25em]
-  &        \sep& \kvd{merge}~e_1, e_2~\kvd{into}~x~\kvd{in}~e_2 
-\end{array}
-\end{equation*}
-%
-The $!e$ and $\kvd{let\;box}$ constructs correspond to the \ident{counit} and \ident{cobind}
-operation of the comonad. To define meta-langauge for flat indexed comonads, we also include 
-\kvd{split} and \kvd{merge} that embed the corresponding operations. 
-
-\paragraph{Types for coeffect meta-language.}
-The type system for the language is shown in Figure~\ref{fig:conclusions-cml}. The first part
-shows the usual typing rules for simply-typed $\lambda$-calculus. For simplicity, we omit typing 
-rules for pairs, but those need to be present as the \kvd{merge} operation works on tuples.
-
-The second part of the typing rules is more interesting. The (\emph{counit}) operation extracts
-a value from a comonadic context and corresponds to variable access in coeffect calculi. The
-\kvd{let\;box} construct (\emph{cobind}) takes an input $e_1$ with context $\cclrd{r}\,\cseq\,\cclrd{s}$
-and a computation that turns a variable $x$ with a context $\cclrd{r}$ into a value $\tau_2$.
-The result is a computation that produces a $\tau_2$ value with the remaining context specified
-by $\cclrd{s}$. Note that the expression $e_2$ and $e_1$ corresponds to the first and second
-arguments of the \ident{cobind} operation. The keyword \kvd{let\;box} is chosen following 
-CMTT\footnote{The rule is similar to the \ident{letbox} rule for ICML \cite[p. 14]{logic-cmtt},
-although it differs because of our generalization of comonads where \ident{bind} composes
-coeffect annotations rather than requiring the same annotation everywhere.}.
-
-The \kvd{split} and \kvd{merge} constructs follow a similar pattern. They both apply some 
-transformation on one or two values in a context and then add the new value as a fresh variable
-to the variable context. For simplicity, we omit sub-coeffecting, but it could be easily added 
-following the pattern used elsewhere.
-
-% -------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-
-{\small a.) Typing rules for the simply typed $\lambda$-calculus}
-
-\begin{equation*}
-\tyrule{var}
-  {x : \tau \in \Gamma}
-  {\Gamma \vdash x : \tau }
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  {\Gamma \vdash e_1 : \tau_2 \rightarrow \tau_1 &
-   \Gamma \vdash e_2 : \tau_2 }
-  {\Gamma \vdash e_1~e_2 : \tau_1 }
-\end{equation*}
-\begin{equation*}
-\tyrule{abs}
-  {\Gamma, x:\tau_1 \vdash e : \tau_2}
-  {\Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 }
-\end{equation*}
-
-\vspace{1em}
-{\small b.) Additional typing rules arising from \emph{flat indexed comonads}}
-
-\begin{equation*}
-\tyrule{cobind}
-  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}\,\cseq\,\cclrd{s}}{\tau_1} & \Gamma, x : \ctyp{\cclrd{r}}{\tau_1} \vdash e_2 : \tau_2 }
-  {\Gamma \vdash \kvd{let\;box}~x=e_1~\kvd{in}~e_2 : \ctyp{\cclrd{s}}{\tau_2}}
-\end{equation*}
-\begin{equation*}
-\tyrule{counit}
-  {\Gamma \vdash e : \ctyp{\cunit}{\tau}}
-  {\Gamma \vdash !e : \tau}
-\end{equation*}
-\begin{equation*}
-\tyrule{split}
-  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}\,\cpar\,\cclrd{s}}{\tau_1} &
-   \Gamma, x:\ctyp{\cclrd{r}}{\tau_1}, y:\ctyp{\cclrd{s}}{\tau_1} \vdash e_2 : \tau_2 }
-  {\Gamma \vdash \kvd{split}~e_1~\kvd{into}~x,y~\kvd{in}~e_2 : \tau_2 }
-\end{equation*}
-\begin{equation*}
-\tyrule{merge}
-  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}}{\tau_1} &
-   \Gamma \vdash e_2 : \ctyp{\cclrd{s}}{\tau_2} \\
-   \Gamma, x:\ctyp{\cclrd{r}\,\czip\,\cclrd{s}}{(\tau_1 \times \tau_2)} \vdash e_2 : \tau_3 }
-  {\Gamma \vdash \kvd{merge}~e_1, e_2~\kvd{into}~x~\kvd{in}~e_2 : \tau_3 }
-\end{equation*}
-
-\caption{Type system for the (flat) coeffect meta-language}
-\label{fig:conclusions-cml}
-\end{figure}
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Embedding flat coeffect calculus}
-
-The \emph{meta-language} approach of embedding comonads in a language is more general than the
-\emph{semantics} approach. This thesis focuses on a narrower use that better guides the design of
-a type system for context-aware programming languages. 
-
-However, it is worth noting that 
-(flat) coeffect calculus can be embedded in the meta-language described above. This may be 
-desirable, \eg~when using the meta-language for reasoning about context-aware computations. 
-We briefly consider the embedding as it illuminates the relationship between coeffects and
-CMTT (although it is not possible to embed coeffect calculi in CMTT because of the more general
-annotations structure).
-
-Given a typing judgement $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ in a flat coeffect calculus,
-we define $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}_v$ as its emebdding in the coeffect
-meta-language. Note that the translation is indexed by $v$, which is a name of variable used 
-to represent the entire variable context of the source language. The translation is defined in
-Figure~\ref{fig:conclusions-embed}. The embedding resembles the semantics discussed in 
-Section~\ref{sec:flat-semantics}. This is not surprising as the meta-language directly mirrors
-the operations of a monad.
-
-% -------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-\begin{equation*}
-\begin{array}{l}
- \sem{ \coctx{\Gamma}{\cunit}\vdash x_i : \tau_i }_v = \pi_i (!v) \\[0.25em]
- \sem{ \coctx{\Gamma}{\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{t})} \vdash e_1~e_2 : \tau_2 }_v =\\[-0.25em]
-   \qquad \kvd{split}~v~\kvd{into}~v_s, v_{rt}~\kvd{in} \\[-0.25em]
-   \qquad \sem{ \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }_{v_s}
-      ~(\kvd{let\;box}~v_r = v_{rt}~\kvd{in}~\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_2 : \tau_1}_{v_r}) \\[0.25em]
- \sem{ \coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e:\tau_1 \xrightarrow{\cclrd{s}} \tau_2 }_v = \lambda x. \\[-0.25em]
-   \qquad \kvd{merge}~v,x~\kvd{into}~v_{rs}~\kvd{in}~\sem{ \coctx{(\Gamma,x:\tau_1)}{\cclrd{r}\,\czip\,\cclrd{s}} \vdash e : \tau_2 }_{v_{rs}}
-\end{array}
-\end{equation*}
-\caption{Embedding flat coeffect calculus in coeffect meta-language }
-\label{fig:conclusions-embed}
-\end{figure}
 
 % ==================================================================================================
 %                                                                             

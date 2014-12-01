@@ -126,11 +126,11 @@ or pre-processors for conditional compilation. Common problems that developers f
   (or may not) be granted access to device capabilities such as GPS sensor, social updates or battery
   status. We would like to know which of the capabilities are required and which are optional
   (\ie~enhance the user experience, but there is a fallback strategy). Equally, on the server-side,
-  we might have access to different database tables and other information sources.
+  we might have access to different database tables, depending on the role of the user.
 \end{itemize}
 
 \noindent
-Most developers do not perceive the above as programming language flaws -- they are simply common
+Most developers do not perceive the above as programming language flaws. They are simply common
 programming problems (at most somewhat annoying and tedious) that have to be solved. However, this
 is because it is not apparent that a suitable language extension could make the above problems
 significantly easier to solve. As the number of distinct contexts and their diversity increases,
@@ -160,7 +160,7 @@ the program.
 \prepk{\#if}~\prepi{FX\_NO\_WEBREQUEST\_REFERER}\\[-0.25em]
 \hspace{2em}|~\str{referer} \rightarrow~ \ident{req.Referer} \leftarrow \ident{value}\\[-0.25em]
 \prepk{\#else}\\[-0.25em]
-\hspace{2em}|~\str{user-agent} \rightarrow~
+\hspace{2em}|~\str{referer} \rightarrow~
   \ident{req.Headers}.[\,\ident{HttpHeader.Referer}\,] \leftarrow \ident{value}\\[-0.25em]
 \prepk{\#endif}\\[-0.25em]
 %
@@ -168,9 +168,6 @@ the program.
 \end{array}
 \end{equation*}
 
-\vspace{1em}
-\noindent\makebox[\linewidth]{\rule{\textwidth}{0.5pt}}
-\vspace{-1.5em}
 \caption{Conditional compilation in the HTTP module of the F\# Data library}
 \label{fig:introduction-context-http}
 \end{figure}
@@ -204,17 +201,17 @@ on Android, programs can access API from higher level platform dynamically using
 reflection and writing wrappers. This is even more error prone. As noted in an article\footnote{Retrieved 
 from: \url{http://android-developers.blogspot.com/2009/04/backward-}\\\url{compatibility-for-android.html}}
 introducing the technique ``Remember the mantra: if you haven't tried it, it doesn't work.'' 
-Again, it would be reasonable to expect that statically-typed languages could provide a better solution.
+Again, it would be reasonable to expect that statically-typed languages can provide a better solution.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Context awareness \#2: System capabilities}
 
-Another example related to the previous one is when libraries use meta-programming techniques
-(such as LINQ \cite{app-linq} or F\# quotations \cite{app-fsharp-metaprog}) to translate code
-written in a subset of a host language to some other target language, such as SQL, OpenCL or
-JavaScript. For database access, this is a recently developed technique replacing embedded SQL
-discussed in the introduction, but it is a more generally important technique for programming
+Another example related to the previous one is when libraries use meta-programming techniques,
+such as LINQ \cite{app-linq,app-linq-essence} or F\# quotations \cite{app-fsharp-metaprog}, to 
+translate code written in a subset of a host language to some other target language, such as SQL, 
+OpenCL or JavaScript. For database access, this is a recently developed technique replacing embedded 
+SQL discussed in the introduction, but it is a more broadly applicable technique for programming
 in heterogeneous environments. It lets developers targets multiple runtimes that have limited 
 execution capabilities.
 
@@ -244,7 +241,7 @@ not a technical limitation of LINQ, but a fundamental problem of the approach.
 
 When cross-compiling to a limited environment, we cannot always support the full source language.
 The example with LINQ and SQL demonstrates the importance of this problem. As of March 2014,
-Google search returns 11800 results for the message above and even more results (44100) for a
+Google search returns 11,800 results for the message above and even more results (44,100) for a
 LINQ error message \emph{``Method X has no supported translation to SQL''} caused by a similar
 limitation.
 
@@ -255,7 +252,7 @@ limitation.
 The previous two examples were related to the non-existence of some library functions in a different
 execution environment. Another common factor was that they were related to the execution context of 
 the whole program or a function scope. However, contextual properties can also be associated with
-a specific variables.
+specific variables.
 
 For example, consider the following code sample that accesses a database by building a SQL query
 using string concatenation. For the purpose of the demonstration, this example does not use LINQ, 
@@ -270,11 +267,11 @@ but an older approach with a parameterized SQL query written as a string:
 \end{equation*}
 %
 The code compiles without error, but it contains a major security flaw called \emph{SQL injection}
-\cite{app-sql-injection} (an attacker could enter \str{'; DROP TABLE Products -{}-} as their 
-\ident{name} and delete the database table ``Products''). For this reason, most libraries discourage 
+\cite{app-sql-injection}. An attacker could enter \str{'; DROP TABLE Products -{}-} as their 
+\ident{name} and delete the database table ``Products''! For this reason, most libraries discourage 
 building SQL commands by string concatenation, but there are still many systems that do so.
 
-The example demonstrates a more general property. Sometimes, it is desirable to track additional
+Again, this example demonstrates a more general property. Sometimes, it is desirable to track additional
 meta-data about variables that are in some ways special. Such meta-data can determine how the variables
 can be used. Here, \ident{name} comes from the user input. This information about the value should
 be propagated to \ident{query}. The \ident{SqlCommand} object should then require arguments that can
@@ -286,10 +283,10 @@ unsecured network connection.
 
 In the security context, such marking of values (but at run-time) is called \emph{tainting} 
 \cite{app-tainting-sql}, but the technique is a special case of more general \emph{provenance}
-tracking. This can be useful when working with data in other contexts. For example, 
-data jounralsts might want to propagate meta-data about the quality and the information source -- 
-is the source trustworthy? Is the data up-to-date? Such meta-data could propagate to 
-the result and tell us important information about the calculated results.
+tracking \cite{app-provenance-future}. This can be useful when working with data in other contexts. 
+For example, data jounralsts might want to propagate meta-data about the quality and the 
+information source -- is the source trustworthy? Is the data up-to-date? Such meta-data could 
+propagate to the result and tell us important information about the calculated results.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -329,9 +326,9 @@ we need to be able to compose ranges $\langle-1,-1 \rangle$, $\langle 0,0 \rangl
 
 The information about access patterns can be used to efficiently compile the computation
 by preallocating the necessary space (as we know which sub-range of the array might be accessed).
-It also allows better handling of boundaries. For example, to simplify wrap-around behaviour we 
-could pad the \ident{input} with a known number of elements from the other side of the array.
-
+It also allows better handling of boundaries \cite{app-stencil-dsl}. For example, to simplify 
+wrap-around behaviour we could pad the \ident{input} with a known number of elements from the 
+other side of the array.
 
 
 % ==================================================================================================
@@ -353,7 +350,7 @@ could pad the \ident{input} with a known number of elements from the other side 
 
 The four examples presented in the previous section cover different kinds of \emph{context}.
 The context includes notions such as execution environment, capabilities provided by the 
-environment or input and meta-data about the input.
+environment or input and meta-data about the input and variables through which it is accessed.
 
 The different applications can be broadly classified into two categories -- those that
 speak about the environment and those that speak about individual inputs (variables). In this
@@ -431,19 +428,22 @@ also require a specific platform.
 \end{array}
 \end{equation*}
 
-\vspace{1em}
-\noindent\makebox[\linewidth]{\rule{\textwidth}{0.5pt}}
-\vspace{-1.5em}
-\caption{News reader implemented in a context-aware language}
+\caption{Client/server news reader app implemented in a context-aware language}
 \label{fig:introduction-sample}
 \end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\newcommand{\introfuncblack}[3]{ \ident{#1 \hspace{-1em}\footnotesize{@} \{ #2 \}} $\rightarrow$ \ident{#3}  }
+\newcommand{\introfunc}[3]{ \ident{#1 \hspace{-1em}\footnotesize{@} \aclrd{\{ #2 \}}} $\rightarrow$ \ident{#3}  }
+\newcommand{\introvar}[2]{ \ident{#1 \hspace{-1em}\footnotesize{@} \cclrd{#2} } }
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Understanding context with types}
 
 The approach advocated in this thesis is to track information about context requirements using
-the type system. To make this practical, the system needs to provide at least partial support for
+the type system. To make this practical, the system should also provide at least a partial support for
 automatic type inference, as the information about context requirements makes the types more complex.
 An inspiring example might be the F\# support for units of measure \cite{app-units} -- the user has
 to explicitly annotate constants, but the rest of the information is inferred automatically.
@@ -454,15 +454,13 @@ pointer over an identifier. For \ident{fetchLocalNews}, the tip could appear as 
 %
 \definecolor{tooltipy}{rgb}{0.98,0.97,0.76}
 \definecolor{tooltipb}{rgb}{0.7,0.7,0.7}
-\newcommand{\introfunc}[3]{ \ident{#1 \hspace{-1em}\footnotesize{@} \{ #2 \}} $\rightarrow$ \ident{#3}  }
-\newcommand{\introvar}[2]{ \ident{#1 \hspace{-1em}\footnotesize{@} #2 } }
 \vspace{0.5em}
 \begin{equation*}
 \hspace{5em}
 \begin{array}{l}
 \ident{\textbf{fetchLocalNews}}\\
 \hspace{1em} \fcolorbox{tooltipb}{tooltipy}{
-	\introfunc{unit}{gps, rpc}{(news~list)~async}
+	\introfuncblack{unit}{gps, rpc}{(news~list)~async}
 }
 \end{array}
 \end{equation*}
@@ -508,7 +506,7 @@ number of useful information:
   as that would leak sensitive data over an unsecured connection.
 
 \item The \ident{fetchNews} function requires database access and so it can only run on the server-side
-  (or on a thick client with local copy of the database, such as a desktop computer with an offline mode).
+  (or on a thick client with a local copy of the database, such as a desktop computer with an offline mode).
 
 \item The \ident{gpsLocation} function accesses the GPS sensor and since we call it in
   from \texttt{fetchLocalNews}, this function also requires GPS (the requirement is propagated
@@ -529,8 +527,8 @@ In this scenario, the main benefit of using an integrated context-aware language
 ability to design appropriate abstractions using standard mechanisms of the language. For
 cross-compilation, we can structure code using functions, rather than relying on \prepk{\#if}
 directives. Similarly, the splitting between client-side, server-side and shared code can be
-done using ordinary functions and modules -- rather than having to split the application into
-separate independent libraries or projects.
+done using ordinary functions and modules (with shared functions reused) -- rather than having 
+to split the application into separate independent libraries or projects.
 
 The purpose of this section was to show that many modern programs rely on the context in which
 they execute in non-trivial ways. Thus designing context-aware languages is an important
@@ -556,7 +554,7 @@ the context $\Gamma$, the expression $e$ has a type $\tau$.
 The variable context $\Gamma$ is necessary to determine the type of expressions. Consider an
 expression $x + y$. In many languages, including Java, C\# and F\#, the type could be \ident{int},
 \ident{float}, or even \ident{string}, depending on the types of the variables. For example, 
-the following is a valid typing judgement in F\#:
+the following is a valid typing judgement in F\# \cite{app-fsharp}:
 %
 \begin{equation*}
 x\!:\!\ident{int},~y\!:\!\ident{int} \vdash x+y : \ident{int}
@@ -616,13 +614,13 @@ The expression queries a database and gets back a list of news values as the res
 earlier discussion that there are two contextual information that are desirable to track for this
 expression. First, the call to the \ident{query} primitive requires \emph{database access}. Second,
 the \ident{password} argument needs to be marked as \emph{sensitive value} to avoid sending it over
-an unsecure network connection.
-The \emph{coeffect systems} developed in this thesis capture this information in the following way:
+an unsecure network connection. The \emph{coeffect systems} developed in this thesis capture this 
+information in the following way (we slightly refine the notation later):
 %
 \begin{equation*}
 \begin{array}{l}
  \coctx{( \ident{password}\!:\!\coctx{\ident{string}}{\hspace{-0.75em}\ident{\cclrd{\footnotesize sensitive}}},
-   \ident{cmd}\!:\!\ident{string})}{ \cclrd{\{ \ident{database} \}}}  \\[-0.1em]
+   \ident{cmd}\!:\!\ident{string})}{ \aclrd{\{ \ident{database} \}}}  \\[-0.1em]
  \hspace{3em} \vdash\ident{query}(\ident{cmd}, \ident{password}) : \ident{news list}
 \end{array}
 \end{equation*}
@@ -642,8 +640,7 @@ information is captured by the \emph{structural coeffect calculus} developed in 
 It is well-known fact that \emph{effects} correspond to \emph{monads} and languages such as Haskell 
 use monads to provide a limited form of effect system. An interesting observation made in this thesis 
 is that \emph{coeffects}, or systems for tracking contextual information, correspond to the category 
-theoretical dual of monads called \emph{comonads}. The details are explained when discussing the 
-semantics of coeffects throughout the thesis.
+theoretical dual of monads called \emph{comonads}. The details are explained throughout the thesis.
 
 % ==================================================================================================
 %
@@ -673,7 +670,7 @@ better solution. Finding the foundations of such better solution is the goal of 
 \begin{itemize}
 \item In Chapter~\ref{ch:pathways} we give an overview of related work. Most importantly, we show
   that the idea of context-aware computations can be naturally approached from a number of
-  directions developed recently in theories of programming languages (including type and effect
+  directions developed recently in the theory of programming languages (including type and effect
   systems, categorical semantics and sub-structural logics).
 
 \item Chapter~\ref{ch:applications} presents the first contribution of the thesis -- the discovery
@@ -690,10 +687,10 @@ better solution. Finding the foundations of such better solution is the goal of 
   an alternative presentation that is more suitable for automatic type inference of coeffects.
 
 \item Related work is presented in Chapter~\ref{ch:pathways} and throughout the thesis. 
-  One important direction deserves further exploration, and so Chapter~\ref{ch:conclusions}
-  starts with a brief discussion of a different approach to tracking contextual information that 
-  arises from modal logics. Finally, the rest of Chapter~\ref{ch:conclusions} discusses approaches 
-  for implementing the presented theory in main-stream programming languages and concludes.
+  One important direction deserves further exploration, and so Chapter~\ref{ch:unified}
+  also includes a brief discussion of a different approach to tracking contextual information that 
+  arises from modal logics. This is followed by an outline of the future work that is needed
+  in order to implement the presented theory in main-stream programming languages.
 \end{itemize}
 
 \noindent
