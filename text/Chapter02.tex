@@ -191,7 +191,7 @@ such that, for all $f:\alpha \rightarrow \mtyp{}{\beta}$ and $g:\beta \rightarro
 \noindent
 Without providing much details, we note that well known examples of monads include the partiality
 monad ($\mtyp{}{\alpha} = \alpha + {\bot}$) also corresponding to the \ident{Maybe} type in 
-Haskell, list monad ($\mtyp{}{\alpha} = \mu \gamma.1 + (\alpha \times \gamma)$) and other.
+Haskell, list monad ($\mtyp{}{\tau} = \mu \gamma.1 + (\tau \times \gamma)$) and other.
 In programming language semantics, monads can be used in two distinct ways.
 
 %---------------------------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ In this thesis, we generally follow the first approach -- this means that we wor
 programming language without needing to add additional constructs corresponding to the primitives
 of our semantics (the alternative is discussed in Section~\ref{sec:unified-meta}). To clarify the 
 difference, the following two sections show a minimal example of both formal systems. We follow 
-Moggi and start with language where judgements have the form $x\!:\!\alpha \vdash e : \beta$ with 
+Moggi and start with language where judgements have the form $x\!:\!\tau_1 \vdash e : \tau_2$ with 
 exactly one variable\footnote{This simplifies the examples as we do not need \emph{strong} monad, 
 but that is an orthogonal issue to the distinction between language semantics and meta-language.}.
 
@@ -380,9 +380,9 @@ comonads can be found in Orchard's PhD thesis \cite{comonads-dom-thesis}.
 
 \paragraph{Language semantics.}
 To demonstrate the approach of Uustalu and Vene, we consider the non-empty list comonad
-$\ctyp{}{\alpha} = \mu \gamma.\alpha + (\alpha \times \gamma)$. A value of the type is either
-the last element $\alpha$ or an element followed by another non-empty list $\alpha \times \gamma$
-(consisting of the head $\alpha$ and the tail $\gamma$). Note that the list must be non-empty, 
+$\ctyp{}{\tau} = \mu \gamma.\tau + (\tau \times \gamma)$. A value of the type is either
+the last element $\tau$ or an element followed by another non-empty list $\tau \times \gamma$
+(consisting of the head $\tau$ and the tail $\gamma$). Note that the list must be non-empty, 
 otherwise \ident{counit} would not be a complete function (it would be undefined on empty list). In 
 the following, we write $(l_1, \ldots, l_n)$ for a list of $n$ elements:
 %
@@ -456,43 +456,42 @@ and semantics of flat coeffect systems in Section~\ref{sec:flat-semantics}.
 
 \paragraph{Meta-language interpretation.} ~To briefly demonstrate the app\-roach that employs comonads
 as part of a meta-language, we look at an example inspired by the work of Pfenning, Davies and 
-Nanevski et al. We do not attempt to provide precise overview of their work. The main purpose 
-of our discussion is to provide a different intuition behind comonads, and to give an example
-of a language that includes comonad as a type constructor, together with language primitives
-corresponding to comonadic operations\footnote{In fact, Pfenning and Davies \cite{logic-modal-reconstruction,logic-cmtt}
-never mention comonads explicitly. This is done in later work by Gabbay et al. \cite{logic-cmtt-semantics}, 
-but the connection between the language and comonads is not as direct as in case of monadic or
-comonadic semantics covered in the last few pages.}. 
+Nanevski. We do not attempt to provide a precise overview of their work. The main purpose 
+of the following discussion is to provide a different intuition behind comonads, and to present an 
+example of a language that includes comonad as a type constructor, together with language primitives
+corresponding to comonadic operations\footnote{In fact, Pfenning, Davies and Nanevski 
+\cite{logic-modal-reconstruction,logic-cmtt} never mention comonads explicitly. This is done in later 
+work by Gabbay et al. \cite{logic-cmtt-semantics},  but the connection between the language and comonads
+is not as direct as in case of monadic or comonadic semantics covered in the previous section.}. 
 
 In languages inspired by modal logics, types can have the form $\square \tau$. In the work of
-Pfenning and Davies, this means a term that is provable with no assumptions. In distributed 
-programming language ML5, Murphy et al. \cite{app-distributed-ml5,logic-distributed-calculus} use the 
-$\square \tau$ type to mean \emph{mobile code}, that is code that can be evaluated at any node of a 
+Pfenning and Davies, this is the type of a term that is provable with no assumptions. In distributed 
+programming language ML5 by Murphy et al. \cite{app-distributed-ml5,logic-distributed-calculus}, the 
+$\square \tau$ type means \emph{mobile code}, that is code that can be evaluated at any node of a 
 distributed system (the evaluation corresponds to the axiom $\square \tau \rightarrow \tau$). 
 Finally, Davies and Pfenning \cite{logic-modal-staged} consider staged computations and interpret 
 $\square \tau$ as a type of unevaluated expressions of type $\tau$ (with no free variables).
 
 In Contextual Modal Type Theory, the modality $\square$ is further annotated with the free variales
-of the (unevaluated) expression. To keep the syntax consistent with earlier examples, we use 
-$\ctyp{\cclrd{\Psi}}{\tau}$ for a type $\square \tau$ with an annotation $\cclrd{\Psi}$. The type 
-is a comonadic counterpart to the \emph{indexed monads} used by Wadler and Thiemann when linking 
-monads and effect systems and, indeed, it gives rise to a language that tracks context-dependence 
-of computations in a type system.
+of the (unevaluated) expression. We write $\square^{\cclrd{\Psi}} \tau$ for a type of expressions
+that requires a context $\Psi$. The type is a comonadic counterpart to \emph{indexed monads} used by 
+Wadler and Thiemann when linking monads and effect systems and, indeed, it gives rise to a language 
+that tracks context-dependence of computations in a type system.
 
-In staged computation, the type $\ctyp{\cclrd{\Psi}}{\alpha}$ represents an expression 
+In staged computation, the type $\ctyp{\cclrd{\Psi}}{\tau}$ represents an expression 
 that requires the context $\Psi$ (i.e.~the expression is an open term that requires variables $\Psi$).
 The Figure~\ref{fig:modal-meta} shows two typing rules for such language. The rules directly
 correspond to the two operations of a comonad and can be interpreted as follows:
 
 \begin{itemize}
 \item (\emph{eval}) corresponds to $\ident{counit} : \ctyp{\cclrd{\emptyset}}{\alpha} \rightarrow \alpha$. 
-  It means that we can evaluate a closed (unevaluated) term and obtain a value. Note that the 
+  It indicates that we can evaluate a closed (unevaluated) term and obtain a value. Interestingly, the 
   rule requires a specific context annotation (empty set of free variables). 
   It is not possible to evaluate an open term.
 
 \item (\emph{letbox}) corresponds to $\ident{cobind} : (\ctyp{\cclrd{\Psi}}{\alpha} \rightarrow \beta) 
-  \rightarrow \ctyp{\cclrd{\Psi}, \clrd{\Phi}}{\alpha} \rightarrow \ctyp{\cclrd{\Phi}}{\beta}$. 
-  It means that given a term which requires variable context $\cclrd{\Psi}, \cclrd{\Phi}$ 
+  \rightarrow \ctyp{\cclrd{\Psi}, \cclrd{\Phi}}{\alpha} \rightarrow \ctyp{\cclrd{\Phi}}{\beta}$. 
+  Given a term which requires variable context $\cclrd{\Psi}, \cclrd{\Phi}$ 
   (expression $e_1$) and a function that turns a term needing $\cclrd{\Psi}$ into an evaluated 
   value (expression $e_2$), we can construct a term that requires just $\cclrd{\Phi}$.
 \end{itemize}
@@ -502,26 +501,26 @@ The fact that the (\emph{eval}) rule requires a specific context is an interesti
 from ordinary comonads where \ident{counit} needs to be defined for all values. Here, the indexed
 \ident{counit} operation needs to be defined \emph{only} on values annotated with $\emptyset$.
 
-The annotated \ident{cobind} operation that corresponds to (\emph{letbox}). We discuss this 
-in Section~\ref{sec:unified-meta}. An interesting aspect is that it propagates the 
-context-requirements ``backwards''. The input expression (second parameter) requires a 
-combination of contexts that are required by the two components -- those required by the 
+The annotated \ident{cobind} operation that corresponds to (\emph{letbox}). An interesting aspect 
+is that it propagates the context-requirements ``backwards''. The input expression (second parameter) 
+requires a combination of contexts that are required by the two components -- those required by the 
 input of the function (first argument) and those required by the resulting expression (result). 
-This is another key aspect that distinguishes coeffects from effect systems.
+This is another key aspect that distinguishes coeffects from effect systems. We return back to 
+the meta-language approach of embedding comonads in Section~\ref{sec:unified-meta}.
 
 %---------------------------------------------------------------------------------------------------
 
 \begin{figure}
 \begin{equation*}
 \inference[(eval)]
-  {\Gamma \vdash e : \ctyp{\cclrd{\emptyset}}{\tau}}
+  {\Gamma \vdash e : \square^{\cclrd{\emptyset}}{\tau}}
   {\Gamma \vdash !e : \tau}
 \end{equation*}
 \begin{equation*}
 \inference[(letbox)]
-  { \Gamma \vdash e_1 : \ctyp{\cclrd{\Phi}, \cclrd{\Psi}}{\tau_1} & 
-    \Gamma, x\!:\!\ctyp{\cclrd{\Phi}}{\tau_1} \vdash e_2 : \tau_2 }
-  { \Gamma \vdash \kvd{let~box}~x=e_1~\kvd{in}~e_2 : \ctyp{\cclrd{\Psi}}{\tau_2}}
+  { \Gamma \vdash e_1 : \square^{\cclrd{\Phi}, \cclrd{\Psi}}{\tau_1} & 
+    \Gamma, x\!:\!\square^{\cclrd{\Phi}}{\tau_1} \vdash e_2 : \tau_2 }
+  { \Gamma \vdash \kvd{let~box}~x=e_1~\kvd{in}~e_2 : \square^{\cclrd{\Psi}}{\tau_2}}
 \end{equation*}
 
 \caption{Typing for a comonadic language with contextual staged computations}
@@ -530,15 +529,16 @@ This is another key aspect that distinguishes coeffects from effect systems.
 
 %---------------------------------------------------------------------------------------------------
   
-\paragraph{Thesis perspective}
+\paragraph{Thesis perspective.}
 As mentioned earlier, we are interested in designing context-dependent languages and so we
-use comonads as \emph{language semantics}. Uustalu and Vene present a semantics of 
+use comonads for \emph{language semantics}. Uustalu and Vene present a semantics of 
 context-dependent computations in terms of comonads. We provide the rest of the story known 
-from the marriage of monads and effects. We develop coeffect calculus with a type system that 
+from the marriage of monads and effects. We develop coeffect calculus with an type system that 
 tracks the context requirements more precisely (by annotating the types) and we add indexing 
-to comonads and link the two by giving a formal semantics. 
+to comonads and link the two by giving a formal semantics. The indexing allows us to capture 
+applications that do not fit into the model provided by plain comonads.
 
-The \emph{meta-language} approach of Pfenning, Davies and Nanevski et al. is closely related to
+The \emph{meta-language} approach of Pfenning, Davies and Nanevski is closely related to
 our work. Most importantly, Contextual Modal Type Theory (CMTT) uses indexed $\square$ modality
 which corresponds to indexed comonads (in a similar way in which effect systems correspond to 
 indexed monads). The relation between CMTT and comonads has been suggested by
@@ -550,13 +550,13 @@ CMTT provides a useful hint for adding indexing to the work of Uustalu and Vene.
 
 %===================================================================================================
 
-\section{Through sub-structural and bunched logics}
+\section{Through substructural and bunched logics}
 \label{sec:path-logic}
 
 In the coeffect system for tracking resource usage outlined earlier, we associated additional
 contextual information (set of available resources) with the variable context of the typing 
-judgement: $\Gamma @ \sigma \vdash e : \alpha$. In other words, our work focuses on ``what is
-happening on the left hand side of $\vdash$''.
+judgement: $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$. In other words, our work focuses on 
+``what is happening on the left hand side of $\vdash$''.
 
 In the case of resources, the additional information about the context are simply added to the
 variable context (as a products), but we will later look at contextual properties that affect 
@@ -564,63 +564,66 @@ how variables are represented. More importantly, \emph{structural coeffects} lin
 information to individual variables in the context, rather than the context as a whole.
 
 In this section, we look at type systems that reconsider $\Gamma$ in a number of ways. 
-First of all, sub-structural type systems \cite{substruct-attpl-intro} restrict the use of variables
+First of all, substructural type systems \cite{substruct-attpl-intro} restrict the use of variables
 in the language. Most famously linear type systems introduced by Wadler \cite{substruct-linear-change} 
-can guarantee that variable is used exactly once. This has interesting implications for memory
+can guarantee that a variable is used exactly once. This has interesting implications for memory
 management and I/O. 
 
 In bunched typing developed by O'Hearn \cite{substruct-bunched}, the variable context is a tree 
 formed by multiple different constructors (e.g.~one that allows sharing and one that does not). 
-Most importantly, bunched typing has contributed to the development of separation logic
+Most famously, bunched typing has contributed to the development of separation logic
 \cite{substruct-separation-logic} (starting a fruitful line of research in software verification), 
 but it is also interesting on its own. 
 
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Sub-structural type systems}
+\subsection{Substructural type systems.}
 
 Traditionally, $\Gamma$ is viewed as a set of assumptions and typing rules admit (or explicitly
-include) three operations that manipulate the variable contexts which are shown in 
-Figure~\ref{fig:substructural-rules}. The (\emph{exchange}) rule allows us to reorder variables
-(which is implicit, when assumptions are treated as set); (\emph{weakening}) makes it possible
+include) three transformations that manipulate the variable contexts which are shown in 
+Figure~\ref{fig:substructural-rules}. The (\emph{exchange}) rule allows reordering of variables
+(which is implicit when assumptions are treated as set); (\emph{weakening}) makes it possible
 to discard an assumption -- this has the implication that a variable may be declared but never
 used. Finally, (\emph{contraction}) makes it possible to use a single variable multiple times
-(by joining multiple variables into a single one using substitution).
+(in the rule, this is done explicitly by joining multiple variables into a single one using 
+substitution).
+
+In substructural type systems, the assumptions are typically treated as a list. As a result,
+they have to be manipulated explicitly. Different systems allow different subsets of the rules.
+For example, \emph{affine} systems allows exchange and weakening, leading to a system where 
+variable may be used at most once; in \emph{linear} systems, only exchange is permitted and so 
+every variable has to be used exactly once.
+
+When tracking context-dependent properties associated with individual variables, we need to 
+be more explicit in how variables are used. Substructural type systems provide a way to do this.
+Even if we allow all three operations, we can use a variation on the three rules (exchange, 
+weakening and contraction) to track which variables are used and how (and to track additional 
+contextual information about variables). 
 
 \begin{figure}
 \begin{equation*}
-\inference[(exchange)]
-  {\Gamma, x\!:\!\alpha, y\!:\!\tau_2 \vdash e : \gamma}
-  {\Gamma, y\!:\!\tau_2, x\!:\!\alpha \vdash e : \gamma}
-\quad
-\inference[(weakening)]
-  {\Gamma, \Delta \vdash e : \gamma}
-  {\Gamma, x\!:\!\alpha, \Delta \vdash e : \gamma}
+\tyrule{exchange}
+  {\Gamma, x\!:\!\tau_1, y\!:\!\tau_2 \vdash e : \gamma}
+  {\Gamma, y\!:\!\tau_2, x\!:\!\tau_1 \vdash e : \gamma}
 \end{equation*}
 \begin{equation*}
-\inference[(contraction)]
-  {\Gamma, x\!:\!\alpha, y\!:\!\alpha, \Delta \vdash e : \gamma}
-  {\Gamma, x\!:\!\alpha, \Delta \vdash \subst{e}{y}{x} : \gamma}
+\tyrule{weakening}
+  {\Gamma, \Delta \vdash e : \gamma}
+  {\Gamma, x\!:\!\tau, \Delta \vdash e : \gamma}
+\end{equation*}
+\begin{equation*}
+\tyrule{contraction}
+  {\Gamma, x\!:\!\tau_1, y\!:\!\tau_1, \Delta \vdash e : \tau_2}
+  {\Gamma, x\!:\!\tau_1, \Delta \vdash \subst{e}{y}{x} : \tau_2}
 \end{equation*}
 
 \caption{Exchange, weakening and contraction typing rules}
 \label{fig:substructural-rules}
 \end{figure}
 
-In sub-structural type systems, the assumptions are typically treated as a list. As a result,
-they have to be manipulated explicitly. Different systems allow different subset of the rules.
-For example, \emph{affine} systems allows exchange and weakening, leading to a system where 
-variable may be used at most once; in \emph{linear} systems, only exchange is permitted and so 
-every variable has to be used exactly once.
-
-When tracking context-dependent properties associated with individual variables, we need to 
-be more explicit in how variables are used. Sub-structural type systems provide a way to do this.
-Even when we allow all three operations, we can track which variables are used and how
-(and use that to track additional contextual information about variables). 
-
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Bunched type systems}
+\subsection{Bunched type systems.}
 Bunched typing makes one more refinement to how $\Gamma$ is treated. Rather than having a list
 of assumptions, the context becomes a tree that contains variable typings (or special identity
 values) in the leaves and has multiple different types of nodes. The context can be defined,
@@ -644,30 +647,34 @@ One important note about bunched typing is that it requires a different interpre
 of weakening and contraction in linear logic means that variable can be used exactly once. 
 In bunched typing, variables may still be duplicated, but only using the ``;'' separator.
 The type system can be interpreted as specifying whether a variable may be shared between the 
-body of a function and the context where a function is declared. The system introduces two 
-distinct function types $\alpha \rightarrow \tau_2$ and $\alpha~ \textendash\!\!\!\ast \tau_2$
+body of a function and the context where a function is declared. 
+
+The system introduces two 
+distinct function types $\tau_1 \rightarrow \tau_2$ and $\tau_1~ \textendash\!\!\!\ast \tau_2$
 (corresponding to ``;'' and ``,'' respectively). The key property is that only the first kind
 of functions can share variables with the context where a function is declared, while the second
 restricts such sharing. We do not attempt to give a detailed description here as it is not 
-immediately to coeffects -- for more information, refer to O'Hearn's introduction 
+immediately related to coeffects -- for more information, refer to O'Hearn's introduction 
 \cite{substruct-bunched}.
 
 \begin{figure}
 \begin{equation*}
-\inference[(exchange1)]
+\tyrule{exchange1}
   {\Gamma(\Delta, \Sigma) \vdash e : \alpha}
   {\Gamma(\Sigma, \Delta) \vdash e : \alpha}
-\quad
-\inference[(weakening)]
+\end{equation*}
+\begin{equation*}
+\tyrule{exchange2}
+  {\Gamma(\Delta; \Sigma) \vdash e : \alpha}
+  {\Gamma(\Sigma; \Delta) \vdash e : \alpha}
+\end{equation*}
+\begin{equation*}
+\tyrule{weakening}
   {\Gamma(\Delta) \vdash e : \alpha}
   {\Gamma(\Delta; \Sigma) \vdash e : \alpha}
 \end{equation*}
 \begin{equation*}
-\inference[(exchange2)]
-  {\Gamma(\Delta; \Sigma) \vdash e : \alpha}
-  {\Gamma(\Sigma; \Delta) \vdash e : \alpha}
-\quad
-\inference[(contraction)]
+\tyrule{contraction}
   {\Gamma(\Delta; \Sigma) \vdash e : \alpha}
   {\Gamma(\Delta) \vdash \subst{e}{\Sigma}{\Delta} : \alpha}
 \end{equation*}
@@ -677,27 +684,26 @@ immediately to coeffects -- for more information, refer to O'Hearn's introductio
 
 %---------------------------------------------------------------------------------------------------
 
-\paragraph{Thesis perspective}
+\paragraph{Thesis perspective.}
 
-Our work can be viewed as annotating bunches. Such annotations then specify additional information
-about the context -- or, more specifically, about the sub-tree of the context. Although this is not
-the exact definition used in Chapter~X, we could define contexts as follows:
+From the perspective of substructural and bunched types, our work can be viewed as annotating 
+bunches. Such annotations then specify additional information about the context -- or, more
+specifically, about the sub-tree of the context. Although this is not the exact definition used in 
+Chapter~\ref{ch:unified}, we could define contexts as follows:
 %
 \begin{equation*}
-\Gamma, \Delta, \Sigma := x\!:\!\alpha \sep 1 \sep \Gamma, \Gamma \sep \Gamma @ \sigma
+\Gamma, \Delta, \Sigma := x\!:\!\alpha \sep 1 \sep \Gamma, \Gamma \sep \coctx{\Gamma}{\cclrd{r}}
 \end{equation*}
 %
 Now we can not only annotate an entire context with some information (as in the simple coeffect
-system for tracking resources that used judgements of a form $\Gamma @ \sigma \vdash e : \alpha$).
+system for tracking resources that used judgements of a form $\cclrd{\Gamma}{\cclrd{r}} \vdash e : \tau$).
 We can also annotate individual components. For example, a context containing variables $x,y,z$
-where only $x$ is used could be written as $(x\!:\!\alpha \,@\, \ident{used}), ((y\!:\!\alpha, z\!:\!\alpha) 
-\,@\, \ident{unused})$.
+where only $x$ is used could be written as $\coctx{(x\!:\!\tau_1}{\ident{\cclrd{used}}}, \coctx{(y\!:\!\tau_2, z\!:\!\tau_3)}{\ident{\cclrd{unused}}}$.
 
 For the purpose of this introduction, we ignore important aspects such as how are nested annotations
 interpreted. The main goal is to show that coeffects can be easily viewed as an extension to the 
 work on bunched logic. Aside from this principal connection, \emph{structural coeffects} also 
-use some of the proof techniques from the work on bunched logics, because they also use tree-like
-structure of variable contexts.
+use some of the proof techniques from the work on bunched logics.
 
 
 %===================================================================================================
@@ -707,7 +713,7 @@ structure of variable contexts.
 The importance of context-aware computations is perhaps most obvious when considering mobile
 application, client/server web applications or even the internet of things. A pioneering work
 in the area using functional languages has been done by Serrano \cite{app-hop-diffuse,app-hop-lang}
-(which also inspired the example presented in Chapter~\ref{ch:intro}). His HOP language supports 
+(which also inspired the motivating example presented in Chapter~\ref{ch:intro}). His HOP language supports 
 cross-compilation and programs execute in different contexts. However, HOP is not statically 
 type checked.
 
@@ -723,30 +729,24 @@ on concrete physical context (obtained from the device sensors) than context as 
 language feature.
 
 We approach the problem from a different perspective, building on the tradition of 
-statically-typed functional programming languages and their theories. 
+statically-typed functional programming languages, focusing on type systems as the primary way
+of capturing contextual properties. 
 
 %===================================================================================================
 
 \section{Summary}
 
-This chapter presented four different pathways leading to the idea of coeffects. We also 
+This chapter presented three different pathways leading to the idea of coeffects. We also 
 introduced the most important related work, although presenting related work was not the
-main goal of the chapter. The main goal was to show the idea of coeffects as a logical follow up
-to a number of research directions. For this reason, we highlighted only certain aspects of 
-related work -- the remaining aspects as well as important technical details are covered 
-in later chapters.
+primary goal of the chapter. The primary goal was to present the idea of coeffects as a logical 
+follow up to a number of research directions. For this reason, we highlighted only certain aspects 
+of the discussed related work -- the remaining aspects as well as important technical details are
+covered throughout the thesis.
 
-The first pathway looks at applications and systems that involve notion of \emph{context}.
-The two coeffect calculi we present aim to unify some of these systems. The second pathway
-follows as a dualization of well-known effect systems. However, this is not simply a syntactic
-transformation, because coeffect systems treat lambda abstraction differently. The third 
-pathway follows by extending comonadic semantics of context-dependent computations with 
-indexing and building a type system analogous to effect system from the ``marriage of effects
-and monads''. Finally, the fourth pathway starts with sub-structural type systems. Coeffect
-systems naturally arise by annotating bunches in bunched logics with additional information.
-
-
-% \section{Missing}
-% ~
-% 
-% indexed/layered/etc. monads, productors or whatever
+The first pathway follows as a dualization of well-known effect systems. However, this is not simply 
+a syntactic transformation. As we further discuss in the next chapter, coeffect systems treat lambda 
+abstraction differently. The second pathway follows by extending comonadic semantics of context-dependent 
+computations with indexing and building a type system analogous to effect system from the ``marriage of 
+effects and monads''. Finally, the third pathway starts with substructural type systems. Coeffect
+systems naturally arise by annotating bunches in bunched logics with additional information. In this
+thesis, we mostly follow the first two approaches.
