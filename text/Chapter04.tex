@@ -49,7 +49,7 @@ In the previous chapter, we looked at three important examples of systems that t
 properties. The type systems for whole-context liveness (Section~\ref{sec:applications-flat-live}) 
 and whole-context data-flow (Section~\ref{sec:applications-flat-dataflow}) have a very similar 
 structure -- their lambda abstraction duplicates the requirements and their application arises
-from the combination of \emph{sequential} and \emph{point-wise} composition.
+from the combination of \emph{sequential} and \emph{pointwise} composition.
 
 The system for tracking of implicit parameters (Section~\ref{sec:applications-flat-impl}), and
 similar systems for rebindable resources, differ in two ways. In lambda abstraction, they split
@@ -187,7 +187,7 @@ $\textit{min}(\aclrd{n}, \aclrd{m}) \leq \aclrd{m}$ and $\textit{min}(\aclrd{n},
 \label{sec:flat-calculus-algebra}
 
 To make the flat coeffect system general enough, the algebra consists of three operations.
-Two of them, $\cseq$ and $\cpar$, represent the \emph{sequential} and \emph{point-wise} composition, 
+Two of them, $\cseq$ and $\cpar$, represent the \emph{sequential} and \emph{pointwise} composition, 
 respectively and the third one, $\czip$ represents context \emph{merging}. The term merging should be 
 understood semantically -- the operation models what happens when the semantics of lambda abstraction 
 combines context available at the declaration-site and the call-site.
@@ -237,7 +237,7 @@ common properties of the three examples, without unnecessarily restricting the s
 functions. The laws of a monoid are required in order to form a category structure in the 
 categorical model (Section~\ref{sec:flat-semantics}).
 
-\item The idempotent monoid $(\C, \cpar, \czero)$ represents \emph{point-wise} composition, 
+\item The idempotent monoid $(\C, \cpar, \czero)$ represents \emph{pointwise} composition, 
 \ie~the case when the same context is passed to multiple (independent) computations. The monoid 
 laws guarantee that usual syntactic transformations on tuples and the unit value 
 (Section~\ref{sec:flat-exts}) preserve the coeffect. Idempotence holds for all our examples
@@ -288,7 +288,7 @@ ways of reading the judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and t
 used to define it.
 
 \begin{itemize}
-\item \textbf{Analysis of context dependence.}
+\item \textsc{Analysis of context dependence.}
 Syntactically, coeffect annotations $\cclrd{r}$ model \emph{context requirements}. This means
 we can over-approximate them and require more than is actually needed at runtime. 
 
@@ -296,7 +296,7 @@ Syntactically, the typing rules should be read top-down. In (\emph{app}), the co
 of multiple assumptions are \emph{merged}; in (\emph{abs}), they are split between the declaration-site
 and the call-site.
 
-\item \textbf{Semantics of context passing.}
+\item \textsc{Semantics of context passing.}
 Semantically, coeffect annotations $\cclrd{r}$ mo\-del \emph{contextual capabilities}. This means
 that we can throw away capabilities, if a sub-expression requires fewer than we 
 currently have.
@@ -422,7 +422,7 @@ $(L, \sqcap, \sqcup, \sqcap, \ident{L}, \ident{D}, \sqsubseteq)$.
 
 \noindent
 As in Section~\ref{sec:applications-flat-live}, sequential composition $\cseq$ is modelled by 
-the meet operation $\sqcap$ and point-wise composition $\cpar$ is modelled by join $\sqcup$. 
+the meet operation $\sqcap$ and pointwise composition $\cpar$ is modelled by join $\sqcup$. 
 Two-point lattice is a commutative, idempotent monoid. The distributivity 
 $(r \sqcup s) \sqcap t = (r \sqcap t) \sqcup (s \sqcap t)$ does not hold for \emph{every} 
 lattice, but it trivially holds for a two-point lattice used here.
@@ -439,7 +439,7 @@ by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$.
 \end{example}
 
 \noindent
-As discussed earlier, sequential composition $\cseq$ is represented by $+$ and point-wise 
+As discussed earlier, sequential composition $\cseq$ is represented by $+$ and pointwise 
 composition $\cpar$ uses $\emph{max}$. For data-flow, we need a third separate operator for
 lambda abstraction. Annotating the body with $\emph{min}(\cclrd{r}, \cclrd{s})$ ensures that
 both call-site and declaration-site annotations are equal or greater than the annotation 
@@ -2112,7 +2112,7 @@ e &::=& \ldots \sep () \sep e_1, e_2 \\
 The typing rules for pairs and the unit value are shown in Figure~\ref{fig:flat-ext-types}.
 The unit value (\emph{unit}) is annotated with the $\czero$ coeffect (the same as other constants).
 Pairs, created using the $(e_1, e_2)$ expression, are annotated with a coeffect that combines
-the coeffects of the two sub-expressions using the \emph{point-wise} operator $\cpar$. The operator
+the coeffects of the two sub-expressions using the \emph{pointwise} operator $\cpar$. The operator
 models the case when the (same) available context is split and passed to two independent 
 sub-expressions. This matches the semantics of pairs discussed shortly. Finally, the (\emph{proj})
 rule is uninteresting, because $\pi_i$ can be viewed as a pure function.
@@ -2184,7 +2184,7 @@ Coeffect systems differ from effect systems in three important ways:
   Chapter~\ref{ch:pathways}, coeffects track additional contextual properties required by a
   computation, many of which cannot be captured by a monad (\eg~liveness or data-flow).
 
-\item Syntactically, coeffect calculi use a richer algebraic structure with point-wise composition,
+\item Syntactically, coeffect calculi use a richer algebraic structure with pointwise composition,
   sequential composition and context merging $(\cpar, \cseq, \czip)$ while most effect systems
   only use a single operation for sequential composition (monadic bind).
 

@@ -6,25 +6,42 @@
 \label{ch:applications} 
 
 Software developers as well as programming language researchers choose abstractions based not 
-just on how appropriate they are. Other factors may include social aspects -- how well is the 
-abstraction known, how well is it documented and whether it is a standard tool of the 
-\emph{research programme}\footnote{ Research programme, as introduced by Lakatos \cite{philosophy-lakatos},
-is a network of scientists sharing the same basic assumptions and techniques.}. This may
-partly be why no unified context tracking mechanism has been developed so far.
+just on how appropriate they are. Other factors include social aspects -- how well is the 
+abstraction known, how well is it documented and whether it is a standard tool of the
+\emph{research programme}\footnote{A research programme, as introduced by Lakatos \cite{philosophy-lakatos},
+is a network of scientists sharing the same basic assumptions and techniques.} that the researcher
+unconsciously subscribes to. 
 
-In Chapter~\ref{ch:intro}, we argued that context-awareness had, so far, only limited influence 
-on the design of programming languages because it is a challenge that is not easy to
-see. However, many of the properties that this thesis treats uniformly as \emph{coeffects} have been
-previously tracked by other means. This includes special-purpose type systems, systematic 
-approaches arising from modal logic S4, as well as techniques based on abstractions designed 
-for other purpose, most frequently monads.
+For tracking of computational effects, such \emph{standard tools} are well known. When 
+faced with an effectful computation, programming language designers immediately pick monads. For 
+context-aware computations, there are no standard tools. This means that contextual properties may, 
+at first, appear as a set of disconnected examples. Consequently, existing systems that capture 
+contextual properties use a wide range of methods including special-purpose type systems,  
+approaches arising from modal logic S4, as well as techniques based on abstractions designed for other 
+purpose, most frequently monads and effect systems.
 
-In this chapter, we describe a number of simple calculi for tracking a wide range of contextual
-properties. The systems are adapted from existing work, but the uniform presentation in this 
-chapter is a novel contribution. The fact that we find a common structure in all systems presented 
-here lets us develop unified coeffect calculi in the upcoming three chapters.
+\paragraph{Chapter structure and contributions}
+\begin{itemize}
+\item[--] We start with a characterization of contextual properties. The Section~\ref{sec:applications-structure}
+  explains what is a \emph{coeffect} and constrasts it with a better known notion of 
+  \emph{effect}. It explains what is the nature of properties that can be tracked using 
+  coeffect systems presented in this theis.
 
+\item[--] We describe a number of simple calculi for tracking a wide range of contextual properties. 
+  The systems are adapted from diverse sources (type systems, static analyses, logics) and apply to
+  various domains (cross-compilation, liveness, distributed computing, data-flow, security), but
+  share a common structure.
 
+\item[--] The uniform presentation of the systems is the key contribution of this chapter. We distinguish
+  between \emph{flat coeffect} systems (Section~\ref{sec:applications-flat}) and \emph{structural coeffect}
+  systems (Section~\ref{sec:applications-structural}). The fact that we find a common structure in
+  all systems presented here lets us develop unified coeffect calculi in the upcoming three chapters.
+\end{itemize}
+
+\noindent
+As mentioned earlier, this chapter may initially appear as a collection of disconnected 
+examples\footnote{The different properties captured by monads may appear similarly 
+disconnected at first!}. But at the end, we will see that they share a common pattern.
 
 
 % ===================================================================================================
@@ -40,26 +57,27 @@ here lets us develop unified coeffect calculi in the upcoming three chapters.
 % ===================================================================================================
 
 \section{Structure of coeffect systems}
+\label{sec:applications-structure}
 
-When introducing coeffect systems in Section~\ref{sec:intro-theory}, we related coeffect systems
-with effect systems. Effect systems track how program affects the environment, or, in other words 
-capture some \emph{output impurity}. In contrast, coeffect systems track what program requires from the 
-environment, or \emph{input impurity}.
+When introducing coeffect systems in Section~\ref{sec:path-effects-coeff}, we related coeffect systems
+with effect systems. Effect systems track how a program affects the environment, or, in other words 
+capture some \emph{output impurity}. In contrast, coeffect systems track what a program requires from 
+the execution environment, or \emph{input impurity}.
 
 Effect systems generally use judgements of the form $\Gamma \vdash e : \tau \;\&\; \aclrd{\sigma}$, 
-associating effects $\sigma$ with the output type. In contrast, we choose to write coeffect 
+associating effects $\sigma$ with the output type. We write coeffect 
 systems using judgements of the form $\coctx{\Gamma}{\aclrd{\sigma}} \vdash e : \tau$, associating
 the context requirements with $\Gamma$. Thus, we extend the traditional notion of free-variable
-context $\Gamma$ with richer notions of context. Besides the notation, there are more important 
-differences between effects and coeffects.
+context $\Gamma$ with richer notions of context. This notation emphasizes the right intuition, 
+but there are more important differences between effects and coeffects.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Lambda abstraction}
+\subsection{Effectful lambda abstraction}
 \label{sec:applications-structure-lam}
 
 The difference between effects and coeffects becomes apparent when we consider lambda abstraction.
-The typical lambda abstraction rule for effect systems looks as (\emph{abs-eff}) in 
+The typical lambda abstraction rule for effect systems looks as (\emph{effect}) in 
 Figure~\ref{fig:applications-abs}. Wadler and Thiemann~\cite{monads-effects-marriage} explain how 
 the effect analysis works as follows:
 %
@@ -87,15 +105,16 @@ As shown in the next section, contextual properties do not follow this pattern.
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}
-\[
-\tyrule{abs-pure}
+\begin{equation*}
+\tyrule{pure}
   { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2}
   { \Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2}
-\;\;
-\tyrule{abs-eff}
+\end{equation*}
+\begin{equation*}
+\tyrule{effect}
   { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2 \,\&\, \aclrd{\sigma} }
   { \Gamma \vdash \lambda x.e : \tau_1 \xrightarrow{\aclrd{\sigma}} \tau_2 \,\&\, \aclrd{\emptyset} }
-\]
+\end{equation*}
 \caption{Lambda abstraction for pure and effectful computations}
 \label{fig:applications-abs}
 \end{figure}
@@ -108,22 +127,23 @@ We look at three notions of context. The first is the standard free-variable con
 $\lambda$-calculus. This is well understood and we use it to demonstrate how contextual 
 properties behave. Then we consider two notions of context introduced in this thesis --
 \emph{flat coeffects} refer to overall properties of the environment and \emph{structural coeffects} 
-refer to properties attached to individual variables. 
+refer to properties attached to individual variables. We could track properties associated
+with values in data structures (\eg~fields of a tuple), but this is left as future work.
 
 \paragraph{Variable coeffects.}
 
 In standard $\lambda$-calculus, variable access can be seen as a primitive operation that 
-accesses the context. The expression $x$ introduces a context requirement -- the expression 
-is typeable only in a context that contains $x:\tau$ for some type $\tau$. 
+accesses the context. The variable access expression introduces a context requirement -- the 
+expression $x$ is typeable only in a context that contains $x:\tau$ for some type $\tau$. 
 
-The standard lambda abstraction (\emph{abs-pure}), shown in Figure~\ref{fig:applications-abs},
-splits the free-variable context of an expression into two parts. The value of the parameter
+The standard lambda abstraction (\emph{pure}), shown in Figure~\ref{fig:applications-abs},
+splits the free-variable context of an expression into two parts. At runtime, the value of the parameter
 has to be provided by the \emph{call site} (dynamic scope) and the remaining values are provided 
-by the \emph{declaration site} (lexical scope). Here, the splitting is determined syntactically --
-the notation $\lambda x.e$ names the variable whose value comes from the call site.
+by the \emph{declaration site} (lexical scope). In the type checking, the splitting is determined 
+syntactically -- the notation $\lambda x.e$ names the variable whose value comes from the call site.
 
-The flat and structural coeffects behave in the same way. They also split context-requirements
-between the declaration site and call site, but they do it in two different ways.
+Flat and structural coeffects also split context-requirements between the declaration site and 
+the call site. The flat and structural coeffects capture two different ways of doing this.
 
 \paragraph{Flat coeffects.}
 
@@ -131,32 +151,35 @@ In Section~\ref{sec:intro-context-example}, we used \emph{resources} in a distri
 example of flat coeffects. These could be, for example, a database, GPS sensor or access to the current 
 time. We also outlined that such context requirements can be tracked as part of the typing assumption,
 for example, say we have an expression $e$ that requires GPS coordinates and the current time. 
-The context of such expression will be $\coctx{\Gamma}{ \aclrd{\ident{\{ gps, time \}}} }$.
+The variable context of such expression will be annotated with a set of required resources, 
+\ie~$\coctx{\Gamma}{ \aclrd{\ident{\{ gps, time \}}} }$.
 
 The interesting case is when we construct a lambda function $\lambda x.e$, marshall it and
-send it to another node. In that case, the context requirements can be satisfied in a number of
-ways. When the same resource is available at the target machine (\eg.~current time), we can
-send the function with a context requirement and \emph{rebind} the resource. However, if the
-resource is not available (\eg.~GPS on the server), we need to capture a \emph{remote reference}.
+send it to another node. In systems such as Acute \cite{app-distributed-acute}, the context 
+requirements can be satisfied in a number of ways. When the same resource is available at the target
+machine (\eg~current time), we can transfer the function with a context requirement and \emph{rebind} 
+the resource. However, if the resource is not available (\eg.~GPS on the server), we need to a 
+capture \emph{remote reference}.
 
 In the example discussed here, $\lambda x.e$ would require GPS sensor from the declaration
 site (lexical scope) where the function is declared, which is attached to the current context
 as $\coctx{\Gamma}{ \aclrd{\ident{\{ gps \}}} }$. The current time is required from the caller
 of the function. So, the context requirement on the call site (dynamic scope) will be
 $\aclrd{r}=\aclrd{\footnotesize\ident{\{ time \}}}$. In coeffect systems, we attach this information
-to the function writing $\tau_1 \xrightarrow{ \aclrd{r} } \tau_2$.
+to the function, writing $\tau_1 \xrightarrow{ \aclrd{r} } \tau_2$.
 
 We look at resources in distributed programming in more details in Section~\ref{sec:applications-flat-distr}.
 The important point here is that in flat coeffect systems, contextual requirements are 
-\emph{split} between the call-site and declaration-site. Furthermore, in case of distributed
-programming, the resources can be freely distributed between the two sites.
+\emph{split} between the call-site and declaration-site. Furthermore, there is no syntactic
+structure that determines how the requirements are split. In the case of distributed
+programming, the resources can be freely associated with either of the two sites.
 
 \paragraph{Structural coeffects.}
-
 On the one hand, variable context provides a \emph{fine-grained tracking} mechanism of how context
 (variables) are used. On the other hand, flat coeffects let us track \emph{additional information} about 
 the context. The purpose of \emph{structural coeffects} is to reconcile the two and to provide a way
-for fine-grained tracking of additional information related to variables in programs.
+for fine-grained tracking of additional information linked to variables in programs. Structural 
+coeffects follow the lexical scoping structure determined by the typing rules.
 
 In Section~\ref{sec:intro-why-array}, we used an example of tracking array access patterns. For every
 variable, the additional coeffect annotation keeps a range of indices that may be accessed relatively
@@ -164,7 +187,7 @@ to the current cursor. For example, consider an expression
 $x[\kvd{cursor}] = y[\kvd{cursor}-1] + y[\kvd{cursor}+1]$.
 
 Here, the variable context $\Gamma$ contains two variables, both of type \ident{Arr}. This means
-$\Gamma = x\!:\!\ident{Arr},\, y\-!\-!\ident{Arr}$. For simplicity, we treat \kvd{cursor} as a 
+$\Gamma = x\!:\!\ident{Arr},\, y\!:\!\ident{Arr}$. For simplicity, we treat \kvd{cursor} as a 
 language primitive. The coeffect annotations will be $(0,0)$ for $x$ and $(-1,1)$ for $y$, 
 denoting that we access only the current value in $x$, but we need access to both left and right 
 neighbours in the $y$ array. In order to unify the flat and structural notions, we attach this information 
@@ -172,27 +195,28 @@ as a \emph{vector} of annotations associated with a \emph{vector} of variable an
 $\coctx{x\!:\!\ident{Arr},\, y\!:\!\ident{Arr}}{ \aclrd{\alift{ (0,0), (-1,1) }} }$.
 The unification is discussed in Chapter~\ref{ch:unified}.
 
-Unlike in flat coeffects, in the structural systems, splitting of context determined by the syntax. 
+In structural systems, the splitting of context is determined by the name (variable) binding. 
 For example, consider a function that takes $y$ and contains the above body:
 $\lambda y.x[\kvd{cursor}] = y[\kvd{cursor}-1] + y[\kvd{cursor}+1]$. Here, the declaration site
 contains $x$ and needs to provide access at least within a range $(0,0)$. The call site provides
 a value for $y$, which needs to be accessible at least within $(-1, 1)$. In this way, structural
-coeffects remove the non-determinism of flat coeffect systems.
+coeffects remove the non-determinism arising from the splitting of requirements in flat coeffect systems.
 
-Before looking at concrete flat and structural systems in mode details, we briefly overview 
-some notation used in this thesis. As structural coeffects keep annotations as \emph{vectors},
-we use a number of operations related to scalars and vectors.
+Before looking at concrete flat and structural systems, we briefly overview 
+some notation used in this thesis. Structural coeffects keep annotations as \emph{vectors} and
+use a number of operations related to scalars and vectors.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Scalars and vectors}
 \label{sec:applications-strucutre-vec}
 
-The $\lambda$-calculus is asymmetric -- it maps a context with \emph{multiple} variables to a 
-\emph{single} result. An expression with free variables of types $\tau_i$ can be modelled by a function 
+The $\lambda$-calculus is asymmetric. It maps a context with \emph{multiple} variables to a 
+\emph{single} result. An expression with $n$ free variables of types $\tau_i$ can be modelled by a function 
 $\tau_1 \times \ldots \times \tau_n \rightarrow \tau$ with a product on the left, but a single value
-on the right. Effect systems attach effect annotations to the result $\tau$. In coeffect systems,
-we attach a coeffect annotation to the context $\tau_1 \times \ldots \times \tau_n$.
+on the right. In both effect systems and coeffect systems, we \emph{write} the annotation as part of
+the function arrow. However, in the underlyng categorical model, effects are attached to the result
+$\tau$, while coeffects are attached to the context $\tau_1 \times \ldots \times \tau_n$.
 
 Structural coeffects have one coeffect annotation per each variable. Thus, the annotation consists
 of multiple values -- one belonging to each variable. To distinguish between the overall annotation
@@ -201,18 +225,18 @@ and individual (per-variable) annotations, we call the overall coeffect a \emph{
 effect systems.
 
 It is useful to clarify how vectors are used in this thesis. Suppose we have a set $\C$ of
-\emph{scalars} such that $\cclrd{r_1},\ldots,\cclrd{r_n} \in \C$. A vector $\aclrd{R}$ 
+\emph{scalars} ranged over by $\cclrd{r},\cclrd{s},\cclrd{t}$. A vector $\aclrd{R}$ 
 over $\C$ is a tuple $\alift{ \cclrd{r_1}, \ldots, \cclrd{r_n} }$ of scalars. 
-We use bold-face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ for vectors and lower-case
-letters $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars\footnote{For better readability, the thesis
+We use bold face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ for vectors and 
+normal face $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars\footnote{For better readability, the thesis
 also distinguishes different structures using colours. However ignoring the colour does not introduce 
 any ambiguity.}. We also say that a \emph{shape} of a vector $\slen{\aclrd{\textbf{r}}}$ (or more generally any container) 
-is the set of \emph{positions} in a vector. So, a vector of length $n$ has shape $\{ 1, 2, \ldots, n \}$. 
-We discuss containers and shapes further in Chapter~\ref{ch:unified} and also discuss how our use
-relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
+determines the set of \emph{positions} in a vector. So, a vector of a shape (length) $n$ has positions 
+$\{ 1, 2, \ldots, n \}$. We discuss containers and shapes further in Chapter~\ref{ch:unified} and also 
+discuss how our use relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
 
-Just as in the usual multiplication of a vector by scalar, we lift any binary operation on scalars into a 
-scalar-vector one. For any binary operation on scalars $\circ : \C \times \C \rightarrow \C$, we define
+Just as in the usual pointwise multiplication of a vector by a scalar, we lift any binary operation on scalars into a 
+scalar-vector one. For a binary operation on scalars $\circ : \C \times \C \rightarrow \C$, we define
  $\cclrd{s} \circ \aclrd{\textbf{r}} = \alift{ \cclrd{s}\circ\cclrd{r_1}, \ldots, \cclrd{s}\circ\cclrd{r_n}}$.
 Relations on scalars can be also lifted to vectors. Given two vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$ of the
 same shape with positions $\{ 1, \ldots, n \}$ and a relation $\varpropto\, \subseteq \C \times \C$ we define 
@@ -244,23 +268,28 @@ be seen as $\Gamma_1 \times \langle x\!:\!\tau\rangle \times \Gamma_2$.
 \section{Flat coeffect systems}
 \label{sec:applications-flat}
 
-In flat coeffect systems, the additional contextual information are independent of the variables.
-As such, flat coeffects capture properties where the execution environment provides some 
+In flat coeffect systems, the additional contextual information are independent of lexically scoped
+variables. As such, flat coeffects capture properties where the execution environment provides some 
 additional data, resources or information about the execution context.
 
-In this section, we look at a number of examples ranging from Haskell's type constraints
-and implicit parameters to distributed computing. For three of our examples --
-implicit parameters, liveness analysis and data-flow -- we show an ad-hoc type system that
-captures their properties. This serves as a basis for Chapter~\ref{ch:flat}, which develops
-a unified flat coeffect calculus.
+As mentioned in the introduction, coeffect systems in this chapter may appear as a disconnected
+set of examples at first. Indeed, this section covers a diverse set of calculi including
+Haskell's implicit parameters (Section~\ref{sec:applications-flat-impl}), distributed computing and 
+cross-compilation (Section~\ref{sec:applications-flat-distr}), liveness analysis 
+(Section~\ref{sec:applications-flat-live}) and data-flow (Section~\ref{sec:applications-flat-dataflow}).
+
+For three of the examples, we present a type system and a simple semantics. Although the examples 
+are not new, our novel presentation of the systems (and the fact that they appear side-by-side)
+makes it possible to see that they share a common structure. The structure is captured by
+a unified \emph{flat coeffect calculus} in Chapter~\ref{ch:flat}.
 
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Implicit parameters and type classes} 
 \label{sec:applications-flat-impl}
 
-Haskell provides two examples of flat coeffects -- type class and implicit parameter constraints
-\cite{app-type-classes,app-implicit-parameters}. Both of the features introduce additional 
+Haskell provides two examples of flat coeffects -- type class constraints and implicit parameter 
+constraints \cite{app-type-classes,app-implicit-parameters}. Both of the features introduce additional 
 \emph{constraints} on the context requiring that the environment provides certain operations for
 a type (type classes) or that it provides values for named implicit parameters.
 In the Haskell type system, constraints $C$ are attached to the types of top-level declarations,
@@ -268,18 +297,17 @@ such as let-bound functions. The Haskell notation $\Gamma \vdash e : C \Rightarr
 corresponds to our notation $\coctx{\Gamma}{C} \vdash e : \tau$. 
 
 In this section, we present a type system for implicit parameters in terms of the coeffect typing
-judgement. We briefly consider type classes, but do no give a full type system.
+judgement. We briefly consider type classes, but do not give a full type system.
 
 \paragraph{Implicit parameters.}
 Implicit parameters are a special kind of variables that support dynamic scoping.
-They can be used to parameterise a computation (involving a long chain of function calls)
+They make it possible to parameterise a computation (involving a long chain of function calls)
 without passing parameters explicitly as additional arguments of all involved functions. 
 
 The dynamic scoping means that if a function uses a parameter $\ident{?param}$ then the caller of the 
 function must set a value of $\ident{?param}$ before calling the function. However, implicit 
 parameters also support lexical scoping. If the parameter $\ident{?param}$ is available in the 
-lexical scope where a function (which uses it) is defined, then the function will not require a
-value from the caller.
+lexical scope where a function is defined, then the function will not require a value from the caller.
 
 A simple language with implicit parameters has an expression $\ident{?param}$ to read a parameter 
 and an expression\footnote{Haskell uses $\kvd{let}~\ident{?p} = e_1~\kvd{in}~e_2$, but we use a 
@@ -307,33 +335,32 @@ $\ident{?width}$, but in addition also uses $\ident{?size}$. Where should the pa
 nested function come from?
 
 To keep examples in this chapter uniform, we do not use the Haskell notation and instead
-write $\tau_1 \xrightarrow{r} \tau_2$ for a function that requires implicit parameters specified $r$.
+write $\tau_1 \xrightarrow{r} \tau_2$ for a function that requires implicit parameters specified by $r$.
 In a purely dynamically scoped system, they would have to be defined when the user invokes the nested function.
 However, implicit parameters behave as a combination of lexical and dynamic scoping. This means
 that the nested function can capture the value of $\ident{?width}$ and require just $\ident{?size}$.
 The following shows the two options:
 %
 \begin{equation}
-\tag{dynamic}
+\tag{\emph{dynamic}}
 \ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int} \} }
   (\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int}, \ident{?size} : \ident{int} \} } \ident{string})
 \end{equation}
 \vspace{-1em}
 \begin{equation}
-\tag{mixed}
+\tag{\emph{mixed}}
 \ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int} \} }
   (\ident{string} \xrightarrow{ \{ \ident{?size} : \ident{int} \} } \ident{string})
 \end{equation}
 %
-This is not a complete list of possible typings, but it demonstrates the options. The \emph{dynamic}
+This is not a complete list of possible typings, but it demonstrates the options. The (\emph{dynamic})
 case requires the parameter \ident{?width} twice (this may be confusing when the caller provides
-two different values). In the \emph{mixed} case, the nested function captures the \ident{?width} 
-parameter available from the declaration site. As a result, the latter function can be called as follows:\
+two different values). In the (\emph{mixed}) case, the nested function captures the \ident{?width} 
+parameter available from the declaration site. Using the latter typing, the function can be called as follows:\
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{formatHello} = \\[-0.25em]
-\quad(~\kvd{letdyn}~\ident{?width}=5~\kvd{in}~\ident{format}~\texttt{"Hello"})\\[-0.25em]
+\kvd{let}~\ident{formatHello} = (~\kvd{letdyn}~\ident{?width}=5~\kvd{in}~\ident{format}~\texttt{"Hello"})\\[-0.25em]
 \kvd{in}\,(~\kvd{letdyn}~\ident{?size} = 10~\kvd{in}~\ident{formatHello}~\texttt{"world"}~)
 \end{array}
 \end{equation*}
@@ -391,15 +418,15 @@ type system for implicit parameters.
 Figure~\ref{fig:applications-flat-impl} shows a type system that tracks the set of expression's 
 implicit parameters. The type system uses judgements of the form $\coctx{\Gamma}{\aclrd{r}} \vdash e : \tau$
 meaning that an expression $e$ has a type $\tau$ in a free-variable context $\Gamma$ with a set 
-of implicit parameters specified by $\aclrd{r}$. The annotations $\aclrd{r},\aclrd{s},\aclrd{t}$ are sets of 
-pairs consisting of implicit parameter names and types, \ie~$\aclrd{r},\aclrd{s},\aclrd{t} \subseteq 
-  \ident{Names} \times \ident{Types}$. The expressions include \ident{?param} to read implicit
+of implicit parameters specified by $\aclrd{r}$. The annotations $\aclrd{r},\aclrd{s},\aclrd{t}$ are 
+finite partial functions mapping implicit parameter names to types, \ie~$\aclrd{r},\aclrd{s},\aclrd{t} \subseteq 
+\ident{Names} \mapsto \ident{Types}$. The expressions include \ident{?param} to read implicit
 parameter and \kvd{letdyn} to bind an implicit parameter. The types are standard, but functions are
 annotated with the set of implicit parameters that must be available on the call-site, \ie~
 $\tau_1 \xrightarrow{\aclrd{s}} \tau_2$.
 
 Accessing an ordinary variable (\emph{var}) does not require any implicit parameters. The rule that 
-introduces primitive context requirements is (\emph{param}) -- accessing a parameter \ident{?param} 
+introduces primitive context requirements is (\emph{param}). Accessing a parameter \ident{?param} 
 of type $\tau$ requires it to be available in the context. The context may provide more (unused) 
 implicit parameters thanks to the (\emph{sub}) rule.
 
@@ -1716,7 +1743,7 @@ The rules of the system are split into two groups. Figure~\ref{fig:applications-
 the standard syntax-driven rules plus sub-coeffecting. In (\emph{var}), the context contains just the 
 single accessed variable, which is annotated as live. Other variables can be introduced using weakening. 
 A constant (\emph{const}) is accessed in an empty context, which also carries no annotations. The
-sub-coeffecting rule (\emph{sub}) uses a point-wise extension of the $\sqsubseteq$ relation over two
+sub-coeffecting rule (\emph{sub}) uses a pointwise extension of the $\sqsubseteq$ relation over two
 vectors as defined in Section~\ref{sec:applications-strucutre-vec}.
 
 In the (\emph{abs}) rule, the variable context of the body $\Gamma, x\!:\!\tau_1$ is annotated with
@@ -2402,7 +2429,7 @@ from bounded reuse and liveness (where difference between using and not using a 
 Primitive requirements are introduced by the (\emph{prev}) rule, which increments the annotation of
 all variables in the context.
 
-In flat data-flow, we identified sequential composition and point-wise composition as two primitive
+In flat data-flow, we identified sequential composition and pointwise composition as two primitive
 operations that were used in the (flat) application. In the structural system, these are used in 
 (\emph{app}) and (\emph{contr}), respectively. Thus application combines coeffect annotations using
 $+$ and contraction using \emph{max}. This contrasts with bounded reuse, which uses $\ast$ and $+$,

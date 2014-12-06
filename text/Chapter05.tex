@@ -170,7 +170,7 @@ of coeffects is provided by the \emph{structural coeffect algebra} definition be
 The structural coeffect scalar structure is similar to \emph{flat coeffect algebra} with the 
 exception that it drops the $\czip$ operation. It only provides a monoid $(\C, \cseq, \cunit)$
 modelling sequential composition of computations and a monoid $(\C, \cpar, \czero)$ representing
-point-wise composition, as well as a relation $\cleq$ that defines sub-coeffecting.
+pointwise composition, as well as a relation $\cleq$ that defines sub-coeffecting.
 
 \begin{definition}
 \label{def:structural-scalar}
@@ -226,7 +226,7 @@ $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ equipped with the following addition
   and an operation that returns the vector length such that 
   $\alen{\aclrd{\textbf{r}}} = \sclrd{n}$ for $\aclrd{\textbf{r}} : \C^{\sclrd{n}}$
 
-\item A point-wise extension of the $\cseq$ operator written as $\cclrd{t} \,\aseq\, \aclrd{\textbf{s}}$
+\item A pointwise extension of the $\cseq$ operator written as $\cclrd{t} \,\aseq\, \aclrd{\textbf{s}}$
   such that\\ $\cclrd{t} \,\aseq\, \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} = 
     \alift{\cclrd{t} \,\cseq\,\cclrd{r_1}, \ldots, \cclrd{t} \,\cseq\,\cclrd{r_n}}$.
 
@@ -468,7 +468,7 @@ and so the above definitions are both valid. Similar construction can be used fo
 It is important to note that this gives us a systems with \emph{different} properties. The 
 information are now tracked per-variable rather than for the enitre context. For data-flow,
 we also need to adapt the typing rule for the \kvd{prev} construct. Here, we write $\aclrd{+}$ 
-for a point-wise extension of the $+$ operator, such that
+for a pointwise extension of the $+$ operator, such that
 $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} + k = \alift{\cclrd{r_1} + k, \ldots, \cclrd{r_n} + k}$.
 %
 \begin{equation*}
@@ -582,7 +582,7 @@ modelling expressions in a context. To capture this, we need to generalize some 
 \emph{coeffect scalars} $\cclrd{r}, \cclrd{s}, \cclrd{t}$ to \emph{coeffect vectors} $\aclrd{r}, \aclrd{s}, \aclrd{t}$.
 
 \begin{definition}
-Given a monoid $(\C, \cseq, \cunit)$ with a point-wise extension of the $\cseq$ operator to a vector 
+Given a monoid $(\C, \cseq, \cunit)$ with a pointwise extension of the $\cseq$ operator to a vector 
 (written as $\cclrd{t}\,\aseq\,\aclrd{\textbf{s}}$) and an operation lifting scalars to vectors 
 $\alift{-}$, an \emph{indexed comonad} over a category $\catc$ is a triple 
 $(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, \ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}})$:
@@ -669,7 +669,7 @@ two-element vector $\alpha \xtimes \alpha$.
 
 Finally, the \ident{lift} mapping is almost the same as in the flat version. It
 operates on a singleton vector, which is equivalent to operating on a scalar as before.
-The operation could easily be extended to a vector in a point-wise way, but we keep it simple
+The operation could easily be extended to a vector in a pointwise way, but we keep it simple
 and perform sub-coeffecting separately on individual variables.
 
 % --------------------------------------------------------------------------------------------------
@@ -1419,7 +1419,7 @@ accesses based on bounded linear logic.
 
 Following the structure of the previous chapter, the structural coeffect calculus is parameterized
 by a \emph{structural coeffect algebra}. The two definitions are similar -- both require operations 
-$\cseq$ and $\cpar$ that model sequential and point-wise composition, respectively. For flat 
+$\cseq$ and $\cpar$ that model sequential and pointwise composition, respectively. For flat 
 coeffects, we further require $\czip$ to model context merging. For structural coeffects, we 
 instead use a vector (free monoid) with the $\atimes$ operation -- which serves a similar purpose
 as $\czip$.

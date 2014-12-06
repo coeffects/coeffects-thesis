@@ -106,23 +106,23 @@ software engineering. The state of the art relies on ad-hoc approaches -- using 
 or pre-processors for conditional compilation. Common problems that developers face include:
 
 \begin{itemize}
-\item \textbf{System capabilities.} Libraries such as LINQ \cite{app-linq} let developers write code
+\item \textsc{System capabilities.} Libraries such as LINQ \cite{app-linq} let developers write code
   in a host language like C\# and then cross-compile it to multiple targets (including SQL, OpenCL 
   or JavaScript \cite{app-hop-lang}). Part of the compilation (\eg~generating the SQL query) occurs 
   at runtime and developers have no guarantee that it will succeed until the program is executed,
   because only subset of the host language is supported.
 
-\item \textbf{Platform versions.} When developing cross-platform applications, different platforms
+\item \textsc{Platform versions.} When developing cross-platform applications, different platforms
   (and different versions of the same platform) provide different API functions. Writing a
   cross-platform code usually relies on (fragile) conditional compilation or (equally fragile)
   dynamic loading.
 
-\item \textbf{Security and provenance.} When working with data (be it sensitive database or social
+\item \textsc{Security and provenance.} When working with data (be it sensitive database or social
    network data), we may have permission to access only some of the data and we may want to track
    \emph{provenance} information. However, this is not checked -- if a program attempts to access
    unavailable data, the access will be refused at run-time.
 
-\item \textbf{Resources \& data availability.} When creating a mobile application, the program may
+\item \textsc{Resources \& data availability.} When creating a mobile application, the program may
   (or may not) be granted access to device capabilities such as GPS sensor, social updates or battery
   status. We would like to know which of the capabilities are required and which are optional
   (\ie~enhance the user experience, but there is a fallback strategy). Equally, on the server-side,
@@ -357,12 +357,12 @@ speak about the environment and those that speak about individual inputs (variab
 thesis, we refer to them as \emph{flat coeffects} and \emph{structural coeffects}, respectively:
 
 \begin{itemize}
-\item \textbf{Flat coeffects} represent additional data, resources and meta-data that are
+\item \textsc{Flat coeffects} -- represent additional data, resources and meta-data that are
    available in the execution environment (regardless of how they are accessed in a program).
    Examples include resources such as GPS sensors and battery status (on a phone), databases
    (on the server), or software framework (or library) version.
 
-\item \textbf{Structural coeffects} capture additional meta-data related to inputs. This can include
+\item \textsc{Structural coeffects} -- capture additional meta-data related to inputs. This can include
    provenance (source of the input value), usage information (how often is the value
    accessed and in what ways) or security information (whether it contain sensitive data or not).
 \end{itemize}
@@ -668,12 +668,12 @@ purpose of this chapter was to expose the flaws and convince the reader that the
 better solution. Finding the foundations of such better solution is the goal of this thesis:
 
 \begin{itemize}
-\item In Chapter~\ref{ch:pathways} we give an overview of related work. Most importantly, we show
+\item In Chapter~\ref{ch:pathways}, we give an overview of related work. Most importantly, we show
   that the idea of context-aware computations can be naturally approached from a number of
   directions developed recently in the theory of programming languages (including type and effect
   systems, categorical semantics and sub-structural logics).
 
-\item Chapter~\ref{ch:applications} presents the first contribution of the thesis -- the discovery
+\item In Chapter~\ref{ch:applications}, we present the first contribution of the thesis -- the discovery
   of the connection between a number of existing programming language features that are related
   to context. The chapter presents type systems and semantics for a number of systems and analyses 
   (including data-flow, liveness analysis, distributed programming and Haskell's type classes).
