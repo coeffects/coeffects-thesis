@@ -1,0 +1,272 @@
+%!TEX root = ../main.tex
+
+\chapter{Appendix A} 
+\label{ch:appendix} 
+
+This appendix gives full typing derivations for the examplespresented in Chapter~\ref{ch:applications},
+which demonstrate simple coeffect calculi for implicit parameters, liveness and data-flow.
+
+% --------------------------------------------------------------------------------------------------
+
+\section{Coeffect typing for implicit parameters}
+\label{sec:appendixa-implicit} 
+
+The example on page~\pageref{pg:applications-flat-paramsex} considers the typing of a function that
+adds the values of two implicit parameters: $\lambda x.\ident{?a} + \ident{?b}$. Note that addition
+is a function (and so we write $(+)~\ident{?a}~\ident{?b}$) that requires no implicit parameters.
+Thus our typing derivation starts with: 
+%
+\begin{equation*}
+\Gamma_0 = (+):\ident{int}\xrightarrow{\cclrd{\emptyset}}\ident{int}\xrightarrow{\cclrd{\emptyset}}\ident{int}
+\end{equation*}
+%
+The typing for the sub-expression $(+)~\ident{?a}$ is shown in Figure~\ref{fig:appendixa-impl} (a).
+Note that the resulting function does not require any implicit parameters, so there is no non-determinism so far.
+It is worth noting that this would change if we used $\eta$-expansion and wrote $(\lambda y.(+)~\ident{?a})$.
+We refer to the above as $\Delta$. The rest of the expresion is shown in Figure~\ref{fig:appendixa-impl} (b).
+
+Here, the last rule applies (\emph{app}) and so we non-deterministically split the set of required resources.
+This means that we need $\cclrd{r_1}, \cclrd{r_2}$ such that $\cclrd{r_1}\,\cup\,\cclrd{r_2}=\{\ident{?a}:\ident{int}, \ident{?b}:\ident{int} \}$.
+The Figure~\ref{fig:appendixa-impl} (c) summarizes the 9 options.
+
+% --------------------------------------------------------------------------------------------------
+
+\section{Coeffect typing for liveness}
+\label{sec:appendixa-liveness} 
+
+\newcommand{\vrl}{\cclrd{\ident{L}}}
+\newcommand{\vrd}{\cclrd{\ident{D}}}
+
+The Section~\ref{sec:applications-flat-live} discusses a coeffect system where the coeffect 
+annotations capture whether a variable may be accessed (marked as live using $\vrl$) or 
+whether it is definitely not used (marked as dead using $\vrd$). The following three examples
+are considered:
+%
+\begin{equation*}
+\begin{array}{lll}
+(\lambda x . 42)~y &~\hspace{1em}~&(1)\\
+\ident{twoTimes}~42          &&(2)\\
+(\lambda x . x)~42 &&(3)\\
+\end{array}
+\end{equation*}
+%
+The typing derivation for the expression ($1$) is shown in Figure~\ref{fig:appendixa-liv} (a).
+The most interesting aspect about the previous example is the use of the (\emph{app}) rule, which
+marks the resulting context as dead, even though a variable is accessed in the second part of the
+expression (this part never needs to be evaluated). 
+
+Assuming $\Gamma_0 = \ident{twoTimes} : \ident{int} \xrightarrow{\vrl} \ident{int}$,
+the typing derivation for ($2$) is shown in Figure~\ref{fig:appendixa-liv} (b).
+Here, the variable context is marked as live. This is not because the argument of \ident{twoTimes} 
+is marked as live, but because the function itself is a variable that (always) needs to be obtained
+from the variable context. Finally, the derivation for ($3$) is shown in Figure~\ref{fig:appendixa-liv} (c).
+
+% --------------------------------------------------------------------------------------------------
+
+\section{Coeffect typing for data-flow}
+\label{sec:appendixa-dataflow}
+
+The Section~\ref{sec:applications-flat-dataflow} presents a coeffect type system that tracks the 
+maximal number of past values required by a data-flow computation. The discussion includes the 
+following example:
+%
+\begin{equation*}
+\begin{array}{l}
+(\,   \kvd{if}~~(\kvd{prev}~\ident{tick})=0\\[-0.25em]
+\,\,\, \kvd{then}~(\lambda x \rightarrow \kvd{prev}~x)\\[-0.25em]
+\,\,\, \kvd{else}~(\lambda x \rightarrow x) \,)\qquad(\kvd{prev}~\ident{counter})
+\end{array}
+\end{equation*}
+%
+In order to give typing for the above example, we first need to extend the language with 
+conditionals. The typing rule for the $\kvd{if}$ construct is:
+%
+\begin{equation*}
+\tyrule{if}
+  { \coctx{\Gamma}{\cclrd{m}} \vdash e : \ident{bool} &
+    \coctx{\Gamma}{\cclrd{n}} \vdash e_1 : \tau &
+    \coctx{\Gamma}{\cclrd{n}} \vdash e_2 : \tau }
+  {\coctx{\Gamma}{\textnormal{max}(\cclrd{m},\cclrd{n})} \vdash \kvd{if}~e~\kvd{then}~e_1~\kvd{else}~e_2 : \tau_1 }
+\end{equation*}
+%
+Given a condition that requires $\cclrd{m}$ past and two (alternative) bodies that each require
+$\cclrd{n}$ past values, the composed expression requires at most the maximum of the two, \ie~the
+same context is passed to both the condition and the body using point-wise composition. As we will
+see, the fact that both branches require the same number of past values means that we need to use
+the sub-coeffecting rule.
+
+Assuming $\Gamma_0 = \ident{tick}:\ident{int}, \ident{counter}:\ident{int}$, the 
+Figure~\ref{fig:appendixa-dfl} shows the typing derivation for the example. In the first part,
+we derive the types for the sub-expressions of the application and the conditional. Note that 
+to obtain compatible function types, we use sub-coeffecting \emph{before} abstraction in the
+typing of $(\lambda x.x)$ -- the type $\ident{int} \xrightarrow{\cclrd{1}} \ident{int}$ is  a
+valid overapproximation. Finally, the typing of the application yields the requirement of two 
+past values, calculated as $\textnormal{max}(\cclrd{1}, \cclrd{1}+\cclrd{1})$.
+
+\newpage
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}
+{\small a.) Typing for the sub-expression $(+)~\ident{?a}$}
+
+\begin{equation*}
+\begin{array}{l}
+ \tyrule{app}
+  { \hspace{-15em}\tyrule{var}{}
+    { \coctx{\Gamma_0, x:\ident{int}}{\cclrd{ \emptyset }} \vdash
+      (+) : \ident{int} \xrightarrow{\cclrd{\emptyset}} \ident{int} \xrightarrow{\cclrd{\emptyset}} \ident{int}} \\ \hspace{10em}
+    \tyruler{param}{}
+    { \coctx{\Gamma_0, x:\ident{int}}{\cclrd{ \{ \ident{?a}:\ident{int} \} }} \vdash
+      \ident{?a} : \ident{int} } }
+  { \coctx{\Gamma_0, x:\ident{int}}{\cclrd{ \{ \ident{?a}:\ident{int} \} }} \vdash
+    (+)~\ident{?a} : \ident{int} \xrightarrow{\cclrd{\emptyset}} \ident{int} }
+\end{array}
+\end{equation*}
+
+\vspace{1em}
+{\small b.) Typing for the expression $(+)~\ident{?a}~\ident{?b}$}
+
+\begin{equation*}
+\tyrule{app}
+{ \Delta\qquad\qquad &
+  \coctx{\Gamma_0, x:\ident{int}}{\cclrd{ \{ \ident{?b}:\ident{int} \} }} \vdash
+  \ident{?b} : \ident{int} }
+{ \tyrule{abs}
+  { \coctx{\Gamma_0, x:\ident{int}}{\cclrd{ \{\ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} }} \vdash 
+    (+)~\ident{?a}~\ident{?b} : \ident{int} }
+  { \coctx{\Gamma_0}{\cclrd{ r_1 }} \vdash 
+    \lambda x.(+)~\ident{?a}~\ident{?b} : 
+    \ident{int} \xrightarrow{ \cclrd{r_2} } \ident{int} } }
+\end{equation*}
+
+\vspace{1em}
+{\small c.) Possible splittings of the implicit parameters }
+
+\begin{equation*}
+\begin{array}{ll}
+ \cclrd{r_1} = \{ \} & \cclrd{r_2} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} \\
+ \cclrd{r_1} = \{ \ident{?a}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} \\
+ \cclrd{r_1} = \{ \ident{?b}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} \\
+ \cclrd{r_1} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} \\
+ \cclrd{r_1} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} & \cclrd{r_2} = \{ \}\\
+ \cclrd{r_1} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?a}:\ident{int} \}\\
+ \cclrd{r_1} = \{ \ident{?a}:\ident{int}, \ident{?b}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?b}:\ident{int} \}\\
+ \cclrd{r_1} = \{ \ident{?a}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?b}:\ident{int} \} \\
+ \cclrd{r_1} = \{ \ident{?b}:\ident{int} \} & \cclrd{r_2} = \{ \ident{?a}:\ident{int} \} \\
+\end{array}
+\end{equation*}
+
+\figcaption{Coeffect typing for implicit parameters}
+\label{fig:appendixa-impl}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+{\small a.) Typing for the expression $(\lambda x . 42)~y$}
+
+\begin{equation*}
+\tyrule{app}
+  { \hspace{-5em}
+    \tyrule{abs}
+      { \hspace{-5em}
+        \tyrule{const}{}{ \coctx{y\!:\!\tau, x\!:\!\tau}{\vrd} \vdash 42 : \ident{int} } }
+      { \coctx{y\!:\!\tau}{\vrd} \vdash \lambda x . 42 : \tau \xrightarrow{\vrd} \ident{int} }  &
+    \tyrule{var}{}{\coctx{y\!:\!\tau}{\vrl} \vdash y : \tau } }
+  { \inference 
+    { \coctx{y\!:\!\tau}{\vrd \sqcup (\vrl \sqcap \vrd)} \vdash (\lambda x . 42)~y : \ident{int} }
+    { \coctx{y\!:\!\tau}{\vrd} \vdash (\lambda x . 42)~y : \ident{int} } }
+\end{equation*}
+
+\vspace{1em}
+{\small b.) Typing for the expression $\ident{twoTimes}~42$}
+
+\begin{equation*}
+\tyrule{app}
+  { \hspace{-5em}
+    \tyrule{var}{}{ \coctx{\Gamma_0}{\vrl} \vdash \ident{twoTimes} : \ident{int} \xrightarrow{\vrl} \ident{int}  }&
+    \tyrule{var}{}{ \coctx{\Gamma_0}{\vrd} \vdash 42 : \ident{int} } }
+  { \inference 
+      { \coctx{\Gamma_0}{\vrl \sqcup (\vrd \sqcap \vrl)} \vdash \ident{twoTimes}~42 : \ident{int}}
+      { \coctx{\Gamma_0}{\vrl} \vdash \ident{twoTimes}~42 : \ident{int}} }
+\end{equation*}
+
+\vspace{1em}
+{\small c.) Typing for the expression $(\lambda x . x)~42$}
+
+\begin{equation*}
+\tyrule{app}
+  { \hspace{-5em}
+    \tyrule{abs}
+      { \hspace{-5em}
+        \tyrule{var}{}{ \coctx{x\!:\!\ident{int}}{\vrl} \vdash x : \ident{int} } }
+      { \coctx{()}{\vrl} \vdash \lambda x . x : \ident{int} \xrightarrow{\vrl} \ident{int} }  &
+    \tyrule{const}{}{\coctx{()}{\vrd} \vdash 42 : \ident{int} } }
+  { \inference 
+    { \coctx{()}{\vrl \sqcup (\vrl \sqcap \vrd)} \vdash (\lambda x . x)~42 : \ident{int} }
+    { \coctx{()}{\vrl} \vdash (\lambda x . x)~42 : \ident{int} } }
+\end{equation*}
+
+
+\figcaption{Coeffect typing for liveness}
+\label{fig:appendixa-liv}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+{\small a.) Typing for sub-expressions of the conditional and for the argument}
+
+\begin{equation*}
+\tyrule{prev}
+ { \coctx{\Gamma_0}{\cclrd{0}} \vdash \ident{tick} : \ident{int} }
+ { \inference
+   { \coctx{\Gamma_0}{\cclrd{1}} \vdash \kvd{prev}~\ident{tick} : \ident{int} }
+   { \coctx{\Gamma_0}{\cclrd{1}} \vdash (\kvd{prev}~\ident{tick}) = 0 : \ident{bool} } }
+\end{equation*}
+\vspace{1em}
+\begin{equation*}
+\tyrule{prev}
+ { \tyrule{var}
+    {} 
+    { \coctx{\Gamma_0,x\!:\!\ident{int}}{\cclrd{0}} \vdash x : \ident{int} } }
+ { \tyrule{abs}
+   { \coctx{\Gamma_0,x\!:\!\ident{int}}{\cclrd{1}} \vdash \kvd{prev}~x : \ident{int} }
+   { \coctx{\Gamma_0}{\cclrd{1}} \vdash \lambda x . \kvd{prev}~x : \ident{int} \xrightarrow{\cclrd{1}} \ident{int} } }
+\end{equation*}
+\vspace{1em}
+\begin{equation*}
+\tyrule{abs}
+  { \tyrule{sub}
+      { \tyrule{var}{}{ \coctx{\Gamma_0, x\!:\!\ident{int}}{\cclrd{0}} \vdash x : \ident{int} } }
+      { \coctx{\Gamma_0, x\!:\!\ident{int}}{\cclrd{1}} \vdash x : \ident{int} } } 
+  { \coctx{\Gamma_0}{\cclrd{0}} \vdash \lambda x . x : \ident{int} \xrightarrow{\cclrd{1}} \ident{int} }
+\end{equation*}
+\vspace{1em}
+\begin{equation*}
+\tyrule{prev}
+  { \tyrule{var}{}{ \coctx{\Gamma_0}{\cclrd{0}} \vdash \ident{counter} : \ident{int} } }
+  { \coctx{\Gamma_0}{\cclrd{1}} \vdash \kvd{prev}~\ident{counter} : \ident{int} }
+\end{equation*}
+
+\vspace{1em}
+{\small b.) Typing for the composed expression}
+
+\begin{equation*}
+\tyrule{app}
+  { \hspace{-5em}
+    \tyrule{if}
+      { (\ldots) } 
+      { \coctx{\Gamma_0}{\cclrd{1}} \vdash (\kvd{if}\ldots\kvd{then}\ldots\kvd{else}\ldots) : \ident{int} \xrightarrow{\cclrd{1}} \ident{int} } & 
+        \coctx{\Gamma_0}{\cclrd{1}} \vdash (\ldots) : \ident{int} }
+  { \hspace{-1em}
+    \inference
+     { \coctx{\Gamma_0}{\textnormal{max}(\cclrd{1}, \cclrd{1}+\cclrd{1})} \vdash (\kvd{if}\ldots\kvd{then}\ldots\kvd{else}\ldots)~(\ldots) : \ident{int} }
+     { \coctx{\Gamma_0}{\cclrd{2}} \vdash (\kvd{if}\ldots\kvd{then}\ldots\kvd{else}\ldots)~(\ldots) : \ident{int} } }
+\end{equation*}
+
+\figcaption{Coeffect typing for data-flow}
+\label{fig:appendixa-dfl}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------

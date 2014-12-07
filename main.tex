@@ -128,6 +128,12 @@
 \newcommand{\idf}[1]{ {\textnormal{\sffamily id}}_{#1} }
 
 
+\newcommand{\figcaption}[1]{
+  \vspace{0.5em}
+  \noindent\makebox[\linewidth]{\rule{\textwidth}{0.5pt}} 
+  \vspace{-2em}
+  \caption{#1}
+}
 % Half line spacing around align
 \newcommand{\zerodisplayskips}{%
   \setlength{\abovedisplayskip}{0.5em}
@@ -231,6 +237,7 @@
 %----------------------------------------------------------------------------------------
 
 \appendix
-\include{text/AppendixA} % Appendix A
+\include{text/AppendixA}
+\include{text/AppendixB}
 
 \end{document}
