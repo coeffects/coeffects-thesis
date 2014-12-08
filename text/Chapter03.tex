@@ -1733,16 +1733,17 @@ operations on coeffect annotations is an interesting future extension for coeffe
 \section{Structural coeffect systems}
 \label{sec:applications-structural}
 
-In structural coeffect systems, the additional information are associated with individual variables.
-This is very often information about how the variables are used, or, in which contexts they are 
-used. 
-
+In structural coeffect systems, the additional information is associated with individual variables.
+This is very often information about how the variables are used, or, in which contexts they are used. 
 In Chapter~\ref{ch:intro}, we introduced the idea using an example that tracks array access patterns.  
 Each variable is annotated with a range specifying which elements of the corresponding array 
-may be accessed. In this section, we look at a number of examples. We first consider an example
-inspired by linear logic. Then we revisit liveness and data-flow, for which the structural system 
-provides a more precise analysis. Finally, we look at a number of other practical uses including 
-security, tainting and provenance tracking.
+may be accessed. 
+
+In this section, we look at three examples in detail -- we revisit liveness and show a practically
+useful structural version of the system; we consider an example inspired by linear logic; finally,
+we revisit data-flow to get a more precise analysis. Although quite different, the common pattern
+among these three examples is somewhat easier to see, because they all track information about 
+variable usage. We finish the section with a brief outline of several other applications.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -1750,7 +1751,7 @@ security, tainting and provenance tracking.
 \label{sec:applications-struct-live}
 
 The flat system for liveness analysis presented in Section~\ref{sec:applications-flat-live} is 
-interesting from a theoretical perspective, but it is not practically useful. In this section, we
+interesting from a theoretical perspective, but it is not practically useful. Here, we
 revisit the problem and define a structural system that tracks liveness per-variable.
 
 \paragraph{Structural liveness.} 
@@ -1782,23 +1783,23 @@ as a vector. There are two important points:
   guarantees that $\coctx{x\!:\!\tau, y\!:\!\tau}{\alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}}}$
   can not be confused with $\coctx{y\!:\!\tau, x\!:\!\tau}{\alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}}}$.
   We need to define the type system in a way that is similar to sub-structural systems 
-  (discussed in Section~\ref{sec:path-logic}) which provide explicit rules for manipulating
+  (discussed in Section~\ref{sec:path-logic}) and add explicit rules for manipulating
   the context. 
 
 \item We choose to attach a vector of annotations to a vector of variables, rather than attaching
   individual annotations to individual variables. This lets us unify and combine flat and 
-  structural systems as discussed in Chapter~\ref{ch:unified}, but the alternative is briefly
-  explored in Section~\ref{sec:conclusions-meta}.
+  structural systems as discussed in Section~\ref{sec:unified-unified}, but the alternative is briefly
+  explored in Section~\ref{sec:unified-meta}.
 \end{itemize}
 
 \paragraph{Type system.}
 The structural system for liveness uses the same two-point lattice of annotations
-$\mathcal{L}=\{ \ident{L}, \ident{D} \}$ that was used by the flat system. We also use the
+$\mathcal{L}=\{ \cclrd{\ident{L}}, \cclrd{\ident{D}} \}$ that was used by the flat system. We also use the
 $\sqcup, \sqcap$ and $\sqsubseteq$ operators that are defined in Figure~\ref{fig:applications-flat-livealg}.
 
 The rules of the system are split into two groups. Figure~\ref{fig:applications-struct-live} (a) shows 
 the standard syntax-driven rules plus sub-coeffecting. In (\emph{var}), the context contains just the 
-single accessed variable, which is annotated as live. Other variables can be introduced using weakening. 
+single accessed variable, which is annotated as live. Unused variables can be introduced using weakening. 
 A constant (\emph{const}) is accessed in an empty context, which also carries no annotations. The
 sub-coeffecting rule (\emph{sub}) uses a pointwise extension of the $\sqsubseteq$ relation over two
 vectors as defined in Section~\ref{sec:applications-strucutre-vec}.
@@ -1826,19 +1827,19 @@ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\aclrd{\mathbf{s}}} \sigma
 \qquad
 f : \sigma \xrightarrow{\cclrd{t}} \tau
 \qquad
-f \circ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\cclrd{t} \sqcup \aclrd{\mathbf{s}}} \tau
+f \circ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\cclrd{t} \,\sqcup\, \aclrd{\mathbf{s}}} \tau
 \end{equation*}
 %
 This definition is only for illustration and is revised in Chapter~\ref{ch:structural}. The function
 $g$ takes a product of multiple variables (and is annotated with a vector). The function $f$ takes
 just a single value and is annotated with the scalar. As in the flat system, sequential composition
 is modelled using $\sqcup$ -- but here, we use a scalar-vector extension of the operation. Finally,
-the (\emph{let}) rule follows similar reasoning (and also corresponds to the typing of $(\lambda x.e_2)~e_1$.
+the (\emph{let}) rule follows similar reasoning (and also corresponds to the typing of $(\lambda x.e_2)~e_1$).
 
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
-{\small a.) Ordinary, syntax-driven rules with sub-coeffecting}
+{\small a.) Ordinary, syntax-driven rules along with sub-coeffecting}
 \begin{equation*}
 \tyrule{var}{}
   {\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau} 
@@ -1847,11 +1848,6 @@ the (\emph{let}) rule follows similar reasoning (and also corresponds to the typ
 \tyrule{const}
   {c:\tau \in \Delta}
   {\coctx{()}{\alift{}} \vdash c : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \sqsubseteq \aclrd{\textbf{r'}}
 \end{equation*}
 \begin{equation*}
 \tyrule{abs}
@@ -1869,6 +1865,11 @@ the (\emph{let}) rule follows similar reasoning (and also corresponds to the typ
   { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad 
     \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
   {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \sqsubseteq \aclrd{\textbf{r'}}
 \end{equation*}
 \vspace{0.5em}
 
@@ -1970,6 +1971,63 @@ $\alift{\cclrd{\ident{D}}}$.
 
 % --------------------------------------------------------------------------------------------------
 
+\paragraph{Semantics.}
+When defining the semantics of flat liveness calculus, we used an indexed form of the option type
+$1 + \tau$ (which is $1$ for dead contexts and $\tau$ for live contexts). In the semantics of 
+expressions, the type constructor was applied to the entire context, \ie~$1+(\tau_1 \times \ldots \times \tau_n)$.
+In the structural version, the semantics applies the option type constructor to individual elements 
+of the free-variable context pair: $(1+\tau_1) \times \ldots \times (1+ \tau_n)$. For each variable, 
+the type is indexed by the corresponding annotation:
+%
+\begin{equation*}
+\begin{array}{r}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau} 
+  ~:~ (\tau'_1 \times \ldots \times \tau'_n) \rightarrow \tau\\[0.5em]
+\textnormal{where}~\tau'_i = \begin{cases}
+\tau_i & (\cclrd{r_i} = \cclrd{\ident{L}})\\
+1      & (\cclrd{r_i} = \cclrd{\ident{D}})
+\end{cases}
+\end{array}
+\end{equation*}
+%
+Note that the product of the free variables is not an ordinary tuple of our language, but a special
+construction (we return to this topic in Section~\ref{sec:struct-semantics}). This follows from the 
+asymmetry of $\lambda$-calculus, as discussed in Section~\ref{sec:applications-strucutre-vec}. Functions 
+take just a single input and so they are interpreted in the same way as in flat calculus:
+%
+\begin{equation*}
+\sem{\tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2} = \tau_1 \rightarrow \tau_2 \qquad\qquad
+\sem{\tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2} = 1 \rightarrow \tau_2
+\end{equation*}
+%
+The rules that define the semantics are shown in Figure~\ref{fig:applications-struct-livesem}.
+To make the definition simpler, we are somewhat vague when working with products. We write 
+variables of product type such as $\mathbf{v}$ in bold-face and individual values like $x$ in 
+normal face. We freely re-associate products and so $(\mathbf{v}, x)$ should not be seen as a
+nested product, but simply as a product containing all variables from the product $\mathbf{v}$ 
+together with one additional variable $x$ at the end. We shall be more precise in 
+Chapter~\ref{ch:structural}.
+
+In (\emph{var}), the context contains just a single variable and so we do not even need to apply
+projection; (\emph{cosnt}) receives no variables and uses global constant lookup function $\delta$.
+In (\emph{abs}), we obtain two parts of the context and combine them into $(\mathbf{v}, x)$. This
+works the same way regardless of whether the variables are live or dead. For simplicity, we omit
+sub-coeffecting, which just turns some of the available values $v_i$ to unit values $()$.
+
+As dictated by the semantics, the application again needs to ``implement'' dead code elimination
+(otherwise the type system would be unsound). When the input parameter of the function $g$ is live 
+(\emph{app-1}), we first evaluate $e_2$ and then pass the result to $g$. When the parameter is 
+dead (\emph{app-2}), we do not need to evaluate $e_2$ and so all values in $\mathbf{v_2}$ can be 
+dead, \ie~$()$.
+
+In the structural rules, (\emph{weak}) receives context containing a dead variable as the last one.
+It drops the $()$ value and evaluates the expression in a context $\mathbf{v}$. Exchange (\emph{exch})
+simply swaps two variables. In contraction, we either duplicate a dead value (\emph{contr-1}),
+or a live value (\emph{contr-2}). In the latter, one of the duplicates may be dead and 
+so we need to consider three separate cases.
+
+% --------------------------------------------------------------------------------------------------
+
 \begin{figure}[t]
 {\small a.) Semantics of ordinary expressions}
 \begin{equation*}
@@ -2060,76 +2118,24 @@ $\alift{\cclrd{\ident{D}}}$.
 
 % --------------------------------------------------------------------------------------------------
 
-\paragraph{Semantics.}
-When defining the semantics of flat liveness calculus, we used an indexed form of the option type
-$1 + \tau$ (which is $1$ for dead contexts and $\tau$ for live contexts). In the semantics of 
-expressions, the type wrapped the entire context, \ie~$1+(\tau_1 \times \ldots \times \tau_n)$.
-In the structural version, the semantics wraps individual elements of the free-variable context
-pair: $(1+\tau_1) \times \ldots \times (1+ \tau_n)$. For each variable, the type is indexed by 
-the corresponding annotation. More formally:
-%
-\begin{equation*}
-\begin{array}{r}
-\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau} 
-  ~:~ (\tau'_1 \times \ldots \times \tau'_n) \rightarrow \tau\\[0.5em]
-\textnormal{where}~\tau'_i = \begin{cases}
-\tau_i & (\cclrd{r_i} = \cclrd{\ident{L}})\\
-1      & (\cclrd{r_i} = \cclrd{\ident{D}})
-\end{cases}
-\end{array}
-\end{equation*}
-%
-Note that the product of the free variables is not an ordinary tuple of our language, but a special
-construction. This follows from the asymmetry of $\lambda$-calculus, as discussed in 
-Section~\ref{sec:applications-strucutre-vec}. Functions take just a single input and so they are
-interpreted in the same way as in flat calculus:
-%
-\begin{equation*}
-\sem{\tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2} = \tau_1 \rightarrow \tau_2 \qquad\qquad
-\sem{\tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2} = 1 \rightarrow \tau_2
-\end{equation*}
-%
-The rules that define the semantics are shown in Figure~\ref{fig:applications-struct-livesem}.
-To make the definition simpler, we are somewhat vague when working with products. We write 
-variables of product type such as $\mathbf{v}$ in bold-face and individual values like $x$ in 
-normal face. We freely re-associate products and so $(\mathbf{v}, x)$ should not be seen as a
-nested product, but simply a product with a number of variables represented as another product
-$\mathbf{v}$ with one more variable $x$ at the end. We shall be more precise in Chapter~\ref{ch:structural}.
-
-In (\emph{var}), the context contains just a single variable and so we do not even need to apply
-projection; (\emph{cosnt}) receives no variables and uses global constant lookup function $\delta$.
-In (\emph{abs}), we obtain two parts of the context and combine them into $(\mathbf{v}, x)$. This
-works the same way regardless of whether the variables are live or dead. For simplicity, we omit
-sub-coeffecting, which just turns some of the available values $v_i$ to unit values $()$.
-
-In application, we again need to ``implement'' dead code elimination. When the input parameter
-of the function $g$ is live (\emph{app-1}), we first evaluate $e_2$ and then pass the result to
-$g$. When the parameter is dead (\emph{app-2}), we do not need to evaluate $e_2$ and so all values
-in $\mathbf{v_2}$ can be dead, \ie~$()$.
-
-In the structural rules, (\emph{weak}) receives context containing a dead variable as the last one.
-It drops the $()$ value and evaluates the expression in a context $\mathbf{v}$. Exchange (\emph{exch})
-simply swaps two variables. In contraction, we either duplicate a dead value (\emph{contr-1}),
-or a live value (\emph{contr-2}). In the latter, one of the duplicates may be dead and 
-so we need to consider three separate cases.
-
 \paragraph{Summary.}
 The structural liveness calculus is a typical example of a system that tracks per-variable 
 annotations. In a number of ways, the system is simpler than the flat coeffect calculi. In
 lambda abstraction, we simply annotate function with the annotation of a matching variable 
 (this rule is the same for all upcoming systems). In application, the \emph{pointwise} composition
 is no longer needed, because the sub-expressions use separate contexts. On the other hand, 
-we had to add weakening, contraction and exchange rules to let us manipulate the contexts.
+we had to add weakening, contraction and exchange rules to let us manipulate contexts.
 
 The semantics of weakening demonstrates an important point about coeffects that may be quite
 confusing. When we read the \emph{typing rule} from top to bottom, weakening adds a variable
 to the context. When we read the \emph{semantic rule}, weakening drops a variable value from the 
 context! This duality is caused by the fact that coeffects talk about context -- they describe
 how to build the context required by the sub-expressions and so the semantics implements 
-transformation from the context in the (typing) conclusion to the (typing) assumption.
+transformation from the context in the (typing) conclusion to the (typing) assumption. How
+should coeffects be understood, in general, is discussed further in Section~\ref{sec:flat-calculus-undestanding}.
 
 The structural systems discussed in the upcoming sections are remarkably similar to the one
-shown here. We discuss two more examples in details to explore the design space, but we shall
+shown here. We discuss two more examples to explore the design space, but we shall
 omit details that are the shared with the system in this section.
 
 %---------------------------------------------------------------------------------------------------
@@ -2145,16 +2151,56 @@ relate it with the original formulation.
 
 % --------------------------------------------------------------------------------------------------
 
+\paragraph{Bounded variable use.} 
+The system discussed in this section tracks the number of times a variable is accessed in the 
+call-by-name evaluation. Although we look at an example that tracks \emph{variable usage}, the same
+system could be used to track access to resources that are always passed as a reference (and behave
+effectively as call-by-name) and so the system is relevant for call-by-value languages too.
+To demonstrate the idea, consider the following term:
+%
+\begin{equation*}
+(\lambda v.x + v + v)~(x+y)
+\end{equation*}
+%
+When evaluated, the body of the function directly accesses $x$ once and then twice indirectly, via
+the function argument. Similarly, $y$ is accessed twice indirectly. Thus, the overall expression uses
+$x$ three times and $y$ twice.
+
+As discussed in Chapter~\ref{ch:structural}, the system preserves type and coeffect annotations under
+the $\beta$-reduction. Reducing the expression in this case gives $x + (x+y) + (x+y)$. This has the 
+same bounds as the original expression -- $x$ is used three times and $y$ twice.
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Type system.}
+The type system in Figure~\ref{fig:applications-struct-bll} annotates contexts with vectors of integers.
+The rules have the same structure as those of the system for liveness analysis. The only difference is
+how annotations are combined. Here, we use integer multiplication ($\ast$) for sequential composition
+and addition ($+$) for point-wise composition.
+
+Variable access (\emph{var}) annotates a variable with $1$, meaning that it has been used once. An
+unused variable (\emph{weak}) is annotated with $0$. Multiple occurrences of the same variable are 
+introduced by contraction (\emph{contr}), which adds the numbers of the two contracted variables.
+
+As previously, application (\emph{app}) and let binding (\emph{let}) combine two separate contexts.
+The second part applies a function that uses its parameter $\cclrd{t}$-times to an argument that uses
+variables in $\Gamma_2$ at most $\aclrd{\mathbf{s}}$-times (here, $\aclrd{\mathbf{s}}$ is a vector of
+integers with an annotations for each variable in $\Gamma_2$). The sequential composition (modelling
+call-by-name) multiplies the uses, meaning that the total number of uses is $(\cclrd{t} \ast \aclrd{\mathbf{s}})$
+(where $\ast$ is a point-wise multiplication of a vector by a scalar). This models the fact that 
+for each use of the function parameter, we replicate the variable uses in $e_2$.
+
+Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates the number of accesses using 
+the pointwise $\leq$ relation. We can view any variable as being used a greater
+number of times than it actually is.
+
+% --------------------------------------------------------------------------------------------------
+
 \begin{figure}[t]
-{\small a.) Ordinary, syntax-driven rules with sub-coeffecting}
+{\small a.) Ordinary, syntax-driven rules along with sub-coeffecting}
 \begin{equation*}
 \tyrule{var}{}
   {\coctx{x \!:\! \tau}{\alift{\cclrd{1}}} \vdash x : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
 \end{equation*}
 \begin{equation*}
 \tyrule{abs}
@@ -2172,6 +2218,11 @@ relate it with the original formulation.
   { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad 
     \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
   {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
 \end{equation*}
 \vspace{0.5em}
 
@@ -2209,47 +2260,6 @@ relate it with the original formulation.
 
 % --------------------------------------------------------------------------------------------------
 
-\paragraph{Bounded variable use.} 
-The system discussed in this section tracks the number of times a variable is accessed in the 
-call-by-name evaluation. Although we look at an example that tracks \emph{variable usage}, the same
-system could be used to track access to resources that are always passed as a reference (and behave
-effectively as call-by-name) and so the system is relevant for call-by-value languages too.
-To demonstrate the idea, consider the following term:
-%
-\begin{equation*}
-(\lambda v.x + v + v)~(x+y)
-\end{equation*}
-%
-When evaluated, the body of the function directly accesses $x$ once and then twice indirectly, via
-the function argument. Similarly, $y$ is accessed twice indirectly. Thus, the overall expression uses
-$x$ three times and $y$ twice.
-
-As discussed in Chapter~\ref{ch:structural}, the system preserves type and coeffect annotations under
-the $\beta$-reduction. Reducing the expression in this case gives $x + (x+y) + (x+y)$. This has the 
-same bounds as the original expression -- $x$ is used three times and $y$ twice.
-
-\paragraph{Type system.}
-The type system in Figure~\ref{fig:applications-struct-bll} annotates contexts with vectors of integers.
-The rules have the same structure as those of the system for liveness analysis. The only difference is
-how annotations are combined -- here, we use integer multiplication ($\ast$) and addition ($+$).
-
-Variable access (\emph{var}) annotates a variable with $1$, meaning that it has been used once. An
-unused variable (\emph{weak}) is annotated with $0$. Multiple occurrences of the same variable are 
-introduced by contraction (\emph{contr}), which adds the numbers of the two contracted variables.
-
-As previously, application (\emph{app}) and let binding (\emph{let}) combine two separate contexts.
-The second part applies a function that uses its parameter $\cclrd{t}$-times to an argument that uses
-variables in $\Gamma_2$ at most $\aclrd{\mathbf{s}}$-times (here, $\aclrd{\mathbf{s}}$ is a vector of
-integers with an annotations for each variable in $\Gamma_2$). The sequential composition (modelling
-call-by-name) multiplies the uses, meaning that the total number of uses is $(\cclrd{t} \ast \aclrd{\mathbf{s}})$
-(where $\ast$ is a multiplication of a vector by a scalar). This models the fact that for each use of
-the function parameter, we replicate the variable uses in $e_2$.
-
-Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates
-the number of uses using the pointwise
-$\leq$ relation. We can view any variable as being used a greater
-number of times than it actually is.
-
 \paragraph{Example.} To type check the expression $(\lambda v.x+v+v)~(x+y)$ discussed earlier, we need
 to use abstraction, application, but also the contraction rule. Assuming the type judgement for the body,
 abstractions yields:
@@ -2282,8 +2292,8 @@ $x$ and $x'$ from the function and argument terms respectively.
 
 \paragraph{Semantics.}
 In the previous examples, we defined the semantics -- somewhat informally -- using a simple 
-$\lambda$-calculus language to encode the model. More formally, this could be a Cartesian closed 
-category. In that model, we can reuse variables arbitrarily and so it is not
+$\lambda$-calculus language to encode the model. More formally, this could be a Cartesian Closed 
+Category. In that model, we can reuse variables arbitrarily and so it is not
 a good fit for modelling bounded reuse. Girard et al. \cite{logic-bounded} model their bounded
 linear logic in an (ordinary) linear logic where variables can be used at most once.
 
@@ -2306,10 +2316,11 @@ from) the semantic rules of liveness in Figure~\ref{fig:applications-struct-live
 differ are those that use sequential composition (application and let binding) and the contraction
 rule, which represents pointwise composition. 
 
-In the following, we use variable names $\mathbf{v}_i$ for context containing multiple variables (where 
-each variable may be available multiple times), \ie~have a type $\tau_1^{\cclrd{r_1}}\times\ldots\times\tau_m^{\cclrd{r_m}}$;
-We do not explicitly write the sizes of these vectors (number of variables in a context; number of 
-instances of a variable) as these are clear from the coeffect annotations. We assume that $\Gamma_2$ 
+In the following, we use vector names $\mathbf{v}_i$ for contexts containing multiple variables
+\ie~have a type $\tau_1^{\cclrd{r_1}}\times\ldots\times\tau_m^{\cclrd{r_m}}$. Each vector contains 
+multiple copies of each variable, to model the fact that variables are used in an affine way (at most 
+once). We do not explicitly write the sizes of these vectors (number of variables in a context; number 
+of instances of a variable) as these are clear from the coeffect annotations. We assume that $\Gamma_2$ 
 contains $n$ variables and that $\aclrd{s}=\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}$:
 %
 \begin{equation*}
@@ -2336,6 +2347,7 @@ contains $n$ variables and that $\aclrd{s}=\alift{\cclrd{s}_1, \ldots, \cclrd{s}
   \hspace{8.2em}                                         (x_{n,(\cclrd{t}-1)\ast\cclrd{s}_n + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_n})  )\\[-0.25em]
   \qquad\qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}~\mathbf{y}_1, \ldots, 
     \sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}~\mathbf{y}_{\cclrd{t}})
+\\[1em]
 \end{array}
 \end{equation*}
 %
@@ -2360,23 +2372,24 @@ ignore additional copies of a value. Thus, permitting (\emph{sub}) rule is only 
 underlying model is \emph{affine} rather than \emph{linear}.
 
 \paragraph{Bounded linear logic.}
-The system presented in this section differs from bounded linear logic (BLL) \cite{logic-bounded}.
-Using the terminology from Section~\ref{sec:path-sem-contextdep}, our system is written in the
-\emph{language semantics} style, while BLL is written in the \emph{meta-language} style.
+The system presented in this section is based on the idea of bounded linear logic (BLL)
+\cite{logic-bounded}, but it is adapted to follow the structure of other coeffect systems 
+discussed in this chapter. This elucidates the connection between BLL and coeffects.
 
-This means that the terms and types of our system are the terms and types of ordinary 
-$\lambda$-calculus, with the only difference that functions carry coeffect annotations.
-In BLL, the language of types is extended with a type constructor $!_k A$ (where $A$ is
-a proposition, corresponding to a type $\tau$ in our system). The type denotes a value
-$A$ that can be used at most $k$ times. 
+The big difference, using the terminology from Section~\ref{sec:path-sem-contextdep}, is 
+that our system is written in \emph{language semantics} style, while BLL is written 
+in \emph{meta-language} style. We briefly consider the original BLL formulation.
+
+The terms and types of our system are the terms and types of an ordinary $\lambda$-calculus, 
+with the only difference that functions carry coeffect annotations. In BLL, the language of 
+types is extended with a type constructor $!_k A$ (where $A$ is a proposition, corresponding 
+to a type $\tau$ in our system). The type denotes a value $A$ that can be used at most $k$ times. 
 
 As a result, BLL does not need to attach additional annotation to the variable context 
 as a whole. The requirements are attached to individual variables and so our context
 $\coctx{\tau_1, ..., \tau_n}{\langle \cclrd{k_1}, ..., \cclrd{k_n}\rangle}$ corresponds
-to a BLL assumption $!_{k_1} A_1, ..., !_{k_n} A_n$. 
-
-Using the formulation of bounded logic (and omitting the terms), the weakening and
-contraction rules are written as follows:
+to a BLL assumption $!_{k_1} A_1, ..., !_{k_n} A_n$. Using the formulation of bounded logic 
+(and omitting the terms), the weakening and contraction rules are written as follows:
 %
 \[
 \tyrule{weak}
@@ -2392,7 +2405,7 @@ The system captures the same idea as the structural coeffect system presented ab
 Variable access in bounded linear logic is simply an operation that produces a value
 $!_n A$ and so the system further introduces \emph{dereliction} rule which lets us 
 treat $!_1 A$ as a value $A$. We further explore difference between \emph{language
-semantics} and \emph{meta-language} in Section~\ref{sec:conclusions-meta}.
+semantics} and \emph{meta-language} in Section~\ref{sec:unified-meta}.
 
 \paragraph{Summary.}
 Comparing the structural coeffect calculus for tracking liveness and for bounded variable reuse
@@ -2405,39 +2418,34 @@ The algebraic structure capturing these operators is developed in Chapter~\ref{c
 
 The brief overview of bounded linear logic shows an alternative approach to tracking properties
 related to individual variables -- we could attach annotations to the variables themselves 
-rather than attaching a \emph{vector} of annotations to the entire context. Our approach has
-two benefits -- it lets you unify flat and structural systems (Chapter~\ref{ch:unified}) and 
-it also makes it possible to build composed systems that mix both flat and structural properties.
-
+rather than attaching a \emph{vector} of annotations to the entire context. The main benefit
+of our approach is that it lets us unify flat and structural systems (Chapter~\ref{ch:unified}).
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Data-flow languages revisited}
 \label{sec:applications-structural-dataflow}
 
-When discussing data-flow languages in the previous section, we said that the context provides 
+When discussing data-flow languages in an earlier section, we said that the context provides 
 past values of variables. In Section~\ref{sec:applications-flat-dataflow}, we tracked this as 
 a \emph{flat} property, which gives us a system that keeps the same number of past values for
 all variables. However, data-flow can also be adapted to a structural system which keeps the number 
 of required past values individually for each variable. Consider the 
 following example:
-%
+
 \begin{equation*}
-\kvd{let}~\ident{offsetZip} = \ident{left} + \kvd{prev}~\ident{right}
+\kvd{let}~\ident{offsetAdd} = \ident{left} + \kvd{prev}~\ident{right}
 \end{equation*}
 %
-The value \ident{offsetZip} adds values of \ident{left} with previous values of \ident{right}.
+The value \ident{offsetAdd} adds values of \ident{left} with previous values of \ident{right}.
 To evaluate a current value of the stream, we need the current value of \ident{left} and one past
 value of \ident{right}. Flat system is not able to capture this level-of-detail and simply
 requires $1$ past values of both streams in the variable context.
 
 Turning a flat data-flow system to a structural data-flow system is a change similar to the one
 between flat ans structural liveness. In case of liveness analysis, we included the flat system
-only as an illustration (it is not practically useful). 
-
-For data-flow, the flat system is less precise, but still practically useful (simplicity may outweigh 
-precision). As discussed in Section~X, the structural system is necessary when we allow arbitrary 
-recursion and cannot (easily) determine the number of required values statically.
+only as an illustration (it is not practically useful). For data-flow, the flat system is less 
+precise, but still practically useful (simplicity may outweigh precision). 
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2528,9 +2536,9 @@ number of enclosing $\kvd{prev}$ constructs.
 
 \paragraph{Semantics.}
 To define the semantics of our structural data-flow language, we can use the same approach as when
-adapting flat liveness to structural liveness. Rather than wrapping the whole context in some wrapper
-(list or option type), we now wrap individual components of the product representing the variables
-in the context. 
+adapting flat liveness to structural liveness. Rather than wrapping the whole context in a type 
+constructor (list or option), we now wrap the individual components of the product representing 
+the variables in the context. 
 
 The result is similar as the structure used for bounded reuse. The only difference is that, given
 a variable annotated with $\cclrd{r}$, we need $1+\cclrd{r}$ values. That is, we need the current
@@ -2588,7 +2596,7 @@ contraction for BLL, the values are duplicated and the same values are used for 
 Two of the structural examples shown so far (liveness and data-flow) extend an earlier flat 
 version of a similar system. We discuss this relation in general later. However, a flat system 
 can generally be turned into a structural one -- although this only gives a useful system when
-the flat version captures properties related to variables.
+the flat version captures statically scoped properties, \ie~related to variables.
 
 The data-flow example demonstrates that the a flat system can also be turned into structural 
 system. In general, this only works for systems where lambda abstraction duplicates context
@@ -2599,16 +2607,16 @@ requirements (as in Figure~\ref{fig:applications-flat-liveness}).
 \subsection{Security, tainting and provenance}
 Tainting is a mechanism where variables coming from potentially untrusted sources are marked
 (\emph{tainted}) and the use of such variables is disallowed in contexts where untrusted input
-can cause security issues or other problems. Tainting can be done dynamically as a runtime mark
-(\eg~in the Perl language) or statically using a type system. Tainting can be viewed as a special
+can cause security issues or other problems. Tainting can be done dynamically using a runtime mark
+(\eg~in the Perl language) or using a static type system. Tainting can be viewed as a special
 case of \emph{provenance tracking}, known from database systems \cite{app-provenance-db}, where
 values are annotated with more detailed information about their source.
 
-Statically typed systems that based on tainting have been use to prevent cross-site scripting
-attacks \cite{app-tainting-xss} and a well known attack known as SQL injection
-\cite{app-tainting-sql,app-tainting-wasp}. In the latter chase, we want to check that SQL commands 
-cannot be directly constructed from, potentially dangerous, inputs provided by the user. Consider the 
-type checking of the following expression in a context containing variables \ident{id} and \ident{msg}:
+Static typed systems based on tainting have been use to prevent cross-site scripting attacks 
+\cite{app-tainting-xss} and SQL injection attacks \cite{app-tainting-sql,app-tainting-wasp}. 
+In the latter case, we want to check that SQL commands cannot be directly constructed from,
+potentially dangerous, inputs provided by the user. Consider the type checking of the following 
+expression in a context containing variables \ident{id} and \ident{msg}:
 %
 \begin{equation*}
 \begin{array}{l}
@@ -2622,21 +2630,21 @@ untainted string. Otherwise, the attacker could specify values such as \str{1; D
 The variable \ident{msg} may or may not be tainted, because it is not used in protected context 
 (i.e.~to construct an SQL query). 
 
-In runtime checking, all (string) values need to be wrapped in an object that stores Boolean 
+In runtime checking, all (string) values need to be wrapped in an object with a Boolean 
 flag (for tainting) or more complex data (for provenance). In static checking, the information
 need to be associated with the variables in the variable context. 
 
 % --------------------------------------------------------------------------------------------------
 
 \paragraph{Core dependency calculus.}
-The checking of tainting is a special case of checking of the \emph{non-interference} property 
+Taint checking is a special case of checking of the \emph{non-interference} property 
 in \emph{secure information flow}. There, the aim is to guarantee that sensitive information (such
 as credit card number) cannot be leaked to contexts with low secrecy (\eg~sent via an unsecured
 network channel). Volpano et al. \cite{app-secure-flow} provide the first (provably) sound type 
-system that guarantees non-inference and Sabelfeld et al. \cite{app-secure-information-flow} survey
-more recent work. The checking of information flows has been also integrated (as a single-purpose
+system that guarantees non-inference and Sabelfeld et al. \cite{app-secure-information-flow} surveys
+more recent work. Information flow checking has been also integrated (as a single-purpose
 extension) in the FlowCaml \cite{app-security-flowcaml} language. Finally, Russo et al. and 
-Swamy et al. \cite{monad-secure-flow,monads-lightweight-ml} show that the properties can be checked
+Swamy et al. \cite{monad-secure-flow,monads-lightweight-ml} show that such properties can be checked
 using a monadic library.
 
 Systems for secure information flow typically define a lattice of security classes $(\mathcal{S}, \leq)$
@@ -2658,25 +2666,29 @@ $z$ becomes high-secure, regardless of the security level of $y$, because the fa
 assignment is performed or not performed leaks information in its own (this is an 
 \emph{implicit} flow).
 
-Abadi et al. realized that there is a number of analyses similar to secure information flow
-and proposed to unify them using a single model called Dependency Core Calculus (DCC) \cite{app-dcc}.
-It captures other cases where some information about expression relies on properties of variables
-in the context where it executes.  The DCC captures, for example, \emph{binding time analysis}
+Although we do not describe a coeffect calculus for information flow checking, it is worth noting 
+that Abadi et al. \cite{app-dcc} realized that there is a number of analyses similar to secure information 
+flow and unified them using a single model called Dependency Core Calculus (DCC). This would be
+a useful basis for coeffect-based information flow checking.
+
+The DCC captures other cases where some information about expression relies on properties of variables
+in the context where it executes.  This includes, for example, \emph{binding time analysis}
 \cite{app-binding-time-analysis}, which detects which parts of programs can be partially evaluated
 (do not depend on user input) and \emph{program slicing} \cite{app-slicing-survey} that identifies
 parts of programs that contribute to the output of an expression.
 
 \paragraph{Coeffect systems.}
 The work outlined in this section is another area where coeffect systems could be applied.
-We do not develop coeffect systems for tracking of tainting, security and provenance in details,
+We do not develop coeffect systems for taint tracking, security and provenance in detail,
 but briefly mention some examples in the upcoming chapters.
 
 The systems work in the same way as the examples discussed already. For example, consider the
 tainting example with the \ident{query} function calling an SQL database. To capture such 
 tainting, we annotate variables with $\cclrd{\ident{T}}$ for \emph{tainted} and with 
-$\cclrd{\ident{U}}$ for \emph{untainted}. Simply accessing variable does not introduce taint, 
-but using a variable in certain contexts -- such as in arguments of \ident{query} -- does introduce
-a taint. This is captured using the standard application rule (\emph{app}):
+$\cclrd{\ident{U}}$ for \emph{untainted}. Accessing a variable marks it as untained,
+but using an expression that depends on some variable in certain dangerous contexts -- such 
+as in arguments of \ident{query} -- does introduce a taint on all the variables contributing to
+the expression. This is captured using the standard application rule (\emph{app}):
 %
 \begin{equation*}
 \tyrule{app}
@@ -2707,10 +2719,11 @@ the language, it is impossible to write a function that modifies the context. We
 \emph{passive} context for such applications. 
 
 There is a number of systems that also capture contextual properties, but that make it possible to 
-\emph{change} the context -- not just be evaluating certain code block in a different scope (\eg by 
-wrapping it in $\ident{prev}$ in data-flow), but also by calling a function that, for example, acquires 
-new capabilities and returns those to the caller. While this thesis focuses on systems with passive 
-contexts, we briefly consider the most important examples of the \emph{active} variant.
+\emph{change} the context -- not just by evaluating certain code block in a locally modified context
+(\eg by wrapping it in $\ident{prev}$ in data-flow), but also by calling a function that, for example, 
+acquires new capabilities and returns those to the caller. Such actions appear to be closer to 
+effects than to coeffects. While this thesis focuses on systems with passive contexts, we briefly 
+consider the most important examples of the \emph{active} variant.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2742,10 +2755,10 @@ increment a value in the region and then read it. The region is de-allocated whe
 leaves its lexical scope -- there is no way to allocate a region inside a function and pass it back 
 to the caller.
 
-Calculus of capabilities differs in two ways. First, it allows explicit allocation and deallocation
-of memory regions (and so region lifetimes do not follow strict LIFO ordering). Second, it
-uses continuation-passing style. We ignore the latter aspect. The following example is almost 
-identical as the previous one:
+The calculus of capabilities differs in two ways. First, it allows explicit allocation and deallocation
+of memory regions (and so region lifetimes do not necessarily follow strict LIFO ordering). Second, 
+it uses continuation-passing style. We ignore the latter aspect. The following example is almost 
+identical to the previous one:
 %
 \begin{equation*}
 \begin{array}{l}
@@ -2761,16 +2774,17 @@ $!\ident{x}$, but returns the reference $\ident{x}$ itself. The reference is all
 created region $\rho$. Together with the value, the function returns a \emph{capability} to access 
 the region $\rho$.
 
-This is where systems with active context differ. To type check such programs, we do not only need
-to know what context is required to call \ident{calculate}. We also need to know what effects it
+This is where systems with active context differ from systems with passive context. To type check 
+such programs, we do not only need to know what context is required to call \ident{calculate}
+(\ie~context on the left-hand side of $\vdash$). We also need to know what effects an expression
 has on the context when it evaluates and the current context meeds to be updated after a function 
-call. 
+call. This is an effectful property that would appear on the right-hand side of $\vdash$.
 
 \paragraph{Active contexts.}
 In a systems with passive contexts, we only need an annotation that specifies the required 
 context. In semantics, this is reflected by having some structure (data type) $\C$ over the
 \emph{input} of the function. Without giving any details, the semantics generally has the 
-following structure:
+following structure (with comonad to model coeffects on the left):
 %
 \begin{equation*}
 \sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} = \C^{\cclrd{r}} \tau_1 \rightarrow \tau_2
@@ -2779,7 +2793,8 @@ following structure:
 Systems with active contexts require two annotations -- one that specifies the context required
 before the call is performed and one that specifies how the context changes after the call (this
 could be either a \emph{new} context or \emph{update} to the original context). Thus the structure
-of the semantics would look as follows:
+of the semantics would look as follows (with comonad to model coeffects on the left and monad to 
+model effects on the right):
 %
 \begin{equation*}
 \sem{\tau_1 \xrightarrow{\cclrd{r}, \cclrd{s}} \tau_2} = \C^{\cclrd{r}} \tau_1 \rightarrow \M^{\cclrd{s}} \tau_2
@@ -2787,8 +2802,7 @@ of the semantics would look as follows:
 %
 In case of Calculus of Capabilities, both of the structures could be the same and they could
 carry a set of available memory regions. In this thesis, we focus only on passive contexts. 
-However, we briefly consider the problem of active contexts in the Section~X of the future work 
-chapter.
+However, capturing active contexts is an interesting future work.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2797,11 +2811,12 @@ Another example of a system that uses contextual information actively is dynamic
 (DSU) \cite{app-dsu-programs,app-dsu}. The DSU systems have the ability to update programs at
 runtime without stopping them. For example, Proteus developed by Stoyle et al. \cite{app-dsu-mutatis} 
 investigates what language support is needed to enable safe dynamic software updating in C-like 
-languages. The system is based on the idea of capabilities.
+languages. The work is based on capabilities and follows a structure similar to the Calculus
+of Capabilities \cite{app-capabilities}.
 
 The system distinguishes between \emph{concrete} uses and \emph{abstract} uses of a value. When
 a value is used concretely, the program examines its representation (and so it is not safe to
-change the representation during an update). An abstract use of a value does not need to examine
+change the representation during an update). An abstract use of a value does not examine
 the representation and so updating the value does not break the program.
 
 The Proteus system uses capabilities to restrict what types may be used concretely after any point
@@ -2820,15 +2835,15 @@ and not just \emph{passively}.
 This chapter served two purposes. The first aim was to present existing work on programming 
 languages and systems that include some notion of \emph{context}. Because there was no well-known
 abstraction capturing contextual properties, the languages use a wide range of formalisms -- including
-from principled approaches based on comonads, ad-hoc type system extensions and static analyses as
-well as approaches based on monads. We looked at a number of applications inclding Haskell's implicit 
+principled approaches based on comonads and modal S4, ad-hoc type system extensions and static analyses 
+as well as approaches based on monads. We looked at a number of applications inclding Haskell's implicit 
 parameters and type classes, data-flow languages such as Lucid, liveness analysis and also a number of 
 security properties. 
 
 The second aim of this chapter was to re-formulate the existing work in a more uniform style and thus
 reveal that all \emph{context-dependent} languages share a common structure. In the upcoming three 
 chapters, we identify the common structure more precisely and develop three calculi to capture it. We 
-will then be able to re-create many of the examples discussed in this chapter by instantiating our 
+will then be able to re-create many of the examples discussed in this chapter just by instantiating our 
 unified calculi.
 
 This chapter was divided into two major sections. First, we looked at \emph{flat} systems, which
