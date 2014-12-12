@@ -49,8 +49,8 @@ can be thunked as "pure" computations for a domain-specific notion of purity.}
 %
 In contrast to the static analysis of (producer) effect systems, the analysis of 
 \emph{context-dependence} does not match this pattern. In the systems we consider, lambda 
-abstraction places requirements on both the \emph{call-site} (latent requirements) and the 
-\emph{declaration-site} (immediate requirements), resulting in different syntactic properties. 
+abstraction places requirements on both the \emph{call site} (latent requirements) and the 
+\emph{declaration site} (immediate requirements), resulting in different syntactic properties. 
 We informally discuss three examples first that demonstrate how contextual requirements propagate. 
 
 %===================================================================================================
@@ -89,7 +89,7 @@ will use the current client's data -- for example, to accommodate for time-zone 
 
 This example demonstrates how lambda abstraction behaves for context-dependent computations. The 
 context requirement of the function body is a set of resources $\{\ident{Clock}, \ident{News}\}$.
-The context requirements are split between the \emph{declaration-site} and \emph{call-site}.
+The context requirements are split between the \emph{declaration site} and \emph{call site}.
 However, there are multiple possible splittings. The splitting $\{\ident{News}\} \cup \{\ident{Clock}\}$
 models the case when the database is accessed from the server, but time is taken from the client,
 while the splitting $\{\ident{Clock}, \ident{News}\} \cup \{\}$ corresponds to the case when both
@@ -134,7 +134,7 @@ version. As we associate information with individual variables, lambda abstracti
 that requires the context requirements associated with the variable that is being abstracted over.
 
 For example, if we wrapped the earlier example above in a function taking \ident{a} (and using 
-\ident{b} from the declaration-site) then the function would have context requirements $5$ -- that
+\ident{b} from the declaration site) then the function would have context requirements $5$ -- that
 is the number associated with the variable \ident{a}.
 
 %---------------------------------------------------------------------------------------------------

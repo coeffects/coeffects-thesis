@@ -174,7 +174,7 @@ to the function, writing $\tau_1 \xrightarrow{ \cclrd{r} } \tau_2$.
 
 We look at resources in distributed programming in more details in Section~\ref{sec:applications-flat-distr}.
 The important point here is that in flat coeffect systems, contextual requirements are 
-\emph{split} between the call-site and declaration-site. Furthermore, there is no syntactic
+\emph{split} between the call site and declaration site. Furthermore, there is no syntactic
 structure that determines how the requirements are split. In the case of distributed
 programming, the resources can be freely associated with either of the two sites.
 
@@ -432,7 +432,7 @@ of implicit parameters specified by $\cclrd{r}$. The annotations $\cclrd{r},\ccl
 finite partial functions mapping implicit parameter names to types, \ie~$\cclrd{r},\cclrd{s},\cclrd{t} \subseteq 
 \ident{Names} \mapsto \ident{Types}$. The expressions include \ident{?param} to read implicit
 parameter and \kvd{letdyn} to bind an implicit parameter. The types are standard, but functions are
-annotated with the set of implicit parameters that must be available on the call-site, \ie~
+annotated with the set of implicit parameters that must be available on the call site, \ie~
 $\tau_1 \xrightarrow{\cclrd{s}} \tau_2$.
 
 Accessing an ordinary variable (\emph{var}) does not require any implicit parameters. The rule that 
@@ -443,8 +443,8 @@ implicit parameters thanks to the (\emph{sub}) rule.
 When we read the rules from the top to the bottom, application (\emph{app}) and let binding 
 (\emph{let}) simply union the context requirements of the sub-expressions. However, lambda abstraction
 (\emph{abs}) is where the example differs from effect systems. The implicit parameters required by
-the body $\cclrd{r} \cup \cclrd{s}$ can be freely split between the declaration-site ($\coctx{\Gamma}{\cclrd{r}}$)
-and the call-site ($\tau_1 \xrightarrow{\cclrd{s}} \tau_2$). Finally, (\emph{letdyn}) defines an implicit
+the body $\cclrd{r} \cup \cclrd{s}$ can be freely split between the declaration site ($\coctx{\Gamma}{\cclrd{r}}$)
+and the call site ($\tau_1 \xrightarrow{\cclrd{s}} \tau_2$). Finally, (\emph{letdyn}) defines an implicit
 parameter and removes it from the set of requirements.
 
 The union operation $\cup$ is not a disjoint union, which means that the values for implicit 
@@ -470,11 +470,11 @@ The first two examples demonstrate that the system does not have the principal t
 Both ($1$) and ($2$) are valid typings and they may both be desirable in certain contexts where
 the function is used. 
 
-The next typing derivation ($3$) requires the parameter \ident{?a} from both the declaration-site and 
-the call-site. This means that, at runtime, two values will be available. Our semantics for the 
+The next typing derivation ($3$) requires the parameter \ident{?a} from both the declaration site and 
+the call site. This means that, at runtime, two values will be available. Our semantics for the 
 system describes \emph{dynamic rebinding}, meaning that when the caller provides a value for a 
-parameter that is already specified by the declaration-site, the new value hides the old one. This
-means that only the value from the call-site is actually used. This ($4$) gives a more precise
+parameter that is already specified by the declaration site, the new value hides the old one. This
+means that only the value from the call site is actually used. This ($4$) gives a more precise
 typing for this situation.
 
 %---------------------------------------------------------------------------------------------------
@@ -588,8 +588,8 @@ dictionary defined \emph{exactly} on $\cclrd{r}$. To achieve this, the (\emph{su
 the function to $\cclrd{r'}$ (which is valid because $\cclrd{r'} \subseteq \cclrd{r}$).
 
 The most interesting rules are (\emph{abs}) and (\emph{app}). In abstraction, we get two dictionaries
-$f$ and $g$ (from the declaration-site and call-site, respectively), which are combined and passed 
-to the body of the function. The semantics prefers values from the call-site, which is captured by
+$f$ and $g$ (from the declaration site and call site, respectively), which are combined and passed 
+to the body of the function. The semantics prefers values from the call site, which is captured by
 the $\uplus$ operation. In application, we first evaluate the expression $e_1$, then $e_2$ and finally
 call the returned function. The three calls use (possibly overlapping) restrictions of the dictionary
 as required by the static types.
@@ -627,8 +627,8 @@ rule would be modified as follows:
 \end{array}
 \end{equation*}
 %
-Note that the declaration-site dictionary
-is ignored and the body is called with only the dictionary provided by the call-site. This is
+Note that the declaration site dictionary
+is ignored and the body is called with only the dictionary provided by the call site. This is
 a consequence of the fact that monadic functions are always pure values created using monadic
 \emph{unit}, which turns a function $\tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2}$ into a monadic
 computation with no side-effects $\mtyp{\cclrd{\emptyset}}{\tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2}}$.
@@ -679,17 +679,17 @@ together with the function inputs.
 \paragraph{Summary.}
 Implicit parameters are the simplest example of a system where function abstraction does not 
 ``delay'' all impurities of the body. Here, the term ``delay'' refers to the fact that some 
-implicit parameters may be captured (from the declaration-site) at the time when the function is 
+implicit parameters may be captured (from the declaration site) at the time when the function is 
 defined, but before it is executed. As discussed in Section~\ref{sec:applications-structure-lam},
 this is the defining feature of \emph{coeffect} systems. 
 
 In this section, we have seen how this affects both the type system and the semantics of the 
 language. In the type system, the (\emph{abs}) rule places context-requirements on both the 
-declaration-site and the call-site. For implicit parameters, this rule introduces non-determinism
+declaration site and the call site. For implicit parameters, this rule introduces non-determinism
 in the type-inference, because the parameters can be split arbitrarily. However, as we show in the 
 next section, this is not always the case. Semantically, lambda abstraction \emph{merges} two 
-parts of context (implicit parameter dictionaries) that are provided by the call-site and 
-declaration-site. 
+parts of context (implicit parameter dictionaries) that are provided by the call site and 
+declaration site. 
 
 %---------------------------------------------------------------------------------------------------
 
@@ -737,8 +737,8 @@ Otherwise, the date and time needs to be obtained from the server too.
 
 The type system and semantics for rebindable resources are essentially the same as those for
 implicit parameters. Primitive requirements are introduced by the $\kvd{access}$ keyword. 
-Lambda abstraction splits the requirements between declaration-site (capturing remote reference) 
-and call-site (representing rebinding). For this reason, we do not discuss the system in details
+Lambda abstraction splits the requirements between declaration site (capturing remote reference) 
+and call site (representing rebinding). For this reason, we do not discuss the system in details
 and instead look at other uses.
 
 %---------------------------------------------------------------------------------------------------
@@ -874,10 +874,10 @@ However, this symmetry does not hold for lambda abstraction (\emph{abs}), which 
 This models the case when there are two ways of executing the function:
 %
 \begin{itemize}
-\item[--] The function is represented as executable code for an call-site environment
+\item[--] The function is represented as executable code for an call site environment
   and is executed there, possibly after it is marshalled and transferred to another machine.
 \vspace{-0.5em}
-\item[--] The function body is compiled for the declaration-site environment; the value
+\item[--] The function body is compiled for the declaration site environment; the value
   that is returned is a remote reference to the code and function calls are performed as remote invocations.
 \end{itemize}
 %
@@ -893,7 +893,7 @@ level requirements in Android. Coeffect annotations are simply numbers represent
 always require higher level (\emph{sub}). The requirement on function application (\emph{app}) is
 the highest level of the levels required by the sub-expressions and the function. The system uses 
 yet another variant of lambda abstraction (\emph{abs}) -- the requirements of the body are duplicated
-and placed on \emph{both} the declaration-site and the call-site.
+and placed on \emph{both} the declaration site and the call site.
 
 The ML5 language \cite{app-distributed-ml5} mentioned above served as an inspiration for our example.
 It tracks execution environments using modalities of modal S4 to represent the environment -- this 
@@ -933,12 +933,12 @@ Consider the following two examples:
 \end{equation*}
 %
 The body of the first function is just a constant $42$ and so the context of the body is marked
-as \emph{dead}. The parameter (call-site) of the function is not used and can also be marked as dead. 
-Similarly, no variables from the declaration-site are used and so they are also marked as dead.
+as \emph{dead}. The parameter (call site) of the function is not used and can also be marked as dead. 
+Similarly, no variables from the declaration site are used and so they are also marked as dead.
 
 In contrast, the body of the second function accesses a variable \ident{value} and so the body 
 of the function is marked as \emph{live}. In the flat system, we do not track \emph{which} 
-variable was used and so we have to mark both the call-site and the declaration-site as live (this will
+variable was used and so we have to mark both the call site and the declaration site as live (this will
 be refined in a structural version of the system).
 
 \paragraph{Forward vs. backward \& may vs. must.}
@@ -1130,7 +1130,7 @@ by $e_2$.
 
 The (\emph{abs}) rule duplicates the annotation of the body, similarly to the cross-compilation 
 example in Figure~\ref{fig:applications-flat-cross}. When the body accesses any variables, it 
-requires both the argument and the variables from declaration-site. When it does not use any variables,
+requires both the argument and the variables from declaration site. When it does not use any variables,
 it marks both as dead. Finally, the (\emph{let}) rule annotates the composed expression with the
 liveness of the expression $e_2$ -- if the context of $e_2$ is live, then it also requires variables
 from $\Gamma$; if it is dead, then it does not require $\Gamma$ or $x$. 
@@ -1156,7 +1156,7 @@ In the first case, the context is dead. In ($1$), the function's parameter is de
 overall context is dead, even though the argument uses a variable $y$ -- the semantics evaluates 
 the function without passing it an actual argument. In the second case ($2$), the function is
 a variable that needs to be obtained and so the context is live. In the last case ($3$), the 
-function accesses a variable and so its declaration-site is marked as requiring the context 
+function accesses a variable and so its declaration site is marked as requiring the context 
 (\emph{abs}). This is where structural coeffect analysis would be more precise -- the system shown
 here cannot capture the fact that $x$ is a bound variable.
 
@@ -1322,7 +1322,7 @@ $e_1$ does not require a context, but $e_1$ does. Finally, in (\emph{app-3}), th
 Unlike with implicit parameters, lambda abstraction for liveness analysis does not introduce 
 non-determinism. It simply duplicates the context requirements. However, this still matches the
 property of coeffects that impurities cannot be delayed or thunked and attached just to the 
-function arrow -- we place requirements on both call-site and declaration-site.
+function arrow -- we place requirements on both call site and declaration site.
 
 The semantics of liveness reveals three interesting properties. Firstly, the coeffect calculus for
 liveness cannot be modelled as a monadic computation of the form $\tau_1 \rightarrow \mtyp{}{\tau_2}$.
@@ -1491,8 +1491,8 @@ In summary, function application (\emph{app}) requires maximum of the values nee
 $e_1$ and the number of values needed to evaluate the argument $e_2$, sequentially composed with
 the function. 
 
-In function abstraction (\emph{abs}), the requirements of the body are duplicated on the declaration-site
-and the call-site as in liveness analysis. If the body requires $\cclrd{n}$ past values, it may access
+In function abstraction (\emph{abs}), the requirements of the body are duplicated on the declaration site
+and the call site as in liveness analysis. If the body requires $\cclrd{n}$ past values, it may access
 $\cclrd{n}$ values of any variables -- including those available in $\Gamma$, as well as the parameter
 $x$. Finally, the (\emph{let}) rule simply adds the two requirements. This corresponds to the sequential
 composition operation, but it is also a rule that we obtain by treating let-binding as a syntactic 
@@ -1633,8 +1633,8 @@ we project the right one. In (\emph{prev}) and (\emph{sub}), we drop some of the
 the history (from the front and end, respectively) and then evaluate the original expression.
 
 Lambda abstractions (\emph{abs}) receives two lists of the same size -- one containing values of
-the variables (list of products) from the declaration-site $\langle \mathbf{v}_0, \ldots, \mathbf{v}_{\cclrd{n}} \rangle$ 
-and one containing the argument (list of values) provided by the call-site $\langle y_0, \ldots, y_{\cclrd{n}} \rangle$.
+the variables (list of products) from the declaration site $\langle \mathbf{v}_0, \ldots, \mathbf{v}_{\cclrd{n}} \rangle$ 
+and one containing the argument (list of values) provided by the call site $\langle y_0, \ldots, y_{\cclrd{n}} \rangle$.
 The semantics applies the well-known \emph{zip} operation on the lists and passes the result to the
 body.
 
@@ -1706,7 +1706,7 @@ the expression $e_2$.
 \paragraph{Summary.}
 Despite attaching annotations to the variable context, the system for safe locking uses 
 effect-style lambda abstraction. Lambda abstraction associates all requirements with the 
-call-site -- a lambda function created under a lock cannot access protected memory available at 
+call site -- a lambda function created under a lock cannot access protected memory available at 
 the time of creation. It will be executed later and can only access the memory available then.
 This suggests that safe locking is better seen as an effect system. 
 
@@ -1766,7 +1766,7 @@ as (syntactically) live, despite the fact part of it was (semantically) dead:
 \end{equation*}
 %
 In the first case, the variable $x$ is dead, but was marked as live. In the second example, the
-declaration-site of the \ident{answer} value is dead, but was marked as live. This is because in 
+declaration site of the \ident{answer} value is dead, but was marked as live. This is because in 
 both of the expressions, \emph{some} variable is accessed. However, the (\emph{abs}) rule of flat
 liveness has no way of determining \emph{which} variables are used by the body -- and, in particular,
 whether the accessed variable is the \emph{bound} variable or some of the \emph{free} variables.
@@ -2292,8 +2292,8 @@ $x$ and $x'$ from the function and argument terms respectively.
 
 \paragraph{Semantics.}
 In the previous examples, we defined the semantics -- somewhat informally -- using a simple 
-$\lambda$-calculus language to encode the model. More formally, this could be a Cartesian Closed 
-Category. In that model, we can reuse variables arbitrarily and so it is not
+$\lambda$-calculus language to encode the model. More formally, this could be a Cartesian-closed 
+category. In that model, we can reuse variables arbitrarily and so it is not
 a good fit for modelling bounded reuse. Girard et al. \cite{logic-bounded} model their bounded
 linear logic in an (ordinary) linear logic where variables can be used at most once.
 
@@ -2503,7 +2503,7 @@ respectively.
 
 \paragraph{Example.} As an example, consider a function $\lambda x.\kvd{prev}~(y+x)$ applied to an argument
 $\kvd{prev}~(\kvd{prev}~y)$. The body of the function accesses the past value of two variables, one free
-and one bound. The (\emph{abs}) rule splits the annotations between the declaration-site and call-site
+and one bound. The (\emph{abs}) rule splits the annotations between the declaration site and call site
 of the function:
 %
 \begin{equation*}
