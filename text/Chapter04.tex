@@ -31,8 +31,8 @@ when we consider the systems separately. For this reason, we discuss \emph{flat 
 \begin{itemize}
 \item[--] We present a \emph{flat coeffect calculus} as a type system that is parameterized by a 
   \emph{flat coeffect algebra} (Section~\ref{sec:flat-calculus}). We show that the system can be 
-  instantiated to obtain three of the systems discussed in previous section (implicit parameters, 
-  liveness and data-flow).
+  instantiated to obtain three of the systems discussed in Section~\ref{sec:applications-flat},
+  namely implicit parameters, liveness and data-flow.
   
 \item[--] We give the equational theory of the calculus and discuss type-pre\-ser\-vation for call-by-name
   and call-by-value reduction (Section~\ref{sec:flat-syntax}). We also extend the calculus
@@ -1498,10 +1498,10 @@ an equality; for liveness and data-flow (which both use a lattice), the greatest
 is smaller than the least upper bound.
 
 Assuming $\reduce_{\ident{cbv}}$ is call-by-value reduction that reduces the term 
-$(\lambda x.e)\,v$ to a term $\subst{e}{x}{v}$, the soundness theorem is
+$(\lambda x.e)\,v$ to a term $\subst{e}{x}{v}$, the type preservation theorem is
 stated as follows:
 
-\begin{theorem}[Call-by-value soundness]
+\begin{theorem}[Type preservation for call-by-value]
 \label{thm:cbv-reduction}
 In a flat coeffect system with the (\emph{approxi\-mation}) property, 
 if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
@@ -1679,10 +1679,9 @@ coeffects associated with individual variables, thus preserving typing in a comp
 
 The two substitution lemmas discussed above show that the call-by-name evaluation strategy can be 
 used for certain coeffect calculi, including liveness and implicit parameters. Assuming
-$\reduce_{\ident{cbn}}$ is the standard call-by-name reduction, the following soundness
-theorem holds:
+$\reduce_{\ident{cbn}}$ is the standard call-by-name reduction, the following theorem holds:
 
-\begin{theorem}[Call-by-name soundness]
+\begin{theorem}[Type preservation for call-by-name]
 \label{thm:cbn-flat}
 In a coeffect system that satisfies the conditions for Lemma~\ref{thm:cbn-substitution-top} or
 Lemma~\ref{thm:cbn-substitution-bot}, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
@@ -1737,7 +1736,7 @@ However, $\eta$-expansion preserves the type for implicit parameters and, more g
 for any flat coeffect algebra where $\cpar \,=\, \czip$. Assuming $\rightarrow_\eta$ is the 
 standard $\eta$-reduction:
 
-\begin{theorem}[Soundness of $\eta$-expansion]
+\begin{theorem}[Type preservation of $\eta$-expansion]
 In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ 
 where $\czip = \cpar$, if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2$ 
 and $e \rightarrow_\eta e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 $.
