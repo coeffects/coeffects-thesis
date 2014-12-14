@@ -21,22 +21,22 @@ on abstractions designed for other purpose, most frequently monads.
 
 \paragraph{Chapter structure and contributions}
 \begin{itemize}
-\item[--] We start with a characterization of contextual properties. The Section~\ref{sec:applications-structure}
+\item We start with a characterization of contextual properties. The Section~\ref{sec:applications-structure}
   explains what is a \emph{coeffect} and constrasts it with a better known notion of 
   \emph{effect}. It explains what is the nature of properties that can be tracked using 
   coeffect systems presented in this theis.
 
-\item[--] We describe a number of simple calculi for tracking a wide range of contextual properties. 
+\item We describe a number of simple calculi for tracking a wide range of contextual properties. 
   The systems are adapted from diverse sources (type systems, static analyses, logics) and apply to
   various domains (cross-compilation, liveness, distributed computing, data-flow, security), but
   share a common structure.
 
-\item[--] The uniform presentation of the systems is the key contribution of this chapter. We distinguish
+\item The uniform presentation of the systems is the key contribution of this chapter. We distinguish
   between \emph{flat coeffect} systems (Section~\ref{sec:applications-flat}) and \emph{structural coeffect}
   systems (Section~\ref{sec:applications-structural}). The fact that we find a common structure in
   all systems presented here lets us develop unified coeffect calculi in the upcoming three chapters.
 
-\item[--] In addition, the coeffect systems for tracking the number of accessed past values in 
+\item In addition, the coeffect systems for tracking the number of accessed past values in 
   data-flow languagges (Sections~\ref{sec:applications-flat-dataflow} and \ref{sec:applications-structural-dataflow})
   presents novel results and can be used to optimize data-flow programs.
 \end{itemize}
@@ -874,10 +874,10 @@ However, this symmetry does not hold for lambda abstraction (\emph{abs}), which 
 This models the case when there are two ways of executing the function:
 %
 \begin{itemize}
-\item[--] The function is represented as executable code for an call site environment
+\item The function is represented as executable code for an call site environment
   and is executed there, possibly after it is marshalled and transferred to another machine.
 \vspace{-0.5em}
-\item[--] The function body is compiled for the declaration site environment; the value
+\item The function body is compiled for the declaration site environment; the value
   that is returned is a remote reference to the code and function calls are performed as remote invocations.
 \end{itemize}
 %
