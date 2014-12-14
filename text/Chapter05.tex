@@ -183,14 +183,23 @@ r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &
 \textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t&
 t\; \cleq\; t &
 \textnormal{(pre-order)}   
+\\
 \end{array}
 \end{equation*}
 %
-In addition, the following distributivity axioms hold:
+The following distributivity axioms hold:
 \begin{align*}
 \quad (\cclrd{r}\, \cpar\, \cclrd{s}) \;\cseq\; \cclrd{t} & = (\cclrd{r} \,\cseq\, \cclrd{t}) \;\cpar\; (\cclrd{s}\, \cseq\, \cclrd{t}) \\
 \quad \cclrd{t} \;\cseq\; (\cclrd{r}\, \cpar\, \cclrd{s}) & = (\cclrd{t} \,\cseq\, \cclrd{r}) \;\cpar\; (\cclrd{t}\, \cseq\, \cclrd{s})
 \end{align*}
+%
+In addition, we require the following two properties of $\czero, \cpar$ and $\cleq$:
+\begin{equation*}
+\begin{array}{l}
+ \quad \cclrd{r}\,\cleq\,\cclrd{r'} \; \Rightarrow \; \forall\cclrd{s}.\;(\cclrd{r}\,\cseq\,\cclrd{s})\;\cleq\;(\cclrd{r'}\,\cseq\,\cclrd{s}) \\
+ \quad \czero\;\cleq\;(\czero\,\cseq\,\cclrd{r})
+\end{array}
+\end{equation*}
 \end{definition}
 
 \noindent
@@ -200,11 +209,18 @@ context requirements. The other difference is that the $\cpar$ operation of stru
 scalar is not required to be idempotent. The bounded reuse example uses $\cpar$ which is not 
 idempotent.
 
+Finally, we now also require two properties that relate the ordering $\cleq$ with coeffects composed
+via $\cpar$ and with $\czero$. These were previously required for bottom-pointed substitution lemma 
+(Lemma~\ref{thm:cbn-substitution-bot}). Here, we require them for all structural coeffects as it holds
+for all our examples; it is needed for the structural version of the subtitution lemma 
+(Lemma~\ref{thm:structural-substitution}).
+
 In the structural coeffect calculus, we use a vector instead -- combining and splitting of 
 coeffects becomes just vector concatenation or splitting, respectively; these are provided
 by the tensor product. The operations on vectors are indexed by integers representing the lengths
 of the vectors. The additional structure required by the type system for structural coeffect 
 calculi is given by the following definition.
+
 
 \begin{definition}
 A \emph{\aclrd{structural coeffect algebra}} is formed by a structural coeffect scalar 
@@ -239,9 +255,9 @@ In the following text, we usually omit the indices and write just
 $\aclrd{\textbf{r}} \atimes \aclrd{\textbf{s}}$, because the lengths of the coeffect vectors 
 can be determined from the lengths of the matching free variable context vectors.
 
-More generally, we could see the the coeffect annotations as a \emph{container} 
-\cite{types-containers} that supports certain operations. This approach is used in 
-Chapter~\ref{ch:unified} as a way of unifying the flat and structural systems. 
+More generally, we could see the the coeffect annotations as \emph{containers} 
+\cite{types-containers}. This approach is used in Chapter~\ref{ch:unified} to unify flat 
+and structural systems. 
 
 % -------------------------------------------------------------------------------------------------
 
@@ -897,10 +913,6 @@ differently. We start by looking at the structure modelling data-flow computatio
 variables in bold face (such as $\mathbf{a_1}$) range over vectors while ordinary notation (such
 as $a_1$) is used for individual values.
 
-~
-
-~
-
 \begin{example}[Indexed list for data-flow]
 \label{ex:struct-dfl}
 The indexed list model of data-flow computations is defined over a structural coeffect
@@ -972,6 +984,8 @@ The $\ident{dup}_{m,n}$ operation needs to produce a two-varaible context contai
 respectively, of the input variable. The input provides $\mathit{max}(m, n)$ values, so the definition
 is simply a matter of restriction. Finally, \ident{counit} extracts the value of its single variable
 and \ident{lift} drops additional past values that are not required.
+
+~
 
 \paragraph{Bounded reuse.}
 As mentioned earlier, the semantics of calculus for bounded reuse is also based on the indexed list 
@@ -1195,6 +1209,7 @@ the annotation of the new context -- in the above example
 $\cclrd{2}\cclrd{\ast}\alift{\cclrd{1}, \cclrd{1}}=\alift{\cclrd{2}, \cclrd{2}}$.
 
 \subsection{Holes and substitution lemma}
+\label{sec:struct-syntactic-subst}
 
 As demonstrated in the previous section, reduction (and substitution) in the structural coeffect 
 calculus may need to replace a \emph{single} variable with a \emph{vector} of variables. 
@@ -1281,6 +1296,12 @@ annotated with coeffects in the vector $\aclrd{\textbf{t}}$, we first need to ev
 expression with coeffects $\cclrd{s}$, followed by the rest of the expression with coeffects specified
 by $\aclrd{\textbf{t}}$.
 
+~
+
+~
+
+~
+
 \begin{lemma}[Multi-nary substitution]
 \label{thm:structural-substitution}
 Given an expression with multiple holes filled by variables $x_i\!:\!\tau_i$ with coeffects $\cclrd{s_k}$:
@@ -1302,8 +1323,8 @@ then substituting the expressions $e_i$ for variables $x_i$ results in an expres
 where the original holes are filled by contexts $\Gamma_i$ with coeffects $\cclrd{s_i} \aseq \aclrd{\mathbf{t_i}}$:
 %
 \begin{equation*}
-\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{\Gamma_s}{\cclrd{s_1}\aseq\,\aclrd{\textbf{t}_1}} \,|\, \ldots \,|\, 
-  \coctx{\Gamma_s}{\cclrd{s_k}\aseq\,\aclrd{\textbf{t}_k}}\,] \vdash \subst{\subst{e_r}{x_1}{e_1}\ldots}{x_k}{e_k} : \tau_r
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{\Gamma_1}{\cclrd{s_1}\aseq\,\aclrd{\textbf{t}_1}} \,|\, \ldots \,|\, 
+  \coctx{\Gamma_k}{\cclrd{s_k}\aseq\,\aclrd{\textbf{t}_k}}\,] \vdash \subst{\subst{e_r}{x_1}{e_1}\ldots}{x_k}{e_k} : \tau_r
 \end{equation*}
 \end{lemma}
 \begin{proof}

@@ -7,6 +7,20 @@ This appendinx provides additional details for some of the proofs for equational
 of flat coeffect calculus from Chapter~\ref{ch:flat} and structural coeffect calculus
 from Chapter~\ref{ch:structural}.
 
+
+
+% =================================================================================================
+%
+%      #####   ##            #    
+%      #        #            #    
+%      #        #     ###   ####  
+%      ####     #        #   #    
+%      #        #     ####   #    
+%      #        #    #   #   #  # 
+%      #       ###    ####    ##  
+%                               
+% =================================================================================================
+
 \section{Substitution for flat coeffects}
 \label{sec:appendix-flat-cbn}
 In Section~\ref{sec:flat-syntax-cbn}, we stated that, for a bottom-pointed flat coeffect
@@ -41,7 +55,7 @@ that is being substituted into an expression. Using structural induction over $\
 \]
 There are two cases depending on whether $y$ is the variable $x$ or not:
 \begin{itemize}
-\item[--] If $y=x$ then also $\tau = \tau_s$ and thus $\subst{y}{x}{e_s} = e_s$. Using the assumption,
+\item If $y=x$ then also $\tau = \tau_s$ and thus $\subst{y}{x}{e_s} = e_s$. Using the assumption,
 implicit weakening and the fact that $\cunit$ is a unit of $\cseq$:
 \[
 \inference
@@ -50,7 +64,7 @@ implicit weakening and the fact that $\cunit$ is a unit of $\cseq$:
   {\coctx{\Gamma_1, \Gamma, \Gamma_2}{\cclrd{S}} \vdash \subst{y}{x}{e_s} : \tau } }
  {\coctx{\Gamma_1, \Gamma, \Gamma_2}{\cunit\,\cseq\,\cclrd{S}} \vdash \subst{y}{x}{e_s} : \tau } 
 \]
-\item[--] If $y\neq x$ then $\subst{y}{x}{e_s} = y$. Using the fact that $\cunit$ is the bottom element
+\item If $y\neq x$ then $\subst{y}{x}{e_s} = y$. Using the fact that $\cunit$ is the bottom element
 and sub-coeffecting:
 \[
 \inference
@@ -108,7 +122,7 @@ From the induction hypothesis, we have that:
  \coctx{\Gamma_1, \Gamma, \Gamma_2}{\cclrd{s}\,\cseq\,\cclrd{S}} \vdash \subst{e_2}{x}{e_s} : \tau_1
 \end{array}\quad(*)
 \]
-Now using (\emph{app}) rule and the fact that $\cpar\,=\,\cseq$, associativity, commutativity and idempotence
+Now using the (\emph{app}) rule and the fact that $\cpar\,=\,\cseq$, associativity, commutativity and idempotence
 (note that all three properties are needed):
 \[
 \inference
@@ -134,8 +148,9 @@ From the induction hypothesis, we have that:
  \coctx{\Gamma_1, \Gamma, \Gamma_2, y:\tau_1}{\cclrd{s}\,\cseq\,\cclrd{S}} \vdash \subst{e_2}{x}{e_s} : \tau_2
 \end{array}\quad(\dagger)
 \]
-Now using (\emph{let}) rule and similarly to the (\emph{app}) case:
+Now using the (\emph{let}) rule and similarly to the (\emph{app}) case:
 \[
+\hspace{-2em}
 \inference
  { (\dagger) }
  { \inference
@@ -145,6 +160,368 @@ Now using (\emph{let}) rule and similarly to the (\emph{app}) case:
          \vdash \subst{(\kvd{let}~y=e_1~\kvd{in}~e_2)}{x}{e_s} : \tau_2 } }
 \]
 \end{proof}
+\newpage
+
+
+
+% =================================================================================================
+%                                                                      
+%     ###    #                           #                           ##   
+%    #   #   #                           #                            #   
+%    #      ####   # ##   #   #   ###   ####   #   #  # ##    ###     #   
+%     ###    #     ##  #  #   #  #   #   #     #   #  ##  #      #    #   
+%        #   #     #      #   #  #       #     #   #  #       ####    #   
+%    #   #   #  #  #      #  ##  #   #   #  #  #  ##  #      #   #    #   
+%     ###     ##   #       ## #   ###     ##    ## #  #       ####   ###  
+%
+% =================================================================================================
+
 
 \section{Substitution for structural coeffects}
 \label{sec:appendix-struct-cbn}
+
+In order to prove that $\beta$-reduction and $\eta$-expansion preserve the type of an expression
+in Section~\ref{sec:struct-syntactic-subst}, we required a multi-nary form of the substitution 
+lemma (Lemma~\ref{thm:structural-substitution}). This section provides the corresponding proof.
+
+\begin{lemma*}[Multi-nary substitution]
+Given an expression with multiple holes filled by variables $x_{Ti}\!:\!\tau_{Ti}$ with coeffects $\cclrd{s_k}$:
+%
+\begin{equation*}
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+  \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,] \vdash e_r : \tau_r
+\end{equation*}
+%
+and a expressions $e_{Ti}$ with free-variable contexts $\Gamma_{Ti}$ annotated with $\aclrd{\mathbf{T_i}}$:
+%
+\begin{equation*}
+\coctx{\Gamma_1}{\aclrd{\mathbf{T_1}}} \vdash e_{T1} : \tau_{T1}
+\quad \ldots \quad
+\coctx{\Gamma_k}{\aclrd{\mathbf{T_k}}} \vdash e_{Tk} : \tau_{Tk}
+\end{equation*}
+%
+then substituting the expressions $e_{Ti}$ for variables $x_{Ti}$ results in an expression with a context
+where the original holes are filled by contexts $\Gamma_{Ti}$ with coeffects $\cclrd{s_i} \aseq \aclrd{\mathbf{T_i}}$:
+%
+\begin{equation*}
+\coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+  \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,] \vdash \subst{\subst{e_r}{x_{T1}}{e_{T1}}\ldots}{x_{Tk}}{e_{Tk}} : \tau_r
+\end{equation*}
+\end{lemma*}
+\begin{proof}
+Assume that $\coctx{\Gamma}{\aclrd{\mathbf{T_i}}} \vdash e_{Ti} : \tau_{Ti}$ and we are substituting terms $e_{Ti}$ for 
+variables $x_{Ti}$. Furthermore, we assume that are variables that are being substituted for actually appear in the original 
+term (which means that $k$ is at most the number of variables). Note that we use upper-case $\aclrd{\textbf{T}}$ to distinguish 
+the coeffect of the expression that is being substituted into an expression. Using structural induction over $\vdash$:
+
+
+% -------------------------------------------------------------------------------------------------
+
+\paragraph{Syntax-driven typing rules}
+\paragraph{(var)} Given the following derivation using (\emph{var}):
+\[
+\inference
+  { }
+  {\coctx{y:\tau}{\alift{\cunit}} \vdash y : \tau }
+\]
+Here, the context contains exactly one variable and so $k=1$. There are two cases depending on whether $y$ is 
+the (only substituted) variables $x_{T1}$ or not:
+\begin{itemize}
+\item If $y=x_{T1}$ then also $\tau = \tau_{T1}$ and thus $\subst{y}{x_{T1}}{e_{T_1}} = e_{T1}$. 
+In this case, the context contains only a single hole $\coctx{\Gamma}{\aclrd{\mathbf{r}}} = \coctx{-}{-}$. Using the
+assumption and the fact that $\cunit$ is a unit of $\cseq$:
+\[
+\inference
+ { \inference 
+   {\coctx{\Gamma_{T1}}{\aclrd{\mathbf{T_i}}} \vdash \subst{y}{x_{T1}}{e_{T1}} : \tau_r }
+   {\coctx{\Gamma}{\aclrd{\mathbf{r}}}~[\,\coctx{\Gamma_{T1}}{\aclrd{\mathbf{T_i}}}\,] \vdash \subst{y}{x_{T1}}{e_{T1}} : \tau_r } }
+ { \coctx{\Gamma}{\aclrd{\mathbf{r}}}~[\,\coctx{\Gamma_{T1}}{\cunit\,\aseq\,\aclrd{\mathbf{T_i}}}\,] \vdash \subst{y}{x_{T1}}{e_{T1}} : \tau_r }   
+\]
+\item If $y\neq x_{T1}$ then there is no substitution that could be performed ($y$ does not 
+appear in the context) and so (trivially):
+\[
+\coctx{\Gamma}{\aclrd{\mathbf{r}}}~[\,] \vdash y : \tau_r
+\]
+\end{itemize}
+
+\paragraph{(const)} Similar to the (\emph{var}) case when the variable is not substituted.
+
+\paragraph{(app)} In the (\emph{app}) rule, the context $\Gamma$ is obtained as a tensor product $\Gamma_1, \Gamma_2$.
+  Given $\Gamma$ of length $k$, we assume that $\Gamma_1$ has length $l$ and $\Gamma_2$ has length $k-l$. 
+  Now, given the following typing derivation using (\emph{app}):
+\[
+\inference
+  {\coctx{\Gamma_1}{\aclrd{\mathbf{s_1}}} 
+   [\,\coctx{x_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tl}}{\alift{\cclrd{s_l}}}\,] 
+      \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \\
+   \coctx{\Gamma_2}{\aclrd{\mathbf{s_2}}} 
+   [\,\coctx{x_{Tl+1}}{\alift{\cclrd{s_{l+1}}}} \,|\, \ldots \,|\, \coctx{x_{Tk}}{\alift{\cclrd{s_k}}}\,]
+      \vdash e_2 : \tau_1 }
+  { \begin{array}{l}
+    \coctx{\Gamma_1, \Gamma_2}{\aclrd{\mathbf{s_1}\;\atimes\;(\cclrd{t} \,\aseq\, \aclrd{\mathbf{s_2}})}}~
+     [\,\coctx{x_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tl}}{\alift{\cclrd{s_l}}}, \\[-0.35em] \hspace{9.3em}
+       \coctx{x_{Tl+1}}{\alift{\cclrd{t} \,\cseq\, \cclrd{s_{l+1}}}} \,|\, \ldots \,|\, 
+          \coctx{x_{Tk}}{\alift{\cclrd{t} \,\cseq\, \cclrd{s_k}}}\,] \vdash e_1~e_2 : \tau_2 
+    \end{array} }
+\]
+Here, we use $\cclrd{t}\;\aseq\;\aclrd{\mathbf{s_2}}$ as a pointwise extension of $\czip$ that is additionally
+applied to holes such that $\cclrd{t}\;\czip\; - = -$. That is, a hole in the context remains a hole and so
+the second part of the context is filled with $\cclrd{t} \,\cseq\, \cclrd{s_i}$ for all $i \in \{ l+1 \ldots k \}$.
+Next, from the induction hypothesis, we have that:
+\[
+\begin{array}{l}
+ \coctx{\Gamma_1}{\aclrd{\mathbf{s_1}}} 
+   [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\,\aseq\,\aclrd{\mathbf{T_1}}} \,|\, \ldots \,|\, \coctx{\Gamma_{Tl}}{\cclrd{s_l}\aseq\,\aclrd{\mathbf{T_l}}}\,] 
+   \vdash e_1~[\,\ldots\,] : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \\
+ \coctx{\Gamma_2}{\aclrd{\mathbf{s_{2}}}} 
+   [\,\coctx{\Gamma_{Tl+1}}{\cclrd{s_{l+1}}\aseq\,\aclrd{\mathbf{T}_{l+1}}} \,|\, \ldots \,|\, \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\mathbf{T_k}}}\,]
+   \vdash e_2~[\,\ldots\,] : \tau_1
+\end{array}\quad(*)
+\]
+Now using the (\emph{app}) rule in the first step and associativity of $\cseq$ on the second part of the context in the second step:
+\[
+\hspace{-2em}
+\inference 
+ { \inference
+   { (*) }
+   { \begin{array}{l}
+      \coctx{\Gamma_1, \Gamma_2}{\aclrd{\mathbf{s_1}\;\atimes\;(\cclrd{t} \,\aseq\, \aclrd{\mathbf{s_2}})}} ~~
+       [\,\coctx{\Gamma_{T1}}{ \cclrd{s_1}\,\aseq\,\aclrd{\mathbf{T_1}} } \,|\, \ldots \,|\, 
+          \coctx{\Gamma_{Tl}}{ \cclrd{s_l}\,\aseq\,\aclrd{\mathbf{T_l}} }, 
+         \\[-0.35em] \qquad
+         \coctx{\Gamma_{Tl+1}}{\cclrd{t} \,\aseq\, (\cclrd{s_{l+1}}\,\aseq\,\aclrd{\mathbf{T_{l+1}}}) } \,|\, \ldots \,|\,
+         \coctx{\Gamma_{Tk}}{\cclrd{t} \,\aseq\, (\cclrd{s_k}\,\aseq\,\aclrd{\mathbf{T_k}})}\,] \vdash (e_1~e_2)~[\,\ldots\,] : \tau_2 
+      \end{array} } }
+ { \begin{array}{l}
+    \coctx{\Gamma_1, \Gamma_2}{\aclrd{\mathbf{s_1}\;\atimes\;(\cclrd{t} \,\aseq\, \aclrd{\mathbf{s_2}})}} ~~
+     [\,\coctx{\Gamma_{T1}}{ \cclrd{s_1}\,\aseq\,\aclrd{\mathbf{T_1}} } \,|\, \ldots \,|\, 
+        \coctx{\Gamma_{Tl}}{ \cclrd{s_l}\,\aseq\,\aclrd{\mathbf{T_l}} }, 
+       \\[-0.35em] \qquad
+       \coctx{\Gamma_{Tl+1}}{(\cclrd{t} \,\cseq\, \cclrd{s_{l+1}})\,\aseq\,\aclrd{\mathbf{T_{l+1}}} } \,|\, \ldots \,|\,
+       \coctx{\Gamma_{Tk}}{(\cclrd{t} \,\cseq\, \cclrd{s_k})\,\aseq\,\aclrd{\mathbf{T_k}}}\,] \vdash (e_1~e_2)~[\,\ldots\,] : \tau_2 
+    \end{array} }
+\]
+
+\paragraph{(abs)} Without the loss of generality, we can assume that the bound variable is 
+not one of the variables being substituted. Thus, the last variable (and the corresponding coeffect)
+are not holes. The typing derivation using (\emph{abs}) then looks as follows:
+\[
+\inference
+  {\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}} 
+   ~[\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+    \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} 
+   ~[\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+    \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
+\]
+From the induction hypothesis, we have that:
+\[
+\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}}~
+ [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+    \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,] \vdash e~[\,\ldots\,] : \tau_2
+\]
+Because the last position in the vector of variables is an actual variable rather than a hole, we
+just need to apply the (\emph{abs}) rule:
+\[
+\inference 
+ { \coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}}~
+   [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+      \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,] \vdash e~[\,\ldots\,] : \tau_2 }
+ { \coctx{\Gamma}{\aclrd{\textbf{r}}}~
+   [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+      \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,] \vdash \lambda x.e~[\,\ldots\,] : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
+\]
+
+\paragraph{(let)} In the structural coeffect calculus let-binding can be viewed as a syntactic
+sugar for abstraction/application and so the case follows from (\emph{abs}) and (\emph{app}).
+
+\vspace{0.75em}
+\noindent
+Compared to the similar proof for the flat coeffect calculus, the proof for the structural system
+requires fewer properties of the coeffect algebra. In particular, we only needed associativity of 
+$\cseq$ in the (\emph{app}) rule the fact that $\cunit$ is a unit of $\cseq$ in (\emph{var}).
+
+
+% -------------------------------------------------------------------------------------------------
+
+\paragraph{Structural rules}
+
+\paragraph{(contr)} In case of contraction, we can assume that the two variables to be contracted
+(in the assumption) are not the variables that are being substituted. However, the resulting
+variable  (in the conclusion) can be one of the variables being substituted for.
+
+\begin{itemize}
+\item Assuming that $x \neq x_{Ti}$ for all $i$, the original derivation is:
+\[
+\inference
+  {{ \begin{array}{l}
+     \coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} 
+     \\[-0.35em] \hspace{4em}
+     [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+    \vdash e : \tau
+    \end{array} }}
+  { \begin{array}{l}
+    \coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} 
+    \\[-0.35em] \quad
+    [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+    \vdash \subst{e}{z,y}{x} : \tau
+    \end{array} }
+\]
+Applying (\emph{contr}) to the induction hypothesis gives the required result:
+\[
+\inference
+  {{ \begin{array}{l}
+     \coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} 
+     \\[-0.35em] \hspace{4em}
+     [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,]
+    \vdash e~[\,\ldots\,] : \tau
+    \end{array} }}
+  { \begin{array}{l}
+    \coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} 
+    \\[-0.35em] \quad
+    [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,]
+    \vdash \subst{e}{z,y}{x}[\,\ldots\,] : \tau
+    \end{array} }
+\]
+
+\item In the other case, $x=x_{Ti}$ for some $i$. The original typing is:
+\[
+\inference
+  {{ \begin{array}{l}
+     \coctx{\Gamma_1,-,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-,-} \atimes \aclrd{\textbf{q}}}~
+         [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+     \\[-0.35em] \hspace{4em}
+     \coctx{y\!:\!\tau_1}{\alift{\cclrd{s}}} \,|\,
+     \coctx{z\!:\!\tau_1}{\alift{\cclrd{t}}}
+     \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+    \vdash e : \tau
+    \end{array} }}
+  { \begin{array}{l}
+    \coctx{\Gamma_1,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-} \atimes \aclrd{\textbf{q}}}~
+        [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+     \\[-0.35em] \quad
+     \coctx{x\!:\!\tau_1}{ \alift{\cclrd{s} \,\cpar\, \cclrd{t}} }
+     \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+    \vdash \subst{e}{z,y}{x} : \tau
+    \end{array} }
+\]
+Applying (\emph{contr}) to the induction hypothesis gives the following result:
+\[
+\inference
+  {{ \begin{array}{l}
+     \coctx{\Gamma_1,-,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-,-} \atimes \aclrd{\textbf{q}}}~
+         [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\,
+     \\[-0.35em] \quad
+     \coctx{\Gamma_{Ti}}{\cclrd{s}\,\aseq\,\aclrd{\mathbf{T_k}} } \,|\,
+     \coctx{\Gamma_{Ti}}{\cclrd{t}\,\aseq\,\aclrd{\mathbf{T_k}} }
+     \,|\, \ldots \,|\, \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,]
+    \vdash e~[\,\ldots\,] : \tau
+    \end{array} }}
+  {{ \begin{array}{l}
+     \coctx{\Gamma_1,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-} \atimes \aclrd{\textbf{q}}}~
+         [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\,
+     \\[-0.35em] \quad
+     \coctx{\Gamma_{Ti}}{ (\cclrd{s}\,\aseq\,\aclrd{\mathbf{T_k}}) \aparstr (\cclrd{t}\,\aseq\,\aclrd{\mathbf{T_k}})}
+     \,|\, \ldots \,|\, \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,]
+    \vdash e~[\,\ldots\,] : \tau
+    \end{array} }}
+\]
+Here the $\aparstr$ operation represents a pointwise extension of $\cpar$. Thus for $i^{\textit{th}}$ 
+substituted coeffect, we have $(\cclrd{s}\,\cseq\,\cclrd{T_i})\;\cpar\;(\cclrd{t}\,\cseq\,\cclrd{T_i})$.
+Using the distributivity law of structural coeffect algebra, we obtain the required structure:
+$(\cclrd{s}\,\cpar\,\cclrd{t})\;\cseq\;\cclrd{T_i}$.
+
+\paragraph{(sub)} As in the (\emph{contr}) case, in the (\emph{sub}) case we distinguish two situations.
+If the sub-coeffecting is applied to variable that is \emph{not} being substituted for, then the case is
+easy (sub-coeffecting does not interact with substitution), so we only consider the case when $x$ is one
+of the variables being substituted for:
+\[
+\inference
+  {{\begin{array}{l}
+   \coctx{\Gamma_1,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-} \atimes \aclrd{\textbf{q}}} ~
+   [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+     \\[-0.35em] \qquad
+     \coctx{x\!:\!\tau_1}{\alift{\cclrd{s'}}}
+     \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+   \vdash e : \tau
+   \end{array}}}
+  {{\begin{array}{l}
+   \coctx{\Gamma_1,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-} \atimes \aclrd{\textbf{q}}} ~
+   [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
+     \\[-0.35em] \qquad
+     \coctx{x\!:\!\tau_1}{\alift{\cclrd{s}}}
+     \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+   \vdash e : \tau
+   \end{array}}}
+\quad(\cclrd{s'}\;\cleq\;\cclrd{s})   
+\]
+From the induction hypothesis, we have the following:
+\[
+  {{\begin{array}{l}
+   \coctx{\Gamma_1,-,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{-} \atimes \aclrd{\textbf{q}}} ~
+   [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\,
+     \\[-0.35em] \qquad
+     \coctx{\Gamma_{Ti}}{\cclrd{s'}\aseq\,\aclrd{\mathbf{T_k}} }
+     \,|\, \ldots \,|\, \coctx{\Gamma_{Tk}}{\cclrd{s_k}\aseq\,\aclrd{\textbf{T}_k}}\,]
+   \vdash e : \tau
+   \end{array}}}
+\]
+To complete the case, we need to apply (\emph{sub}) repeatedly on each of the variables in 
+$\Gamma_{Ti}$. For $i^{\textit{th}}$ variable $x_i$, the coeffect annotation is $\cclrd{s'}\cseq\,\cclrd{T_i}$.
+Using the fact that combining coeffects with $\cseq$ preserves the ordering, we get that 
+$(\cclrd{s'}\cseq\,\cclrd{T_i}) \cleq (\cclrd{s}\,\cseq\,\cclrd{T_i})$ and so the conditions
+of (\emph{sub}) are satisfied.
+
+\paragraph{(weak)} We again need to consider whether the removed variable is 
+one of the variables that are being substituted for. If this is not the case,
+the proof is easy, so we only look at the other case:
+\[
+\inference
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} }~
+   [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,]
+   \vdash e : \tau}
+  {\coctx{\Gamma, -}{\aclrd{\textbf{r}} \atimes \alift{ - }}~
+   [\,\coctx{x_{T1}\!:\!\tau_{T1}}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\, \coctx{x_{Tk}\!:\!\tau_{Tk}}{\alift{\cclrd{s_k}}}\,|\,\coctx{x\!:\!\tau_1}{\czero}\,]
+   \vdash e : \tau} 
+\]
+Now, we use the induction hypothesis, apply the (\emph{weak}) rule and use properties of the
+structural coeffect algebra:
+\[
+\inference
+  {{ \begin{array}{l}
+    \coctx{\Gamma}{ \aclrd{\textbf{r}} }~
+    [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+     \\[-0.35em] \qquad
+     \coctx{\Gamma_{Tk-1}}{\cclrd{s_{k-1}}\aseq\,\aclrd{\textbf{T}_{k-1}}}\,]
+   \vdash e~[\,\ldots\,] : \tau 
+   \end{array} }}
+{\tyrule{sub}
+ {{\begin{array}{l}
+   \coctx{\Gamma, -}{\aclrd{\textbf{r}} \atimes \alift{ - }}~
+   [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+    \\[-0.35em] \qquad
+    \coctx{\Gamma_{Tk-1}}{\cclrd{s_{k-1}}\aseq\,\aclrd{\textbf{T}_{k-1}}}
+      \,|\,\coctx{x\!:\!\tau_1}{\czero}\,]
+   \vdash e~[\,\ldots\,] : \tau
+   \end{array} }} 
+ {{\begin{array}{l}
+   \coctx{\Gamma, -}{\aclrd{\textbf{r}} \atimes \alift{ - }}~
+   [\,\coctx{\Gamma_{T1}}{\cclrd{s_1}\aseq\,\aclrd{\textbf{T}_1}} \,|\, \ldots \,|\, 
+    \\[-0.35em] \qquad
+    \coctx{\Gamma_{Tk-1}}{\cclrd{s_{k-1}}\aseq\,\aclrd{\textbf{T}_{k-1}}}
+      \,|\,\coctx{x\!:\!\tau_1}{\czero \aseq\,\aclrd{\textbf{T}_k} }\,]
+   \vdash e~[\,\ldots\,] : \tau
+   \end{array} }}  }
+\]
+The derivation first applies the standard (\emph{weak}) rule and then uses sub-coeffecting
+rule and the property $\czero\;\cleq\;(\czero\,\cseq\,\cclrd{r})$ to obtain conclusion of the required form.
+
+\paragraph{(exch)} In the (\emph{exch}) case, the property follows directly from the 
+induction hypothesis. The required conclusion is obtained by applying (\emph{exch}) 
+repeatedly (as we now need to exchange not just two individual variables, but two 
+contexts, possibly containing multiple variables).
+
+\end{itemize}
+\end{proof}
+
+
