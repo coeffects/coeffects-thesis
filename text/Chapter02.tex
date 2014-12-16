@@ -161,7 +161,7 @@ created on server-side requires access to current time-zone, it can use the reso
 
 Another pathway to coeffects leads through the semantics of effectful and context-dependent 
 computations. In a pioneering work, Moggi \cite{monad-notions} showed that effects (including
-partiality, exceptions, non-determinism and I/O) can be modelled uisng the category theoretic
+partiality, exceptions, non-determinism and I/O) can be modelled using the category theoretic
 notion of \emph{monad}.
 
 When using monads, we distinguish effect-free values $\tau$ from programs, or 
@@ -473,7 +473,7 @@ distributed system (the evaluation corresponds to the axiom $\square \tau \right
 Finally, Davies and Pfenning \cite{logic-modal-staged} consider staged computations and interpret 
 $\square \tau$ as a type of unevaluated expressions of type $\tau$ (with no free variables).
 
-In Contextual Modal Type Theory, the modality $\square$ is further annotated with the free variales
+In Contextual Modal Type Theory, the modality $\square$ is further annotated with the free variables
 of the (unevaluated) expression. We write $\square^{\cclrd{\Psi}} \tau$ for a type of expressions
 that requires a context $\Psi$. The type is a comonadic counterpart to \emph{indexed monads} used by 
 Wadler and Thiemann when linking monads and effect systems and, indeed, it gives rise to a language 
@@ -744,7 +744,7 @@ follow up to a number of research directions. For this reason, we highlighted on
 of the discussed related work -- the remaining aspects as well as important technical details are
 covered throughout the thesis.
 
-The first pathway follows as a dualization of well-known effect systems. However, this is not simply 
+The first pathway follows as a dualisation of well-known effect systems. However, this is not simply 
 a syntactic transformation. As we further discuss in the next chapter, coeffect systems treat lambda 
 abstraction differently. The second pathway follows by extending comonadic semantics of context-dependent 
 computations with indexing and building a type system analogous to effect system from the ``marriage of 
