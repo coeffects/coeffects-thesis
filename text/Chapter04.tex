@@ -125,7 +125,7 @@ This is similar to the recent work on \emph{parameterized monads} by Katsumata \
 The flat coeffect calculus is defined in terms of \emph{flat coeffect algebra}, which defines
 the structure of context annotations, such as $\cclrd{r}, \cclrd{s}, \cclrd{t}$. These can be
 sets of implicit parameters, versions represented as integers or other values. The expressions of 
-the calculus are those of the $\lambda$-calculus wwith \emph{let} binding; assuming $\alpha$ ranges 
+the calculus are those of the $\lambda$-calculus with \emph{let} binding; assuming $\alpha$ ranges 
 over base types, the types of the calculus are defined as:
 %
 \begin{equation*}
@@ -1504,7 +1504,7 @@ stated as follows:
 \begin{theorem}[Type preservation for call-by-value]
 \label{thm:cbv-reduction}
 In a flat coeffect system with the (\emph{approxi\-mation}) property, 
-if $\ctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
+if $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ 
 and $e \reduce_{\ident{cbv}} e'$ then $\coctx{\Gamma}{\cclrd{r}} \vdash e' : \tau$.
 \end{theorem}
 \begin{proof}
@@ -2301,7 +2301,7 @@ are:
 \begin{equation*}
 \begin{array}{lll}
  \ctyp{\cclrd{r}}\tau = \tau \times (\cclrd{r} \rightarrow \sigma) &~\hspace{10em}~& (\emph{product comonad}) \\
- \mtyp{\cclrd{r}}\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau && (\emph{eader monad})
+ \mtyp{\cclrd{r}}\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau && (\emph{reader monad})
 \end{array} 
 \end{equation*}
 %
