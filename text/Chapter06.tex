@@ -82,7 +82,7 @@ Abbott et al. \cite{types-containers}. Interestingly, containers have later been
 to comonads by Ahman et al. \cite{comonads-containers}. Intuitively a container describes data
 types such as lists, trees or streams. A container is formed by shapes (\eg~lengths of 
 lists)\footnote{Shapes can also be intuitively thought of as sizes, but this is not fully precise 
-as some containers may have multiple shapes of the same length, \eg~differently ballanced trees.}.
+as some containers may have multiple shapes of the same length, \eg~differently balanced trees.}.
 For every shape, we can obtain a set of positions in the container (\eg~offsets in a list of a
 specified length). More formally:
 
@@ -102,7 +102,7 @@ to our work are lists and singleton data types:
   shapes are integers $S = \ident{Nat}$ (lengths of a list). The set of positions for a 
   given length $n$ is the set of indices $P(n)= \{ 1 \ldots n \}$.
 
-\item The contianer representing the singleton data type is given by $S \triangleleft P$ where
+\item The container representing the singleton data type is given by $S \triangleleft P$ where
   shapes are given by a singleton set $S = \{ \ast \}$ and the set of positions for the
   shape $\ast$ contains exactly one position. To follow the intuition based on offset or 
   index, we write the single position as $0$, that is $P(\ast) = \{ 0 \}$.
@@ -173,7 +173,7 @@ In addition, we require the following two properties of $\czero, \cpar$ and $\cl
 
 \noindent
 As previously, the monoid $(\C,\cseq,\cunit)$ models sequential composition; the laws guarantee
-an underlying category structre; $\cunit$ and $\czero$ represent an accessed and unused variable, 
+an underlying category structure; $\cunit$ and $\czero$ represent an accessed and unused variable, 
 respectively.
 
 The $\cpar$ operation models combining of context requirements arising from multiple parts of a 
@@ -207,7 +207,7 @@ mapping from free-variable contexts to shapes $\slen{\Gamma} \in \SH$, and eleme
 \SH$ such that $(\SH, \stimes, \sempty)$ is a monoid.
 
 The elements $\sempty$ and $\sunit$ represent the shapes of the empty and the singleton free-variable 
-context, respectively. The $\stimes$ operation corresponds to concatentation of free-variable contexts.
+context, respectively. The $\stimes$ operation corresponds to concatenation of free-variable contexts.
 Given $\Gamma_1$ and $\Gamma_2$ such that $\sclrd{s_1}=\slen{\Gamma_1}, \sclrd{s_2}=\slen{\Gamma_2}$, 
 we require that $\sclrd{s_1}\,\stimes\,\sclrd{s_2}=\slen{\Gamma_1, \Gamma_2}$. 
 \end{definition}
@@ -412,7 +412,7 @@ $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ together with a coeffect algebra $(\
 and the derived constructs $\alift{-}$, $\alen{-}$ and $\aseq$. 
 As in the structural system, free-variable contexts $\Gamma$ are treated as vectors modulo duplicate
 use of variables -- the associativity is built-in. The order of variables matters, but can be changed 
-using the exchane rule. The context annotations $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ 
+using the exchange rule. The context annotations $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ 
 are shape-indexed coeffects (rather than simple vectors as before). As before, functions are
 annotated with coeffects scalars.
 
@@ -427,7 +427,7 @@ However, for a singleton shape with one position, the annotations are equivalent
 variables with a scalar $\cunit$ and constants with a scalar $\czero$.
 
 In the (\emph{app}), (\emph{abs}) and (\emph{let}) rules, the only change from the structural
-system is that the vector concatentation $\atimes$ is now replaced with context splitting/merging 
+system is that the vector concatenation $\atimes$ is now replaced with context splitting/merging 
 of the unified coeffect algebra. As already mentioned, we use splitting of context requirements $\azip$
 in rule \emph{assumptions} and merging of context requirements $\apar$ in rule \emph{conclusions}.
 
@@ -628,7 +628,7 @@ Similarly to exchange, the proof uses idempotence of $\czip$ and $\cpar$:
 \noindent
 In the last two cases, we need to turn the coeffect into a form that is required by the exchange
 and contraction rules. Aside from idempotence, we could use the unit property and obtain 
-\eg~$\czero\,\czip\,\cclrd{r}\,\czip\,\czero\,\czip\,\czero$. However, this appraoch does not 
+\eg~$\czero\,\czip\,\cclrd{r}\,\czip\,\czero\,\czip\,\czero$. However, this approach does not 
 work because $\cpar$ and $\czip$ may have different unit elements (in fact, we do not ever require
 the existence of a unit for $\czip$).
 
@@ -699,7 +699,7 @@ data-flow and variable liveness.
 
 %--------------------------------------------------------------------------------------------------
 
-\subsection{Semanitcs of unified calculus}
+\subsection{Semantics of unified calculus}
 \label{sec:unified-semantics}
 
 The semantics of the unified calculus can be obtained by generalizing the semantics of the structural
@@ -737,7 +737,7 @@ This means that the splitting and merging the context can change the coeffect an
 \end{equation*}
 %
 For flat coeffect calculi where $(\aclrd{r}\,\azip\,\aclrd{s}) \;\aclrd{\leq}\; (\aclrd{r}\,\apar\,\aclrd{s})$,
-splitting and then merging a context may lose some of the avilable contextual capabilities
+splitting and then merging a context may lose some of the available contextual capabilities
 (and increase context requirements). This illuminates why our proofs of Lemma~\ref{thm:unified-rev-contr} 
 and Lemma~\ref{thm:unified-rev-exch} relied on sub-coeffecting in the flat system.
 
@@ -873,7 +873,7 @@ support programming with computations based on flat/structural indexed comonads.
 
 More lightweight syntax for effectful computation can be obtained using
 techniques that automatically insert the necessary monadic plumbing (without
-special syntax). This has been done for effecful computations \cite{monads-lightweight-ml}
+special syntax). This has been done for effectful computations \cite{monads-lightweight-ml}
 and a similar approach would be worth exploring for coeffects. 
 
 % -------------------------------------------------------------------------------------------------
@@ -884,7 +884,7 @@ and a similar approach would be worth exploring for coeffects.
 The other aspect of practical implementation of coeffects is that of tracking the context requirements
 (coeffect annotations) in the type system. To achieve this (without resorting to a single-purpose
 language feature) the type system needs to be able to capture various kinds of coeffect algebras. 
-The structures required in this thesis include sets (with union or interesection), natural numbers (with 
+The structures required in this thesis include sets (with union or intersection), natural numbers (with 
 addition, maximum, minimum and multiplication), two-point lattice (for liveness) and free monoids 
 (vectors of annotations).
 
@@ -918,7 +918,7 @@ provider}.
 
 Compared to typical effect systems based on sets, coeffect systems have richer structure consisting
 of four operations ($\cseq,\czip,\cpar$ and a relation $\cleq$). This allows capturing interesting 
-properties, but it makes working with coeffect annotations difficult -- it compilcates tasks
+properties, but it makes working with coeffect annotations difficult -- it complicates tasks
 such as type generalization and constraint solving in type inference. Here, we look at one possible 
 simplification of the structure.
 
@@ -986,7 +986,7 @@ $\cseq$ and $\cleq$:
 \end{equation*}
 %
 Note that we still need \emph{two distinct} operators in the system. Analysis of our examples shows
-that the operator used for sequential composition $\cseq$ is not necessarilly related in any way to 
+that the operator used for sequential composition $\cseq$ is not necessarily related in any way to 
 the ordering on the lattice provided by $\cleq$. 
 
 However, the operations $\ident{merge}$, $\ident{split}$ and $\ident{lift}$ can now all
@@ -1001,7 +1001,7 @@ bound with $\ident{lift}$ to get the (less precise) operation required here.
 % -------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
-{\small a.) Littice-based flat systems (selected rules):}
+{\small a.) Lattice-based flat systems (selected rules):}
 
 \begin{equation*}
 \tyrule{abs}
@@ -1018,7 +1018,7 @@ bound with $\ident{lift}$ to get the (less precise) operation required here.
 \end{equation*}
 
 \vspace{1.5em}
-{\small b.) Littice-based structural systems (selected rules):}
+{\small b.) Lattice-based structural systems (selected rules):}
 
 \begin{equation*}
 \tyrule{contr}
@@ -1046,7 +1046,7 @@ This can be rewritten similarly to the flat (\emph{app}) rule --  when contracti
 context requirements of the resulting variable are greater than the requirements associated with
 each of the original variables.
 
-In smmary, the lattice-based coeffect system has some advantages over the design used in this
+In summary, the lattice-based coeffect system has some advantages over the design used in this
 thesis. In particular, it uses better-known structures and is simpler. However, we do not use
 it as it rules out one of the important motivating examples (implicit parameters) and, even with
 the simplification, solving constraints with $\cseq$ and $\cleq$ is still an open question.
@@ -1157,9 +1157,9 @@ development for both coeffect systems and CMTT.
 
 \subsection{Coeffect meta-language}
 
-The coeffect meta-langauge could be designed using both flat and structural indexed comonads.
+The coeffect meta-language could be designed using both flat and structural indexed comonads.
 For simplicity, this section only discusses the flat variant. The syntax of types and terms
-of the langauge includes the type constructor $\ctyp{\cclrd{r}}{\tau}$ and four additional
+of the language includes the type constructor $\ctyp{\cclrd{r}}{\tau}$ and four additional
 language constructs:
 %
 \begin{equation*}
@@ -1173,7 +1173,7 @@ language constructs:
 \end{equation*}
 %
 The $!e$ and $\kvd{let\;box}$ constructs correspond to the \ident{counit} and \ident{cobind}
-operation of the comonad. To define meta-langauge for flat indexed comonads, we also include 
+operation of the comonad. To define meta-language for flat indexed comonads, we also include 
 \kvd{split} and \kvd{merge} that embed the corresponding operations. 
 
 \paragraph{Types for coeffect meta-language.}
@@ -1266,7 +1266,7 @@ as it illuminates the relationship between coeffects and CMTT (unfortunately it 
 to embed coeffect calculi in CMTT because of the more general annotations structure).
 
 Given a typing judgement $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ in the flat coeffect calculus,
-we define $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}_v$ as its emebdding in the coeffect
+we define $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}_v$ as its embedding in the coeffect
 meta-language. Note that the translation is indexed by $v$, which is a name of variable used 
 to represent the entire variable context of the source language. The translation is defined in
 Figure~\ref{fig:conclusions-embed}. The embedding resembles the semantics discussed in 
@@ -1316,7 +1316,7 @@ in the previous two chapters. To achieve this, we introduced \emph{coeffect cont
 determines how are coeffect annotations attached to variable contexts. We then discussed two
 instances of the structure that capture flat and structural properties.
 
-In the rest of the chapter, we discussed two topis of future and related work. First
+In the rest of the chapter, we discussed two topics of future and related work. First
 (Section~\ref{sec:unified-impl}), we considered pathways to practical implementations of
 coeffect systems, including a discussion of a novel lattice-based coeffect system, which is simpler,
 but cannot capture all our motivating examples. Finally, we discussed how our work relates to 

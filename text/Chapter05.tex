@@ -8,7 +8,7 @@ languages. As already discussed, we attempt to find abstractions that are \emph{
 to capture a wide range of useful programming language features, but \emph{specific enough} to 
 let us identify and capture interesting properties of the context. 
 
-In Chapter~\ref{ch:applications}, we discussed two notions of context. Context-aware prorgamming
+In Chapter~\ref{ch:applications}, we discussed two notions of context. Context-aware programming
 languages that that capture whole-context properties were generalized by the \emph{flat coeffect 
 calculus} in Chapter~\ref{ch:flat}. Here, we consider per-variable contextual properties
 and we introduce the \emph{structural coeffect calculus}.
@@ -79,7 +79,7 @@ and its annotations.
 
 Our work follows the ``language semantics'' style in that we provide a structural semantics to
 the terms of ordinary $\lambda$-calculus. By contrast the most closely related work has been done in 
-the meta-langauge style, which extends the terms and types of a language with constructs for explicitly
+the meta-language style, which extends the terms and types of a language with constructs for explicitly
 manipulating the context. This includes Contextual Modal Type Theory (CMTT) \cite{logic-cmtt}, where variables
 may be of a type $A[\Psi]$ denoting a value of type $A$ that requires context $\Psi$. In CMTT, 
 $A[\Psi]$ is a first-class type, while structural coeffect systems do not expose coeffect 
@@ -212,7 +212,7 @@ idempotent.
 Finally, we now also require two properties that relate the ordering $\cleq$ with coeffects composed
 via $\cpar$ and with $\czero$. These were previously required for bottom-pointed substitution lemma 
 (Lemma~\ref{thm:cbn-substitution-bot}). Here, we require them for all structural coeffects as it holds
-for all our examples; it is needed for the structural version of the subtitution lemma 
+for all our examples; it is needed for the structural version of the substitution lemma 
 (Lemma~\ref{thm:structural-substitution}).
 
 In the structural coeffect calculus, we use a vector instead -- combining and splitting of 
@@ -269,7 +269,7 @@ in how it handles free variable contexts. The \emph{syntax-driven} rules do not 
 weakening, exchange or contraction -- this is done by checking the types of sub-expressions
 in disjoint parts of the free variable context. Unlike in sub-structural logics, our system
 does allow weakening, exchange and contraction, but via explicit \emph{structural} rules that
-perform corresponding transformation on the coeffect annoation.
+perform corresponding transformation on the coeffect annotation.
 
 \paragraph{Syntax-driven rules.}
 The syntax-driven rules of the type system are shown in Figure~\ref{fig:struct-types} (a).
@@ -305,9 +305,9 @@ Rule (\emph{weak}) allows adding a variable to the context, extending the coeffe
 vector with $\czero$ to mark it as unused, (\emph{exch}) provides a way to rearrange variables
 in the context, performing the same reordering on the coeffect vector. Finally recall that 
 variables in the free variable context are required to be \emph{unique}. The (\emph{contr}) rule 
-allows re-using a variable. We can type check sub-expressions using two separate varaibles and 
+allows re-using a variable. We can type check sub-expressions using two separate variables and 
 then unify them using substitution. The resulting variable is annotated with $\cpar$ and it
-is the only place in the structural coeffect system where context requiremens are combined
+is the only place in the structural coeffect system where context requirements are combined
 (semantically, this is where the available context is shared).
 
 %---------------------------------------------------------------------------------------------------
@@ -479,7 +479,7 @@ and so the above definitions are both valid. Similar construction can be used fo
 \emph{optimized data-flow} example from Section~\ref{sec:flat-calculus-examples}.
 
 It is important to note that this gives us a systems with \emph{different} properties. The 
-information are now tracked per-variable rather than for enitre contexts. For data-flow,
+information are now tracked per-variable rather than for entire contexts. For data-flow,
 we also need to adapt the typing rule for the \kvd{prev} construct. Here, we write $\aclrd{+}$ 
 for a pointwise extension of the $+$ operator, such that
 $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} \aclrd{+} k = \alift{\cclrd{r_1} + k, \ldots, \cclrd{r_n} + k}$.
@@ -624,7 +624,7 @@ flat coeffect annotation can be seen as singleton vectors.
 
 The operation $\ident{counit}_{\cunit}$ operates on a vector of length one. This means that it will always
 return a single value rather than a vector created using $-\xtimes-$. The $\ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}$
-operation is, perhaps surprisingly, indexed by a coeffect vector and a coeffect scalar. This assymmetry
+operation is, perhaps surprisingly, indexed by a coeffect vector and a coeffect scalar. This asymmetry
 is explained by the fact that the input function ($\ctyp{\aclrd{\textbf{r}}}{\alpha} \rightarrow \beta$)
 takes a vector of variables, but always produces just a single value. Thus the resulting function 
 also takes a vector of variables, but always returns a context with a vector containing just one value.
@@ -771,7 +771,7 @@ and perform sub-coeffecting on individual variables.
 \end{figure*}
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Semantics of structural caluculus}
+\subsection{Semantics of structural calculus}
 
 The concrete semantics for liveness and bounded variable use shown in 
 Sections~\ref{sec:applications-struct-live} and \ref{sec:applications-struct-bll}
@@ -810,7 +810,7 @@ rather than more generally for $\ctyp{\aclrd{\textbf{r}}}{\alpha}$. The need to 
 of the variable context is another reason for using $-\xtimes-$ when interpreting expressions in contexts.
 
 \paragraph{Expressions.}
-A semantics of strucutural coeffect calculi is shown in Figure~\ref{fig:struct-semantics}. As in
+A semantics of structural coeffect calculi is shown in Figure~\ref{fig:struct-semantics}. As in
 the previous chapter, the semantics is written in a programming language style using constructs
 such as let-binding rather than using a categorical (point-free) notation. As before, the semantics
 can equally be written using primitives such as currying, uncurrying, function pairing etc.
@@ -856,7 +856,7 @@ merges them, using the newly transformed middle part.
 The transformations on the middle part are quite simple. The (\emph{sub}) rule 
 uses $\ident{lift}_{\cclrd{s}, \cclrd{s'}}$ to discard some of the available additional context;
 the (\emph{exch}) rule swaps two single-variable contexts and the (\emph{contr}) rule
-uses the $\ident{dup}_{\cclrd{s}, \cclrd{t}}$ operation to duplicate a varaible while 
+uses the $\ident{dup}_{\cclrd{s}, \cclrd{t}}$ operation to duplicate a variable while 
 splitting its additional context.
 
 \paragraph{Properties.}
@@ -882,7 +882,7 @@ By analysis of the semantic rules in Figure~\ref{fig:struct-semantics}.
 \noindent
 As in the flat calculus, the primitive operations of the structural indexed comonad are each
 annotated with a unique operations provided by the coeffect annotations. This means that the
-semantics fully determines the structure of the typing rules of the strucutral coeffect
+semantics fully determines the structure of the typing rules of the structural coeffect
 calculus. 
 
 % --------------------------------------------------------------------------------------------------
@@ -980,7 +980,7 @@ composition) and \ident{dup} (representing context sharing or parallel compositi
 we get $k$ vectors corresponding to $k$ variables, each with $m+n_i$ values. The operation calls 
 $f$ $m$-times to obtain $m$ past values required as the result of type $\ctyp{\langle m \rangle} \beta$.
 
-The $\ident{dup}_{m,n}$ operation needs to produce a two-varaible context containing $m$ and $n$ values,
+The $\ident{dup}_{m,n}$ operation needs to produce a two-variable context containing $m$ and $n$ values,
 respectively, of the input variable. The input provides $\mathit{max}(m, n)$ values, so the definition
 is simply a matter of restriction. Finally, \ident{counit} extracts the value of its single variable
 and \ident{lift} drops additional past values that are not required.
@@ -1478,7 +1478,7 @@ suitability of the type system. The second technical result is equational theory
 coeffect calculus. In particular, we show that $\beta$-reduction and $\eta$-expansion have the
 typing preservation property for any instance of the structural coeffect calculus. These two 
 strong properties are desirable for programming languages, but are often not satisfied 
-(\eg~by langauges with effects).
+(\eg~by languages with effects).
 
 Two questions remain open for the upcoming chapter. Firstly, is there a way to present 
 flat and structural coeffect calculi in a uniform way as a single system? Secondly, what
