@@ -1,0 +1,408 @@
+% ==================================================================================================
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+% ==================================================================================================
+
+\documentclass[
+		twoside,openright,titlepage,numbers=noenddot,headinclude,%1headlines,
+                footinclude=true,cleardoublepage=empty,
+                BCOR=10mm,paper=a4,fontsize=10pt, % Binding correction, paper type and font size
+                ngerman,american, % Languages
+                ]{scrreprt}
+
+\input{classicthesis-config}
+\usepackage{semantic}
+\usepackage{paralist}
+\usepackage{etoolbox}
+\usepackage{stmaryrd}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+\newcounter{mythmcounter}
+\newcounter{mydefcounter}
+\newcounter{myexpcounter}
+\newtheorem{example}[myexpcounter]{Example}
+\newtheorem{remark}[mythmcounter]{Remark}
+\newtheorem{definition}[mydefcounter]{Definition}
+\newtheorem{theorem}[mythmcounter]{Theorem}
+\newtheorem{lemma}[mythmcounter]{Lemma}
+\newtheorem{proposition}[mythmcounter]{Proposition}
+\newtheorem*{lemma*}{Lemma}
+
+% Formatting for source code & types
+\definecolor{cmtclr}{rgb}{0.0,0.6,0.0}
+\definecolor{kvdclr}{rgb}{0.0,0.0,0.6}
+\definecolor{strclr}{rgb}{0.5,0.1,0.0}
+\definecolor{prepclr}{rgb}{0.0,0.0,0.0}
+
+\newcommand{\sep}[0]{\; | \;}
+\newcommand{\kvd}[1]{\textnormal{\textcolor{kvdclr}{\ttfamily #1}}}
+\newcommand{\str}[1]{\textnormal{\textcolor{strclr}{\ttfamily "#1"}}}
+\newcommand{\prepk}[1]{\textnormal{\textcolor{prepclr}{\bfseries\sffamily #1}}}
+\newcommand{\prepi}[1]{\textnormal{\textcolor{prepclr}{\ttfamily #1}}}
+\newcommand{\ident}[1]{\textnormal{\sffamily #1}}
+\newcommand{\cmt}[1]{\textit{\sffamily\textcolor{cmtclr}{#1}}}
+
+\newcommand{\ctyp}[2]{C^{#1}#2}
+\newcommand{\mtyp}[2]{M^{#1}#2}
+\newcommand{\subst}[3]{#1[#2 \leftarrow #3]}
+
+% Typing rule and typing statement (single line)
+\newcommand{\tyrule}[3]{ \inference[\footnotesize{(\emph{#1})}~~]{#2}{#3} }
+\newcommand{\tyruler}[3]{ \inference{#2}{#3}~~\footnotesize{(\emph{#1})} }
+
+% Coeffect algebra
+\definecolor{aclr}{rgb}{0.6,0.3,0.0}
+\newcommand{\aclrd}[1]{\textcolor{aclr}{#1}}
+
+% Coeffect algebra
+\definecolor{cclr}{rgb}{0.0,0.5,0.0}
+\newcommand{\cclrd}[1]{\textcolor{cclr}{#1}}
+
+\newcommand{\czero}{ \textcolor{cclr}{ \mathsf{ign} } }
+\newcommand{\cunit}{ \textcolor{cclr}{ \mathsf{use} } }
+\newcommand{\cseq}{ \textcolor{cclr}{ \circledast }}
+\newcommand{\cpar}{ \textcolor{cclr}{\oplus} }
+\newcommand{\czip}{ \textcolor{cclr}{\wedge} } % only used by flat coeffects
+\newcommand{\cleq}{ \textcolor{cclr}{\leq} }
+\newcommand{\cgeq}{ \textcolor{cclr}{\geq} }
+
+\newcommand{\atimes}{ \textcolor{aclr}{\times} }
+\newcommand{\aseq}{ \textcolor{aclr}{\circledast}} % Should be the same as \cseq
+\newcommand{\aparstr}{ \textcolor{aclr}{\oplus}} % Should be the same as \cseq
+
+% Unified
+
+\newcommand{\SH}{ {\textcolor{sclr}{S}} }
+\newcommand{\SP}{ {\textcolor{sclr}{P}} }
+\newcommand{\SHP}{ {\textcolor{sclr}{S\triangleleft P}} }
+\newcommand{\sempty}{ {\textcolor{sclr}{ \hat{0}}} }
+\newcommand{\sunit}{ {\textcolor{sclr}{\hat{1}}} }
+\newcommand{\stimes}{ {\textcolor{sclr}{\diamond}} }
+\newcommand{\sflat}{\star}
+
+\newcommand{\azero}{ \textcolor{aclr}{\bot} }
+\newcommand{\aunit}{ \alift{\cunit} }
+\newcommand{\aweak}{ \alift{\czero} }
+
+\newcommand{\azip}{ \textcolor{aclr}{ \mathbin{\rotatebox[origin=c]{-90}{$\ltimes$}} } }
+\newcommand{\apar}{ \textcolor{aclr}{ \mathbin{\rotatebox[origin=c]{90}{$\ltimes$}} } }
+
+
+\newcommand{\xtimes}{\hat{\times}}
+
+\newcommand{\ctx}{\textit{ctx}}
+
+
+% Ordinary context where colouring is done by hand
+\newcommand{\coctx}[2]{ #1 \,\text{\scriptsize @}\, {{\text{$#2$}}}  }
+
+% Simple coeffect systems in the introduction
+\newcommand{\cons}{\hspace{-0.15em}\times\hspace{-0.25em}} %\sctxclrd{+\hspace{-0.55em}+}}
+
+\newcommand{\alift}[1]{ \textcolor{aclr}{\langle} #1 \textcolor{aclr}{\rangle}}
+
+\definecolor{sclr}{rgb}{0.2,0,0.8}
+\newcommand{\sclrd}[1]{ \textcolor{sclr}{#1} }
+
+\newcommand{\C}{ {\textcolor{cclr}{\mathcal{C}}} }
+\newcommand{\M}{ {\textcolor{cclr}{\mathcal{M}}} }
+
+\newcommand{\alen}[1]{{\aclrd{\textit{len}(}#1\aclrd{)}}}
+\newcommand{\slen}[1]{{\sclrd{\textit{len}(}#1\sclrd{)}}}
+\newcommand{\xlen}[1]{{\textit{len}(#1)}}
+
+\newcommand{\reduce}{\longrightarrow}
+
+
+\newcommand{\restr}[2]{#1|_{#2}}
+\newcommand{\narrow}[1]{\hspace{-0.5em} #1 \hspace{-0.65em}~}
+
+
+\definecolor{todoclr}{rgb}{0.8,0,0.5}
+\newcommand{\todo}[1]{\textcolor{todoclr}{ \begin{quotation} \noindent\textbf{TODO:} #1 \end{quotation} }}
+
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\catc}{\mathcal{C}}
+\newcommand{\idf}[1]{ {\textnormal{\sffamily id}}_{#1} }
+
+
+\newcommand{\figcaption}[1]{
+  \vspace{0.5em}
+  \noindent\makebox[\linewidth]{\rule{\textwidth}{0.5pt}}
+  \vspace{-2em}
+  \caption{#1}
+}
+% Half line spacing around align
+\newcommand{\zerodisplayskips}{%
+  \setlength{\abovedisplayskip}{0.5em}
+  \setlength{\belowdisplayskip}{0.5em}
+  \setlength{\abovedisplayshortskip}{0.5em}
+  \setlength{\belowdisplayshortskip}{0.5em}}
+\appto{\normalsize}{\zerodisplayskips}
+\appto{\small}{\zerodisplayskips}
+\appto{\footnotesize}{\zerodisplayskips}
+
+% half line spacing around compactitem
+\setlength{\pltopsep}{0.5em}
+\setlength{\plitemsep}{0.3em}
+
+\patchcmd{\thebibliography}{\chapter*}{\section*}{}{}
+
+\begin{document}
+
+\frenchspacing % Reduces space after periods to make text more compact
+\raggedbottom % Makes all pages the height of the text on that page
+\selectlanguage{american} % Select your default language - e.g. american or ngerman
+\pagenumbering{roman} % Roman page numbering prior to the start of the thesis content (i, ii, iii, etc)
+\pagestyle{plain} % Suppress headers for the pre-content pages
+
+
+% ==================================================================================================
+
+\chapter*{Proposal for thesis corrections}
+\renewcommand*\thesection{\arabic{section}}
+
+This document addresses some of the concerns discussed in the joint report on a viva of the thesis
+``Context-aware programming languages'' and to proposes an outline for corrections that would
+resolve the issues discussed in the report.
+
+The main concern presented in the report is related to the use of ``coeffect-directed semantics''
+in the thesis. We start by discussing additional background that provides a better perspective on
+this approach as well as why it was employed in the thesis (Section~\ref{sec:background}). Next,
+we turn our attention to the issue of \emph{implicit parameters} (Section~\ref{sec:ambiguity}) --
+this problem (one of the three problems used throughout the thesis) demonstrates the ambiguity
+of type checking that arises in \emph{flat coeffect calculus} and relates it with prior work in
+languages such as Haskell. Finally, the last section (Section~\ref{sec:proposal}) outlines four
+concrete steps that address the reviewer's concerns.
+
+\section{Background}
+\label{sec:background}
+
+Perhaps the most important objection raised in the report is that the semantics presented throughout
+the thesis is given based on a concrete typing derivation. In other words, the meaning of a term
+depends on the concrete typing assigned by a compiler\footnote{The thesis does not clearly and
+explicitly state this, leading to potential confusion -- this can be clarified, both in the
+text and typographically (by writing the semantics over a derivation rule, rather than over
+a judgement) to avoid confusion.} In this section, we discuss additional programming language
+background\footnote{Which will be added in the final version of the thesis.} that provides
+additional grounds for specifying the meaning of programs in this way.
+
+\subsection{Type-directed semantics in practice}
+\label{sec:background-practice}
+
+One of the aims of this thesis is to model how real-world functional-first programming languages
+could be extended with the support for context-aware programming and so the work is done in
+the context of languages such as F\# \cite{app-fsharp-spec} and Scala \cite{app-scala-spec}.
+
+In theoretically-focused programming languages, it is possible to define the meaning of a term
+without considering the typing, but there are many examples where this is not the case in languages
+such as F\#:
+%
+\begin{equation*}
+\begin{array}{l}
+  \kvd{let}~\ident{nextTwo}~\ident{rnd}~=~(\ident{rnd.Next}(), \ident{rnd.Next}()) \\
+  \kvd{let}~\ident{add}~\ident{a}~\ident{b}~=~\ident{a}+\ident{b}
+\end{array}
+\end{equation*}
+%
+In the first example, the meaning of $\ident{rnd.Next}()$ depends on the type of \ident{rnd}.
+This can be any .NET class with the \ident{Next} method, but the F\# compiler can only compile
+the code if it knows the concrete type. Thus, the meaning depends the typing derivation.
+
+In the second example, the meaning of $+$ depends on the types of the operands (it can be an
+addition or string concatenation). The F\# compiler can compile the function
+without additional information, because the type inference has a defaulting mechanism (using
+\ident{int}), but if the program contains e.g.~$\ident{add}~\str{hi}~\str{there}$, the compiler
+will use \ident{string}.
+
+As demonstrated in this section, it is not uncommon in practical programming languages that the
+meaning of a term depends on its typing derivation. In F\#, this is addressed in two ways. In case
+of \ident{nextTwo}, the compiler rejects the program if it does not know the type of \ident{rnd}
+(an explicit type annotation would be required to disambiguate). In case of \ident{add}, the
+compiler uses a defaulting mechanism to pick one of the avialable typing derivations. We return to
+these two options when discussing the resolution of ambiguities in \emph{coeffect calculi} in
+Section~\ref{sec:ambiguity}.
+
+\subsection{Type-directed semantics in theory}
+
+In a number of places in the thesis, we give the semantics of based on typing derivation (both for
+the concrete languages in Chapter~3 and for the coeffect calculi in Chapters~4 and 5). The notation
+used in the thesis is (using simple let-binding as an example):
+%
+\begin{equation*}
+\begin{array}{l}
+  \sem{x:\tau \vdash \kvd{let}~x_1=e_2~\kvd{in}~e_2 : \tau_2} = \\
+  \quad \sem{x_1:\tau_1 \vdash e_2 : \tau_2} \circ \sem{x:\tau \vdash e_1 : \tau_1}
+\end{array}
+\end{equation*}
+%
+This notation is somewhat ambiguous as it suggests that we are defining a function from a typing
+judgement for the expression on the left-hand side. However, this should be read as giving an
+interpretation of the term based on the typing derivation.
+
+It is worth noting that giving an interpretation of a term based on its typing derivation is not
+an unusual construction used only in the thesis. In fact, Moggi in his seminal paper on monads uses
+the same approach and writes \cite[p7]{monad-notions} (emphasis mine):
+
+\begin{quotation}
+\noindent
+An interpretation $\sem{-}$ of the language in a category $C$ is parametric in an interpretation
+of the symbols in the signature and is defined by \emph{induction on the derivation} of
+well-formedness for (types,) terms and equations.
+\end{quotation}
+
+\noindent
+The notation used by Moggi is unambiguous (and we intend to adopt the same clear notation in the
+revised version of the thesis). Using the same example as above:
+%
+\begin{equation*}
+  \begin{array}{r}
+    x:\tau \vdash e_1 : \tau_1 \\
+    x_1:\tau_1 \vdash e_2 : \tau_2 \\ \hline
+    x:\tau \vdash \kvd{let}~x_1=e_2~\kvd{in}~e_2 : \tau_2
+  \end{array}
+  \begin{array}{l}
+    = g_1 \\
+    = g_2 \\
+    = g_2 \circ g_1
+  \end{array}
+\end{equation*}
+%
+In systems that have unique typing derivation (such as the language of Moggi), the fact that the
+semantics is defined by induction over a typing derivation means merely that we only define
+semantics for well-typed prorgams (as there is no other typing derivation). However, there are two
+possible directions that can be taken from this simple starting point.
+
+We can extend the type system with non-syntax-driven rules (for example, with sub-effecting or
+explicit structural rules like exchange, weakening and contraction). As a result, the language
+loses uniqueness of typing, but the semantics of terms is equivalent for all typing derivations.
+This is the \emph{coherence property} that has been proved for certain systems
+\cite{semantics-bltres}.
+
+However, when we consider programming languages where the meaning of a term \emph{depends} on a
+typing derivation (as discussed in Section~\ref{sec:background-practice}), we can no longer
+prove the coherence property -- because the semantics of a term is different for different
+typing derivations. As further discussed in Section~\ref{sec:ambiguity}, this is exactly the case
+of the flat coeffect calculus for implicit parameters presented in the thesis. Before discussing
+implicit parameters, the following subsection provides a more general argument for why this is the
+correct approach for context-aware computations.
+
+\subsection{Why type-directed semantics for coeffects?}
+
+One aim of the thesis is to make explicit some of the context-dependencies that are often implicit
+in today's programming languages. For example, a language today might provide a construct for
+accessing a resource provided by the environment such as $\kvd{access}~\ident{Date}$ (typically,
+this is just a library call). Operationally, the meaning of the meaning of the term depends on
+the context -- if \ident{Date} is available on the client-side, it is accessed from there; if
+\ident{Date} is available on the server-side, it is accessed from there instead and if \ident{Date}
+is not available, the program raises an exception.
+
+We aim to make the programming language aware of these contextual dependencies through the use
+of type-and-coeffect systems. Our calculi lift some of the operational properties into the type
+system as coeffects. This makes the existing context-dependencies more visible -- and as a
+consequence, the semantics can only be defined for a concrete typing derivation. An alternative
+approach is to make the language \emph{more explicit}, but we do not attempt to do this and
+instead follow an approach similar to F\#\footnote{This demarcation for the work
+in the thesis is not clearly discussed in the text and will be clarified.} as outlined in
+Section~\ref{sec:background-practice}.
+
+\section{Resolving ambiguity}
+\label{sec:ambiguity}
+
+The ambiguity in typing derivation that is ``a problem'' in the thesis is best demonstrated
+using implicit parameters. Here, we look at how Haskell resolves this (and how the same
+problem appears elsewhere).
+
+The presented thesis does not attempt to resolve the ambiguity and so it provides a more
+interesting insight. We discuss why this is the case.
+
+\subsection{Haskell implicit parameters}
+
+If we try to understand implicit parameters in a more general way, then we can see that the meaning
+indeed depends on the typing derivation. (Haskell resolves this by preferring one specific typing derivation.)
+
+
+Haskell implicit parameters
+
+\subsection{Exceptions}
+Exceptions
+
+\subsection{Counter example}
+
+
+\subsection{Summary}
+
+Haskell does one thing, exceptions do (strictly) another thing.
+(Maybe for good reasons, but we should view this more generally)
+
+\section{Proposal}
+\label{sec:proposal}
+
+Coeffect-directed meaning makes sense.
+
+The thesis does not use category theory to give a semantics in the traditional sense with
+traiditional properties (and this needs to be said clearly)
+
+\subsection{Translation}
+
+The "coeffect-directed semantics" should not be seen as a "semantics of a term", but it should
+instead be seen as a translation that - given a typing derivation - produces a new term that
+unambiguously defines the meaning. The chapter 3 does so using direct denotational style; the
+chapters 4 and 5 show that we can abstract common structures used in these definitions.
+
+Doing so also explains why our type system (about which we also prove syntactic properties) is
+appropriately constructed (the structure of the typing follows from the structure of this
+coeffect-directed semantics - and BTW this was the hard thing to figure out when working on the thesis!)
+
+As a result, we can see the "coeffect-directed semantics" more as a translation from a type-and-coeffect
+derivation to an unambiguous term language (which I'm happy to define more explicitly and precisely
+in a syntactic style, as opposed to categorical style).
+
+\subsection{Unique typing derivation}
+
+>> 1. The problem occurs because the type derivation in all the proposed
+>> systems is not unique, due to features such as sub-typing
+
+After doing the changes outlined above, this still remains a valid point. In Haskell's implicit
+parameters, this is resolved by choosing one canonical typing derivation (I'll give an example how
+this works). The same approach can be used to correct this in the thesis - that is, I would like
+to give an algorithmic formulation of the type system that produces a canonical typing derivation.
+(There are three sources of the problem - subtyping, lambda abstraction and structural system; I
+intend to make subtyping an explicit term, add externally provided function for resolving ambiguities
+in lambda abstraction and have algorithmic typing rules for the structural systems).
+
+\subsection{Lack of equational structure}
+
+>> 3. The co-monadic structures proposed in the categorical semantics
+>> lack an equational structure
+
+This is correct - and it follows from the fact that the categorical structures are used to motivate
+the design of the type system, rather than - which is more common - to provide a reasoning
+framework about coeffectful programs.
+
+\subsection{Generalization}
+
+>> 4. It is unclear as to whether the concrete denotational semantics
+>> are instances of the categorical framework.
+
+This is a valid point and I fully accept it. I intend to add sections showing that this is, indeed, the case.
+
+% ==================================================================================================
+
+\section{Summary}
+
+In practice, people use monads as common structure - not for proving program properties.
+This thesis aims to find a similar common structure in context-aware programming.
+
+This is done in two ways pursued in parallel - by finding a type system with desirable syntactic
+properties and by finding a way to structure the translational semantics using a common structure.
+
+Finding common structure.
+
+yo
+
+\bibliographystyle{abbrv}
+\bibliography{Bibliography}
+
+\end{document}
