@@ -13,3 +13,5 @@ rules/*.aux
 rules/*.log
 rules/*.synctex.gz
 *.bak
+packages
+.paket/paket.exe

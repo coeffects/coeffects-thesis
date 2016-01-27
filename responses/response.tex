@@ -167,14 +167,14 @@ The starting point for addressing the reviewers concerns is observing that in ma
 programming languages, the value of an expression depends on the type derivation
 (Section~\ref{sec:background-practice}). Often, the choice is hidden behind a mechanism that
 selects one type as primary\footnote{An F\# example is discussed in Section~\ref{sec:background-practice}
-and Haskell example is discussed in Section~\ref{sec:ambiguity}.}. This resolves the ambiguity,
-but also narrows down the design space.
+and Haskell example is discussed in Section~\ref{sec:ambiguity}.}. 
 
-The same is the case for the coeffect calculi presented in the thesis \emph{Context-aware programming
-languages}. However, our approach makes the dependence on the typing explicit and we resolve it by
+The same is the case for the coeffect calculi presented in the thesis, but 
+our approach makes the dependence on the typing explicit and we resolve it by
 defining the semantics as a function of a typing derivation\footnote{The thesis does not explicitly
-state this and it will be clarified in the final version.}. As discussed in Section~\ref{sec:background-theory}
-this approach does not diverge from, but rather extends Moggi's seminal work \cite{monad-notions}.
+state this and it will be clarified in the final version.}. 
+this approach does not diverge from, but rather extends Moggi's work \cite{monad-notions}
+(Section~\ref{sec:background-theory}).
 
 In the following two sections, we argue that specifying program semantics based on a type derivation
 is not unusual in practice (Section~\ref{sec:background-practice}) and theory
@@ -183,6 +183,7 @@ Finally, Section~\ref{sec:proposal} concludes with a concrete correction proposa
 
 \section{Type-directed semantics in practice}
 \label{sec:background-practice}
+\vspace{-1em}
 
 The aim of the thesis is to provide foundations for extending practical functional-first
 programming languages such as F\# \cite{app-fsharp-spec} and Scala \cite{app-scala-spec} with
@@ -191,7 +192,7 @@ a term depends on the typing:
 %
 \begin{equation*}
 \begin{array}{l}
-  \kvd{let}~\ident{nextTwo}~\ident{rnd}~=~(\ident{rnd.Next}(), \ident{rnd.Next}()) \\
+  \kvd{let}~\ident{nextTwo}~\ident{rnd}~=~(\ident{rnd.Next}(), \ident{rnd.Next}()) \\[-0.2em]
   \kvd{let}~\ident{add}~\ident{a}~\ident{b}~=~\ident{a}+\ident{b}
 \end{array}
 \end{equation*}
@@ -219,11 +220,12 @@ a mechanism for finding a unique typing.
 
 \section{Type-directed semantics in theory}
 \label{sec:background-theory}
+\vspace{-1em}
 
 In the thesis, we give the semantics of terms based on a typing derivation (both for concrete
 languages and for coeffect calculi). Using the notation used in the thesis, the semantics of
 a (plain) let-binding is written as:
-
+%
 \begin{equation*}
 \begin{array}{l}
  \sem{x:\tau \vdash \kvd{let}~x_1=e_2~\kvd{in}~e_2 : \tau_2} = \\ \qquad
@@ -237,12 +239,14 @@ as opposed to typing \emph{derivations}. The correct reading is the latter. In f
 the same approach has been used by Moggi in his seminal paper on monads, who writes
 \cite[p7]{monad-notions} (emphasis mine):
 
+\vspace{-0.5em}
 \begin{quotation}
 \noindent
 An interpretation $\sem{-}$ of the language in a category $C$ is parametric in an interpretation
 of the symbols in the signature and is defined by \emph{induction on the derivation} of
 well-formedness for (types,) terms and equations.
 \end{quotation}
+\vspace{-0.5em}
 
 \noindent
 The notation used by Moggi is unambiguous (and we intend to adopt the same clear notation in the
@@ -261,9 +265,9 @@ revised version of the thesis):
   \end{array}
 \end{equation*}
 %
-In systems that have a unique typing derivation (including the language of Moggi), the fact that
+In systems that have a unique typing (including Moggi's), the fact that
 the semantics is defined by induction \emph{over a typing derivation} means merely that we only
-define semantics for well-typed prorgams. More complex languages with non-syntax-driven rules
+define semantics for well-typed programs. Languages with non-syntax-driven rules
 (and no unique typing derivation) have two options:
 
 \begin{itemize}
@@ -280,13 +284,14 @@ define semantics for well-typed prorgams. More complex languages with non-syntax
 \noindent
 Contextual dependencies can often be satisfied in multiple ways\footnote{For example, see the
 discussion about distributed programming in Section~3.2.2 of the thesis.}. By capturing the
-contextual properties in the type-and-coeffect system, we are merely making the existing
+contextual properties in the type-and-coeffect system, we are making the existing
 run-time ambiguities \emph{more explicit}. Thus the proposal is to focus on systems with
 \emph{coeffect-directed semantics} rather than modifying the calculi that inspired the work
 in the thesis in order to force coherence.
 
 \section{Resolving ambiguity}
 \label{sec:ambiguity}
+\vspace{-1em}
 
 The case where the semantics of a context-aware program depends on the typing derivation is best
 demonstrated using the system for implicit parameters (Section~3.2.1 of the thesis). Consider the
@@ -295,7 +300,7 @@ following example:
 \begin{equation*}
 \begin{array}{l}
 \kvd{let}~\ident{f} = (~\kvd{let}~\ident{?x} = 10~\kvd{in}~
-  \lambda \ident{v} \rightarrow \ident{?x})~\kvd{in}\\
+  \lambda \ident{v} \rightarrow \ident{?x})~\kvd{in}\\[-0.2em]
 \kvd{let}~\ident{?x} = 15~\kvd{in}~\ident{f}~0
 \end{array}
 \end{equation*}
@@ -317,9 +322,8 @@ operators discussed in Section~\ref{sec:background-practice}.
 In case of implicit parameters, the choice is between \emph{lexical} and \emph{dynamic} scoping.
 The same choice appears for other language constructs, such as exception handling. Exception
 handlers in most modern languages are dynamically scoped, but Beta and original version of Smalltalk
-support lexical scoping \cite{app-exceptions}. A language with checked exception that supports
-both dynamic and lexical exception handlers would expose the same problem as implicit parameters
-in Haskell.
+support lexical scoping \cite{app-exceptions}. A language that supports both dynamic and lexical
+exception handlers would expose the same problem.
 
 \paragraph{Resolution in coeffect systems.}
 Coeffect systems presented in the thesis explore the most general approach. For example, the
@@ -334,12 +338,14 @@ possibilities.
 
 \section{Correction proposal}
 \label{sec:proposal}
+\vspace{-1em}
 
 In the preceding sections, we argued that \emph{coeffect-directed semantics} is the right approach
 for discussing context-aware programming languages. This clarifies the confusion arising from the
 fact that coeffect systems (like implicit parameters and others) do not satisfy categorical
 \emph{coherence}. This section outlines four specific improvements to address the reviewers concerns.
 
+\vspace{-0.5em}
 \paragraph{4.1 Type erasure.}
 The coeffect-directed semantics in the thesis is presented in the style of a categorical semantics
 (as it was, indeed, inspired by categorical structures). However, it does not follow the full rigour
@@ -356,11 +362,12 @@ In the revised thesis, we intend to make this more explicit and treat the formal
 ``coeffect-directed translation'', as well as explicitly define the target term language
 for the translation.
 
+\vspace{-0.5em}
 \paragraph{4.2 Unique typing derivation.}
 
 As argued above, the fact the that semantics depends on the typing derivation is an important
-aspect of our work. However, the fact that we do not define a unique typing for coeffect
-calculi makes them impractical when compared with e.g. Haskell's implicit parameters.
+aspect of our work. This lets us better explore the design space, but it does not guide
+concrete language implementations that need a unique typing (cf. Haskell's implicit parameters).
 
 In the final version of the thesis, we intend to follow the example of Haskell and include an
 algorithmic formulation of the type system that produces a single default typing
@@ -370,6 +377,7 @@ language, add externally provided function for resolving ambiguities in lambda a
 have algorithmic typing rules instead of contraction, weakening and exchange rules.} and
 resolves the ambiguity.
 
+\vspace{-0.5em}
 \paragraph{4.3. Equational structure.}
 
 One specific concern raised in the referees report is the lack of equational structure for the
@@ -378,21 +386,35 @@ structures (indexed comonads) is mainly to inspire the abstractions that can be 
 context-aware computations (as opposed to focusing on using category theory to prove properties
 of context-aware programs).
 
-We intend to make this more explicit in the final version. As discussed in Section~4.1, the thesis
-presents a coeffect-directed translation to a target language, which contains operations inspired
-by indexed comonads. Explaining this link is important in order to relate coeffect calculi with
+Our work should be seen as a coeffect-directed translation to a target language with structures
+inspired by indexed comonads. Preserving this link is important in order to relate coeffect calculi with
 previous work \cite{comonads-notions}, however our structure need not be seen as categorical
 semantics.
 
+\vspace{-0.5em}
 \paragraph{4.4. Generalization.}
 
 One of the key claims of the thesis is that the comonad-inspired structure of the target
 language appropriately captures the structure of concrete examples of context-aware computations
 (presented in Chapter 3) and as a result, it provides an appropriate type system.
 
-This claim is left implicit in the text and we intend to address this in the final version (most
-importantly, by proving that the three concrete examples spelled out in Chapter 3 do, indeed, fit
+This claim is left implicit and we intend to address this in the final version 
+(by proving that the three concrete examples spelled out in Chapter 3 do, indeed, fit
 the common patterns identified later in Chapters 4 and 5).
+
+\vspace{-0.5em}
+\paragraph{4.5. Universal type systems.}
+
+The thesis does not clearly explain the benefit of introducing the universal type systems
+based on the coeffect calculi, as we do not prove the usual type-safety property for the concrete systems.
+This becomes clearer when we consider the system as \emph{type erasure}.
+
+The type systems guarantee that \emph{coeffect indices} will match in the resulting 
+translation. The relationship from indices to values is injective in the general case, but 
+we can also show a number of important properties (which will be clarified in the revised
+version) for the concrete systems, \eg~an upper bound on the number of required
+past values in causal data-flow.
+
 
 % ==================================================================================================
 

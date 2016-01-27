@@ -23,12 +23,13 @@ Target "run" (fun _ ->
     let ps =
       ProcessStartInfo
         ( FileName = @"C:\Programs\Publishing\MiKTeX 2.9\miktex\bin\pdflatex.exe",
-          Arguments = "-interaction=nonstopmode response.tex",
+          Arguments = "-interaction=nonstopmode translation.tex",
           WorkingDirectory = path,
           UseShellExecute = false,
           CreateNoWindow = true )
     let p = Process.Start(ps)
     p.WaitForExit()
+    printfn "Updated"
     fsw.EnableRaisingEvents <- true )
 
   fsw.EnableRaisingEvents <- true
