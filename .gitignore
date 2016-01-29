@@ -15,3 +15,5 @@ rules/*.synctex.gz
 *.bak
 packages
 .paket/paket.exe
+templates
+.ionide.debug
