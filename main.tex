@@ -18,7 +18,7 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsthm}
-\usepackage{catchfilebetweentags}
+%\usepackage{catchfilebetweentags}
 
 \newcounter{mythmcounter}
 \newcounter{mydefcounter}
@@ -60,6 +60,10 @@
 % Coeffect algebra
 \definecolor{cclr}{rgb}{0.0,0.5,0.0}
 \newcommand{\cclrd}[1]{\textcolor{cclr}{#1}}
+
+% Red color
+\definecolor{rclr}{rgb}{0.75,0.0,0.0}
+\newcommand{\rclrd}[1]{\textcolor{rclr}{#1}}
 
 \newcommand{\czero}{ \textcolor{cclr}{ \mathsf{ign} } }
 \newcommand{\cunit}{ \textcolor{cclr}{ \mathsf{use} } }
@@ -135,6 +139,28 @@
   \vspace{-2em}
   \caption{#1}
 }
+
+% For definining semantics of things over a typing derivation
+\newcommand{\semdeff}[4]{
+\begin{array}{rcl}
+  #1 & = & #3 \\ \cline{1-1}\cline{3-3}
+  #2 & = & #4 \\
+\end{array}  
+}
+\newcommand{\semdefff}[6]{
+\begin{array}{rcl}
+  #1 & = & #4 \\
+  #2 & = & #5 \\ \cline{1-1}\cline{3-3}
+  #3 & = & #6 \\
+\end{array}  
+}
+\newcommand{\semdef}[2]{
+\begin{array}{rcl}
+  ~ & ~ & ~ \\ \cline{1-1}\cline{3-3}
+  #1 & = & #2 \\
+\end{array}  
+}
+
 % Half line spacing around align
 \newcommand{\zerodisplayskips}{%
   \setlength{\abovedisplayskip}{0.5em}
@@ -169,19 +195,11 @@
 %	PRE-CONTENT THESIS PAGES
 %----------------------------------------------------------------------------------------
 
-\include{text/Titlepage} % Main title page
+%\include{text/Titlepage} % Main title page
 
-% \include{FrontBackMatter/Titleback} % Back of the title page
+%\cleardoublepage\include{text/Declaration} % Publications from the thesis page
 
-% \cleardoublepage\include{FrontBackMatter/Dedication} % Dedication page
-
-%\cleardoublepage\include{FrontBackMatter/Foreword} % Uncomment and create a Foreword.tex to include a foreword
-
-\cleardoublepage\include{text/Declaration} % Publications from the thesis page
-
-\cleardoublepage\include{text/Abstract} % Abstract page
-
-% \cleardoublepage\include{FrontBackMatter/Acknowledgments} % Acknowledgements page
+%\cleardoublepage\include{text/Abstract} % Abstract page
 
 \pagestyle{scrheadings} % Show chapter titles as headings
 
@@ -210,13 +228,23 @@
 
 % \part{The Showcase} % Second part of the thesis
 
-\include{text/Chapter01}
-\include{text/Chapter02}
-\include{text/Chapter03}
+%\include{text/Chapter01}
+%\include{text/Chapter02}
+%\include{text/Chapter03}
+
+
+\ctparttext{This part presents the key novel contributions of the thesis. We develop \emph{flat}
+  and \emph{structural} coeffect calculi that capture a wide range of context-aware programming
+  languages. We discuss their type systems and semantics together with safety properties.}
+\setcounter{part}{1}
+\part{Coeffect calculi}
+
+
 \include{text/Chapter04}
 \include{text/Chapter05}
-\include{text/Chapter06}
-\include{text/Chapter07}
+%\include{text/Chapter06}
+%\include{text/Chapter07}
+%\include{text/Chapter08}
 
 %----------------------------------------------------------------------------------------
 %	THESIS CONTENT - APPENDICES
@@ -237,8 +265,8 @@
 
 %----------------------------------------------------------------------------------------
 
-\appendix
-\include{text/AppendixA}
-\include{text/AppendixB}
+%\appendix
+%\include{text/AppendixA}
+%\include{text/AppendixB}
 
 \end{document}

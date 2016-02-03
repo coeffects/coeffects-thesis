@@ -16,23 +16,25 @@ open System.Diagnostics
 // --------------------------------------------------------------------------------------
 
 Target "run" (fun _ ->
-  let path = __SOURCE_DIRECTORY__
-  let fsw = new FileSystemWatcher(path,"*.tex")
-  fsw.Changed.Add(fun _ ->
-    fsw.EnableRaisingEvents <- false
-    let ps =
-      ProcessStartInfo
-        ( FileName = @"C:\Programs\Publishing\MiKTeX 2.9\miktex\bin\pdflatex.exe",
-          Arguments = "-interaction=nonstopmode translation.tex",
-          WorkingDirectory = path,
-          UseShellExecute = false,
-          CreateNoWindow = true )
-    let p = Process.Start(ps)
-    p.WaitForExit()
-    printfn "Updated"
-    fsw.EnableRaisingEvents <- true )
+  let watch path = 
+    let fsw = new FileSystemWatcher(path,"*.tex")
+    fsw.Changed.Add(fun _ ->
+      fsw.EnableRaisingEvents <- false
+      let ps =
+        ProcessStartInfo
+          ( FileName = @"C:\Programs\Publishing\MiKTeX 2.9\miktex\bin\pdflatex.exe",
+            Arguments = "-interaction=nonstopmode main.tex",
+            WorkingDirectory = __SOURCE_DIRECTORY__,
+            UseShellExecute = false,
+            CreateNoWindow = true )
+      let p = Process.Start(ps)
+      p.WaitForExit()
+      printfn "Updated"
+      fsw.EnableRaisingEvents <- true )
 
-  fsw.EnableRaisingEvents <- true
+    fsw.EnableRaisingEvents <- true
+  watch __SOURCE_DIRECTORY__
+  watch (__SOURCE_DIRECTORY__ @@ "text")
   System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite)
 )
 
