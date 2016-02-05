@@ -905,7 +905,6 @@ equations define four syntactic reductions on the terms:
 \begin{array}{rllcl}
 (\lambda x.e_1)~e_2 &{\reduce_{\ident{cbn}}}& \subst{e_1}{x}{e_2}   &&(\textit{call-by-name})\\
 (\lambda x.e_1)~v   &{\reduce_{\ident{cbv}}}& \subst{e_1}{x}{v}     &\quad&(\textit{call-by-value})\\
-(\lambda x.e_1)~e_2 &{\reduce_{\ident{seq}}}& \kvd{glet}~x=e_2~\kvd{in}~e_1  &&(\textit{internalized sequencing})\\
 e &{\reduce_\eta}& \lambda x.e~x                                    &&(\textit{$\eta$-expansion})
 \end{array}
 \end{equation*}
@@ -915,16 +914,14 @@ knowledge of the specific notion of context. If the reductions preserve the type
 (type preservation), then operational semantics can be defined as a repeated application of the 
 rules, until a specified normal form (\ie~a value) is reached.
 
-The first two equations define well-known call-by-name and call-by-value reductions. The \kvd{glet} 
-reduction (inspired by Filinski \cite{monads-inaction}) models a system where program is reduced to 
-a sequence of primitive operations, sequentially composed using the special \kvd{glet} construct. 
-In the rest of the section, we briefly outline the interpretation of the four 
+In the rest of the section, we briefly outline the interpretation of the three
 rules and then we focus on call-by-value (Section~\ref{sec:flat-syntax-cbv}) and call-by-name 
 (Section~\ref{sec:flat-syntax-cbn}) in more details.
 
-The focus of our work is on the general coeffect system and so we do not discuss the operational
+The focus of this chapter is on the general coeffect system and so we do not discuss the operational
 semantics of the specific notions of context. However, some work in that area has been done
-by Brunel et al. \cite{coeffects-quantitative}.
+by Brunel et al. \cite{coeffects-quantitative}. We discuss concrete semantics of implicit 
+parameters and dataflow in Chapter~\ref{ch:transl}.
 
 \paragraph{Call-by-name.} 
 In call-by-name, the argument is syntactically substituted for all occurrences of a variable. It
@@ -1027,7 +1024,7 @@ The substitution lemma~\ref{thm:flat-subst-cbv} holds for all flat coeffect syst
 proving that call-by-value reduction preserves typing requires an additional constraint on the
 flat coeffect algebra, which relates the $\czip$ and $\cpar$ operations. This is captured
 by the (\emph{approximation}) property:
-
+%
 \begin{equation*}
 \cclrd{r}\,\czip\,\cclrd{t}~\;\cleq~\;\cclrd{r}\,\cpar\,\cclrd{t}
 \hspace{10em}(\textit{approximation})
