@@ -75,7 +75,7 @@ starting from the semantics, we first explain how the systems can be unified syn
 (Section~\ref{sec:flat-calculus-lambda}) and then provide the semantics as a justification.
 
 The development in this chapter can be seen as a counterpart to the well-known development of 
-\emph{effect systems} \cite{effects-gifford}. The Chapter~\ref{ch:transl} then links \emph{coeffects} 
+\emph{effect systems} \cite{effects-gifford}. The Chapter~\ref{ch:semantics} then links \emph{coeffects} 
 with \emph{comonads} in the same way in which effect systems can be linked with monads
 \cite{monad-notions}. The syntax and type system of the flat coeffect calculus follows 
 a similar style as effect systems \cite{effects-polymorphic,effects-talpin-et-al}, but differs
@@ -210,7 +210,7 @@ careful about using the words \emph{split} and \emph{merge}, because they can be
 exactly the opposite things. To disambiguate, we always use the term \emph{context requirements} 
 when using the syntactic view, especially in the rest of Chapter~\ref{chf:flat}, and 
 \emph{context capabilities} or just \emph{available context} when using the semantic view, 
-especially in Chapter~\ref{ch:transl}.
+especially in Chapter~\ref{ch:semantics}.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -519,7 +519,7 @@ liveness, the rule discussed in Section~\ref{sec:flat-calculus} reintroduces sim
 because it allows multiple valid typing derivations. 
 
 Furthermore, the semantics of context-aware languages in Chapter~\ref{sec:applications} and
-also in Chapter~\ref{sec:transl} is defined over \emph{typing derivation} and so the same program
+also in Chapter~\ref{ch:semantics} is defined over \emph{typing derivation} and so the same program
 could have a different meaning, depending on the typing derivation chosen. In this section, we
 specify how to choose \emph{unique} typing derivation in each of the coeffect systems we consider.
 
@@ -637,7 +637,7 @@ bound implicit parameter \ident{?p} to the static scope in the sub-expression $e
 If a program written in a coeffect language with implicit parameters is well-typed according to the 
 type system presented in Figure~\ref{fig:flat-resolve-impl}, then the type system gives a unique
 derivation. We use this unique typing derivation to give the semantics of coeffect language
-with implicit parameters in Chapter~\ref{ch:transl} and we also implement this algorithm as
+with implicit parameters in Chapter~\ref{ch:semantics} and we also implement this algorithm as
 discussed in Chatper~\ref{ch:impl}. 
 
 The type system is more restrictive than the fully general one and it reject certain programs that
@@ -783,7 +783,7 @@ for which coeffect system is the (\emph{idabs}) rule preferable over the (\emph{
 If a program written in a coeffect language for liveness or dataflow is well-typed according to
 the type system presented in Figure~\ref{fig:flat-types} with the (\emph{abs}) rule replaced by
 (\emph{idabs}), then the type system gives a unique derivation. As for implicit parameters, this
-defines the semantics of coeffect program (Chapter~\ref{ch:transl}) and it is used in the
+defines the semantics of coeffect program (Chapter~\ref{ch:semantics}) and it is used in the
 implementation (Chatper~\ref{ch:impl}). 
 
 In order to prove the uniqueness of typing theorem (Theorem~\ref{thm:flat-ldf-unique}), we first
@@ -922,7 +922,7 @@ rules and then we focus on call-by-value (Section~\ref{sec:flat-syntax-cbv}) and
 The focus of this chapter is on the general coeffect system and so we do not discuss the operational
 semantics of the specific notions of context. However, some work in that area has been done
 by Brunel et al. \cite{coeffects-quantitative}. We discuss concrete semantics of implicit 
-parameters and dataflow in Chapter~\ref{ch:transl}.
+parameters and dataflow in Chapter~\ref{ch:semantics}.
 
 \paragraph{Call-by-name.} 
 In call-by-name, the argument is syntactically substituted for all occurrences of a variable. It
