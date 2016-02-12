@@ -59,7 +59,7 @@ system and we discuss their safety.
 
 In the previous chapter, we looked at three important examples of systems that track whole-context 
 properties. The type systems for whole-context liveness (Section~\ref{sec:applications-flat-live}) 
-and whole-context data-flow (Section~\ref{sec:applications-flat-dataflow}) have a very similar 
+and whole-context dataflow (Section~\ref{sec:applications-flat-dataflow}) have a very similar 
 structure. First, their lambda abstraction duplicates the requirements. Given a body with context 
 requirements $\cclrd{r}$, the declaration site context \emph{as well as} the function arrow are
 annotated with $\cclrd{r}$. Second, their application arises from the combination of \emph{sequential} 
@@ -136,7 +136,7 @@ The annotations $\cclrd{r}$ are formed by an algebraic structure discussed next.
 \label{sec:flat-calculus-lambda}
 
 Recall the lambda abstraction rules for the implicit parameters system (annotating the context
-with sets of required parameters) and the data-flow system (annotating the context with the
+with sets of required parameters) and the dataflow system (annotating the context with the
 number of past required values):
 %
 \begin{equation*}
@@ -150,7 +150,7 @@ number of past required values):
 \end{equation*}
 %
 In order to capture both systems using a single calculus, we need a way of unifying the two
-systems. For the data-flow system, this can be achieved by over-approximating the number of 
+systems. For the dataflow system, this can be achieved by over-approximating the number of 
 required past elements:
 %
 \begin{equation*}
@@ -259,7 +259,7 @@ In addition, the following distributivity axioms hold:
 
 \noindent
 In two of the three systems, some of the operators of the flat coeffect algebra coincide, but
-in the data-flow system all three are distinct. Similarly, the two special elements  
+in the dataflow system all three are distinct. Similarly, the two special elements  
 coincide in some, but not all systems. The required laws are motivated by the aim to capture
 common properties of the three examples, without unnecessarily restricting the system:
 
@@ -284,7 +284,7 @@ element of the set $\C$.
 
 \noindent
 It is worth noting that, in some of the systems, the operators $\cpar$ and $\czip$ are the least 
-upper bound and the greatest lower bounds of a lattice. For example, in data-flow computations, they 
+upper bound and the greatest lower bounds of a lattice. For example, in dataflow computations, they 
 are \emph{max} and \emph{min} respectively. However, this duality does not hold for implicit parameters
 (we discuss lattice-based formulation of coeffects in Section~\ref{sec:unified-impl-semilattice}. 
 
@@ -382,7 +382,7 @@ constructs such as pairs, sub-coeffecting and sub-typing are covered in Section~
 The flat coeffect calculus generalizes the flat systems discussed in 
 Section~\ref{sec:applications-flat} of the previous chapter. We can instantiate it to a specific
 use just by providing a flat coeffect algebra. The following summary defines the systems for implicit 
-parameters, liveness and data-flow. For the latter two, the general calculus has a lambda abstraction
+parameters, liveness and dataflow. For the latter two, the general calculus has a lambda abstraction
 that is compatible with those discussed in Chapter~\ref{ch:flat}, but includes implicit sub-coeffecting.
 
 \begin{example}[Implicit parameters]
@@ -446,20 +446,20 @@ marked as live $\ident{L}$. When the body is dead $\ident{D}$, the declaration s
 can be marked as dead $\ident{D}$, or as live $\ident{L}$. The latter is less precise, but 
 permissible over-approximation, which could otherwise be obtained via sub-typing.
 
-\begin{example}[Data-flow]
-In data-flow, context is annotated with natural numbers and the flat coeffect algebra is formed 
+\begin{example}[Dataflow]
+In dataflow, context is annotated with natural numbers and the flat coeffect algebra is formed 
 by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$.
 \end{example}
 
 \noindent
 As discussed earlier, sequential composition $\cseq$ is represented by $+$ and pointwise 
-composition $\cpar$ uses $\emph{max}$. For data-flow, we need a third separate operator for
+composition $\cpar$ uses $\emph{max}$. For dataflow, we need a third separate operator for
 lambda abstraction. Annotating the body with $\emph{min}(\cclrd{r}, \cclrd{s})$ ensures that
 both call site and declaration site annotations are equal or greater than the annotation 
 of the body. As with liveness, this allows over-approximation. 
 
 As required by the laws, $(\mathbb{N}, +, 0)$ and $(\mathbb{N}, \mathit{max}, 0)$ form monoids
-and $(\mathbb{N}, \mathit{min})$ forms a band. Note that data-flow is our first example where 
+and $(\mathbb{N}, \mathit{min})$ forms a band. Note that dataflow is our first example where 
 $\cseq$ is not idempotent. The distributivity laws require the following to be the case:
 $\mathit{max}(r,s) + t = \mathit{max}(r+t, s+t)$, which is easy to see. 
 
@@ -476,11 +476,11 @@ previous value in a stream with an additional typing rule that look as follows:
 \end{equation*}
 %
 As a further example that was not covered earlier, it is also possible to combine liveness analysis
-and data-flow. In the above calculus, $0$ denotes that we require the current value, but no previous
+and dataflow. In the above calculus, $0$ denotes that we require the current value, but no previous
 values. However, for constants, we do not even need the current value.
 
-\begin{example}[Optimized data-flow]
-In optimized data-flow, context is annotated with natural numbers extended with the $\bot$ element,
+\begin{example}[Optimized dataflow]
+In optimized dataflow, context is annotated with natural numbers extended with the $\bot$ element,
 that is $\mathbb{N}_{\bot} = \{\bot, 0, 1, 2, 3, \ldots \}$ such that $\forall n \in \mathbb{N}. \bot \leq n$.
 The flat coeffect algebra is $(\mathbb{N}_{\bot}, +, \mathit{max}, \mathit{min}, 0, \bot, \leq)$
 where $m + n$ is $\bot$ whenever $m=\bot$ or $n=\bot$ and \emph{min}, \emph{max} treat $\bot$ as the
@@ -889,7 +889,7 @@ which provided a \emph{semantic} justification for the axioms of coeffect algebr
 \emph{syntactic} justification. Operationally, this section can also be viewed as providing a 
 pathway to an operational semantics for two of our systems (implicit parameters and liveness),
 which can be based on syntactic substitution. As we discuss later, the notion of context for
-data-flow is more complex.
+dataflow is more complex.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1036,7 +1036,7 @@ under-approximates the actual context capabilities while the $\cpar$ operation (
 context requirements) over-approximates the actual context requirements.
 
 The property holds for the three systems we consider -- for implicit parameters, this is 
-an equality; for liveness and data-flow (which both use a lattice), the greatest lower bound 
+an equality; for liveness and dataflow (which both use a lattice), the greatest lower bound 
 is smaller than the least upper bound.
 
 Assuming $\reduce_{\ident{cbv}}$ is call-by-value reduction that reduces the term 
@@ -1092,8 +1092,8 @@ concrete examples. Then, we prove the substitution lemma for two special cases o
 state the conditions under which typing preservation hold for flat coeffect calculi 
 (Theorem~\ref{thm:cbn-flat}).
 
-\paragraph{Data-flow.} 
-The type preservation property does not hold for data-flow. This case is similar to the example
+\paragraph{Dataflow.} 
+The type preservation property does not hold for dataflow. This case is similar to the example
 shown earlier with effectful computations. As a minimal example, consider the substitution of 
 a context-dependent expression $\kvd{prev}~z$ for a variable $y$ in a function $\lambda x.y$:
 %
@@ -1112,7 +1112,7 @@ Semantically, the coeffect over-approximates the actual requirements -- at run-t
 actually access a previous value of the argument $x$. This cannot be captured by a flat coeffect 
 system, but it can be captured using the structural system discussed in Chapter~\ref{ch:structural}. 
 
-\paragraph{Implicit parameters.} In data-flow, there is no typing for the resulting expression that
+\paragraph{Implicit parameters.} In dataflow, there is no typing for the resulting expression that
 preserves the type of the function. However, this is not the case for all systems. Consider substituting
 an implicit parameter access $\ident{?p}$ for a free variable $y$ under a lambda:
 %
@@ -1157,7 +1157,7 @@ element ($\forall r \in \C \;.\; r \,\cgeq\, \cunit $).
 
 \noindent
 Liveness is an example of top-pointed coeffects as variables are annotated with 
-$\ident{L}$ and $\ident{D} \leq \ident{L}$, while implicit parameters and data-flow are examples
+$\ident{L}$ and $\ident{D} \leq \ident{L}$, while implicit parameters and dataflow are examples
 of bottom-pointed coeffects. For top-pointed flat coeffects, the substitution lemma holds without 
 additional requirements:
 
@@ -1264,12 +1264,12 @@ $\cclrd{r}\;\cseq\;\cclrd{s} = \cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{r
 \paragraph{Expansion theorem.}
 The $\eta$-expansion (local completeness) is similar to $\beta$-reduction (local soundness) in that
 it holds for some flat coeffect systems, but not for all. Out of the examples we discuss, it 
-holds for implicit parameters, but does not hold for liveness and data-flow.
+holds for implicit parameters, but does not hold for liveness and dataflow.
 
 Recall that $\eta$-expansion turns $e$ into $\lambda x.e~x$. In the case of liveness, the 
 expression $e$ may require no variables (both immediate and latent coeffects are marked as
 $\ident{D}$). However, the resulting expression $\lambda x.e~x$ accesses a variable, 
-marking the context and function argument as live. In case of data-flow, the immediate coeffects 
+marking the context and function argument as live. In case of dataflow, the immediate coeffects 
 are made larger by the lambda abstraction -- the context requirements of the function value are 
 imposed on the declaration site of the new lambda abstraction. We remedy this limitation in 
 the next chapter.
@@ -1433,7 +1433,7 @@ for our examples.
 & \textbf{\footnotesize Definition\hspace{1em}} & \textbf{\footnotesize Simplified\hspace{1em}} \\ \hline
 \hspace{-1em}{\footnotesize Implicit parameters} & $\cclrd{s} \cup (\cclrd{s} \cup \cclrd{r})$ & $\cclrd{s} \cup \cclrd{r}$ \\ \hline
 \hspace{-1em}{\footnotesize Liveness} & $\cclrd{s} \sqcap (\cclrd{s} \sqcup \cclrd{r})$ & $\cclrd{s}$ \\ \hline
-\hspace{-1em}{\footnotesize Data-flow} & $\mathit{max}(\cclrd{s}, \cclrd{s} + \cclrd{r})$ & $\cclrd{s} + \cclrd{r}$ \\ \hline
+\hspace{-1em}{\footnotesize Dataflow} & $\mathit{max}(\cclrd{s}, \cclrd{s} + \cclrd{r})$ & $\cclrd{s} + \cclrd{r}$ \\ \hline
 \end{tabular}
 \end{center}
 
@@ -1460,7 +1460,7 @@ simplified annotation (on the right) is more precise than the original (on the l
 \cclrd{s_1} \sqcap (\cclrd{s_2} \sqcup \cclrd{r}) &\sqsupseteq&  (\cclrd{s_1} \sqcap \cclrd{s_2}) 
   && \textnormal{(liveness)} \\
 \mathit{max}(\cclrd{s_1}, \cclrd{s_2} + \cclrd{r}) &\geq& \mathit{min}(\cclrd{s_1}, \cclrd{s_2}) + \cclrd{r} 
-  &\quad& \textnormal{(data-flow)} \\
+  &\quad& \textnormal{(dataflow)} \\
 \end{array}
 \end{equation*}
 %
@@ -1485,7 +1485,7 @@ expression $(\lambda x.e_2)~e_1$.
 
 In Section~\ref{sec:flat-calculus-lambda}, we discussed how to reconcile two typings for
 lambda abstraction -- for implicit parameters, the lambda function needs to split context 
-requirements using $\cclrd{r} \cup \cclrd{s}$, but for data-flow and liveness it suffices to 
+requirements using $\cclrd{r} \cup \cclrd{s}$, but for dataflow and liveness it suffices to 
 duplicate the requirement $\cclrd{r}$ of the body. We introduced the $\czip$ operation as 
 a way of providing the additional abstraction.
 
@@ -1542,7 +1542,7 @@ sub-typing and the fact that the algebra is \emph{strictly oriented}:
 
 \noindent
 The practical consequence of the Remark~\ref{thm:flat-alt-abs} is that, for strictly
-oriented coeffect calculi (such as our liveness and data-flow computations), we can use
+oriented coeffect calculi (such as our liveness and dataflow computations), we can use
 the (\emph{idabs}) rule and get an equivalent type system. This alternative formulation
 removes the non-determinism of type checking that arises from the splitting of context 
 requirements in the original (\emph{abs}) rule. 
@@ -1677,7 +1677,7 @@ This is the first of the two \emph{coeffect calculi} developed in this thesis.
 
 The flat coeffect calculus is parameterized by a \emph{flat coeffect algebra} that captures
 the structure of the information tracked by the type system. We instantiated the system to 
-capture three specific systems, namely liveness, data-flow and implicit parameters. However,
+capture three specific systems, namely liveness, dataflow and implicit parameters. However,
 the system is more general and an capture numerous other applications outlined in 
 Section~\ref{sec:applications-flat}.
 
