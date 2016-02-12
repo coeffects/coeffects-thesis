@@ -1324,7 +1324,7 @@ Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\cclrd{r}}(\ldots)$ and the type
   $\ctyp{\cclrd{r}\czip\cclrd{s}}(\ldots)$ as expected by $f$.
   
 \vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{num}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of 
+Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of 
   $\ctx_1, \ctx_2$ are $\ctyp{\cclrd{r}}(\ldots)$ and $\ctyp{\cclrd{s}\cseq\cclrd{t}}(\ldots)$, respectively.
   $g$ requires $\ctyp{\cclrd{s}}(\ldots)$ and so the result of $\ident{cobind}_{\cclrd{s},\cclrd{t}}$ is
   $\ctyp{\cclrd{t}}\tau_1$ as required by $f$.
@@ -1468,9 +1468,25 @@ In order to prove type safety, we first extend the canonical forms lemma
 (Lemma~\ref{thm:semantics-fp-canon}) and the preservation under substitution lemma
 (Lemma~\ref{thm:semantics-fp-pres-subst}). Those need to consider the new (\emph{df}) 
 and (\emph{prev}) typing rules and substitution under the newly introduced expression forms 
-$\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$. Then 
-we extend the type preservation (Theorem~\ref{thm:semantics-fp-pres}) and progress
-(Theorem~\ref{thm:semantics-fp-prog}).
+$\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$. We show that the translation 
+rule for \kvd{prev} produces well-typed expressions. Finally, we extend the type preservation 
+(Theorem~\ref{thm:semantics-fp-pres}) and progress (Theorem~\ref{thm:semantics-fp-prog}).
+
+\begin{theorem}[Well-typedness of the \kvd{prev} translation]
+\label{thm:semantics-welltyped}
+Given a typing derivation for a well-typed closed expression $\coctx{}{\cclrd{r}} \vdash e : \tau$,
+the translated program $f$ obtained using the rules in Figure~\ref{fig:semantics-translation}
+and Figure~\ref{fig:semantics-ext-df} is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
+\end{theorem}
+\begin{proof}
+By rule induction over the derivation of the translation. 
+
+\vspace{0.5em}\noindent\hangindent=0.6cm 
+Case (\emph{var, num, abs, app}): As before.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm 
+Case (\emph{prev}): Type of $\ctx$ is $\ctyp{\cclrd{n+1}}\tau$ and so we can apply the (\emph{prev}) rule.
+\end{proof}
 
 \begin{lemma}[Canonical forms]
 \label{thm:semantics-df-canon}
@@ -1574,7 +1590,139 @@ Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value,
 \end{proof}
 
 
+% --------------------------------------------------------------------------------------------------
 
+\subsection{Coeffect langauge for implicit parameters}
+\label{sec:semantics-proofs-impl}
+
+::::TODO::::
+
+The types of the comonadically-inspired operations are the same for each concrete coeffect DSL, but
+each DSL introduces its own \emph{values} of type $\ctyp{\cclrd{r}}\tau$ and also its own reduction
+rules that define how comonadically-inspired operations evaluate.
+
+We first consider dataflow computations. As discussed earlier in the
+semantics of dataflow, the indexed comonad for a context with $n$ past values carries $n+1$ 
+values. When reducing translated programs, the comonadic values will not be directly manipulated by the
+user code. In a programming language, it could be seen as an \emph{abstract data type} whose only
+operations are the comonadically-inspired ones defined earlier.
+
+The Figure~\ref{fig:semantics-ext-df} shows extensions to the target language for modelling
+dataflow computations. We introduce a new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
+and a matching kind of expressions. We add a language primitive modelling the semantics of the
+\kvd{prev} keyword together with its typing rule (\emph{prev}) and we also add
+a typing rule (\emph{df}) that checks the types of the elements of the stream and also guarantees 
+that the number of elements in the stream matches the number in the coeffect.
+
+The additional reduction rules mirror the semantics that we discussed earlier when talking about
+indexed dataflow comonad.
+
+\paragraph{Properties.}
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[h!]
+\paragraph{Language syntax}
+
+\begin{equation*}
+\begin{array}{rcl}
+v &=& \ldots \sep \ident{Impl}(v, \langle \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n\rangle) \\
+e &=& \ldots \sep \ident{Impl}(e, \langle\ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_n\mapsto e_n\rangle) \\
+  && \hspace{1.4em} \sep \ident{lookup}_{\cclrd{\ident{?p}}}~e \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~e_1~e_2\\
+C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~\_~e \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~v~\_
+\end{array}  
+\end{equation*}
+
+\vspace{1.25em}
+\paragraph{Typing rules}
+
+\begin{equation*}
+\tyrule{impl}
+  { \Gamma \vdash e:\tau & \forall i\in\{ 1 \ldots n \}. ~ \Gamma \vdash e_i : \ident{num}}
+  { \Gamma \vdash \ident{Impl}(e, \langle \ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_n\mapsto e_n \rangle) : \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \}}}{\tau} }
+\end{equation*}
+\begin{equation*}
+\tyrule{lookup}
+  { \Gamma \vdash e : \ctyp{\cclrd{ \{ \ldots, \ident{?p}, \ldots \} }}{\tau} }
+  { \Gamma \vdash \ident{lookup}_{\cclrd{\ident{?p}}}~e : \ident{num} }
+\end{equation*}
+\begin{equation*}
+\tyrule{letimpl}
+  { \Gamma \vdash e_1 : \ident{num} &
+    \Gamma \vdash e_2 : \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}{\tau} }
+  { \Gamma \vdash \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}~e_1~e_2 : 
+      \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n, \ident{?p} \} }}{\tau} }
+\end{equation*}
+
+\vspace{1.25em}
+\paragraph{Translation}
+
+\begin{equation*}
+\semdef
+  { \coctx{\Gamma}{\cclrd{ \{ \ident{?p} \} }} \vdash \ident{?p} : \ident{num} }
+  {\lambda ctx.\ident{lookup}_{\cclrd{\ident{?p}}}~\ctx }
+\end{equation*}
+
+\begin{equation*}
+\semdefff
+  { \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1}
+  { \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2}
+  {\hspace{-1em}\begin{array}{l}  
+      \coctx{\Gamma}{\cclrd{r} \;\cclrd{\cup\; (\cclrd{s} \setminus \{ \ident{?p}) \}} }\\[-0.3em]
+        \quad \vdash \kvd{let}~\ident{?p}=e_1\\[-0.3em]
+        \quyad\qquad \kvd{in}~e_2 : \tau_2 \\[-0.3em]
+        ~ \\[-0.3em]
+   \end{array}}
+  {f}
+  {g}
+  {\hspace{-1em}\begin{array}{l}  
+  \lambda\ctx.~~\\[-0.3em]
+    \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cclrd{\cup}\; \cclrd{(s\setminus{\ident{?p}})}}~\ident{dup}~\ctx\\[-0.3em]
+    \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{(s\setminus{\ident{?p}})}}~\ctx_0\\[-0.3em]
+    \quad g~(\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{(s\setminus{\ident{?p}})}}~(f~\ctx_1)~\ctx_2)
+  \end{array} }   
+\end{equation*}
+
+\vspace{1.25em}
+\paragraph{Reduction rules}
+
+::: TODO ::: Everything except for counit
+
+\begin{equation*}
+\begin{array}{rl}
+{\footnotesize(\emph{counit})} & \begin{array}{l}
+\ident{counit}_{\cclrd{ \emptyset }}~\ident{Impl} (v, \langle \ldots \rangle)   \rightarrow v
+\end{array}
+\\[0.5em]
+{\footnotesize(\emph{cobind})} & \begin{array}{l}
+\ident{cobind}_{\cclrd{m}, \cclrd{n}}~f~(\ident{Df}\langle v_0, \ldots v_{m+n} \rangle) \rightarrow
+\\[-0.25em]
+\quad (\ident{Df}\langle f (\ident{Df}\langle v_0, \ldots, v_m \rangle), \ldots, f (\ident{Df}\langle v_{n}, \ldots, v_{m+n} \rangle) \rangle)
+\end{array}
+\\[0.5em]
+{\footnotesize(\emph{merge})} & \begin{array}{l}
+\ident{merge}_{\cclrd{m}, \cclrd{n}} ((\ident{Df}\langle v_0, \ldots, v_m \rangle), (\ident{Df}\langle v'_0, \ldots, v'_n\rangle)) \rightarrow
+\\[-0.25em]
+\quad (\ident{Df}\langle (v_0, b_0), \ldots, (v_{\mathit{min}(m,n)}, v'_{\mathit{min}(m,n)}) \rangle)
+\end{array}
+\\[0.5em]
+{\footnotesize(\emph{split})} & \begin{array}{l}
+\ident{split}_{\cclrd{m}, \cclrd{n}} (\ident{Df}\langle (v_0, b_0), \ldots, (v_{\mathit{max}(m,n)}, b_{\mathit{max}(m,n)}) \rangle)  \rightarrow
+\\[-0.25em]
+\quad \ident{Df}\langle v_0, \ldots, v_m \rangle, (\ident{Df}\langle b_0, \ldots, b_n\rangle
+\end{array}
+\\[0.5em]
+{\footnotesize(\emph{prev})} & \begin{array}{l}
+\ident{prev}_{\cclrd{n}} (\ident{Df}\langle v_0, \ldots, v_n, v_{n+1} \rangle) \rightarrow
+\\[-0.25em]
+\quad \ident{Df}\langle v_0, \ldots, v_n \rangle
+\end{array}
+\end{array}
+\end{equation*}
+
+\caption{Additional constructs embedding implicit parameters into the language}
+\label{fig:semantics-ext-df}
+\end{figure}
 \newpage
 
 ~
