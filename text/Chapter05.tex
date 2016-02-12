@@ -587,6 +587,8 @@ is defined by duplication.
 \end{example}
 
 \begin{example}[Indexed option]
+\label{thm:semantics-indexed-opt}
+  
 Flat coeffect algebra for liveness defines $\cpar$ and $\czip$ as $\sqcup$ and $\sqcap$, respectively 
 and specifies that $\ident{D} \sqsubseteq \ident{L}$. Recall also that the object mapping is defined 
 as $\ctyp{\ident{L}}{\alpha} = \alpha$ and $\ctyp{\ident{D}}{\alpha} = 1$. The additional operations 
@@ -618,6 +620,8 @@ the input is \emph{live}, the operation can perform implicit sub-coeffecting and
 the values.
 
 \begin{example}[Indexed product]
+\label{thm:semantics-indexed-prod}
+  
 For implicit parameters, both $\czip$ and $\cpar$ are the $\cup$ operation and the relation
 $\cleq$ is formed by the subset relation $\subseteq$. Recall that the data type $\ctyp{\cclrd{r}}{\alpha}$
 is $\alpha \times (\cclrd{r} \rightarrow \rho)$ where $\rho$ is the type of implicit parameter values.
@@ -645,6 +649,8 @@ the right-hand side (call site) over left-hand side (declaration site). Thus the
 symmetric.
 
 \begin{example}[Indexed list]
+\label{thm:semantics-indexed-list}
+  
 Our last example provides the semantics of data-flow computations. The flat coeffect algebra 
 is formed by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$. In a 
 non-indexed version, the semantics is provided by a non-empty list. In the indexed semantics,
@@ -666,7 +672,7 @@ are defined as follows:
 \quad (\langle a_0, \ldots, a_m \rangle, \langle b_0, \ldots, b_n\rangle)
 \end{array}
 \begin{array}{l}
-\hspace{-2em}\ctyp{n}{\alpha} = \underbrace{\alpha \times \ldots \times \alpha}_{(n+1)-\textnormal{times}}\\[11em]
+\hspace{-2em}\ctyp{n}{\alpha} = \underbrace{\alpha \times \ldots \times \alpha}_{(n+1)-\textnormal{times}}\\[8em]
 ~\\
 \end{array}
 \end{equation*}
@@ -684,11 +690,6 @@ $\ident{merge}_{m,n}$ behaves as \emph{zip} and produces a list that has the len
 argument. When splitting a list, $\ident{split}_{m, n}$ needs the maximum of the required lengths. 
 Finally, the lifting operation just drops some number of elements from a list.
 
-~
-
-~
-
-~
 
 % --------------------------------------------------------------------------------------------------
 
@@ -698,17 +699,17 @@ The semantics is defined over a typing derivation:
 \begin{equation*}
 \hspace{-3em}
 \begin{array}{ll}
-\hspace{4.8em}\semdef
+\hspace{5.2em}\semdef
   {\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }
   {\pi_i \circ \ident{counit}_{\cunit}} 
 & (\emph{var})
 \\[1em]
-\hspace{5.3em}\semdef
+\hspace{4.9em}\semdef
   {\coctx{\Gamma}{\czero} \vdash n : \ident{num} }
   {\ident{const}~n} 
-& (\emph{const})
+& (\emph{num})
 \\[1.5em]
-\hspace{1.5em}\semdeff
+\hspace{2.2em}\semdeff
   {\coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\czip\;\cclrd{s}} \vdash e : \tau_2}
   {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
   {f}
@@ -718,13 +719,13 @@ The semantics is defined over a typing derivation:
 \semdefff
   {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
   {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }
-  {\begin{array}\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2\\[-0.3em]~\end{array}}
+  {\begin{array}{l}\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2\\[-0.3em]~\end{array}}
   {f}
   {g}
-  {\begin{array}{l}  
+  {\hspace{-0.5em}\begin{array}{l} 
   \ident{app}~\circ~f\hspace{-0.15em}\times\hspace{-0.15em}(\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g)~\circ~\ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}} \\[-0.3em]
   ~~\circ~\ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~\ident{dup}\\[-0.3em]
-  \end{array} }   
+  \end{array}\hspace{-0.5em}}   
 & (\emph{app})
 \end{array}
 \end{equation*}
@@ -735,17 +736,18 @@ Assuming the following auxiliary operations:
 %
 \begin{equation*}
 \begin{array}{rcl}
+  \ident{map}_\cclrd{r}}~f &=& \ident{cobind}_{\cunit, \cclrd{r}}~(f\circ\ident{counit}_\cunit) \\[-0.3em]
   \ident{const}~v &=& \lambda x.v \\[-0.3em]
   \ident{curry}~f~x~y &=& \lambda f.\lambda x.\lambda y.f~(x, y)\\[-0.3em]
   \ident{dup}~x &=& (x, x)\\[-0.3em]
   f \times g &=& \lambda (x, y).(f~x, g~y)\\[-0.3em]
-  \ident{app}~f~x &=& f~x
+  \ident{app}~(f, x) &=& f~x
 \end{array}
 \end{equation*}
   
 
 \figcaption{Categorical semantics of the flat coeffect calculus}
-\label{fig:flat-semantics}
+\label{fig:semantics-flat}
 \end{figure*}
 
 % --------------------------------------------------------------------------------------------------
@@ -764,7 +766,7 @@ defined over a \emph{typing derivation} rather than over an \emph{term}. To assi
 semantics to a term, we choose its unique coeffect-specific typing derivation as defined in 
 Section~\ref{sec:flat-unique}.
 
-\paragraph{Contexts and functions.}
+\paragraph{Contexts and types.}
 The modelling of contexts and functions generalizes the earlier concrete examples. We use the 
 family of mappings $\ctyp{\cclrd{r}}{}$ as an (indexed) data-type that wraps the product of 
 free variables of the context and the arguments of functions:
@@ -778,112 +780,105 @@ free variables of the context and the arguments of functions:
 \end{equation*}
 
 \paragraph{Expressions.}
-The definition of the semantics is shown in Figure~\ref{fig:flat-semantics}. For readability, we 
-write the definitions in a simple programming language notation as opposed to the point-free 
-categorical style. However, it can be equally written using just the operations of flat indexed 
-comonad together with $i^{th}$ projection from a tuple represented by $\pi_i$, \emph{curry} and 
-\emph{uncurry}, function composition, value duplication ($\Delta : A \rightarrow A \times A$) and 
-function pairing (given $f:A\rightarrow B$ and $g:C\rightarrow D$ then $f\times g : A\times C \rightarrow B \times D$). 
-These operations can be provided by \eg~a Cartesian-closed category.
+The definition of the semantics is shown in Figure~\ref{fig:semantics-flat}. For consistency
+with earlier work \cite{comonads-notions,comonads-dom-thesis}, the definitions use a point-free 
+categorical notation. The semantics uses a number of auxiliary definitions that can be expressed
+in a Cartesian-closed category such as currying \ident{curry}, value duplication \ident{dup},
+function pairing (given $f:A\rightarrow B$ and $g:C\rightarrow D$ then $f\times g : A\times C \rightarrow B \times D$)
+and application \ident{app}. We will embed the definitions in a simple programming language 
+later (Section~\ref{sec:semantics-translation}).
 
 The semantics of variable access and abstraction are the same as in the semantics of Uustalu and 
 Vene \cite{comonads-notions}, modulo the indexing. The semantics of variable access (\emph{var}) uses 
-$\ident{counit}_{\cunit}$ to extract product of free-variables from the context and then projection
-$\pi_i$ to obtain the variable value. Abstraction (\emph{abs}) takes the context $\ctx$ and function argument 
-$v$ and merges their additional contexts using $\ident{merge}_{\cclrd{r}, \cclrd{s}}$. Assuming
-the context $\Gamma$ contains variables of types $\sigma_1, \ldots, \sigma_n$, this gives us a 
-value $\ctyp{\cclrd{r}\czip\cclrd{s}}((\sigma_1 \times \ldots \times \sigma_n) \times \tau_1)$.
+$\ident{counit}_{\cunit}$ to extract a product of free variables and projection
+$\pi_i$ to obtain the variable value. Abstraction (\emph{abs}) is interpreted as a curried
+function that takes the declaration-site context and a function argument, merges them using
+$\ident{merge}_{\cclrd{r}, \cclrd{s}}$ and passes the result to the semantics of the body $f$. 
+Assuming the context $\Gamma$ contains variables of types $\sigma_1, \ldots, \sigma_n$, this gives 
+us a value $\ctyp{\cclrd{r}\czip\cclrd{s}}((\sigma_1 \times \ldots \times \sigma_n) \times \tau_1)$.
 Assuming that $n$-element tuples are associated to the left, the wrapped context is equivalent to
 $\sigma_1 \times \ldots \times \sigma_n \times \tau_1$, which can then be passed to the body of the
 function.
 
-The semantics of application is more complex. It first duplicates the free-variable product inside the 
+The semantics of application (\emph{app}) first duplicates the free-variable product inside the 
 context (using $\ident{map}_{\cclrd{r}}$ and duplication). Then it splits this context using 
 $\ident{split}_{\cclrd{r}, \cclrd{s} \cpar \cclrd{t}}$. The two contexts contain the same variables
 (as required by sub-expressions $e_1$ and $e_2$), but different coeffect annotations. The first
-context (with index $\cclrd{r}$) is used to evaluate $e_1$, resulting in a function 
-$\ctyp{\cclrd{t}}{\tau_1} \rightarrow \tau_2$. To obtain the result, we compose this with a function
-created by applying $\ident{cobind}_{\cclrd{s}, \cclrd{t}}$ on the semantics of sub-expression
-$e_2$, which is of type $\ctyp{\cclrd{s}\cseq\cclrd{t}}{\sigma_1 \times \ldots \times \sigma_n}
-\rightarrow \ctyp{\cclrd{t}}{\tau_1}$.
-
-Finally, constants (\emph{const}) are modelled by a global dictionary $\delta$ and sub-coeffecting
-is interpreted by dropping additional context from the provided context $\ctx$ using 
-$\ident{lift}_{\cclrd{r}, \cclrd{r'}}$ and providing it to the semantics of the assumption.
+context (with index $\cclrd{r}$) is used to evaluate $e_1$ using the semantic function $f$. The 
+result is a function $\ctyp{\cclrd{t}}{\tau_1} \rightarrow \tau_2$. The second context
+(with index $\cclrd{s}\cseq\cclrd{t}$) is used to evaluate $e_2$ and using the semantic function $g$
+and wrap it with context required by the function $e_1$ by applying $\ident{cobind}_{\cclrd{s}, \cclrd{t}}$.
+The \ident{app} operation than applies the function (first element) on the argument (second element).
+Finally, numbers (\emph{num}) become constant functions that ignore the context.
 
 \paragraph{Properties.}
+We the categorical semantics  in Section~\ref{sec:semantics-translation} to define a translation 
+that embeds context-dependent computations in a functional programming langauge, similarly to how 
+monads and the do notation provide a way of embedding effectful computations in Haskell.
 
-The categorical semantics can be used to embed context-dependent computations in functional 
-programming languages, similarly to how monads provide a way of embedding effectful computations.
-More importantly, it also provides validation for the design of the type system developed in 
-Section~\ref{sec:flat-calculus-types}. As stated in the following theorem, the annotations in 
-the type system match those of the semantic functions.
+An important property of the translation is that it respects the coeffect annotations provided 
+by the type system. The annotations of the semantic functions match the annotations in the typing
+judgement and so the semantics is well-defined. 
+This provides a further validation for the design of the type system developed in 
+Section~\ref{sec:flat-calculus-types} -- if the coeffect annotations for (\emph{app}) and (\emph{abs}) 
+were different, we would not be able to provide a well-defined semantics using flat indexed comonads.
 
-\vspace{2em}
+Informally, the following states that if we see the semantics as a translation, the resulting code
+is well-typed. We revisit the property in Lemma~\ref{thm:semantics-welltyped} once we define
+the target langauge and its typing.
 
-\begin{theorem}[Correspondence]
+\begin{lemma}[Correspondence]
 \label{thm:flat-correspondence}
-In all of the typing rules of the flat coeffect system, the context annotations $\cclrd{r}$ of typing 
-judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and function types $\tau_1 \xrightarrow{\cclrd{r}} \tau_2$ 
-correspond to the indices of mappings $\ctyp{\cclrd{r}}{}$ in the corresponding semantic function defined 
-by $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}$.
-\end{theorem}
+In the semantics defined in Figure~\ref{fig:semantics-flat}, the context annotations $\cclrd{r}$ of 
+typing judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and function types 
+$\tau_1 \xrightarrow{\cclrd{r}} \tau_2$  on the left-hand side correspond to the indices of mappings 
+$\ctyp{\cclrd{r}}{}$ in the corresponding semantic function on the right-hand side.
+\end{lemma}
 \begin{proof}
-By analysis of the semantic rules in Figure~\ref{fig:flat-semantics}.
-\end{proof}
-
-\begin{theorem}[Generalization]
-\label{thm:flat-generalization}
-The semantics is the same as the concrete one from Chapter~\ref{ch:applications}
-\end{theorem}
-\begin{proof}
-It is really boring.
+By analysis of the semantic rules in Figure~\ref{fig:semantics-flat}.
 \end{proof}
 
 \noindent
-Thanks to indexing, the statement of the theorem is significantly stronger than for a 
-non-indexed system, because it provides the justification for our choice of indices in the typing
-rules. In particular, we can see that the annotations follow from the annotations on primitive 
-functions that define the semantics. Also, each function defining the semantics uses a distinct 
-operation of the coeffect algebra and so the type system is the most general possible definition
-(within the comonadic framework we use).
+Thanks to indexing, the correspondence provides more guarantees than for a non-indexed system.
+In the semantics, we not only know which values are comonadic, but we also know what contextual
+information they are required to provide. In Section~\ref{sec:semantics-generalising}, we note
+that this lets us generalize the proofs about concrete languages discussed in this chapter to
+a more general setting.
 
-Although the notion of indexed comonads presented in this section is novel and interesting 
-in its own, the main reason for introducing it is to motivate the flat coeffect type system.
-This is captured by the Theorem~\ref{thm:flat-correspondence}. In the next section, we shift our
-focus from (categorical) semantics to syntactic properties of the calculus.
+The semantics is also a generalization of the concrete semantics given when introducing
+context-aware programming languages in Chapter~\ref{ch:applications}.
+
+\begin{theorem}[Generalization]
+\label{thm:flat-generalization}
+
+Consider a typing derivation obtained according to the rules for finding unique typing derivations
+as specified in Section~\ref{sec:flat-unique} for a coeffect language with liveness, dataflow or 
+implicit parameters.
+
+The semantics obtained by instantiating the rules in Figure~\ref{fig:semantics-flat} with the
+concrete operations defined in Example~\ref{thm:semantics-indexed-opt},
+Example~\ref{thm:semantics-indexed-prod} or Example~\ref{thm:semantics-indexed-list} is the
+same as the one defined in Figure~\ref{fig:applications-flat-livsem},
+Figure~\ref{fig:applications-flat-implsem} and Figure~\ref{fig:applications-flat-dfsem},
+respectively.
+\end{theorem}
+\begin{proof}
+Simple expansion of the definitions for the unique typing derivation.
+\end{proof}
 
 
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Comonadic translation}
-
-The previous chapter gives the semantics of coeffect calculus in terms of indexed comonads. In this
-chapter, we follow the example of effects and monads and we use the semantics to define a 
-\emph{translation}.
-
-A context-aware \emph{source} program written using a concrete context-aware domain-specific 
-language (capturing dataflow, implicit parameters or other kinds of context awareness) with
-domain-specific language extensions (the \kvd{prev} keyword, or the \ident{?impl} syntax)
-is translated to a \emph{target} langauge that is not context-aware. The target language is
-a small functional language consisting of:
+% ==================================================================================================
 %
-\begin{itemize}
-  \item Simple functional subset formed by lambda calculus with tuples and numbers.
-  \item Comonadically-inspired primitives corresponding to \emph{counit}, \emph{cobind} and
-    other operations of flat indexed comonads.
-  \item Additional primitives that model contextual operations of each concrete coeffect language
-    (\emph{prev} for the \kvd{prev} keyword, \emph{lookup} for the \ident{?impl} syntax etc.)
-\end{itemize}
+%      #######
+%      #       #    # #####  ###### #####  #####  # #    #  ####
+%      #       ##  ## #    # #      #    # #    # # ##   # #    #
+%      #####   # ## # #####  #####  #    # #    # # # #  # #
+%      #       #    # #    # #      #    # #    # # #  # # #  ###
+%      #       #    # #    # #      #    # #    # # #   ## #    #
+%      ####### #    # #####  ###### #####  #####  # #    #  ####
 %
-The syntx, typing and reduction rules of the first part (simple functional language) are used by 
-all concrete coeffect domain-specific langauges. The syntax and typing rules of the second part 
-(comonadically-inspired) primitives are also shared by all coeffect DSLs, however the \emph{reduction
-rules} for the comonadically-inspired primitives differ -- they capture the concrete notion of
-context. Finally, the third part (domain-specific primitives) will differ for each coeffect DSL.
+% ==================================================================================================
 
-
-% --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
 \paragraph{Language syntax}  
@@ -892,8 +887,7 @@ context. Finally, the third part (domain-specific primitives) will differ for ea
   v &  = & n \sep \lambda x.e \sep (v_1, \ldots, v_n) \\
   e &  = & x \sep n \sep \pi_i~e \sep (e_1, \ldots, e_n) \sep e_1~e_2 \sep \lambda x.e \\
   \tau &  = & \ident{num} \sep \tau_1 \times \ldots \times \tau_n \sep \tau_1 \rightarrow \tau_2 \\
-  C  & = & (v_1, \ldots, v_{i-1}, \_, e_{i+1}, \ldots e_n) \sep v~\_ \sep \_~e \sep \pi_i~\_ 
-  
+  C  & = & (v_1, \ldots, v_{i-1}, \_, e_{i+1}, \ldots e_n) \sep v~\_ \sep \_~e \sep \pi_i~\_   
 \end{array}
 \end{equation*}
 
@@ -907,89 +901,25 @@ context. Finally, the third part (domain-specific primitives) will differ for ea
 \end{array}
 \end{equation*}
 
-\caption{Common syntax and reduction rules of the target langauge}
-\label{fig:semantics-target}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\section{Translation}
-\label{sec:semantics-translation}
-
-\subsection{Target langauge}
-
-The target langauge for the translation is a simply typed lambda calculus with numbers and tuples.
-The translation uses tuples as it keeps a tuple with variable assignments (encoding those without 
-tuples would be possible, but cumbersome) and we add numbers as a basic concrete data type.
-In this section, we define the common parts of the language without the comonadically-inspired
-primitives.
-
-The syntax of the target programming langauge is shown in Figure~\ref{fig:transl-target}. 
-The values include numbers $n$, tuples and function values.
-The expressions include variables $x$, values, lambda abstraction and application and operations 
-on tuples. We do not need recursion (although a realistic programming language would include it). 
-In what follows, we also use the following syntactic sugar for let binding:
-%
-\begin{equation*}
-\begin{array}{rcl}
-  \kvd{let}~x=e_1~\kvd{in}~e_2 &=& (\lambda x.e_2) e_1
-\end{array}
-\end{equation*}
-%
-Finally, $C[e]$ defines the context in which sub-expressions are evaluated. Together with the
-evaluation rules shown in  Figure~\ref{fig:transl-target}, this captures the standard call-by-name
-semantics of the common parts of the target language.
-The (standard) typing rules for the common expressions of the target langauge are shown in 
-Figure~\ref{fig:transl-targetty}. The rules are standard. 
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
+~
 \paragraph{Typing rules}
 \begin{equation*}
-\begin{array}{ll}
+\begin{array}{l}
 \tyrule{var}
   { x:\tau \in \Gamma }
   { \Gamma \vdash x:\tau }
-&
-\tyrule{err}
-  { ~ }
-  { \Gamma \vdash \ident{error}:\tau }
-\\[1em]
-\tyrule{str}
-  { ~ }
-  { \Gamma \vdash s:\ident{str} }
-&
+\\[1.25em]
 \tyrule{num}
   { ~ }
   { \Gamma \vdash n:\ident{num} }
-\\[1em]
-\tyrule{nil}
-  { ~ }
-  { \Gamma \vdash []:[\tau] }
-&
-\tyrule{head}
-  { \Gamma \vdash e :[\tau] }
-  { \Gamma \vdash \ident{head}~e:\tau }
-\\[1em]
-\tyrule{tail}
-  { \Gamma \vdash e :[\tau] }
-  { \Gamma \vdash \ident{tail}~e:[\tau] }
-\qquad~&
+\\[1.25em]
 \tyrule{abs}
   { \Gamma, x\!:\!\tau_1 \vdash e : \tau_2 }
   { \Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 }
-\end{array}
-\end{equation*}
-\begin{equation*}
-\begin{array}{l}
+\\[1.25em]
 \tyrule{app}
   { \Gamma \vdash e_1 : \tau_1 \rightarrow \tau_2  & \Gamma \vdash e_2 : \tau_1 }
   { \Gamma \vdash e_1~e_2 : \tau_2 }
-\\[1.25em]
-\tyrule{cons}
-  { \Gamma \vdash e_1 :\tau & \Gamma \vdash e_2 : [\tau] }
-  { \Gamma \vdash e_1\!::\!e_2 : [\tau] }
 \\[1.25em]
 \tyrule{proj}
   { \Gamma \vdash e : \tau_1 \times \ldots \tau_i \times \ldots \times \tau_n }
@@ -998,62 +928,175 @@ Figure~\ref{fig:transl-targetty}. The rules are standard.
 \tyrule{tup}
   { \forall i\in\{1 \ldots n\}.~ \Gamma \vdash e_i : \tau_i }
   { \Gamma \vdash (e_1, \ldots, e_n) : \tau_1 \times \ldots \times \tau_n }
-\\[1.25em]
-\tyrule{ifn}
-  { \Gamma \vdash e_1 : \ident{num} & \Gamma \vdash e_2 : \ident{num} &
-    \Gamma \vdash e_3 : \tau & \Gamma \vdash e_4 : \tau}
-  { \Gamma \vdash \kvd{if}~e_1 = e_2~\kvd{then}~e_3~\kvd{else}~e_4 : \tau}
-\\[1.25em]
-\tyrule{ifs}
-  { \Gamma \vdash e_1 : \ident{str} & \Gamma \vdash e_2 : \ident{str} &
-    \Gamma \vdash e_3 : \tau & \Gamma \vdash e_4 : \tau}
-  { \Gamma \vdash \kvd{if}~e_1 = e_2~\kvd{then}~e_3~\kvd{else}~e_4 : \tau}
 \end{array}
 \end{equation*}
 
-\caption{Typing rules for the common syntax of the target language}
-\label{fig:semantics-targetty}
+\caption{Common syntax and reduction rules of the target langauge}
+\label{fig:semantics-target}
 \end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Properties}
+\section{Embedding coeffect languages}
+\label{sec:semantics-translation}
 
-The subset of the langauge described so far models a simple ML-like functional programming 
-langauge (or, Haskell-like language, if we choose call-by-name evaluation). The subset of the
-langauge introduced so far satisfies the property that ``well-typed programs do not get stuck'',
-i.e.~both type preservation (reduction does not change the type of an expression) and the progress 
-property (an well-typed expression is either a value or can be reduced).
-We first show this for the subset of the language discussed so far and later extend the proof to 
-also cover the comonadically-inspired primitives that will be added in the next section.
+Although the notion of indexed comonads presented in the previous section is novel and interesting 
+in its own, the main reason for introducing it is that we can view it as a translation that provides 
+embedding of context-aware domain-specific languages in a simple target functional language.
+In this section, we follow the example of effects and monads and we use the semantics to define a 
+translation akin to the do notation in Haskell.
+
+A context-aware \emph{source} program written using a concrete context-aware domain-specific 
+language (capturing dataflow, implicit parameters or other kinds of context awareness) with
+domain-specific language extensions (the \kvd{prev} keyword, or the \ident{?impl} syntax)
+is translated to a \emph{target} langauge that is not context-aware. The target language is
+a small functional language consisting of:
+%
+\begin{itemize}
+  \item Simple functional subset formed by lambda calculus with support for tuples and numbers.
+  \item Comonadically-inspired primitives corresponding to \emph{counit}, \emph{cobind} and
+    other operations of flat indexed comonads.
+  \item Additional primitives that model contextual operations of each concrete coeffect language
+    (\emph{prev} for the \kvd{prev} keyword, \emph{lookup} for the \ident{?p} syntax and
+    \emph{letimpl} for the $\kvd{let}~\ident{?p}=\ldots$ notation).
+\end{itemize}
+%
+The syntx, typing and reduction rules of the first part (simple functional language) are used by 
+all concrete coeffect domain-specific langauges. The syntax and typing rules of the second part 
+(comonadically-inspired) primitives are also shared by all coeffect DSLs, however the \emph{reduction
+rules} for the comonadically-inspired primitives differ -- they capture the concrete notion of
+context. Finally, the third part (domain-specific primitives) will differ for each coeffect DSL.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Functional target langauge}
+
+The target langauge for the translation is a simply typed lambda calculus with integers and tuples.
+We include integers as an example of a concrete type. Tuples are needed by the translation, which
+keeps a tuple of variable assignments. Encoding those without tuples would be possible, but 
+cumbersome. In this section, we define the common parts of the language without the 
+comonadically-inspired primitives.
+
+The syntax of the target programming langauge is shown in Figure~\ref{fig:semantics-target}. 
+The values include numbers $n$, tuples and function values. The expressions include variables $x$, 
+values, lambda abstraction and application and operations on tuples. We do not need recursion or 
+other data types (although a realistic programming language would include them). 
+In what follows, we also use the following syntactic sugar for let binding:
+%
+\begin{equation*}
+\begin{array}{rcl}
+  \kvd{let}~x=e_1~\kvd{in}~e_2 &=& (\lambda x.e_2)~e_1
+\end{array}
+\end{equation*}
+%
+Finally, $C[e]$ defines the context in which sub-expressions are evaluated. Together with the
+evaluation rules shown in  Figure~\ref{fig:semantics-target}, this captures the standard 
+call-by-name semantics of the common parts of the target language. The (standard) typing rules 
+for the common expressions of the target langauge are also shown in Figure~\ref{fig:semantics-target}.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Safety of functional target language}
+
+The functional subset of the langauge described so far models a simple ML-like langauge. We 
+choose call-by-value over call-by-name for no particular reason and Haskell-like language would
+work equally well.
+
+The subset of the language introduced so far is type-safe in the standard sense that
+``well-typed programs do not get stuck''. Although standard, we outline the important parts
+of the proof for the functional subset here, before we extend it to concrete context-aware
+languages in Section~\ref{sec:semantics-proofs}.
+
+We use the standard syntactic approach to type safety introduced by Milner \cite{syntactic-sml}.
+Following Wright, Felleisen and Pierce \cite{syntactic-tapl,syntactic-approach}, we prove the
+type preservation property (reduction does not change the type of an expression) and the progress 
+property (a well-typed expression is either a value or can be further reduced).
+
+\begin{lemma}[Canonical forms]
+\label{thm:semantics-fp-canon}
+For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
+\begin{enumerate}
+  \item If $\tau=\ident{num}$ then $e = n$ for some $n \in \mathbb{Z}$
+  \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
+  \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
+\end{enumerate}  
+\end{lemma}
+\begin{proof}
+  For (1), the last typing rule must have been (\emph{num}); for (2), it must have been
+  (\emph{abs}) and for (3), the last typing rule must have been (\emph{tup})
+\end{proof}
+
+\begin{lemma}[Preservation under substitution]
+\label{thm:semantics-fp-pres-subst}
+For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$ 
+then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
+\end{lemma}
+\begin{proof}
+By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$. 
+\end{proof}
 
 \begin{theorem}[Type preservation]
+\label{thm:semantics-fp-pres}
   If $\Gamma \vdash e : \tau$ and $e \rightarrow e'$ then $\Gamma \vdash e' : \tau$
 \end{theorem}
 \begin{proof}
   Rule induction over $\rightarrow$.
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{fn}): $e = (\lambda x.e_0)~v$, from Lemma~\ref{thm:semantics-fp-pres-subst}
+  it follows that $\Gamma \vdash e_0[x \leftarrow v] : \tau$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{prj}): $e = \pi_i(v_1, \ldots, v_n)$ and so the last applied typing rule must have been
+  (\emph{tup}) and $\Gamma \vdash (v_1, \ldots, v_n) : \tau_1 \times\ldots\times \tau_n$ and
+  $\tau = \tau_i$. After applyng (\emph{prj}) reduction, $e' = v_i$ and so $\Gamma \vdash e' : \tau_i$.
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{ctx}): By induction hypothesis, the type of the reduced sub-expression does not change
+  and the last used rule in the derivation of $\Gamma \vdash e : \tau$ also applies on $e'$
+  giving $\Gamma \vdash e' : \tau$.  
 \end{proof}
 
 \begin{theorem}[Progress]
-  If $\Gamma \vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
+\label{thm:semantics-fp-prog}  
+  If $\vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
 \end{theorem}
 \begin{proof}
   By rule induction over $\vdash$.
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{num}): $e = n$ for some $n$ and so $e$ is a value.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{abs}): $e = \lambda x.e'$ for some $x, e'$, which is a value.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{var}): This case cannot occur, because $e$ is a closed expression.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{app}): $e = e_1~e_2$ which is not a value. By induction, $e_1$ is either
+a value or it can reduce. If it can reduce, apply (\emph{ctx}) reduction with context $\_~e$. Otherwise
+consider $e_2$. If it can reduce, apply (\emph{ctx}) with context $v~\_$. If both are values,
+Lemma~\ref{thm:semantics-fp-canon} guarantees that $e_1 = \lambda x.e_1'$ and so we can apply
+reduction (\emph{fn}).
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{proj}): $e = \pi_i e_0$ and $\tau=\tau_1\times\ldots\tau_n$. If $e_0$ can be reduced, 
+  apply (\emph{ctx}) with context $\pi_i~\_$. Otherwise from Lemma~\ref{thm:semantics-fp-canon}, 
+  we have that $e_0=(v_1, \ldots, v_n)$ and we can apply reduction (\emph{prj}).
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{tup}): $e = (e_1, \ldots, e_n)$. If all sub-expressions are values, then $e$ is also
+  a value. Otherwise, we can apply reduction using (\emph{ctx}) with a context $(v_1, \ldots, v_{i-1}, \_, e_{i+1}, \ldots, e_n)$.
 \end{proof}
 
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Coeffect-specific extnesions}
-
-Given a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$ of a concrete 
-coeffect domain-specific langauge, we first extend the language syntax and typing rules with 
-the terms that correspond to the comonadically-inspired operations. This is done in the same way
-for all concrete coeffect DSLs and so we give the additional syntax, evaluation context and 
-typing rules just once in Figure~\ref{fig:transl-ext}.
-
-The figure defines the syntax and the typing rules, but it does not define the reduction rules.
-Those -- together with the values for a concrete notion of context -- will be defined separately
-for each individual coeffect DSL. We first consider the DSL for dataflow programming.
+\begin{theorem}[Safety]
+  If $\Gamma \vdash e : \tau$ and $e \rightarrow^* e'$ then either $e'$ is a value or there
+  exists $e''$ such that $e' \rightarrow e''$
+\end{theorem}
+\begin{proof}
+  Rule induction over $\rightarrow^*$ using Theorem~\ref{thm:semantics-fp-pres} and Theorem~\ref{thm:semantics-fp-prog}.
+\end{proof}
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1067,9 +1110,8 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, extend the syntax:
          \sep \ident{split}_{\cclrd{r},\cclrd{s}}~e \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~e \\
   \tau &  = &\ldots \sep \ctyp{\cclrd{r}}{\tau} \\
   C  & = &\ldots \sep \ident{cobind}_{\cclrd{s},\cclrd{r}}~\_~e \sep \ident{cobind}_{\cclrd{s},\cclrd{r}}~v~\_ \sep \ident{counit}_{\cunit}~\_ \\
-    &\sep& \ident{merge}_{\cclrd{r},\cclrd{s}}~\_
-           \sep \ident{split}_{\cclrd{r},\cclrd{s}}~\_ \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~\_ \\
-  
+    && \hspace{1.4em} \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~\_
+           \sep \ident{split}_{\cclrd{r},\cclrd{s}}~\_ \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~\_ \\  
 \end{array}
 \end{equation*}
 
@@ -1097,11 +1139,6 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
 \tyrule{split}
   {\Gamma \vdash  e : \ctyp{\cclrd{r}\cpar\cclrd{s}}{(\tau_1 \times \tau_2)} }
   {\Gamma \vdash  \ident{split}_{\cclrd{r},\cclrd{s}}~e : \ctyp{\cclrd{r}}{\tau_1} \times \ctyp{\cclrd{s}}{\tau_2}} \\
-\\
-\tyrule{lift}
-  {\Gamma \vdash  e : \ctyp{\cclrd{r'}}{\tau} }
-  {\Gamma \vdash \ident{lift}_{\cclrd{r'},\cclrd{r}}~e : \ctyp{\cclrd{r}}{\tau} } \qquad\forall \cclrd{r'},\cclrd{r}, \cclrd{r}\,\cleq\,\cclrd{r'}
-\\
 \end{array}
 \end{equation*}
 
@@ -1113,18 +1150,38 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
 
 \subsection{Comonadically-inspired translation}
 
-In Chapter 4, we presented the semantics of the flat coeffect calculus in terms of indexed comonads.
-We treated the semantics as denotational -- interpreting the meaning of a given typing derivation
-of a program in terms of category theory.
+In Section~\ref{sec:semantics-theory}, we presented the semantics of the flat coeffect calculus in 
+terms of indexed comonads. We treated the semantics as denotational -- interpreting the meaning of 
+a given typing derivation of a program in terms of category theory.
 
 In this chapter, we use the same structure in a different way. Rather than treating the rules as
 \emph{denotation} in categorical sense, we treat them as \emph{translation} from a source 
 domain-specific coeffect language into a target language with comonadically-inspired primitives
 described in the previous section.
 
-Similarly, the interpretation of contexts and types in the category now becomes a translation from types and
-contexts in the source language into the types of the target language:
+\paragraph{Language extension.}
+Given a coeffect language with a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
+we first extend the language syntax and typing rules with terms that correspond to the 
+comonadically-inspired operations. This is done in the same way for all concrete coeffect 
+domain-specific languages and so we give the additional syntax, evaluation context and 
+typing rules in Figure~\ref{fig:semantics-ext} for all languages we consider later in 
+Section~\ref{sec:semantics-proofs}.
 
+The new type $\ctyp{\cclrd{r}}$ represents an indexed comonad, which is left abstract for now.
+The additional expressions such as $\ident{counit}_\cunit$ and $\ident{cobind}_{\cclrd{r,s}}$ 
+correspond to the operations of indexed comonads. Note that the we embed the coeffect annotations 
+into the target language -- these are known when translationg a typed term from a source language
+and they will be useful when proving that sufficient context (as specified by the coeffect
+annotations) is available.
+
+The figure defines the syntax and the typing rules, but it does not define the reduction rules.
+Those -- together with the values for a concrete notion of context -- will be defined separately
+for each individual coeffect language.
+
+\paragraph{Contexts and types.}
+The interpretation of contexts and types in the category now becomes a translation from types and
+contexts in the source language into the types of the target language:
+%
 \begin{equation*}
 \begin{array}{rcl}
 \sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{\cclrd{r}}} &=& \ctyp{\cclrd{r}}{(\sem{\tau_1} \times \ldots \times \sem{\tau_n})} \\[0.5em]
@@ -1133,18 +1190,112 @@ contexts in the source language into the types of the target language:
 \end{array}
 \end{equation*}
 
+\noindent
 Here, a context becomes a comonadically-inspired data type wrapping a tuple of variable values 
 and a coeffectful function is translated into an ordinary function in the target language
 with a comonadically-inspired data type wrapping the input type.
 
-The rules shown in Figure~\ref{fig:transl-translation} are very similar to those shown earlier
-Figure~X in Chapter~3. Thanks to the equivalence between $\lambda$-calculus and category theory,
-we now interpret them as denoting a translation. Furthermore, the program produced by the above
-rules is well-typed.
+% --------------------------------------------------------------------------------------------------
 
-\begin{lemma}[Well-typedness of the translation]
-Given a well-typed coeffect program $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ with a 
-typing derivation such that:
+\begin{figure*}[t]
+
+The translation is defined over a typing derivation:
+%
+\begin{equation*}
+\hspace{-3em}
+\begin{array}{ll}
+\hspace{4.8em}\semdef
+  {\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }
+  {\lambda\ctx.\pi_i~(\ident{counit}_{\cunit}~\ctx)} 
+& (\emph{var})
+\\[1em]
+\hspace{4.3em}\semdef
+  {\coctx{\Gamma}{\czero} \vdash n : \ident{num} }
+  {\lambda\ctx.n} 
+& (\emph{num})
+\\[1.5em]
+\hspace{1.5em}\semdeff
+  {\coctx{\Gamma, x_i:\tau_1}{\cclrd{r}\;\czip\;\cclrd{s}} \vdash e : \tau_2}
+  {\hspace{-1em}\begin{array}{l}  
+    \coctx{\Gamma}{\cclrd{r}} \vdash \lambda x_i.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2
+    \\[-0.3em]~\\[-0.3em]~ \\[-0.3em]~
+  \end{array} }
+  {f}
+  {\hspace{-1em}\begin{array}{l}  
+    \lambda \ctx.\lambda v.\\[-0.3em]
+    \quad \kvd{let}~\ident{assoc} = \lambda x.\\[-0.3em]
+    \quad\quad (\pi_1(\pi_1~x), \ldots, \pi_{i-1}(\pi_1~x), \pi_2~x)\\[-0.3em]
+    \quad f~(\ident{map}_{\cclrd{r}\czip\cclrd{s}}~\ident{assoc}~(\ident{merge}_{\cclrd{r}, \cclrd{s}}~(\ctx, v)))
+   \end{array} }
+& (\emph{abs})
+\\[4em]
+\semdefff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }
+  {\begin{array}\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2\\[-0.3em]~\\[-0.3em]~\\[-0.3em]~\end{array}}
+  {f}
+  {g}
+  {\hspace{-1em}\begin{array}{l}  
+  \lambda\ctx.~~\\[-0.3em]
+    \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~\ident{dup}~\ctx\\[-0.3em]
+    \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}}~\ctx_0\\[-0.3em]
+    \quad f~\ctx_1~
+      (\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g~\ctx_2)
+  \end{array} }   
+& (\emph{app})
+\end{array}
+\end{equation*}
+
+~
+
+~
+
+Assuming the following auxiliary operations:
+%
+\begin{equation*}
+\begin{array}{rcl}
+  \ident{map}_\cclrd{r}}~f &=& \ident{cobind}_{\cunit, \cclrd{r}}~(\lambda x.f~({\ident{counit}_\cunit}~x)) \\[-0.3em]
+  \ident{dup} &=& \lambda x. (x, x)
+\end{array}
+\end{equation*}
+  
+
+\figcaption{Translation from a flat DSL to a comonadically-inspired target language}
+\label{fig:semantics-translation}
+\end{figure*}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Expressions.}
+The rules shown in Figure~\ref{fig:semantics-translation} define how expressions of the source
+language are translated into the target language. The rules are very similar to those shown earlier
+in Figure~\ref{fig:semantics-flat}. The result is now written as source code in the
+target programming language rather than as composition of morphisms in a category. However,
+thanks to the equivalence between $\lambda$-calculus and category theory, both interpretations 
+are equivalent.
+
+One change from Figure~\ref{fig:semantics-flat} is that we are now more explicit about the tuple
+that contains variable assignments. Previously, we assumed that the tuple is appropriately 
+reassociated. Now, we perform the reassociation explicitly. We keep a flat tuple of variables, so
+given $\Gamma=x_1\!:\!\tau_1,\ldots,x_n\!:\!\tau_n$, the tuple has a type $\tau_1\times\ldots\times\tau_n$.
+In (\emph{var}), we access a variable using $\pi$, but in (\emph{abs}), the \ident{merge} operation
+produces a tuple $(\tau_1\times\ldots\times\tau_{i-1})\times\tau_i$ that we turn into a flat
+tuple $\tau_1\times\ldots\times\tau_{i-1}\times\tau_i$ using the \ident{assoc} function.
+
+\paragraph{Properties.} 
+The most important property of the translation is that it produces well-typed programs in the
+target language. This is akin to the correspondence property of the semantics discussed earlier
+(Theorem~\ref{thm:flat-correspondence}), but now it has more obvious practical consequences.
+
+In Section~\ref{sec:semantics-proofs}, we will prove safety properties of well-typed programs in the 
+target language. Thanks to the fact that the translation produces a well-typed program (as complex
+as it might be) means that we are also proving safety of well-typed programs in the source 
+context aware languages.
+
+\begin{theorem}[Well-typedness of the translation]
+\label{thm:semantics-welltyped}
+Given a typing derivation for a well-typed closed expression $\coctx{}{\cclrd{r}} \vdash e : \tau$
+written in a context-aware programming langugae that is translated to the target langauge as:
 %  
 \begin{equation*}  
   \semdeff
@@ -1154,103 +1305,120 @@ typing derivation such that:
     { ~~f }
 \end{equation*}  
 %
-Then $e$ is a valid expression in the target langauge and $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
-\end{lemma}
+Then $f$ is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
+\end{theorem}
 \begin{proof}
-  By rule induction over the translation rules.
+By rule induction over the derivation of the translation. Given a judgement
+$\coctx{x_1\!:\!\tau_1 \ldots x_n\!:\!\tau_n}{\cclrd{c}} \vdash e : \tau$, the translation
+constructs a function of type $\ctyp{\cclrd{c}}(\sem{\tau_1} \times\ldots\times \sem{\tau_n}) \rightarrow \sem{\tau}$.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm 
+Case (\emph{var}): $\cclrd{c}=\cunit$ and $\tau = \tau_i$ and so $\pi_i ({\ident{counit}_\cunit}~\ctx)$ is well-typed.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{num}): $\tau = \ident{num}$ and so the body $n$ is well-typed.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\cclrd{r}}(\ldots)$ and the type of $v$ is $\ctyp{\cclrd{s}}\tau_1$,
+  calling $\ident{merge}_{\cclrd{r},\cclrd{s}}$ and reassociating produces
+  $\ctyp{\cclrd{r}\czip\cclrd{s}}(\ldots)$ as expected by $f$.
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{num}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of 
+  $\ctx_1, \ctx_2$ are $\ctyp{\cclrd{r}}(\ldots)$ and $\ctyp{\cclrd{s}\cseq\cclrd{t}}(\ldots)$, respectively.
+  $g$ requires $\ctyp{\cclrd{s}}(\ldots)$ and so the result of $\ident{cobind}_{\cclrd{s},\cclrd{t}}$ is
+  $\ctyp{\cclrd{t}}\tau_1$ as required by $f$.
 \end{proof}
 
 
-\begin{figure*}[t]
 
-\begin{equation*}
-\hspace{-3em}
-\begin{array}{ll}
-\hspace{4.8em}\semdef
-  {\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }
-  {\lambda\ctx.\pi_i~(\ident{counit}_{\cunit}~\ctx)} 
-& (\emph{var})
-\\[1em]
-\hspace{5.3em}\semdef
-  {\coctx{\Gamma}{\czero} \vdash n : \ident{num} }
-  {\lambda\ctx.n} 
-& (\emph{const})
-\\[1.5em]
-\hspace{1.5em}\semdeff
-  {\coctx{\Gamma, x:\tau_1}{\cclrd{r}\;\czip\;\cclrd{s}} \vdash e : \tau_2}
-  {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
-  {f}
-  {\lambda \ctx.\lambda v.f~(\ident{merge}_{\cclrd{r}, \cclrd{s}}~(\ctx, v)) }
-& (\emph{abs})
-\\[2em]
-\semdefff
-  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
-  {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }
-  {\begin{array}\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2\\[-0.3em]~\\[-0.3em]~\\[-0.3em]~\end{array}}
-  {f}
-  {g}
-  {\begin{array}{l}  
-  \lambda\ctx.~~\\[-0.3em]
-    \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~(\lambda x.(x,x))~\ctx\\[-0.3em]
-    \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}}~\ctx_0\\[-0.3em]
-    \quad f~\ctx_1~
-      (\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g~\ctx_2)
-  \end{array} }   
-& (\emph{app})
-\\[4em]
-\hspace{6em}\semdeff
-  {\coctx{\Gamma}{\cclrd{r'}} \vdash e : \tau}
-  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau } 
-  {f}
-  {\lambda\ctx f~(\ident{lift}_{\cclrd{r}, \cclrd{r'}}~\ctx}
-\quad(\hspace{-0.7em}\textnormal{\footnotesize when}~\cclrd{r'} \leq \cclrd{r})
-& (\emph{sub})\\[-0.25em]
-\end{array}
-\end{equation*}
+% ==================================================================================================
+%
+%       #####
+%      #     #   ##   ###### ###### ##### #   #
+%      #        #  #  #      #        #    # #
+%       #####  #    # #####  #####    #     #
+%            # ###### #      #        #     #
+%      #     # #    # #      #        #     #
+%       #####  #    # #      ######   #     #
+%
+% ==================================================================================================
 
-\figcaption{Translation from a flat DSL to a comonadically-inspired target language}
-\label{fig:semantics-translation}
-\end{figure*}
+\section{Safety of context-aware languages}
+\label{sec:semantics-proofs}
+
+The previous two languages provide a general structrue that we now use to prove the safety of 
+concrete context-aware programming languages based on the coeffect language framework. We
+consider a langauge for dataflow computations (Section~\ref{sec:semantics-proofs-df}) and
+for implicit parameters (Section~\ref{sec:semantics-proofs-impl}). In both cases, we extend
+the progress and preservation theorems of the functional subset of the target language, but the
+approach can be generalised as discussed in Section~\ref{sec:semantics-generalising}.
 
 % --------------------------------------------------------------------------------------------------
 
-\section{Proofs}
-\label{sec:semantics-proofs}
-
 \subsection{Coeffect langauge for dataflow}
+\label{sec:semantics-proofs-df}
 
 The types of the comonadically-inspired operations are the same for each concrete coeffect DSL, but
 each DSL introduces its own \emph{values} of type $\ctyp{\cclrd{r}}\tau$ and also its own reduction
 rules that define how comonadically-inspired operations evaluate.
 
-We first consider the extensions needed for dataflow computations. As discussed earlier in the
+We first consider dataflow computations. As discussed earlier in the
 semantics of dataflow, the indexed comonad for a context with $n$ past values carries $n+1$ 
-values.
+values. When reducing translated programs, the comonadic values will not be directly manipulated by the
+user code. In a programming language, it could be seen as an \emph{abstract data type} whose only
+operations are the comonadically-inspired ones defined earlier.
 
-When evaluating translated programs, the comonadic values will not be directly manipulated by the
-user code and so we introduce a new class of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$. 
-Furthermore, the \ident{Df} values will only appear as fully evaluated inputs and they will be manipulated 
-using the comonadically-inspired operations. Thus, the typing rule (\emph{df}) only needs to 
-check values. We do not need a similar rule for expressions. Construct such as $\ident{Df}\langle(\kvd{fun}~x.x)~1\rangle$ 
-are not allowed in the target language. The (\emph{df}) rule also guarantees that the number of 
-elements in the list matches the number in the coeffect:
+The Figure~\ref{fig:semantics-ext-df} shows extensions to the target language for modelling
+dataflow computations. We introduce a new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
+and a matching kind of expressions. We add a language primitive modelling the semantics of the
+\kvd{prev} keyword together with its typing rule (\emph{prev}) and we also add
+a typing rule (\emph{df}) that checks the types of the elements of the stream and also guarantees 
+that the number of elements in the stream matches the number in the coeffect.
 
-\begin{equation*}
-\begin{array}{l}
-v = \ldots \sep \ident{Df}\langle v_0, \ldots, v_n\rangle \\
-e = \ldots \sep \ident{Df}\langle v_0, \ldots, v_n\rangle \\
-\end{array}  
-\begin{array}{l}
-\tyrule{df}
-  { \forall i\in\{ 0 \ldots n \}. ~ \vdash v : \tau}
-  { \Gamma \vdash \ident{Df}\langle v_0, \ldots, v_n \rangle : \ctyp{\cclrd{n}}{\tau} }
-\end{array}  
-\end{equation*}
-~
-
-\noindent
 The additional reduction rules mirror the semantics that we discussed earlier when talking about
 indexed dataflow comonad.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\paragraph{Language syntax}
+
+\begin{equation*}
+\begin{array}{rcl}
+v &=& \ldots \sep \ident{Df}\langle v_0, \ldots, v_n\rangle \\
+e &=& \ldots \sep \ident{Df}\langle e_0, \ldots, e_n\rangle \sep \ident{prev}_{\cclrd{n}}~e\\
+C &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_
+\end{array}  
+\end{equation*}
+
+\vspace{1.25em}
+\paragraph{Typing rules}
+
+\begin{equation*}
+\tyrule{df}
+  { \forall i\in\{ 0 \ldots n \}. ~ \Gamma \vdash e_i : \tau}
+  { \Gamma \vdash \ident{Df}\langle e_0, \ldots, e_n \rangle : \ctyp{\cclrd{n}}{\tau} }
+\end{equation*}
+\begin{equation*}
+\tyrule{prev}
+  { \Gamma \vdash e : \ctyp{\cclrd{n+1}}{\tau} }
+  { \Gamma \vdash \ident{prev}_{\cclrd{n}}~e : \ctyp{\cclrd{n}}{\tau} }
+\end{equation*}
+
+\vspace{1.25em}
+\paragraph{Translation}
+
+\begin{equation*}
+\semdeff
+  { \coctx{\Gamma}{\cclrd{n}} \vdash e : \tau }
+  { \coctx{\Gamma}{\cclrd{n+1}} \vdash \kvd{prev}~e : \tau }
+  {f}
+  {\lambda ctx.\ident{prev}_{\cclrd{n}}~\ctx }
+\end{equation*}
+
+\vspace{1.25em}
+\paragraph{Reduction rules}
 
 \begin{equation*}
 \begin{array}{rl}
@@ -1259,15 +1427,15 @@ indexed dataflow comonad.
 \end{array}
 \\[0.5em]
 {\footnotesize(\emph{cobind})} & \begin{array}{l}
-\ident{cobind}_{\cclrd{m}, \cclrd{n}}~f (\ident{Df}\langle v_0, \ldots v_{m+n} \rangle) \rightarrow
+\ident{cobind}_{\cclrd{m}, \cclrd{n}}~f~(\ident{Df}\langle v_0, \ldots v_{m+n} \rangle) \rightarrow
 \\[-0.25em]
 \quad (\ident{Df}\langle f (\ident{Df}\langle v_0, \ldots, v_m \rangle), \ldots, f (\ident{Df}\langle v_{n}, \ldots, v_{m+n} \rangle) \rangle)
 \end{array}
 \\[0.5em]
 {\footnotesize(\emph{merge})} & \begin{array}{l}
-\ident{merge}_{\cclrd{m}, \cclrd{n}} ((\ident{Df}\langle v_0, \ldots, v_m \rangle), (\ident{Df}\langle b_0, \ldots, b_n\rangle)) \rightarrow
+\ident{merge}_{\cclrd{m}, \cclrd{n}} ((\ident{Df}\langle v_0, \ldots, v_m \rangle), (\ident{Df}\langle v'_0, \ldots, v'_n\rangle)) \rightarrow
 \\[-0.25em]
-\quad (\ident{Df}\langle (v_0, b_0), \ldots, (v_{\mathit{min}(m,n)}, b_{\mathit{min}(m,n)}) \rangle)
+\quad (\ident{Df}\langle (v_0, b_0), \ldots, (v_{\mathit{min}(m,n)}, v'_{\mathit{min}(m,n)}) \rangle)
 \end{array}
 \\[0.5em]
 {\footnotesize(\emph{split})} & \begin{array}{l}
@@ -1276,162 +1444,146 @@ indexed dataflow comonad.
 \quad \ident{Df}\langle v_0, \ldots, v_m \rangle, (\ident{Df}\langle b_0, \ldots, b_n\rangle
 \end{array}
 \\[0.5em]
-{\footnotesize(\emph{lift})} & \begin{array}{l}
-\ident{lift}_{\cclrd{n'}, \cclrd{n}} (\ident{Df}\langle v_0, \ldots, v_{n'} \rangle) \rightarrow
-\qquad(\textnormal{when}~n\leq n') \\[-0.25em]
+{\footnotesize(\emph{prev})} & \begin{array}{l}
+\ident{prev}_{\cclrd{n}} (\ident{Df}\langle v_0, \ldots, v_n, v_{n+1} \rangle) \rightarrow
+\\[-0.25em]
 \quad \ident{Df}\langle v_0, \ldots, v_n \rangle
 \end{array}
 \end{array}
 \end{equation*}
 
-~
+\caption{Additional constructs for modelling dataflow in the target langauge}
+\label{fig:semantics-ext-df}
+\end{figure}
 
-\noindent
-Now consider a target langauge consisting of the core (ML-subset) defined in Figure~\ref{fig:transl-target}
-with typing rules defined in Figure~\ref{fig:transl-targetty} and comonadically-inspired primtiives
-defined in Figure~\ref{fig:transl-ext} and also concrete notion of comonadically-inspired value
-and reduction rules for data flow as defined above.
+% --------------------------------------------------------------------------------------------------
 
+\paragraph{Properties.}
+Now consider a target langauge consisting of the core (ML-subset) defined by the syntax,
+reduction rules and typing rules given in Figure~\ref{fig:semantics-target} and comonadically-inspired 
+primtives defined in Figure~\ref{fig:semantics-ext} and also concrete notion of comonadically-inspired 
+value and reduction rules for dataflow as defined in Figure~\ref{fig:semantics-ext-df}.
+
+In order to prove type safety, we first extend the canonical forms lemma
+(Lemma~\ref{thm:semantics-fp-canon}) and the preservation under substitution lemma
+(Lemma~\ref{thm:semantics-fp-pres-subst}). Those need to consider the new (\emph{df}) 
+and (\emph{prev}) typing rules and substitution under the newly introduced expression forms 
+$\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$. Then 
+we extend the type preservation (Theorem~\ref{thm:semantics-fp-pres}) and progress
+(Theorem~\ref{thm:semantics-fp-prog}).
+
+\begin{lemma}[Canonical forms]
+\label{thm:semantics-df-canon}
+For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
+\begin{enumerate}
+  \item If $\tau=\ident{num}$ then $e = n$ for some $n \in \mathbb{Z}$
+  \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
+  \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
+  \item If $\tau=\ctyp{\cclrd{n}}\tau_1$ then $e = \ident{Df}\langle v_0, \ldots v_n\rangle$ for some $v_i$
+\end{enumerate}  
+\end{lemma}
+\begin{proof}
+  (1,2,3) as before; for (4) the last typing rule must have been (\emph{df}).
+\end{proof}
+
+\begin{lemma}[Preservation under substitution]
+\label{thm:semantics-df-pres-subst}
+For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$ 
+then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$ as before, with new
+  cases for $\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$.
+\end{proof}
 
 \begin{theorem}[Type preservation]
+\label{thm:semantics-df-pres}
   If $\Gamma \vdash e : \tau$ and $e \rightarrow e'$ then $\Gamma \vdash e' : \tau$
 \end{theorem}
 \begin{proof}
-As before, using rule induction over $\rightarrow$.
-
-Interesting new cases are the reduction rules (\emph{counit}), (\emph{cobind}), (\emph{merge}),
-(\emph{split}) and (\emph{lift}). We need to show that, given a well typed input value, the resulting
-value is a \ident{Df} value with the right number of elements (for (\emph{cobind}), (\emph{lift}) and (\emph{merge}),
-a tuple of \ident{Df} values with the right number of elements (for (\emph{split})) and a value
-of correct type (for (\emph{unit})).
-
-From the fact that the reduction occurred, we know that the input was a \ident{Df} value with the
-required number of inputs and from the typing rule (\emph{df}) we know that the values in the input
-were all of correct types.  
-\end{proof}
-
-\begin{theorem}[Progress]
-  If $\Gamma \vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
-\end{theorem}
-\begin{proof}
-  As before, using rule induction over $\vdash$.
-
-Interesting new cases are those arising from the typing rules for the comonadically-inspired
-primitives in Figure~\ref{fig:transl-ext}, that is (\emph{counit}), (\emph{cobind}), (\emph{merge}),
-(\emph{split}) and (\emph{lift}).  
-In all of the cases, $e$ is not a value and so it needs to reduce and the only reduction rules
-are the ones for dataflow computations (above). 
-
-If the argument is a value, one of the reduction rules (above) can be used (the typing guarantees
-that the list has the required number of elements). If the argument is an expressions, we use 
-the induction hypothesis.
-\end{proof}
-
-\begin{theorem}[Soundness]
-\label{thm:semantics-sound-df}  
-Yo
-\end{theorem}
-
-\newpage
-\section{Coeffect language for implicit parameters}
-
-\begin{equation*}
-v = \ident{Impl}(v)
-\end{equation*}
-
-a
-
-\begin{equation*}
-\tyrule{impl}
-  { \Gamma \vdash v : \ident{string} \rightarrow \ident{num}}
-  { a }
-\end{equation*}
-
-b
-
-
-
-% Simple for normal parts of the language
-% We have to check this for dataflow reductions  
-%
-% Interesting case is $e_1 e_2$ where $e_1 = v$ is one of the primitives. Then we have to go through
-% them and make sure they can progress.  
-
-% And also syntactic sugar \ident{map} 
-
-
-%    &\sep& \ident{cobind}_{\cclrd{s},\cclrd{r}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~e 
-%       \sep \ident{split}_{\cclrd{r},\cclrd{s}}~e \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~e \\
-
-%
-% &\sep& \ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e 
-%   \sep \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~e \sep \ident{dup}_{\cclrd{r},\cclrd{s}}~e \\
-
-\section{Dataflow}
-Domain specific coeffect annotations are non-negative integers, type is a tuple and new kinds
-of values are lists:
-\begin{equation*}
-\begin{array}{rcl}
-  v_c &  = &  \langle v_1, \ldots, v_n \rangle
-\end{array}
-\end{equation*}
-%
-With the following typing:
-%
-\begin{equation*}  
-\tyrule{val}
-  { \forall v_i . \vdash v_i : \tau }
-  { \vdash \langle v_1, \ldots, v_n \rangle : \ctyp{n}{\tau} }
-\end{equation*}
-%
-
-
-We could define those in terms of head/tail functions and then prove that they work (and translated
-program does not contain head/tail), but perhaps that's unnecessary overkill. Or perhaps it would
-be useful in order to show how we avoid errors... But doing it directly looks just simpler (we
-also do not need a ``list'' type).
-
-\begin{theorem}[Type preservation]
-  If $\Gamma \vdash e : \tau$ and $e \rightarrow e'$ then $\Gamma \vdash e' : \tau$
-\end{theorem}
-\begin{proof}
-  Rule induction over $\rightarrow$
+  Rule induction over $\rightarrow$.
   
-Simple for normal parts of the language
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{fn}, \emph{prj}, \emph{ctx}): As before, using Lemma~\ref{thm:semantics-df-pres-subst} for (\emph{fn}).
 
-We have to check this for dataflow reductions  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{counit}): $e = \ident{counit}_{\cclrd{0}}(\ident{Df} \langle v_0 \rangle)$. The last rule in the type
+  derivation of $e$ must have been (\emph{counit}) with $\Gamma \vdash \ident{Df} \langle v_0 \rangle : \ctyp{\cclrd{0}}\tau$
+  and therefore $\Gamma \vdash v_0 : \tau$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \cclrd{n}}~f~(\ident{Df}\langle v_0, \ldots v_{m+n} \rangle)$. The
+  last rule in the type derivation of $e$ must have been (\emph{cobind}) with a type $\tau = \ctyp{\cclrd{n}}\tau_2$ and assumptions
+  $\Gamma \vdash f : \ctyp{\cclrd{m}}{\tau_1} \rightarrow \tau_2$ and $\Gamma \vdash \ident{Df}\langle v_0, \ldots v_{m+n} \rangle : \ctyp{\cclrd{m+n}}{\tau}$.
+  The reduced expression has a type $\ctyp{\cclrd{n}}\tau_2$:
+\begin{equation*}
+\inference
+  { \inference 
+      { \Gamma \vdash f : \ctyp{\cclrd{m}}{\tau_1} \rightarrow \tau_2 & \forall i\in 0 \ldots n.~\Gamma\vdash \ident{Df}\langle v_i, \ldots, v_{i+m} \rangle :  \ctyp{\cclrd{m}}{\tau_1}}  
+      { \forall i\in 0 \ldots n.~\Gamma\vdash f (\ident{Df}\langle v_i, \ldots, v_{i+m} \rangle) : \tau_2} }
+  { \Gamma \vdash \ident{Df}\langle f (\ident{Df}\langle v_0, \ldots, v_m \rangle), \ldots, f (\ident{Df}\langle v_{n}, \ldots, v_{m+n} \rangle) \rangle : \ctyp{\cclrd{n}}\tau_2 }
+\end{equation*}
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{merge}, \emph{split}, \emph{next}): Similar. In all three cases, the last typing rule in the derivation of $e$
+  guarantees that the stream contains a sufficient number of elements of correct type.
 \end{proof}
 
 \begin{theorem}[Progress]
-  If $\Gamma \vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
+\label{thm:semantics-df-prog}  
+  If $\vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
 \end{theorem}
 \begin{proof}
   By rule induction over $\vdash$.
   
-Interesting case is $e_1 e_2$ where $e_1 = v$ is one of the primitives. Then we have to go through
-them and make sure they can progress.  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{num,abs,var,app,proj,tup}): As before, using the adapted canonical forms lemma
+  (Lemma~\ref{thm:semantics-df-canon}) for (\emph{app}) and (\emph{proj}).
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced 
+  using (\emph{ctx}) with context ${\ident{counit}_\cunit}~\_$, otherwise it is a value. From Lemma~\ref{thm:semantics-df-canon},
+  $e_1 = \ident{Df}\langle v\rangle$ and so we can apply (\emph{counit}) reduction rule.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \cclrd{n}}~e_1~e_2$. If $e_1$ is not a value,
+  reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{m},\cclrd{n}}}~\_~e$. If $e_2$ is
+  not a value reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{m},\cclrd{n}}}~v~\_$.
+  If both are values, then from Lemma~\ref{thm:semantics-df-canon}, we have that 
+  $e_2 = \ident{Df}\langle v_0, \ldots v_{m+n} \rangle$ and so we can apply the (\emph{cobind})
+  reduction.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{merge}): $e = \ident{merge}_{\cclrd{m}, \cclrd{n}} e_1$. If $e_1$ is not a value, 
+  reduce using (\emph{ctx}) with context $e = \ident{merge}_{\cclrd{m}, \cclrd{n}}~\_$. If $e_1$ is
+  a value, it must be a pair of streams $(\ident{Df}\langle v_0, \ldots, v_m \rangle, \ident{Df}\langle v'_0, \ldots, v'_n\rangle)$
+  using Lemma~\ref{thm:semantics-df-canon} and it can reduce using (\emph{merge}) reduction.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value, or the type 
+  guarantees that it is a stream with correct number of elements to enable the (\emph{split}) 
+  or (\emph{prev}) reduction, respectively.
+\end{proof}
+
+\begin{theorem}[Safety]
+  If $\Gamma \vdash e : \tau$ and $e \rightarrow^* e'$ then either $e'$ is a value or there
+  exists $e''$ such that $e' \rightarrow e''$
+\end{theorem}
+\begin{proof}
+  Rule induction over $\rightarrow^*$ using Theorem~\ref{thm:semantics-df-pres} and Theorem~\ref{thm:semantics-df-prog}.
 \end{proof}
 
 
-\begin{theorem}[Soundness]
-\label{thm:semantics-sound-impl}  
-Yo
-\end{theorem}
 
+\newpage
 
+~
 
+\newpage
 
-
-
-
-
-
-
-
-
-
-
-
+\section{Generalising}
+\label{sec:semantics-generalising}
+... works for any good comonad...
 
 
 
@@ -1463,10 +1615,6 @@ We start with a quick overview of the ways in which effects and coeffects differ
 we briefly look at one (but illustrative) example where the two concepts overlap. We focus 
 mainly on the equivalence between the \emph{categorical semantics}, which reveals the nature
 of the computations -- rather than considering just the syntactic aspects of the type system.
-
-\subsection{Generalising}
-... works for any good comonad...
-
 
 \subsection{Properties and related notions}
 
