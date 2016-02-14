@@ -1367,15 +1367,16 @@ We first consider dataflow computations. As discussed earlier in the
 semantics of dataflow, the indexed comonad for a context with $n$ past values carries $n+1$ 
 values. When reducing translated programs, the comonadic values will not be directly manipulated by the
 user code. In a programming language, it could be seen as an \emph{abstract data type} whose only
-operations are the comonadically-inspired ones defined earlier.
+operations are the comonadically-inspired ones defined earlier, together with an additional 
+\emph{domain-specific} operation that models the \kvd{prev} construct.
 
-The Figure~\ref{fig:semantics-ext-df} shows extensions to the target language for modelling
-dataflow computations. We introduce a new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
-and a matching kind of expressions. We add a language primitive modelling the semantics of the
-\kvd{prev} keyword together with its typing rule (\emph{prev}) and we also add
-a typing rule (\emph{df}) that checks the types of the elements of the stream and also guarantees 
+The Figure~\ref{fig:semantics-ext-df} extensionds the target language with syntax, typing rules,
+additional translation rule and reductions for modelling dataflow computations. We introduce a 
+new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
+and a matching kind of expressions. We specify how the \kvd{prev} keyword is translated into a
+$\ident{prev}_\cclrd{r}$ operation of the target language nd we also add a typing rule
+(\emph{df}) that checks the types of the elements of the stream and also guarantees 
 that the number of elements in the stream matches the number in the coeffect.
-
 The additional reduction rules mirror the semantics that we discussed earlier when talking about
 indexed dataflow comonad.
 
@@ -1388,7 +1389,7 @@ indexed dataflow comonad.
 \begin{array}{rcl}
 v &=& \ldots \sep \ident{Df}\langle v_0, \ldots, v_n\rangle \\
 e &=& \ldots \sep \ident{Df}\langle e_0, \ldots, e_n\rangle \sep \ident{prev}_{\cclrd{n}}~e\\
-C &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_
+C &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_ \sep \ident{Df}\langle v_0, \ldots, v_{i-1}, \_, e_{i+1} \ldots, e_n\rangle
 \end{array}  
 \end{equation*}
 
@@ -1473,7 +1474,7 @@ rule for \kvd{prev} produces well-typed expressions. Finally, we extend the type
 (Theorem~\ref{thm:semantics-fp-pres}) and progress (Theorem~\ref{thm:semantics-fp-prog}).
 
 \begin{theorem}[Well-typedness of the \kvd{prev} translation]
-\label{thm:semantics-welltyped}
+\label{thm:semantics-df-welltyped}
 Given a typing derivation for a well-typed closed expression $\coctx{}{\cclrd{r}} \vdash e : \tau$,
 the translated program $f$ obtained using the rules in Figure~\ref{fig:semantics-translation}
 and Figure~\ref{fig:semantics-ext-df} is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
@@ -1576,6 +1577,12 @@ Case (\emph{merge}): $e = \ident{merge}_{\cclrd{m}, \cclrd{n}} e_1$. If $e_1$ is
   using Lemma~\ref{thm:semantics-df-canon} and it can reduce using (\emph{merge}) reduction.
 
 \vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{df}): $e = \ident{Df}\langle e_0, \ldots, e_n\rangle$. If $e_i$ is not a value
+  then reduce using (\emph{ctx}) with context $\ident{Df}\langle v_0, \ldots, v_{i-1}, \_, e_{i+1} \ldots, e_n\rangle$.
+  Otherwise, $e_0, \ldots, e_n$ are values and so $\ident{Df}\langle e_0, \ldots, e_n\rangle$
+  is also a value.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
 Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value, or the type 
   guarantees that it is a stream with correct number of elements to enable the (\emph{split}) 
   or (\emph{prev}) reduction, respectively.
@@ -1595,58 +1602,85 @@ Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value,
 \subsection{Coeffect langauge for implicit parameters}
 \label{sec:semantics-proofs-impl}
 
-::::TODO::::
+As discussed earlier (Example~\ref{thm:semantics-indexed-prod}), implicit parameters can be modelled 
+by an indexed product comonad, which annotates a value with additional context -- in our case, a 
+mapping from implicit parameter names to their values. In this section, we embed this model into
+the target language.
 
-The types of the comonadically-inspired operations are the same for each concrete coeffect DSL, but
-each DSL introduces its own \emph{values} of type $\ctyp{\cclrd{r}}\tau$ and also its own reduction
-rules that define how comonadically-inspired operations evaluate.
+As with dataflow computations, we take the core functional subset (Figure~\ref{fig:semantics-target}) 
+with comonadically-inspired extensions (Figure~\ref{fig:semantics-ext}) and we specify a new kind
+of values of type $\ctyp{\cclrd{r}}\tau$ and domain-specific reduction rules that specify how
+the operations propagate and access the context containing implicit parameter bindings.
+Again, the $\ctyp{\cclrd{r}}\tau$ values can be seen as an \emph{abstract data type}, which are 
+never manipulated directly.
 
-We first consider dataflow computations. As discussed earlier in the
-semantics of dataflow, the indexed comonad for a context with $n$ past values carries $n+1$ 
-values. When reducing translated programs, the comonadic values will not be directly manipulated by the
-user code. In a programming language, it could be seen as an \emph{abstract data type} whose only
-operations are the comonadically-inspired ones defined earlier.
+\paragraph{Domain-specific extensions.}
 
-The Figure~\ref{fig:semantics-ext-df} shows extensions to the target language for modelling
-dataflow computations. We introduce a new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
-and a matching kind of expressions. We add a language primitive modelling the semantics of the
-\kvd{prev} keyword together with its typing rule (\emph{prev}) and we also add
-a typing rule (\emph{df}) that checks the types of the elements of the stream and also guarantees 
-that the number of elements in the stream matches the number in the coeffect.
+The Figure~\ref{fig:semantics-ext-impl} shows extensions to the target language for modelling
+implicit parameters. A comonadic value with a coeffect $\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}$
+is modelled by a new kind of value written as 
+$\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots \ident{?p}_n \mapsto v_n \})$ which contains
+a value $v$ together with implicit parameter assignments for all the parameters specified in the
+coeffect. We add a corresponding kind of expression with its typing rule (\emph{impl}).
 
-The additional reduction rules mirror the semantics that we discussed earlier when talking about
-indexed dataflow comonad.
+There are also two domain-specific operations for working with implicit parameters. The
+$\ident{lookup}_{\cclrd{\ident{?p}}}$ operation reads a value of an implicit parameter and
+the $\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}$ operation adds a mapping assigning a value
+to an implicit parameter \ident{?p}. The typing rule (\emph{lookup}) specifies that the accessed
+parameter need to be a part of the context and the rule (\emph{letimpl}) specifies that the
+\ident{letimpl} operation extends the context with a new implicit parameter binding.
 
-\paragraph{Properties.}
+The new translation rules specify how implicit parameter access, written as \ident{?p}, and
+implicit parameter binding, written as $\kvd{let}~\ident{?p}~=e_1~\kvd{in}~e_2$ are translated to the
+target language. The first one is straightforward. The binding is similar to the translation for
+function application -- we split the context, evaluate $e_1$ using the first part of the context
+$\ctx_1$ and then add the new binding to the remaining context $\ctx_2$.
+
+Finally, Figure~\ref{fig:semantics-ext-impl} also defines the reduction rules. The (\emph{lookup})
+rule accesses an implicit parameter and (\emph{letimpl}) adds a new binding. The reduction rules 
+for comonadically-inspired primitives closely model the product comonad discussed in 
+Example~\ref{thm:semantics-indexed-prod}. Reductions for (\emph{cobind}) and (\emph{split}) 
+restrict the set of available implicit parameters according to the annotations and 
+(\emph{merge}) combines them, preferring the values from the call-site.
+
+For the semantics of implicit parameter programs that we consider, the preference of call-site
+bindings over declaration-site bindings in (\emph{merge}) does not matter. The unique typing 
+derivations for implicit parameter coeffects obtained in Section~\ref{sec:flat-unique} always
+split implicit parameters into \emph{disjoint sets}.
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}[h!]
+\begin{figure}[h!]  
 \paragraph{Language syntax}
 
 \begin{equation*}
 \begin{array}{rcl}
-v &=& \ldots \sep \ident{Impl}(v, \langle \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n\rangle) \\
-e &=& \ldots \sep \ident{Impl}(e, \langle\ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_n\mapsto e_n\rangle) \\
+v &=& \ldots \sep \ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n\}) \\
+e &=& \ldots \sep \ident{Impl}(e, \{\ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_n\mapsto e_n\}) \\
   && \hspace{1.4em} \sep \ident{lookup}_{\cclrd{\ident{?p}}}~e \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~e_1~e_2\\
-C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~\_~e \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~v~\_
+C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~\_~e \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~v~\_ \\
+  && \hspace{1.4em} \sep \ident{Impl}(\_, \{ \ident{?p}_1\mapsto e_1, .., \ident{?p}_n\mapsto e_n\})\\
+  && \hspace{1.4em} \sep \ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, .., \ident{?p}_{i-1} \mapsto v_{i-1}, \ident{?p}_i \mapsto \_, \ident{?p}_{i+1} \mapsto v_{i+1}, .. \ident{?p}_n \mapsto e_n\})
 \end{array}  
 \end{equation*}
 
-\vspace{1.25em}
+\vspace{1em}
 \paragraph{Typing rules}
 
 \begin{equation*}
+  \hspace{-2em}
 \tyrule{impl}
   { \Gamma \vdash e:\tau & \forall i\in\{ 1 \ldots n \}. ~ \Gamma \vdash e_i : \ident{num}}
-  { \Gamma \vdash \ident{Impl}(e, \langle \ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_n\mapsto e_n \rangle) : \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \}}}{\tau} }
+  { \Gamma \vdash \ident{Impl}(e, \{ \ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_n\mapsto e_n \}) : \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \}}}{\tau} }
 \end{equation*}
 \begin{equation*}
+  \hspace{-2em}
 \tyrule{lookup}
-  { \Gamma \vdash e : \ctyp{\cclrd{ \{ \ldots, \ident{?p}, \ldots \} }}{\tau} }
+  { \Gamma \vdash e : \ctyp{\cclrd{ \{\ident{?p}\} }}{\tau} }
   { \Gamma \vdash \ident{lookup}_{\cclrd{\ident{?p}}}~e : \ident{num} }
 \end{equation*}
 \begin{equation*}
+  \hspace{-2em}
 \tyrule{letimpl}
   { \Gamma \vdash e_1 : \ident{num} &
     \Gamma \vdash e_2 : \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}{\tau} }
@@ -1654,89 +1688,379 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
       \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n, \ident{?p} \} }}{\tau} }
 \end{equation*}
 
-\vspace{1.25em}
+\vspace{1em}
 \paragraph{Translation}
 
 \begin{equation*}
+\begin{array}{rl}  
+(\footnotesize{\emph{lookup}}) &
 \semdef
-  { \coctx{\Gamma}{\cclrd{ \{ \ident{?p} \} }} \vdash \ident{?p} : \ident{num} }
+  { \coctx{\Gamma}{\cclrd{ \{\ident{?p}\} }} \vdash \ident{?p} : \ident{num} }
   {\lambda ctx.\ident{lookup}_{\cclrd{\ident{?p}}}~\ctx }
-\end{equation*}
-
-\begin{equation*}
+\\[2em]
+\begin{array}{l}(\footnotesize{\emph{letimpl}})\\[1.25em]~\end{array}&
 \semdefff
   { \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1}
   { \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2}
   {\hspace{-1em}\begin{array}{l}  
       \coctx{\Gamma}{\cclrd{r} \;\cclrd{\cup\; (\cclrd{s} \setminus \{ \ident{?p}) \}} }\\[-0.3em]
         \quad \vdash \kvd{let}~\ident{?p}=e_1\\[-0.3em]
-        \quyad\qquad \kvd{in}~e_2 : \tau_2 \\[-0.3em]
+        \quad\qquad \kvd{in}~e_2 : \tau_2 \\[-0.3em]
         ~ \\[-0.3em]
    \end{array}}
   {f}
   {g}
   {\hspace{-1em}\begin{array}{l}  
   \lambda\ctx.~~\\[-0.3em]
-    \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cclrd{\cup}\; \cclrd{(s\setminus{\ident{?p}})}}~\ident{dup}~\ctx\\[-0.3em]
-    \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{(s\setminus{\ident{?p}})}}~\ctx_0\\[-0.3em]
-    \quad g~(\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{(s\setminus{\ident{?p}})}}~(f~\ctx_1)~\ctx_2)
+    \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cclrd{\cup}\; \cclrd{(s\setminus\{\ident{?p}\})}}~\ident{dup}~\ctx\\[-0.3em]
+    \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{(s\setminus\{\ident{?p}\})}}~\ctx_0\\[-0.3em]
+    \quad g~(\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{(s\setminus\{\ident{?p}\})}}~(f~\ctx_1)~\ctx_2)
   \end{array} }   
+\end{array}
 \end{equation*}
 
-\vspace{1.25em}
+\vspace{1em}
 \paragraph{Reduction rules}
-
-::: TODO ::: Everything except for counit
 
 \begin{equation*}
 \begin{array}{rl}
 {\footnotesize(\emph{counit})} & \begin{array}{l}
-\ident{counit}_{\cclrd{ \emptyset }}~\ident{Impl} (v, \langle \ldots \rangle)   \rightarrow v
+\ident{counit}_{\cclrd{ \emptyset }}~(\ident{Impl} (v, \ldots))   \rightarrow v
 \end{array}
 \\[0.5em]
 {\footnotesize(\emph{cobind})} & \begin{array}{l}
-\ident{cobind}_{\cclrd{m}, \cclrd{n}}~f~(\ident{Df}\langle v_0, \ldots v_{m+n} \rangle) \rightarrow
+\ident{cobind}_{\cclrd{r}, \cclrd{s}}~f~(\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{n}\mapsto v_n \})) \rightarrow
 \\[-0.25em]
-\quad (\ident{Df}\langle f (\ident{Df}\langle v_0, \ldots, v_m \rangle), \ldots, f (\ident{Df}\langle v_{n}, \ldots, v_{m+n} \rangle) \rangle)
+\quad \ident{Impl}(f~(\ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} )), \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{s} \} )
 \end{array}
-\\[0.5em]
+\\[1em]
 {\footnotesize(\emph{merge})} & \begin{array}{l}
-\ident{merge}_{\cclrd{m}, \cclrd{n}} ((\ident{Df}\langle v_0, \ldots, v_m \rangle), (\ident{Df}\langle v'_0, \ldots, v'_n\rangle)) \rightarrow
-\\[-0.25em]
-\quad (\ident{Df}\langle (v_0, b_0), \ldots, (v_{\mathit{min}(m,n)}, v'_{\mathit{min}(m,n)}) \rangle)
+\ident{merge}_{\cclrd{r}, \cclrd{s}} 
+              (~\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{n}\mapsto v_n \})  \\[-0.25em]
+\hspace{4.4em}    \ident{Impl}(v', \{ \ident{?p}'_1 \mapsto v'_1, \ldots, \ident{?p}'_{n}\mapsto v'_n \})~) \rightarrow \\[-0.25em]
+\quad \ident{Impl}((v, v'), \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}\in\cclrd{r \setminus s}  \} \cup \{ \ident{?p}'_i \mapsto v'_i \;|\; \ident{?p}'\in\cclrd{s}  \})
 \end{array}
-\\[0.5em]
+\\[1.75em]
 {\footnotesize(\emph{split})} & \begin{array}{l}
-\ident{split}_{\cclrd{m}, \cclrd{n}} (\ident{Df}\langle (v_0, b_0), \ldots, (v_{\mathit{max}(m,n)}, b_{\mathit{max}(m,n)}) \rangle)  \rightarrow
+\ident{split}_{\cclrd{r}, \cclrd{s}} (\ident{Impl}((v,v'), \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{n}\mapsto v_n \}))  \rightarrow
 \\[-0.25em]
-\quad \ident{Df}\langle v_0, \ldots, v_m \rangle, (\ident{Df}\langle b_0, \ldots, b_n\rangle
+\quad \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} ), \ident{Impl}(v', \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{s} \} )
 \end{array}
-\\[0.5em]
-{\footnotesize(\emph{prev})} & \begin{array}{l}
-\ident{prev}_{\cclrd{n}} (\ident{Df}\langle v_0, \ldots, v_n, v_{n+1} \rangle) \rightarrow
+\\[1em]
+{\footnotesize(\emph{letimpl})} & \begin{array}{l}
+\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~v'~(\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{n}\mapsto v_n \}))  \rightarrow
 \\[-0.25em]
-\quad \ident{Df}\langle v_0, \ldots, v_n \rangle
+\quad \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i\;|\; \ident{?p}_i \in \cclrd{r}, \ident{?p}_i \neq \ident{?p} \} \cup \{ \ident{?p} \mapsto v' \} )
+\end{array}
+\\[1em]
+{\footnotesize(\emph{lookup})} & \begin{array}{l}
+\ident{lookup}_{\cclrd{\ident{?p}_i}} (\ident{Impl}(v, \{\ident{?p}_i\mapsto v_i\}) \rightarrow v_i
 \end{array}
 \end{array}
 \end{equation*}
 
+\vspace{-0.5em}
 \caption{Additional constructs embedding implicit parameters into the language}
-\label{fig:semantics-ext-df}
+\label{fig:semantics-ext-impl}
 \end{figure}
-\newpage
 
+% --------------------------------------------------------------------------------------------------
+
+\newpage
 ~
+\newpage
+\paragraph{Properties.}
+
+The core functional language subset (Figure~\ref{fig:semantics-target}) with the comonadically-inspired 
+extensions (Figure~\ref{fig:semantics-ext}) and the domain-specific extensions for implicit 
+parameters defined in Figure~\ref{fig:semantics-ext-impl} is safe. Furthermore, the 
+translation from coeffect calculus produces well-typed programs. Together, these two properties 
+also guarantee safety of the source coeffect calculus, when used with implicit parameters.
+
+
+As for dataflow computations, we prove safety by extending the preservation
+(Theorem~\ref{thm:semantics-fp-pres}) and progress (Theorem~\ref{thm:semantics-fp-prog})
+for the core functional subset of the language, but it is worth noting that the key parts of
+the proofs are centered around the new reduction rules for comonadically-inspired primitives
+and newly defined \ident{Impl} values. These do not interact with the rest of the language in 
+any unexpected ways.
+
+
+\begin{theorem}[Well-typedness of the implicit parameters translation]
+\label{thm:semantics-impl-welltyped}
+Given a typing derivation for a well-typed closed expression $\coctx{}{\cclrd{r}} \vdash e : \tau$,
+the translated program $f$ obtained using the rules in Figure~\ref{fig:semantics-translation}
+and Figure~\ref{fig:semantics-ext-impl} is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
+\end{theorem}
+\begin{proof}
+By rule induction over the derivation of the translation. 
+
+\vspace{0.5em}\noindent\hangindent=0.6cm 
+Case (\emph{var, num, abs, app}): As before.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm 
+Case (\emph{lookup}): The type of $\ctx$ has a coeffect  $\cclrd{ \{\ident{?p}\} }$
+  which includes the parameter \ident{?p} as required in order to use the (\emph{lookup}) typing rule.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm 
+Case (\emph{letimpl}): The type of $\ctx$ matches with the input type of
+  $\ident{map}_{  \cclrd{r \cup (s\setminus\{\ident{?p}\})} }$. After duplication and splitting
+  the context, $\ctx_1$ and $\ctx_2$ have types $\ctyp{\cclrd{r}}(\ldots)$ and
+  $\ctyp{\cclrd{s\setminus\{\ident{?p}\}}}(\ldots)$, respectively. This matches with the expected
+  types of $\ident{f}$ and $\ident{letimpl}$. The context returned by $\ident{letimpl}$ then 
+  matches the one required by $\ident{g}$.
+\end{proof}
+
+\begin{lemma}[Canonical forms]
+\label{thm:semantics-impl-canon}
+For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
+\begin{enumerate}
+  \item If $\tau=\ident{num}$ then $e = n$ for some $n \in \mathbb{Z}$
+  \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
+  \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
+  \item If $\tau=\ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}\tau_1$ then $e = \ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_n \mapsto v_n \} )$
+\end{enumerate}  
+\end{lemma}
+\begin{proof}
+  (1,2,3) as before; for (4) the last typing rule must have been (\emph{impl}).
+\end{proof}
+
+\begin{lemma}[Preservation under substitution]
+\label{thm:semantics-impl-pres-subst}
+For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$ 
+then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$ as before, with new
+  cases for $\ident{Impl}(e, \{ \ldots \})$, $\ident{lookup}_{\cclrd{\ident{?p}}}$ and 
+  $\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}$.
+\end{proof}
+
+\begin{theorem}[Type preservation]
+\label{thm:semantics-impl-pres}
+  If $\Gamma \vdash e : \tau$ and $e \rightarrow e'$ then $\Gamma \vdash e' : \tau$
+\end{theorem}
+\begin{proof}
+  Rule induction over $\rightarrow$.
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{fn}, \emph{prj}, \emph{ctx}): As before, using Lemma~\ref{thm:semantics-impl-pres-subst} for (\emph{fn}).
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{counit}): $e = \ident{counit}_{\cclrd{0}}(\ident{Impl}(v, \{\;\}))$. The last rule in the type
+  derivation of $e$ must have been (\emph{counit}) with $\Gamma \vdash \ident{Impl}(v, \{ \; \}) : \ctyp{\cclrd{\emptyset}}\tau$
+  which, in turn, required that $\Gamma \vdash v : \tau$.
 
 \newpage
 
-\section{Generalising}
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f~(\ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n  \}))$.  
+  The last rule in the type derivation of $e$ must have been (\emph{cobind}) with a type $\tau = \ctyp{\cclrd{s}}\tau_2$ and assumptions
+  $\Gamma \vdash \ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n  \}) : \ctyp{\cclrd{r}}{\tau}$ and
+  $\Gamma \vdash f : \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2$.
+  The reduced expression has a type $\ctyp{\cclrd{s}}\tau_2$:
+\begin{equation*}
+\inference
+  { \inference 
+      { \Gamma \vdash f : \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2 & 
+        \Gamma \vdash \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} ) :  \ctyp{\cclrd{r}}{\tau_1}}  
+      { \Gamma \vdash f~(\ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} )) : \tau_2} }
+  { \Gamma \vdash \ident{Impl}(f~(\ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} )), \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{s} \}) : \ctyp{\cclrd{s}}\tau_2 }
+\end{equation*}
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{lookup}): $e = \ident{lookup}_{\cclrd{\ident{?p}_i}}(\ident{Impl}(v, \{\; \ldots, \ident{?p}_i \mapsto v_i \ldots \}))$. The last rule in the type
+  derivation must have been (\emph{lookup}) with $\tau = \ident{num}$ and an assumption $\Gamma\vdash\ident{Impl}(v, \{\; \ldots, \ident{?p}_i\mapsto v_i \ldots \}) : \ctyp{\cclrd{ \{\ldots,\ident{?p}_i,\ldots\} }}{\tau}$,
+  which requires $\Gamma \vdash v_i : \ident{num}$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{merge}, \emph{split}, \emph{letimpl}): Similar. In all three cases, the last typing rule in the derivation of $e$
+  guarantees that all values of all implicit parameters that are required for the reduction are available.
+\end{proof}
+
+\begin{theorem}[Progress]
+\label{thm:semantics-impl-prog}  
+  If $\vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
+\end{theorem}
+\begin{proof}
+  By rule induction over $\vdash$.
+  
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{num,abs,var,app,proj,tup}): As before, using the adapted canonical forms lemma
+  (Lemma~\ref{thm:semantics-impl-canon}) for (\emph{app}) and (\emph{proj}).
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced 
+  using (\emph{ctx}) with context ${\ident{counit}_\cunit}~\_$, otherwise it is a value. From Lemma~\ref{thm:semantics-df-canon},
+  $e_1 = \ident{Impl}(v, \{\;\})$ and so we can apply (\emph{counit}) reduction rule.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{r}, \cclrd{s}}~e_1~e_2$. If $e_1$ is not a value,
+  reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{r},\cclrd{s}}}~\_~e$. If $e_2$ is
+  not a value reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{r},\cclrd{s}}}~v~\_$.
+  If both are values, then from Lemma~\ref{thm:semantics-impl-canon}, we have 
+  $e_2 = \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in \cclrd{r}\cup\cclrd{s} \})$ 
+  and we apply the (\emph{cobind}) reduction.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{merge}): $e = \ident{merge}_{\cclrd{r}, \cclrd{s}} e_1$. If $e_1$ is not a value, 
+  reduce using (\emph{ctx}) with context $e = \ident{merge}_{\cclrd{r}, \cclrd{s}}~\_$. If $e_1$ is
+  a value, it must be a pair of values $(   
+    \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in\cclrd{r} \}),
+    \ident{Impl}(v', \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in\cclrd{s} \}))$
+  using Lemma~\ref{thm:semantics-df-canon} and it can reduce using (\emph{merge}) reduction.
+
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{impl}): $e = \ident{Impl}(e', \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$. 
+  If $e$ is not a value, reduce using (\emph{ctx}) with context
+  $\ident{Impl}(\_, \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$. 
+  If $e_i$ is not a value, reduce using (\emph{ctx}) with context 
+  $\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{i-1} \mapsto v_{i-1}, \ident{?p}_i \mapsto \_, \ident{?p}_{i+1} \mapsto v_{i+1}, \ldots \ident{?p}_n \mapsto e_n\})$.
+  Otherwise, $e, e_0, \ldots, e_n$ are values and so 
+  $\ident{Impl}(e', \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$
+  is also a value.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm 
+Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a value, 
+  or the type guarantees that it is a comonadic value with implicit parameter bindings
+  that enable the (\emph{split}) or (\emph{letimpl}) reduction, respectively.
+\end{proof}
+
+\begin{theorem}[Safety]
+  If $\Gamma \vdash e : \tau$ and $e \rightarrow^* e'$ then either $e'$ is a value or there
+  exists $e''$ such that $e' \rightarrow e''$
+\end{theorem}
+\begin{proof}
+  Rule induction over $\rightarrow^*$ using Theorem~\ref{thm:semantics-impl-pres} and Theorem~\ref{thm:semantics-impl-prog}.
+\end{proof}
+
+\newpage
+
+% --------------------------------------------------------------------------------------------------
+
+\section{Generalised safety of comonadic embedding}
 \label{sec:semantics-generalising}
-... works for any good comonad...
 
+In Section~\ref{sec:semantics-proofs-df} and Section~\ref{sec:semantics-proofs-impl}, we proved the
+safety property of two concrete context-aware programming langauges based on the coeffect 
+language framework. The proofs for the two systems were very similar and they relied on the
+same key principle. 
 
+The principle is that the coeffect annotation $\cclrd{r}$ on the type modelling 
+the indexed comonad structure $\ctyp{\cclrd{r}}\tau$ in the target language guarantees
+that the comonadic value will provide the necessary context. As a result the reductions for
+operations accessing the context do not get stuck. In case of dataflow, $\ident{prev}_\cclrd{n}$ 
+can always access the tail of the stream and and $\ident{counit}_\cunit$ can always access the 
+head (because the stream has a sufficient number of elements). In case of implicit parameters, 
+the context passed to $\ident{lookup}_{\cclrd{\ident{?p}}}$ will always contain a binding for
+$\ident{?p}$.
 
-\newpage
-\newpage
+Our core functional target language is not expressive enough to capture the relationship between
+the coeffect annotation and the structure of the \ident{Df} or \ident{Impl} value and so we
+resorted to adding those as ad-hoc extensions. However, given a target language with a sufficiently 
+expressive type system, the properties proved in Section~\ref{sec:semantics-proofs} would be
+guaranteed directly by the target language. This includes dependently-typed languages such as
+Idris or Agda \cite{other-idris,other-agda}, but type-level numerals and sets can also be encoded
+in the Haskell type system \cite{effects-embedding}.
+
+In other words, the flat coeffect type system, together with the translation for introduced in this 
+chapter, can be embedded into a Haskell-like languages and it can provide a succinct and safe way 
+of implementing context-aware domain specific languages.
+
+\paragraph{Liveness.}
+For example, if we wanted to follow the development in the previous section for liveness, we would
+extend the target language with two kinds of expressions, \ident{Dead} representing a dead context 
+with no value and \ident{Live} representing a context with a value:
+%
+\begin{equation*}
+\begin{array}{rcl}
+e &=& \ldots \sep \ident{Dead} \sep \ident{Live}~e \\
+\end{array}  
+\end{equation*}
+%
+The typing rules promote the information about whether a value is available into the type-level 
+and so a context carrying a live value is marked as $\ctyp{\cclrd{\ident{L}}}{\tau}$ while a
+dead context has a type $\ctyp{\cclrd{\ident{D}}}{\tau}$.
+%
+\begin{equation*}
+\tyrule{live}
+  { \Gamma \vdash e:\tau }
+  { \Gamma \vdash \ident{Live}~e : \ctyp{\cclrd{\ident{L}}}{\tau} }
+\qquad
+\tyrule{dead}
+  { ~ }
+  { \Gamma \vdash \ident{Dead} : \ctyp{\cclrd{\ident{D}}}{\tau} }
+\end{equation*}
+%
+The above example can be encoded using generalized algebraic data types (GADTs) in Haskell. We
+define types \ident{D} and \ident{L} to capture the type annotations and we define a type
+$\ident{C}~r~a$ where the type parameter $r$ represents a coeffect annotation:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{data}~\ident{L} \\[-0.2em]
+\kvd{data}~\ident{D} \\[0.5em]
+\kvd{data}~\ident{C}~r~a~\kvd{where} \\[-0.2em]
+\quad \ident{Live} \hspace{0.45em}:: a \rightarrow \ident{C}~\ident{L}~a\\[-0.2em]
+\quad \ident{Dead} :: \ident{C}~\ident{D}~a
+\end{array}
+\end{equation*}
+%
+The operations of the flat coeffect algebra could then be encoded as type-level operations on
+the types $\ident{L}$ and $\ident{D}$ so that, for example $\ident{Seq}~a~b$ is $\ident{D}$ only
+if both $a$ and $b$ are $\ident{D}$. The types of the \ident{counit} and \ident{cobind} operations
+would encode the coeffect annotations as:
+
+\begin{equation*}
+\begin{array}{rcl}
+\ident{counit} &::& \ident{C}~\ident{L}~a \rightarrow a \\[-0.2em]
+\ident{cobind} &::& (\ident{C}~\ident{r}~a \rightarrow b) \rightarrow \ident{C}~(\ident{Seq}~r~s)~a \rightarrow \ident{C}~\ident{s}~b
+\end{array}
+\end{equation*}
+%
+Here, the additional type annotation ensures that \ident{counit} can only be called on a context
+that contains a value and so calling the operation is not going to fail. Similarly, the type of the
+\ident{cobind} operation now guarantees that if a function (used as the first argument) or the result
+require a live context, it will be called with a value $\ident{C}~\ident{L}~a$ that is guaranteed
+to contain a value. 
+
+In our formalization, this is what guarantees that the reduction rules do 
+not get stuck. For liveness, those would look as:
+%
+\begin{equation*}
+\begin{array}{rl}
+{\footnotesize(\emph{counit})} &
+  \ident{counit}_{\cclrd{ \ident{L} }}~(\ident{Just}~v)   \rightarrow v
+\\[0.5em]
+{\footnotesize(\emph{cobind-1})} &
+  \ident{cobind}_{\cclrd{\ident{L}}, \cclrd{\ident{L}}}~f~(\ident{Live}~v) \rightarrow \ident{Live}~(f~v)
+\\
+{\footnotesize(\emph{cobind-2})} &
+  \ident{cobind}_{\cclrd{\ident{D}}, \cclrd{\ident{L}}}~f~(\ident{Live}~v) \rightarrow \ident{Live}~(f~\ident{Dead})
+\\
+{\footnotesize(\emph{cobind-3})} &
+  \ident{cobind}_{\cclrd{\ident{L}}, \cclrd{\ident{D}}}~f~v \rightarrow \ident{Dead}
+\\
+{\footnotesize(\emph{cobind-4})} &
+  \ident{cobind}_{\cclrd{\ident{D}}, \cclrd{\ident{D}}}~f~v \rightarrow \ident{Dead}
+\end{array}
+\end{equation*}
+%
+If we encoded the rules as functions in a dependently-typed language or in Haskell, the type
+preservation property would be guaranteed by the type system of the target language. The 
+equivalent of the progress property would then be guaranteed by the fact that the the operations
+are always defined.
+
+It is worth noting that this is where coeffects need a target language with a more expressive
+type system than monads. For monadic computations, it is sufficient to use a type $\ident{M}~a$
+which represents that \emph{some} effects may happen. The the type does not specify which effects
+and, indeed, this means that \emph{all possible effects} may happen.
+
+With coeffects, we need indexed comonads $\ident{C}~r~a$ where the annotation $r$ specifies what
+context may be required. Without the annotation, a type $\ident{C}~a$ would represent a comonadic
+context that has \emph{all possible context} available, which is rarely useful in practice.
+
 
 
 % ==================================================================================================

@@ -31,6 +31,8 @@ the definition from Chapter 2.
 Also, add note that this works with the "unique typing derivation" chosen in 
 Chapter 4.
 
+Also Section 5.4.2 (syntactically)
+
 *Chapter 2 - implicit params*
 
 Should mention the same typing derivation as the one showed later.
