@@ -1968,10 +1968,11 @@ In other words, the flat coeffect type system, together with the translation for
 chapter, can be embedded into a Haskell-like languages and it can provide a succinct and safe way 
 of implementing context-aware domain specific languages.
 
-\paragraph{Liveness.}
-For example, if we wanted to follow the development in the previous section for liveness, we would
-extend the target language with two kinds of expressions, \ident{Dead} representing a dead context 
-with no value and \ident{Live} representing a context with a value:
+\paragraph{Coeffects for liveness.}
+As an example, we consider the third instance of coeffect calculus that was discussed in 
+Chapter~\ref{ch:flat}. If we wanted to follow the development in the previous section for liveness, 
+we would extend the target language with two kinds of expressions, \ident{Dead} representing a dead
+context with no value and \ident{Live} representing a context with a value:
 %
 \begin{equation*}
 \begin{array}{rcl}
@@ -1993,40 +1994,9 @@ dead context has a type $\ctyp{\cclrd{\ident{D}}}{\tau}$.
   { \Gamma \vdash \ident{Dead} : \ctyp{\cclrd{\ident{D}}}{\tau} }
 \end{equation*}
 %
-The above example can be encoded using generalized algebraic data types (GADTs) in Haskell. We
-define types \ident{D} and \ident{L} to capture the type annotations and we define a type
-$\ident{C}~r~a$ where the type parameter $r$ represents a coeffect annotation:
-%
-\begin{equation*}
-\begin{array}{l}
-\kvd{data}~\ident{L} \\[-0.2em]
-\kvd{data}~\ident{D} \\[0.5em]
-\kvd{data}~\ident{C}~r~a~\kvd{where} \\[-0.2em]
-\quad \ident{Live} \hspace{0.45em}:: a \rightarrow \ident{C}~\ident{L}~a\\[-0.2em]
-\quad \ident{Dead} :: \ident{C}~\ident{D}~a
-\end{array}
-\end{equation*}
-%
-The operations of the flat coeffect algebra could then be encoded as type-level operations on
-the types $\ident{L}$ and $\ident{D}$ so that, for example $\ident{Seq}~a~b$ is $\ident{D}$ only
-if both $a$ and $b$ are $\ident{D}$. The types of the \ident{counit} and \ident{cobind} operations
-would encode the coeffect annotations as:
-
-\begin{equation*}
-\begin{array}{rcl}
-\ident{counit} &::& \ident{C}~\ident{L}~a \rightarrow a \\[-0.2em]
-\ident{cobind} &::& (\ident{C}~\ident{r}~a \rightarrow b) \rightarrow \ident{C}~(\ident{Seq}~r~s)~a \rightarrow \ident{C}~\ident{s}~b
-\end{array}
-\end{equation*}
-%
-Here, the additional type annotation ensures that \ident{counit} can only be called on a context
-that contains a value and so calling the operation is not going to fail. Similarly, the type of the
-\ident{cobind} operation now guarantees that if a function (used as the first argument) or the result
-require a live context, it will be called with a value $\ident{C}~\ident{L}~a$ that is guaranteed
-to contain a value. 
-
-In our formalization, this is what guarantees that the reduction rules do 
-not get stuck. For liveness, those would look as:
+Finally, we need to add reduction rules that define the meaning of the comonadically-inspired
+operations for liveness. Those follow the definitions given in Example~\ref{thm:semantics-indexed-opt}
+when discussing the categorical semantics:
 %
 \begin{equation*}
 \begin{array}{rl}
@@ -2047,10 +2017,79 @@ not get stuck. For liveness, those would look as:
 \end{array}
 \end{equation*}
 %
-If we encoded the rules as functions in a dependently-typed language or in Haskell, the type
-preservation property would be guaranteed by the type system of the target language. The 
-equivalent of the progress property would then be guaranteed by the fact that the the operations
-are always defined.
+This language extension is safe because the reductions respect the typing of the
+comonadically-inspired operations. The $\ident{counit}_\cunit$ reduction does not get stuck
+for well-typed terms because $\cunit = \cclrd{\ident{L}}$ in the coeffect algebra and thus its 
+argument is of type $\ctyp{\cclrd{\ident{L}}}{\tau}$ and will always be a value $\ident{Live}~v$.
+
+Similarly, the when reducing $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$, the typing ensures that
+the value passed as the second argument is of type $\ctyp{\cclrd{r}\cseq\cclrd{s}}{\tau_1}$.
+In case of liveness, $\cclrd{r}\,\cseq\,\cclrd{s}=\cclrd{\ident{L}}$ if either
+$\cclrd{r}=\cclrd{\ident{L}}$ or $\cclrd{s}=\cclrd{\ident{L}}$. This means that reductions
+(\emph{cobind-1}) and (\emph{cobind-2}) will not get stuck because the value will be
+$\ident{Live}~v$ and not \ident{Dead}. The reduction rules also preserve typing - the resulting
+value is of type $\ctyp{\cclrd{s}}\tau_2$, that is $\ident{Live}~v$ for (\emph{cobind-1}),
+(\emph{cobind-2}) and \ident{Dead} for (\emph{cobind-3}) and (\emph{cobind-4}).
+
+
+\paragraph{Encoding liveness in Haskell.}
+The liveness example can be encoded in Haskell using type-level features such as generalized
+algebraic data types (GADTs) and type families \cite{haskell-faking,haskell-promotion,haskell-families}.
+We do not aim to give a complete implementation, but to show that such encoding is possible and
+would provide the necessary safety guarantees.
+
+We first define types \ident{D} and \ident{L} to capture the coeffect annotations. 
+Then we define a comonadically-inspired type $\ident{C}~r~a$ as a GADT with cases for
+\ident{Live} and \ident{Dead} contexts. The type parameter $r$ represents a coeffect 
+annotation:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{data}~\ident{L} \\[-0.2em]
+\kvd{data}~\ident{D} \\[0.5em]
+\kvd{data}~\ident{C}~r~a~\kvd{where} \\[-0.2em]
+\quad \ident{Live} \hspace{0.45em}:: a \rightarrow \ident{C}~\ident{L}~a\\[-0.2em]
+\quad \ident{Dead} :: \ident{C}~\ident{D}~a
+\end{array}
+\end{equation*}
+%
+The definition matches with the typing rules (\emph{live}) and (\emph{dead}). The coeffect 
+annotation for a live value is \ident{L} and the annotation for a dead value is \ident{D}.
+To give the type of \ident{cobind}, we need a type-level function that encodes the operations
+of the flat coeffect algebra. We model $\cseq$ as $\ident{Seq}~a~b$. The operation is defined
+on types $\ident{L}$ and $\ident{D}$ and returns a type $\ident{D}$ if and only if both its
+arguments are $\ident{D}$:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{type}~\kvd{family}~\ident{Seq}~r~s :: *\\[-0.2em]
+\quad \kvd{type}~\kvd{instance}~\ident{Seq}~\ident{D}~\ident{D} = \ident{D}\\[-0.2em]
+\quad \kvd{type}~\kvd{instance}~\ident{Seq}~\ident{L}~s = \ident{L}\\[-0.2em]
+\quad \kvd{type}~\kvd{instance}~\ident{Seq}~r~\ident{L} = \ident{L}
+\end{array}
+\end{equation*}
+%
+The \ident{counit} and \ident{cobind} operations can then be defined as Haskell functions
+that have types corresponding to the typing rules (\emph{counit}) and (\emph{cobind}) given
+in Figure~\ref{fig:semantics-ext}:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\ident{counit} &::& \ident{C}~\ident{L}~a \rightarrow a \\[-0.2em]
+\ident{cobind} &::& (\ident{C}~\ident{r}~a \rightarrow b) \rightarrow \ident{C}~(\ident{Seq}~r~s)~a \rightarrow \ident{C}~\ident{s}~b
+\end{array}
+\end{equation*}
+%
+Here, the additional type annotation ensures that \ident{counit} can only be called on a context
+that contains a value and so calling the operation is not going to fail. Similarly, the type of the
+\ident{cobind} operation now guarantees that if a function (used as the first argument) or the result
+require a live context, it will be called with a value $\ident{C}~\ident{L}~a$ that is guaranteed
+to contain a value. 
+
+\paragraph{Coeffects in dependently-typed languages.}
+If we use the above encoding, type preservation is guaranteed by the type 
+system of the target language. The equivalent of the progress property is guaranteed by the 
+fact that the the implementation of the operations is well-defined.
 
 It is worth noting that this is where coeffects need a target language with a more expressive
 type system than monads. For monadic computations, it is sufficient to use a type $\ident{M}~a$
@@ -2075,38 +2114,34 @@ context that has \emph{all possible context} available, which is rarely useful i
 %
 % ==================================================================================================
 
-\section{Related and futrue work}
+\section{Related categorical structures}
 \label{sec:semantics-related}
 
-Most of the related work leading to coeffects has already been discussed in Chapter~\ref{ch:pathways} 
-and we covered work related to individual concepts throughout the chapter. In this section, we
-do not repeat the discussion present elsewhere. Instead, we discuss one specific question that often 
-arises when discussing coeffects and that is \emph{when is a coeffect (not) an effect?}
+Related work leading to coeffects has already been discussed in Chapter~\ref{ch:pathways} 
+and we covered work related to individual concepts throughout the thesis. However, there is a
+number of related categorical structures that are related to our \emph{indexed comonads}
+(Section~\ref{sec:semantics-flat-idx}) that deserve additional discussion.
 
-We start with a quick overview of the ways in which effects and coeffects differ and then
-we briefly look at one (but illustrative) example where the two concepts overlap. We focus 
-mainly on the equivalence between the \emph{categorical semantics}, which reveals the nature
-of the computations -- rather than considering just the syntactic aspects of the type system.
+In Section~\ref{sec:semantics-related-related}, we discuss related approaches to adding 
+indices to categorical structures (mostly monads). In Section~\ref{sec:semantics-related-monad},
+we discuss a question that often arises when discussing coeffects and that is 
+\emph{when is a coeffect (not) an effect?}
 
-\subsection{Properties and related notions}
+\subsection{Indexed categorical structures}
+\label{sec:semantics-related-related}
 
-The flat indexed comonad structure is all we need to give the semantics of the flat coeffect 
-calculus. Before doing so in Section~\ref{sec:flat-semantics-calculus}, we briefly consider 
-additional properties and other categorical structures that have been proposed mainly in the 
-context of monads and effects and we look how they relate to indexed comonads.
-
-\paragraph{Shape preservation.}
 Ordinary comonads have the \emph{shape preservation} property \cite{comonads-codo}. Intuitively, 
 this means that the core comonad structure does not provide a way of modeling computations where
 the additional context changes during the computation. For example, in the \ident{NEList} comonad, 
 the length of the list stays the same after applying \ident{cobind}.
 
-~
-
 Indexed comonads are not restricted by this property of comonads. For example, given the indexed
 product comonad, in the computation $\ident{cobind}_{\cclrd{r}, \cclrd{s}} f$, the shape of
 the context changes from providing implicit parameters $\cclrd{r} \cup \cclrd{s}$  to providing
-just implicit parameters $\cclrd{s}$.
+just implicit parameters $\cclrd{s}$. 
+Thus \emph{indexed comonads} are a generalization of \emph{comonads} that captures structures that
+do not form a (non-indexed) comonad. However, indexing has been also discussed in the case of
+\emph{monads.}
 
 \paragraph{Families of monads.}
 When linking effect systems and monads, Wadler and Thiemann \cite{monad-notions} propose a
@@ -2139,6 +2174,8 @@ unit of a monoid and the \ident{bind} operation composes effect annotations usin
 structure.
 
 \subsection{When is coeffect not a monad}
+\label{sec:semantics-related-monad}
+
 Coeffect systems differ from effect systems in three important ways:
 
 \begin{itemize}
@@ -2285,7 +2322,7 @@ coeffect calculus is modelled using $\ident{merge}_{\cclrd{r}, \cclrd{s}}$. The 
 two contexts (wrapped in an indexed comonad $\ctyp{\cclrd{r}}\alpha$), combines their carried 
 values and additional contextual information (implicit parameters). To obtain the (\emph{mabs}) 
 rule, we can restrict the first parameter, which corresponds to the declaration site context:
-%
+
 \begin{equation*}
 \begin{array}{rcll}
  \ident{merge}_{\cclrd{r}, \cclrd{s}} &\narrow{:}& \ctyp{\cclrd{r}}\alpha \times \ctyp{\cclrd{s}}\beta \rightarrow \ctyp{\cclrd{r \cup s}}(\alpha \times \beta)
@@ -2308,24 +2345,62 @@ functions has been used in the semantics of effectful computations by Tate~\cite
 
 
 
-
-
-
-
-
-
+% ==================================================================================================
+%
+%     #####
+%    #     # #    # #    # #    #   ##   #####  #   #
+%    #       #    # ##  ## ##  ##  #  #  #    #  # #
+%     #####  #    # # ## # # ## # #    # #    #   #
+%          # #    # #    # #    # ###### #####    #
+%    #     # #    # #    # #    # #    # #   #    #
+%     #####   ####  #    # #    # #    # #    #   #
+%
+% ==================================================================================================
 
 
 
 \section{SUmmary}
 
-Next, we introduced the notion of \emph{flat indexed comonad}, which generalizes of comonads
+In the previous chapter, we defined \emph{type system} for flat coeffect calculi that uniformly
+captures the shared structure of context-aware computations. In this chapter, we completed
+the unification by providing \emph{semantics} for flat coeffect calculi and proving the
+\emph{safety} of coeffect languages for dataflow and implicit parameters. The semantics shown
+here also guides the implementation that is discussed later in Chapter~\ref{ch:impl}.
+
+The development presented in this chapter follows the well-known example of effects and monads.
+We introduced the notion of \emph{indexed comonad}, which generalizes comonads
 and adds additional operations needed to provide categorical semantics of the flat coeffect 
-calculus. The indices of the flat indexed comonad operations correspond to the
-coeffect annotations in the type system and provide a foundation for the design of the 
-calculus. 
+calculus and we demonstrated how implicit parameters, liveness and dataflow computations form
+indexed comonads.
 
+We then used the comonadic semantics to define a \emph{comonadically-inspired translation}
+that turns programs written in a domain-specific coeffect language into a functional target 
+language. This is akin to the Haskell do notation for monads. Finally, we extended the target
+language with concrete implementation of comonadic operations for dataflow and implicit parameters
+and we presented syntactic safety proof. In summary, the proof states that well-typed 
+context-aware programs written in a coeffect language \emph{do not go wrong} (when translated
+to a simple functional language and evaluated).
 
-In the upcoming chapter, we move from \emph{flat} coeffect calculi, tracking whole-context
+The proof relies on the fact that coeffect annotations (provided by the coeffect type system)
+guarantee that the required context is available in the comonadic value that represents the 
+context and we also discussed how this would guarantee safety in languages with sufficiently
+expressive type system such as Haskell.
+
+In the following chapter, we move from \emph{flat} coeffect calculi, tracking whole-context
 properties to \emph{structural} coeffect calculi, tracking per-variable information, thus
 covering systems from the second half of Chapter~\ref{ch:applications}.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
