@@ -136,7 +136,7 @@ contains the required number of past values as captured by the coeffect type sys
 does not get stuck.
 
 In summary, coeffect type system, captures certain runtime 
-requirements of context-aware programs and (as we show in this chapter), eliminates common errors 
+demands of context-aware programs and (as we show in this chapter), eliminates common errors 
 related to working with context.
 
 
@@ -224,7 +224,7 @@ capturing fine-grained properties (\eg~a set of memory regions that may be acces
 stateful computation).}. 
 
 In the next section, we introduce \emph{indexed comonads}, which provide a more precise analysis 
-and let us model computations with context requirements $\cclrd{r}$ as functions 
+and let us model computations with context demands $\cclrd{r}$ as functions 
 $\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2$ using an \emph{indexed comonad} $\ctyp{\cclrd{r}}{}$.
 
 % --------------------------------------------------------------------------------------------------
@@ -363,7 +363,7 @@ associativity of the $\cseq$ operator.
 \paragraph{Composition.}
 The co-Kleisli category that models sequential composition is formed by the unit arrow (provided
 by $\ident{counit}$) together with the (associative) composition operation that composes computations 
-with contextual requirements as follows:
+with contextual demands as follows:
 %
 \begin{equation*}
 \begin{array}{ccl}
@@ -375,8 +375,8 @@ g \, \hat{\circ} \, f &\narrow{=}& g \circ (\ident{cobind}_{\cclrd{r}, \cclrd{s}
 \end{equation*}
 %
 The composition $\hat{\circ}$ best expresses the intention of indexed comonads. Given two functions
-with contextual requirements $\cclrd{r}$ and $\cclrd{s}$, their composition is a function that 
-requires $\cclrd{r}\,\cseq\,\cclrd{s}$. The contextual requirements propagate \emph{backwards} and
+with contextual demands $\cclrd{r}$ and $\cclrd{s}$, their composition is a function that 
+requires $\cclrd{r}\,\cseq\,\cclrd{s}$. The contextual demands propagate \emph{backwards} and
 are attached to the input of the composed function.
 
 % --------------------------------------------------------------------------------------------------
@@ -970,6 +970,7 @@ context. Finally, the third part (domain-specific primitives) will differ for ea
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Functional target langauge}
+\label{sec:semantics-translation-target}
 
 The target langauge for the translation is a simply typed lambda calculus with integers and tuples.
 We include integers as an example of a concrete type. Tuples are needed by the translation, which
@@ -1149,6 +1150,7 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Comonadically-inspired translation}
+\label{sec:semantics-translation-transl}
 
 In Section~\ref{sec:semantics-theory}, we presented the semantics of the flat coeffect calculus in 
 terms of indexed comonads. We treated the semantics as denotational -- interpreting the meaning of 
@@ -1942,7 +1944,7 @@ Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a val
 \section{Generalised safety of comonadic embedding}
 \label{sec:semantics-generalising}
 
-In Section~\ref{sec:semantics-proofs-df} and Section~\ref{sec:semantics-proofs-impl}, we proved the
+In Section~\ref{sec:semantics-df} and Section~\ref{sec:semantics-proofs-impl}, we proved the
 safety property of two concrete context-aware programming langauges based on the coeffect 
 language framework. The proofs for the two systems were very similar and they relied on the
 same key principle. 
@@ -2188,7 +2190,7 @@ Coeffect systems differ from effect systems in three important ways:
   only use a single operation for sequential composition (used by monadic bind).
 
 \item Syntactically, the second difference is in the lambda abstraction (\emph{abs}). In 
-  coeffect systems, the context requirements of the body can be split between (or duplicated
+  coeffect systems, the context demands of the body can be split between (or duplicated
   at) declaration site and call site, while monadic effect systems always defer all effects.
 \end{itemize}
 
@@ -2196,7 +2198,7 @@ Coeffect systems differ from effect systems in three important ways:
 Despite the differences, our implicit parameters example can be also represented by a monad.
 Semantically, the \emph{reader} monad is equivalent to the \emph{product} comonad. Syntactically,
 we use the $\cup$ operation for all three operations of the coeffect algebra. However, to enable
-splitting of implicit parameter requirements using the reader monad, we need to extend the 
+splitting of implicit parameter demands using the reader monad, we need to extend the 
 monad structure and change the translation of monadic lambda abstraction.
 
 % -------------------------------------------------------------------------------------------------
@@ -2206,7 +2208,7 @@ monad structure and change the translation of monadic lambda abstraction.
 
 Implicit parameters can be captured by a monad, but \emph{just} a monad is not enough.
 Lambda abstraction in effect systems does not provide a way of splitting the context
-requirements between declaration site and call site (or, semantically, combining the implicit 
+demands between declaration site and call site (or, semantically, combining the implicit 
 parameters available in the scope where the function is defined and those specified by the caller).
 
 \paragraph{Categorical relationship.}
@@ -2266,7 +2268,7 @@ side-by-side, using the effect system notation for both of them:
 \end{equation*}
 %
 In the comonadic (\emph{cabs}) rule, the implicit parameters of the body are split. However,
-the monadic rule (\emph{mabs}) places all requirements on the call site. This follows from the
+the monadic rule (\emph{mabs}) places all demands on the call site. This follows from the
 fact that monadic semantics uses the \ident{unit} operation in the interpretation of lambda abstraction:
 %
 \begin{equation*}
@@ -2297,7 +2299,7 @@ The remaining effects $\cclrd{s}$ are delayed as usual, while effects $\cclrd{r}
 from the effect annotation of the body.
 
 Another important aspect of the signature is that the function needs to be indexed by the coeffect
-annotations $\cclrd{r}, \cclrd{s}$. The indices determine how the input context requirements
+annotations $\cclrd{r}, \cclrd{s}$. The indices determine how the input context demands
 $\cclrd{r \cup s}$ are split -- and thus guarantee determinism of the function at run-time.
 
 The operation cannot be implemented in a useful way for most standard monads, but the 
@@ -2312,9 +2314,9 @@ when we expand the definitions of $\mtyp{\cclrd{r}}\tau$:
 
 \paragraph{Restricting coeffects in comonads.} 
 As just demonstrated, we can extend monads so that the reader monad is capable of capturing
-the semantics of implicit parameters, including the splitting of implicit parameter requirements
+the semantics of implicit parameters, including the splitting of implicit parameter demands
 in lambda abstraction. Can we also go the other way round and \emph{restrict} the comonadic
-semantics so that all requirements are delayed as in the (\emph{mabs}) rule, thus modelling 
+semantics so that all demands are delayed as in the (\emph{mabs}) rule, thus modelling 
 fully dynamically scoped parameters?
 
 This is, indeed, possible. Recall that the semantics of lambda abstraction in the flat

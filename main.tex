@@ -232,16 +232,86 @@
 %\include{text/Chapter02}
 %\include{text/Chapter03}
 
+% ==================================================================================================
 
-\ctparttext{This part presents the key novel contributions of the thesis. We develop \emph{flat}
-  and \emph{structural} coeffect calculi that capture a wide range of context-aware programming
-  languages discussed in the previous section. We present parameterized coeffect type system, 
-  categorical model based on indexed comonads. We use the model to give semantics in terms of 
-  translation to a target functional language and we present syntactic safety proof for 
-  context-aware languages with implicit parameters and dataflow.}
+\ctparttext{In this part, we capture the similarities between the concrete context-aware langauges
+  presented in the previous chapter. We also develop the key novel technical contributions of
+  the thesis. We define a \emph{flat coeffect type system} (Chapter~\ref{ch:flat}) that is 
+  parameterized by a \emph{coeffect algebra} and a mechanism for choosing unique typing derivation. 
+  We instantiate a coeffect type system with a concrete coeffect algebra and procedure for choosing 
+  unique typing derivation for three languages to capture dataflow, implicit parameters and liveness.
+  
+  The type system is complemented with a translational semantics for coeffect-based context-aware
+  programming languages (Chapter~\ref{ch:semantics}). The semantics is inspired by a categorical
+  model based on \emph{indexed comonads} and it translates source context-aware program into a 
+  target program in a simple functional language with comonadically-inspired primitives. We give 
+  concrete definition of the primitives for dataflow, implicit parameters and liveness and 
+  present a syntactic safety proof for these three languages.
+  
+  The following page provides a detailed overview of the content of Chapters~\ref{ch:flat} and
+  Chapters~\ref{ch:semantics}, highlighting the split between general definitions and properties
+  (about the coeffect calculus) and concrete definitions and properties (about concrete
+  context-awre language). The Chapter~\ref{ch:structural} mirrors the same development for 
+  \emph{structural coeffect systems}.
+}
 \setcounter{part}{1}
 \part{Coeffect calculi}
 
+\begin{center}
+\begin{tabular}{ | l | l | l |}
+\hline
+\multicolumn{3}{ | c | }{\spacedlowsmallcaps{Chapter 4}} \\ \hline \hline
+\hspace{7.1em} & \textsc{Coeffect calculus} \hspace{2.5em} & \textsc{Language-specific} \hspace{6.9em} \\ \hline
+\textsc{Syntax} 
+  & \hspace{-0.5em}\begin{tabular}{l} Coeffect $\lambda$-calculus \\[-0.3em] (Section~\ref{sec:flat-calculus-syntax}) \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Extensions such as \\[-0.3em] \ident{?param} and \kvd{prev} \\[-0.3em] (Section~\ref{sec:flat-calculus-examples})  \end{tabular} \\ \hline
+\textsc{Type system} 
+  & \hspace{-0.5em}\begin{tabular}{l} Abstract coeffect \\[-0.3em] algebra (Section~\ref{sec:flat-calculus-algebra})  \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Concrete instances \\[-0.3em] of the coeffect algebra \\[-0.3em] (Section~\ref{sec:flat-calculus-examples})  \end{tabular} \\ 
+\hline
+  & \hspace{-0.5em}\begin{tabular}{l} Coeffect type system \\[-0.3em] parameterized by \\[-0.3em] the coeffect algebra \\[-0.3em] (Section~\ref{sec:flat-calculus-types})  \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Typing for language- \\[-0.3em] specific extensions \\[-0.3em] (Section~\ref{sec:flat-calculus-examples})  \end{tabular} \\ 
+\hline
+  & 
+  & \hspace{-0.5em}\begin{tabular}{l} Procedure for determining \\[-0.3em] a unique typing derivation \\[-0.3em]  (Section~\ref{sec:flat-unique})  \end{tabular} \\ \hline
+\textsc{Properties} 
+  & \hspace{-0.5em}\begin{tabular}{l} Syntactic properties \\[-0.3em] of coeffect $\lambda$-calculus \\[-0.3em] (Section~\ref{sec:flat-syntax})  \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Uniqueness of the above \\[-0.3em]  (Section~\ref{sec:flat-unique})  \end{tabular} \\ \hline
+\end{tabular}
+\end{center}
+
+~
+
+\begin{center}
+\begin{tabular}{ | l | l | l |}
+\hline
+\multicolumn{3}{ | c | }{\spacedlowsmallcaps{Chapter 5}} \\ \hline \hline
+& \textsc{Coeffect calculus} & \textsc{Language-specific} \\ \hline
+\textsc{Categorical} 
+  & \hspace{-0.5em}\begin{tabular}{l} Indexed comonads \\[-0.3em] (Sectiuon~\ref{sec:semantics-flat-idx}) \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Examples including indexed \\[-0.3em] product, list and maybe \\[-0.3em] comonads (Section~\ref{sec:semantics-flat-monoidal}) \end{tabular} \\ 
+\hline
+  & \hspace{-0.5em}\begin{tabular}{l} Categorical semantics \\[-0.4em] of coeffect $\lambda$-calculus \\[-0.3em] (Section~\ref{sec:semantics-flat-calculus}) \end{tabular}
+  & \\ \hline
+\textsc{Translational} 
+  & \hspace{-0.5em}\begin{tabular}{l} Functional target \\[-0.3em] language (Section~\ref{sec:semantics-translation-target}) \end{tabular}
+  &  \\ 
+\hline
+  & \hspace{-0.5em}\begin{tabular}{l} Translation from coeffect \\[-0.3em] $\lambda$-calculus to target \\[-0.3em]  language (Section~\ref{sec:semantics-translation-transl}) \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Translation for language-\\[-0.3em] specific extensions (\kvd{prev}, \ident{?p}) \\[-0.3em] (Sections~\ref{sec:semantics-proofs-df} and \ref{sec:semantics-proofs-impl}) \end{tabular} \\ \hline
+\textsc{Operational} 
+  & \hspace{-0.5em}\begin{tabular}{l} Abstract comonadically- \\[-0.3em] inspired primitives \\[-0.3em] (Section~\ref{sec:semantics-translation-transl}) \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Concrete reduction rules for \\[-0.3em] comonadically-inspired primitives \\[-0.3em] (Sections~\ref{sec:semantics-proofs-df} and \ref{sec:semantics-proofs-impl}) \end{tabular} \\
+\hline
+  & 
+  & \hspace{-0.5em}\begin{tabular}{l} Reduction rules for language-\\[-0.3em] specific extensions (\kvd{prev}, \ident{?p}) \\[-0.3em] (Sections~\ref{sec:semantics-proofs-df} and \ref{sec:semantics-proofs-impl}) \end{tabular} \\ 
+\hline
+  & \hspace{-0.5em}\begin{tabular}{l} Sketch of generalized \\[-0.3em] syntactic soundness \\[-0.3em] (Section~\ref{sec:semantics-generalising}) \end{tabular}
+  & \hspace{-0.5em}\begin{tabular}{l} Syntactic soundness \\[-0.3em] (Sections~\ref{sec:semantics-proofs-df} and \ref{sec:semantics-proofs-impl}) \end{tabular} \\ \hline
+\end{tabular}
+\end{center}
+
+% ==================================================================================================
 
 \include{text/Chapter04}
 \include{text/Chapter05}
