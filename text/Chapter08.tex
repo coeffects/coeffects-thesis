@@ -1,4 +1,188 @@
+% ==================================================================================================
+
 \chapter{Implementation}
 \label{ch:impl}
 
-Crap
+In the previous three chapters, we presented the theory of coeffects consisting of type system
+and comonadically inspired semantics of two parameterized coeffect calculi. The theory provides
+a framework that simplifies the implementation of safe context-aware programming languages. To
+support this claim, this chapter presents a prototype implementation of three coeffect languages --
+language with implicit parameters and both flat and structural versions of a data-flow language.
+
+The implementation directly follows the thoery presented in the previous three chapters. It
+consists of a common framework that provides type checking and translation to a simple functional
+target language with comonadically-inspired primitives. Each concrete context-aware language then
+adds a domain-specific rule for choosing unique typing derivation (as discussed in
+Section~\ref{sec:flat-unique}) together with a domain-specific definition of the
+comonadically-inspired primitives that define the runtime semantics (see Section~\ref{sec:semantics-proofs}).
+
+The main goal of the implementation is to show that the theory is practically useful and to present it
+in a more practical way. However, we do not intend to build a complete real-world programming language.
+For this reason, the implementation is available primarilly as an interactive web-based essay, though
+it can be also downloaded and run locally.
+
+\paragraph{Chapter structure and contributions}
+
+\begin{itemize}
+\item We discuss how the implementation follows from the theory presented earlier (Section~\ref{sec:impl-theory}).
+  This applies to the implementation of the \emph{type checker} and the implementation of the \emph{translation}
+  to a simple target langauge that is then iterpereted. We also discuss how the common framework makes it
+  easy to implement additional context-aware languages (Section~\ref{sec:impl-theory-ext}).
+
+\item We consider a number of case studies (Section~\ref{sec:impl-case}) that illustrate ointeresting
+  aspects of the theories discussed earlier. This includes the typing of lambda abstraction and the
+  difference between flat and structural systems (Section~\ref{sec:impl-case-typing}) and the
+  comonadically-inspired translation (Section~\ref{sec:impl-case-transl}).
+
+\item We briefly outline some of the interesting technical details of the implementation
+  (Section~\ref{sec:impl-tech}). To make the implementation easily accessible, we make it
+  available via web and we also implement a limited support for type inference.
+
+\item The implementation is available not just as downloadable code, but also in the format of interactive essay
+  (Section~\ref{sec:impl-essay}), which aims to make coeffects accessible to a broader audience.
+  We conclude this chapter by discussing the most interesting aspects of the presentation.
+\end{itemize}
+
+
+% ==================================================================================================
+%
+%    #######
+%       #    #    # ######  ####  #####  #   #
+%       #    #    # #      #    # #    #  # #
+%       #    ###### #####  #    # #    #   #
+%       #    #    # #      #    # #####    #
+%       #    #    # #      #    # #   #    #
+%       #    #    # ######  ####  #    #   #
+%
+% ==================================================================================================
+
+\section{From theory to implementation}
+\label{sec:impl-theory}
+
+The theory discussed so far provides the two key components of the implementation. In
+Chapter~\ref{ch:flat}, we discussed the type checking of context-aware programs and
+Chapter~\ref{ch:semantics} models the execution of context-aware programs (in terms of
+translation and operational semantics). For structural coeffects, the same components are discussed
+in Chapter~\ref{ch:structural}. In this section, we discuss how those provide foundation for the
+implementation.
+
+\subsection{Type checking}
+\label{sec:impl-theory-typing}
+
+
+(Section~\ref{sec:flat-unique})
+
+\paragraph{Implementation.}
+From the presentation in this section, it might appear that resolving the ambiguity related to
+lambda abstraction for implicit parameters requires a type system that is quite different from
+the core flat coeffect type system shown earlier in Figure~\ref{fig:flat-types}. This is not the
+case. As discussed in Chapter~\ref{ch:impl}, the required changes in the implementation are
+simpler.
+
+Briefly, the implementation collects constraints on the coeffects and then finds the smallest sets
+of implicit parameters to satisfy the constraints. We still need to track implicit parameters in
+scope $\cclrd{\Delta}$, but the rest of the (\emph{abs}) rule from the implementation is close
+to the one from Figure~\ref{fig:flat-types}:
+%
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x\!:\!\tau_1;\cclrd{\Delta}}{\cclrd{t}} \vdash e : \tau_2 ~|~ C}
+  {\coctx{\Gamma;\cclrd{\Delta}}{\cclrd{r}} \vdash \lambda x\!:\!\tau_1.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 ~|~
+    C\cup\{\cclrd{t}=\cclrd{r} \,\czip\, \cclrd{s}, \cclrd{r}=\cclrd{\Delta} \}}
+\end{equation*}
+%
+Given a typing derivation for the body that produced constraints $C$, we generate an additional
+constraint that restricts $\cclrd{r}$ (declaration-site demands) to those available in the
+current static scope $\cclrd{\Delta}$. The constraint satisfaction algorithm then finds
+the minimal set $\cclrd{s}$ which is $\cclrd{t}\cclrd{\setminus \Delta}$.
+
+\paragraph{Implementation.}
+As with implicit parameters, the implementation (discussed in Chapter~\ref{ch:impl}) does not
+require changing the typing (\emph{abs}) rule of the flat coeffect system. The typing specified
+by (\emph{idabs}) can be easily obtained by generating additional constraints:
+%
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e : \tau_2 ~|~ C}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash \lambda x\!:\!\tau_1.e : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 ~|~
+    C\cup\{\cclrd{t}=\cclrd{r} \,\czip\, \cclrd{s}, \cclrd{r}=\cclrd{t}, \cclrd{s}=\cclrd{t} \}}
+\end{equation*}
+%
+Here, the two additional constraints restrict both $\cclrd{r}$ and $\cclrd{s}$ to be equal to the
+coeffect of the body $\cclrd{t}$ and so the only possible resolution is the one specified by
+(\emph{idabs}).
+
+
+Type checking
+ * DSL specific constraint resolution
+ * easier for structural
+
+
+\subsection{Translation}
+\label{sec:impl-theory-transl}
+
+Translation ~ Semantics
+
+\subsection{Extensions}
+\label{sec:impl-theory-ext}
+
+It is really easy to add another DSL
+
+\section{Case studies}
+\label{sec:impl-case}
+
+\subsection{Typing}
+\label{sec:impl-case-typing}
+
+let both =
+  let ?fst = 100 in
+  fun trd -> ?fst + ?snd + trd in
+let ?fst = 200 in
+both 1
+
+num -{ ?snd:num }-> num
+
+
+let struct x y = x + prev y in
+struct
+
+num -{ 1 }-> num -{ 1 }-> num
+
+let flat x y = x + prev y in
+flat
+
+num -{ 0 }-> num -{ 1 }-> num
+
+\subsection{Translation}
+\label{sec:impl-case-transl}
+
+let ?param = 10 in
+fun x -> ?param + ?other
+
+let (ctx2, ctx3) = split (duplicate finput) in
+let ctx1 = letimpl ?param (ctx2, 10) in
+fun x ->
+  let ctx4 = merge (x, ctx1) in
+  let (ctx5, ctx6) = split (duplicate ctx4) in
+  lookup ?param ctx5 + lookup ?other ctx6
+
+
+fun x -> (fun v -> prev v) (prev x)
+
+fun x ->
+  let ctx1 = merge (x, sinput) in
+  (fun v ->
+    let ctx3 = merge (v, choose_0 ctx1) in
+    counit (prev ctx3)) (cobind (fun ctx2 ->
+      counit (prev ctx2)) (choose_1 ctx1))
+
+\section{Technical details}
+\label{sec:impl-tech}
+
+1. F# + JavaScript
+2. Single AST and parsing
+3. Type checking and constraint generation
+4. Constraint resolution
+
+\section{Interactive essay}
+\label{sec:impl-essay}
