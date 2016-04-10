@@ -29,7 +29,7 @@ it can be also downloaded and run locally.
   to a simple target langauge that is then iterpereted. We also discuss how the common framework makes it
   easy to implement additional context-aware languages (Section~\ref{sec:impl-theory-ext}).
 
-\item We consider a number of case studies (Section~\ref{sec:impl-case}) that illustrate ointeresting
+\item We consider a number of case studies (Section~\ref{sec:impl-case}) that illustrate interesting
   aspects of the theories discussed earlier. This includes the typing of lambda abstraction and the
   difference between flat and structural systems (Section~\ref{sec:impl-case-typing}) and the
   comonadically-inspired translation (Section~\ref{sec:impl-case-transl}).
@@ -66,23 +66,41 @@ translation and operational semantics). For structural coeffects, the same compo
 in Chapter~\ref{ch:structural}. In this section, we discuss how those provide foundation for the
 implementation.
 
-\subsection{Type checking}
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Type checking and inference}
 \label{sec:impl-theory-typing}
 
+To simplify the writing of context-aware programs, the implementation provides a limited form of
+type inference (Section~\ref{sec:impl-tech}). This is available just for convenience and so we do
+not claim any completeness or complexity result about the algorithm and we do not present full
+formalization. However, it is worth noting how the domain-specific procedures for choosing a unique
+type derivation (Section~\ref{sec:flat-unique}) are adapted.
 
-(Section~\ref{sec:flat-unique})
+The type inference works in the standard way \cite{types-mlessence,types-inference} by generating
+type constraints and solving them. Solving of type constraints is done in the standard way, but we
+additionally collect and solve \emph{coeffect constraints}. In order to obtain unique type
+derivation, we generate additional coeffect constraints in lambda abstraction of each flat
+coeffect language.
 
-\paragraph{Implementation.}
-From the presentation in this section, it might appear that resolving the ambiguity related to
-lambda abstraction for implicit parameters requires a type system that is quite different from
-the core flat coeffect type system shown earlier in Figure~\ref{fig:flat-types}. This is not the
-case. As discussed in Chapter~\ref{ch:impl}, the required changes in the implementation are
-simpler.
+\paragraph{Flat implicit parameters.}
 
-Briefly, the implementation collects constraints on the coeffects and then finds the smallest sets
-of implicit parameters to satisfy the constraints. We still need to track implicit parameters in
-scope $\cclrd{\Delta}$, but the rest of the (\emph{abs}) rule from the implementation is close
-to the one from Figure~\ref{fig:flat-types}:
+As discussed in Section~\ref{sec:flat-unique}, when choosing unique typing derivation for
+implicit parameters, we keep track of the implicit parameters available in lexical scope
+(written as $\cclrd{\Delta}$). In lambda abstraction rule, the implicit parameters required by
+the body (tracked by $\ccclrd{r}$) are split so that all parameters available in lexical scope
+are captured and only the remaining parameters ($\cclrd{r}\setminus\cclrd{\Delta}$) are required
+from the caller of the function.
+
+From the presentation in Section~\ref{sec:flat-unique}, it might appear that resolving the ambiguity
+related to lambda abstraction for implicit parameters requires a type system different from
+the core flat coeffect type system shown earlier in Section ~\ref{sec:flat-calculus-types}.
+This is not the case.
+
+We track implicit parameters in scope $\cclrd{\Delta}$, but the rest of the (\emph{abs}) rule from
+the implementation only generates an additional coeffect constraint. Writing
+$\coctx{\Gamma}{\cclrd{t}} \vdash e : \tau ~|~ C}$ for a judgement that generates coeffect
+constraints $C$, the (\emph{abs}) rule used for implicit parameters looks as follows:
 %
 \begin{equation*}
 \tyrule{abs}
@@ -93,13 +111,20 @@ to the one from Figure~\ref{fig:flat-types}:
 %
 Given a typing derivation for the body that produced constraints $C$, we generate an additional
 constraint that restricts $\cclrd{r}$ (declaration-site demands) to those available in the
-current static scope $\cclrd{\Delta}$. The constraint satisfaction algorithm then finds
+current static scope $\cclrd{\Delta}$. It is not necessary to generate a constraint for the
+coeffect $\cclrd{s}$, because our constraint satisfaction algorithm finds
 the minimal set $\cclrd{s}$ which is $\cclrd{t}\cclrd{\setminus \Delta}$.
 
-\paragraph{Implementation.}
-As with implicit parameters, the implementation (discussed in Chapter~\ref{ch:impl}) does not
-require changing the typing (\emph{abs}) rule of the flat coeffect system. The typing specified
-by (\emph{idabs}) can be easily obtained by generating additional constraints:
+\paragraph{Flat data-flow.}
+In context-aware language for data-flow (and in language with liveness tracking), the inherent
+ambiguity of the (\emph{abs}) rule is resolved by duplicating the context requirements of the body.
+In Section~\ref{sec:flat-unique}, this was defined by replacing the standard coeffect (\emph{abs})
+rule with a rule (\emph{idabs}) that uses an annotation $\cclrd{r}$ for the body of the function,
+declaration-site coeffect and call-site coeffect.
+
+As with implicit parameters, the implementation does not require changing the core (\emph{abs})
+typing rule of the flat coeffect system. Instead, the unique resulution is obtained by generating
+additional coeffect constraints:
 %
 \begin{equation*}
 \tyrule{abs}
@@ -112,69 +137,211 @@ Here, the two additional constraints restrict both $\cclrd{r}$ and $\cclrd{s}$ t
 coeffect of the body $\cclrd{t}$ and so the only possible resolution is the one specified by
 (\emph{idabs}).
 
+% --------------------------------------------------------------------------------------------------
 
-Type checking
- * DSL specific constraint resolution
- * easier for structural
-
-
-\subsection{Translation}
+\subsection{Execution of context-aware programs}
 \label{sec:impl-theory-transl}
 
-Translation ~ Semantics
+Context-aware programs are executed by translating the source program into a simple functional
+target language. For simplicity, programs in the simple target language are then interpreted, but
+they could equally be compiled using standard techniques for compiling functional code. The
+translation follows the rules defined in Section~\ref{sec:semantics-translation} (for flat coeffect
+languages) and Section~X (for structural coeffect languages). The result of the translation is a
+program that consists of the following:
 
-\subsection{Extensions}
+\begin{itemize}
+\item {\sc Functional constructs.} Those include binary operations, tuples, let binding,
+  constants, variables, function abstraction and application. The interpreter keeps a map of
+  assignments for variables in scope and recursively evaluates the expression.
+
+\item {\sc Comonadic operations.} Those are the comonadic primitives provided by indexed comonads --
+  \ident{cobind}, \ident{counit} together with \ident{merge} and \ident{split} for flat coeffects
+  or \ident{merge} and \ident{choose} for structural coeffects. The translation that produces these
+  is shared by all context-aware languages, but their definition in the interpreter is
+  domain-specific.
+
+\item {\sc Domain-specific operations.} Each context-aware language may additionally include
+  operations that model domain-specific operations. For data-flow, this is \ident{prev} (accessing
+  past values) and for implicit parameters, this is \ident{letimpl} and \ident{lookup} for implicit
+  parameter binding and access, respectively.
+\end{itemize}
+
+\noindent
+The fact that the prototype implementation is based on the theoretical framework provided by
+coeffect calculi means that it has the desirable properties proved in Section~\ref{sec:semantics-proofs}
+and Section~X. In particular, evaluating a well-typed context-aware program in a context that
+provides sufficient contextual capabilities will not cause an error.
+
+In the interactive essay (Section~\ref{sec:impl-essay}), we further use the coeffects to
+automatically generate a user interface that requires the user to provide the required contextual
+capabilities (past values for individual variables, or values for implicit parameters).
+
+Another benefit of using the common framework is that the implementation can be easily extended
+to support additional context-aware languages.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Supporting more context-aware languages}
 \label{sec:impl-theory-ext}
 
-It is really easy to add another DSL
+The prototype implementation supports two of the context-aware languages discussed in this thesis:
+implicit parameters and data-flow. The remaining examples are calculus for tracking variable
+liveness (of ordinary variables) and the structural language based on bounded reuse (counting
+number of times values are used). However, the prototype implementation is based on the
+common coeffect framework and makes it easy to add support for these and also for other context
+aware languages based on coeffects.
+
+In order to extend the implementation with support for liveness or bounded reuse tracking (or
+other context-aware language), the following 4 additions are required:
+
+\begin{enumerate}
+\item A domain-specific function abstraction rule that resolves the ambiguity in the general
+  (\emph{abs}) rule of the flat coeffect calculus. For liveness, the handling would be the same
+  as for data-flow, but for other flat coeffect systems, another resolution mechanism might be used
+  instead.
+
+\item A domain-specific instance of coeffect algebra needs to be provided. In order to support
+  the type inference in the prototype implementation, the constraint solver needs to be extended
+  to solve constraint using the coeffect algebra. For liveness, this would be solving simple
+  two-point lattice constraints.
+
+\item For evaluation, a new kind of comonadic values needs to be added. For liveness, this would be
+  an option value that may or may not contain a value. The semantics of comonadic operations on the
+  values needs to be defined.
+
+\item For context-aware languages that have additional primitives (such as \kvd{prev} or \ident{?param}),
+  the parser and AST needs to be extended, custom type-checking and translation rules added and
+  domain-specific primitive operations (with their semantics) provided. Liveness and bounded reuse
+  do not have additional custom syntax and so supporting these would not require this step.
+\end{enumerate}
+
+\noindent
+The list mirrors a list of steps that need to be done when supporting a new effectful computation
+in a language that supports monadic do-notation. The step (3) corresponds to implementing a new
+monad and (4) corresponds to adding monad-specific effectful operations. The step (2) applies when
+using indexing to track effects more precisely \cite{effects-embedding}. The only step that does not
+have effectful/monadic counterpart is (1).
+
+When adding a new context-aware programming language support, much of the existing infrastructure
+can be reused. This includes the implementation of the core coeffect and type checking rules and
+also the translation for standard language constructs as well as the interpreter for the target
+language.
+
+
+% ==================================================================================================
+%
+%     #####
+%    #     #   ##    ####  ######     ####  ##### #    # #####  # ######  ####
+%    #        #  #  #      #         #        #   #    # #    # # #      #
+%    #       #    #  ####  #####      ####    #   #    # #    # # #####   ####
+%    #       ######      # #              #   #   #    # #    # # #           #
+%    #     # #    # #    # #         #    #   #   #    # #    # # #      #    #
+%     #####  #    #  ####  ######     ####    #    ####  #####  # ######  ####
+%
+% ==================================================================================================
 
 \section{Case studies}
 \label{sec:impl-case}
 
-\subsection{Typing}
+The prototype implementation illustrates a number of interesting aspects of coeffect systems.
+Those appear as examples in the interactive essay (discussed in Section~\ref{sec:impl-essay}), but
+we briefly review them in this section.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Typing context-aware programs}
 \label{sec:impl-case-typing}
 
-let both =
-  let ?fst = 100 in
-  fun trd -> ?fst + ?snd + trd in
-let ?fst = 200 in
-both 1
+We first consider two case studies of how coeffect type checking works. The first one exposes the
+resolution of the ambiguity in typing for implicit parameters and the second one exposes the
+difference between flat and structural system for data-flow.
 
-num -{ ?snd:num }-> num
+\paragraph{Abstraction for implicit parameters.}
+As discussed in Section~\ref{sec:impl-theory-typing}, the implementation of the language with
+implicit parameters resolves the ambiguity in the lambda abstraction by generating a coeffect
+constraint that restricts the set of parameters required from the declaration-site to those that
+are lexically available. Remaining parameters are required from the call-site. This is illustrated
+by the following example:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{both}~=\\[-0.25em]
+\quad \kvd{let}~\ident{?fst}~=~100~\kvd{in}\\[-0.25em]
+\quad \kvd{fun}~\ident{trd}~\rightarrow~\ident{?fst}~+~\ident{?snd}~+~\ident{trd}~\kvd{in}\\[-0.25em]
+\kvd{let}~\ident{?fst}~=~200~\kvd{in}\\[-0.25em]
+\ident{both}~1
+\end{array}
+\end{equation*}
+%
+In this expression, the lambda function on line 3 requires implicit parameters \ident{?fst} and
+\ident{?snd}. Since \ident{?fst} is available in scope, the type of \ident{both} is a function that
+requires only \ident{?snd}. In the text-based notation used in the prototype, the type of the
+function \ident{both} is: {\tt num -\{?snd:num\}-> num}.
 
+\paragraph{Flat and structural data-flow.}
+In flat data-flow, the context requirements of the body is required from both the declaration-site
+and from the call-site. In structural data-flow, the context requirements are tracked separately
+for each variable, which provides a more precise type. Consider the following two examples (the
+\kvd{let} keyword is used to define a curried function of two arguments):
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{oldy}~\ident{x}~\ident{y}~=~\ident{x}~+~\kvd{prev}~\ident{y}~\kvd{in}\\[-0.25em]
+\ident{oldy}
+\end{array}
+\end{equation*}
+%
+When type checking the expression using the flat system, the type of \ident{oldy} is inferred as {\tt num -\{1\}-> num -\{1\}-> num},
+but when using the structural system, the type becomes {\tt num -\{0\}-> num -\{1\}-> num}.
 
-let struct x y = x + prev y in
-struct
+This illustrates the difference between the two - the flat system keeps only one annotation
+for the whole body (which requires 1 past value). In lambda abstraction (or function declaration
+written using \kvd{let}), this requirement is duplicated. The structural system keeps information
+per-variable and so the resulting type reflects the fact that only the variable \idnet{y} appears
+inside \kvd{prev}.
 
-num -{ 1 }-> num -{ 1 }-> num
-
-let flat x y = x + prev y in
-flat
-
-num -{ 0 }-> num -{ 1 }-> num
+% --------------------------------------------------------------------------------------------------
 
 \subsection{Translation}
 \label{sec:impl-case-transl}
 
-let ?param = 10 in
+
+
+\begin{equation*}
+\begin{array}{l}
+let ?param = 10 in\\[-0.25em]
 fun x -> ?param + ?other
+\end{array}
+\end{equation*}
 
-let (ctx2, ctx3) = split (duplicate finput) in
-let ctx1 = letimpl ?param (ctx2, 10) in
-fun x ->
-  let ctx4 = merge (x, ctx1) in
-  let (ctx5, ctx6) = split (duplicate ctx4) in
+\begin{equation*}
+\begin{array}{l}
+let (ctx2, ctx3) = split (duplicate finput) in\\[-0.25em]
+let ctx1 = letimpl ?param (ctx2, 10) in\\[-0.25em]
+fun x ->\\[-0.25em]
+  let ctx4 = merge (x, ctx1) in\\[-0.25em]
+  let (ctx5, ctx6) = split (duplicate ctx4) in\\[-0.25em]
   lookup ?param ctx5 + lookup ?other ctx6
+\end{array}
+\end{equation*}
 
 
+\begin{equation*}
+\begin{array}{l}
 fun x -> (fun v -> prev v) (prev x)
+\end{array}
+\end{equation*}
 
-fun x ->
-  let ctx1 = merge (x, sinput) in
-  (fun v ->
-    let ctx3 = merge (v, choose_0 ctx1) in
-    counit (prev ctx3)) (cobind (fun ctx2 ->
+\begin{equation*}
+\begin{array}{l}
+fun x ->\\[-0.25em]
+  let ctx1 = merge (x, sinput) in\\[-0.25em]
+  (fun v ->\\[-0.25em]
+    let ctx3 = merge (v, choose_0 ctx1) in\\[-0.25em]
+    counit (prev ctx3)) (cobind (fun ctx2 ->\\[-0.25em]
       counit (prev ctx2)) (choose_1 ctx1))
+\end{array}
+\end{equation*}
 
 \section{Technical details}
 \label{sec:impl-tech}
