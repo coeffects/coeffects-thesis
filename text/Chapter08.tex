@@ -34,13 +34,10 @@ it can be also downloaded and run locally.
   difference between flat and structural systems (Section~\ref{sec:impl-case-typing}) and the
   comonadically-inspired translation (Section~\ref{sec:impl-case-transl}).
 
-\item We briefly outline some of the interesting technical details of the implementation
-  (Section~\ref{sec:impl-tech}). To make the implementation easily accessible, we make it
-  available via web and we also implement a limited support for type inference.
-
-\item The implementation is available not just as downloadable code, but also in the format of interactive essay
-  (Section~\ref{sec:impl-essay}), which aims to make coeffects accessible to a broader audience.
-  We conclude this chapter by discussing the most interesting aspects of the presentation.
+\item The implementation is available not just as downloadable code, but also in the format of
+  interactive web-based essay (Section~\ref{sec:impl-essay}), which aims to make coeffects
+  accessible to a broader audience. We discuss the most interesting aspects of the essay format and
+  briefly discuss some of the interesting implementation detail (Section~\ref{sec:impl-essay-tech}).
 \end{itemize}
 
 
@@ -181,7 +178,7 @@ to support additional context-aware languages.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Supporting more context-aware languages}
+\subsection{Supporting additional context-aware languages}
 \label{sec:impl-theory-ext}
 
 The prototype implementation supports two of the context-aware languages discussed in this thesis:
@@ -302,54 +299,386 @@ inside \kvd{prev}.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Translation}
+\subsection{Comonadically-inspired translation}
 \label{sec:impl-case-transl}
 
+In addition to running coeffect programs, the implementation can also print the result of the
+translation to the simple functional target language with comonadically-inspired primitives.
+The following two case studies illustrate important aspects of the translation for flat coeffect
+systems (Section~\ref{sec:semantics-translation}) and structural coeffect systems (Section~?).
 
+\paragraph{Merging implicit parameter contexts.}
 
+The following example illustrates the lambda abstraction for implicit parameters.
+It defines a parameter \ident{?param} and then returns a function value that captures it, but
+also requires an implicit parameter \ident{?other}:
+%
 \begin{equation*}
 \begin{array}{l}
-let ?param = 10 in\\[-0.25em]
-fun x -> ?param + ?other
+\kvd{let}~\ident{?param} ~=~ \num{10}~\kvd{in}\\[-0.25em]
+\kvd{fun}~\ident{x}~\rightarrow~\ident{?param} ~+~ \ident{?other}
 \end{array}
 \end{equation*}
-
+%
+Translating the code to the target language produces the code below. The reader is encouraged to
+view the translation in the interactive essay (Section~\ref{sec:impl-essay}), which displays the
+types and coeffect annotations of the individual values and primitives. As in the theory, the
+comonadically-inspired primitives are families of operations indexed by the coeffects (we
+omit the annotations here):
+%
 \begin{equation*}
 \begin{array}{l}
-let (ctx2, ctx3) = split (duplicate finput) in\\[-0.25em]
-let ctx1 = letimpl ?param (ctx2, 10) in\\[-0.25em]
-fun x ->\\[-0.25em]
-  let ctx4 = merge (x, ctx1) in\\[-0.25em]
-  let (ctx5, ctx6) = split (duplicate ctx4) in\\[-0.25em]
-  lookup ?param ctx5 + lookup ?other ctx6
+\kvd{let}~(\ident{ctx2}, \ident{ctx3}) ~=~ \ident{split}~(\ident{duplicate}~\kvd{finput})~\kvd{in}\\[-0.25em]
+\kvd{let}~\ident{ctx1} ~=~ \ident{letimpl}_{\ident{?param}}~(\ident{ctx2}, \num{10})~\kvd{in}\\[-0.25em]
+\kvd{fun}~\ident{x}~\rightarrow\\[-0.25em]
+\quad \kvd{let}~\ident{ctx4} ~=~ \ident{merge}~(\ident{x}, \ident{ctx1})~\kvd{in}\\[-0.25em]
+\quad \kvd{let}~(\ident{ctx5}, \ident{ctx6}) ~=~ \ident{split}~(\ident{duplicate}~\ident{ctx4})~\kvd{in}\\[-0.25em]
+\quad \ident{lookup}_{\ident{?param}}~\ident{ctx5} ~+~ \ident{lookup}_{\ident{?other}}~\ident{ctx6}
 \end{array}
 \end{equation*}
+%
+The \kvd{finput} value on the first line represents an empty context in which the expression is
+evaluated and is of type $\ctyp{\czero}{\ident{unit}}$. The context is duplicated; \ident{ctx3}
+is not needed, because $\num{10}$ is a constant; \ident{ctx2} is passed to \ident{letimpl}, which
+assigns an implicit parameter value in the newly returned context \ident{ctx1} of type
+$\ctyp{\cclrd{\{\ident{?param}\}}}{\ident{unit}}$ (this now carries the implicit parameter value, but
+it does not represent any ordinary variables, thus the \ident{unit} type representing an empty
+tuple).
 
+In the body of the function, the context \ident{ctx1} is merged with the context provided by the
+variable \ident{x}. The type of \ident{ctx4} is $\ctyp{\ccrld{\{\ident{?param},\ident{?other}\}}}{(\ident{num}\times\ident{unit})}$.
+This is then split into two parts that contain just one of the implicit parameters and those are
+then accessed using \ident{lookup}.
 
+\paragraph{Composition in structural data-flow.}
+
+In structural coeffect systems, the translation works differently in that the context passed to
+a sub-expression contains only assignments for the variables used in the sub-expression (in the
+flat version, we always duplicated the variable context before using \ident{split}). To illustrate
+this, consider the following simple function:
+%
 \begin{equation*}
 \begin{array}{l}
-fun x -> (fun v -> prev v) (prev x)
+\kvd{fun}~\ident{x} \rightarrow \kvd{fun}~\ident{y} \rightarrow \kvd{prev}~\ident{x}
 \end{array}
 \end{equation*}
-
+%
+In structural coeffect systems, the comonadic value is annotated with a vector of coeffect
+annotations that correspond to individual variables. The initial structural input \kvd{sinput}
+is a value of type $\ctyp{\cclrd{[]}}{()}$ containing no variables (we write $()$ rather than
+\ident{unit} to make that more explicit). The translated code then looks as follows:
+%
 \begin{equation*}
 \begin{array}{l}
-fun x ->\\[-0.25em]
-  let ctx1 = merge (x, sinput) in\\[-0.25em]
-  (fun v ->\\[-0.25em]
-    let ctx3 = merge (v, choose_0 ctx1) in\\[-0.25em]
-    counit (prev ctx3)) (cobind (fun ctx2 ->\\[-0.25em]
-      counit (prev ctx2)) (choose_1 ctx1))
+\kvd{fun}~\ident{x} \rightarrow\\[-0.25em]
+\quad \kvd{let}~\ident{ctx1} ~=~ \ident{merge}~(\ident{x}, \kvd{sinput}) \kvd{in}\\[-0.25em]
+\quad (\kvd{fun}~\ident{y} \rightarrow\\[-0.25em]
+\quad \quad \kvd{let}~\ident{ctx2} ~=~ \ident{merge}~(\ident{y}, \ident{ctx1})~\kvd{in}\\[-0.25em]
+\quad \quad \ident{counit}~(\ident{prev}~(\ident{choose}_{\langle 0,1\rangle}~\ident{ctx2}))
 \end{array}
 \end{equation*}
+%
+The two variables are merged with the initial context, obtaining a value \ident{ctx2} of type
+$\ctyp{\cclrd{[0, 1]}}{\ident{num}\times\ident{num}}$ that contains two values with 0 and 1 past
+values, respectively.
 
-\section{Technical details}
-\label{sec:impl-tech}
+For simplicity, the implementation does not use the \ident{split}/\ident{merge} pair of operations
+of the structural coeffects to obtain the correct subset of variables. This can be done, but it
+would make the translated code longer and more cumbersome. Instead, we use a higher-level operation
+\ident{choose} (which can be expressed in terms of \ident{split}/\ident{merge}) that projects the
+variable subset as specified by the index. Here, $\langle 0, 1\rangle$ means that the first variable
+should be dropped an the second one should be kept.
 
-1. F# + JavaScript
-2. Single AST and parsing
-3. Type checking and constraint generation
-4. Constraint resolution
+The resulting single-variable context is then passed to \ident{prev} (to shift the stream by one)
+and then to \ident{counit} to obtain the current value.
+
+
+% ==================================================================================================
+%
+%    #######
+%    #        ####   ####    ##   #   #
+%    #       #      #       #  #   # #
+%    #####    ####   ####  #    #   #
+%    #            #      # ######   #
+%    #       #    # #    # #    #   #
+%    #######  ####   ####  #    #   #
+%
+% ==================================================================================================
 
 \section{Interactive essay}
 \label{sec:impl-essay}
+
+As explained in the introduction of this chapter, the purpose of the implementation presented in
+this thesis is not to provide a real-world programming language, but to support the theory
+discussed in the rest of the thesis. The goal is to explain the theory and inspire authors of
+real-world programming langauges to include support for context-aware programming, ideally using
+coeffects as a sound foundation. For this reason, the implementation needs to be:
+
+\begin{itemize}
+\item {\sc Accessible.}  Anyone interested should be able to use the implemented langauges without
+  downloading the source code and compiling it and without installing specialized software.
+
+\item {\sc Explorable.}  It should be possible to explore the inner workings -- how is the typing
+  derived, how is the source code translated to the target language and how is it evaluated.
+\end{itemize}
+
+\noindent
+To make the work \emph{accessible}, we implement sample context-aware languages in a way that makes it
+possible to use them in any standard web browser with JavaScript support (Section~\ref{sec:impl-essay-tech})
+without requiring any server-side component. Following the idea that ``the medium is the message'' \cite{essay-medium},
+we choose medium that encourages \emph{exploration} and make the implementation available not just
+as source code that can be compiled and run locally, but also in the format of
+interactive essay (Section~\ref{sec:impl-essay-features}). The live version of the essay can be
+found at: \url{http://tomasp.net/coeffects}.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=16em]{images/eval1.png}}
+\boxed{\includegraphics[width=16em]{images/eval2.png}}
+\caption{Interactive evaluation of implicit parameters (left) and data-flow (right)}
+\label{fig:essay-eval}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Explorable language implementation}
+\label{sec:impl-essay-features}
+
+The interactive essay format used of the implementation is inspired by Bret Victor's work on
+\emph{explorable explanations} \cite{essay-explorable}:
+%
+\begin{quote}
+\emph{Do our reading environments encourage active reading? Or do they utterly oppose it? A
+  typical reading tool, such as a book or website, displays the author's argument, and nothing
+  else. The reader's line of thought remains internal and invisible, vague and speculative. We
+  form questions, but can't answer them. We consider alternatives, but can't explore them. We
+  question assumptions, but can't verify them. And so, in the end, we blindly trust, or blindly
+  don't, and we miss the deep understanding that comes from dialogue and exploration.}
+\end{quote}
+%
+The interactive essay we present encourages active reading in the sense summarized in Victor's quote.
+We show the reader an example (program, typing derivation or translation), but the reader is
+encouraged to modify it and see how the explanation in the essay adapts.
+
+The idea of active reading is older and has been encouraged in the context of art Josef Albers'
+classic 1963 work on color \cite{essay-albers} (which has been turned into an interactive essay
+60 years later \cite{essay-albers-app}). More recently, similar formats have been used to explain
+topics in areas such as signal processing \cite{essay-seeing} (explaining Fourrier transformations)
+and sociology \cite{essay-polygons} (visualizing and explaining game theoretical model of segregation
+in the society \cite{essay-segregation}). To our best knowledge, no such work exists in the area
+of programming language theory and so we briefly outline some of the interesting features that
+our essay provides in order to encourage active reading.
+
+\paragraph{Interactive program excution.}
+
+After providing the practical motivation for coeffects (based on Chapter~\ref{ch:intro}), the
+interactive essay shows the reader the two sample context-aware programming languages. Readers can
+write code in a panel that type checks the input, generates user interface for entering the
+required context and runs the sample code.
+
+The panels for implicit parameters and for data-flow computations are shown in Figure~\ref{fig:essay-eval}.
+The sample code on the left adds two implicit parameters and the generated UI lets the user
+enter implicit parameter values as required by the context in the typing judgement. The sample on
+the right calculates the average of the current and past value in a data-flow; the UI lets the user
+enter past values required by the type of the function.
+
+The essay guides the readers through a number of interesting programs (shown in Section~\ref{sec:impl-case-typing})
+and encourages them to run and try modifying them. For implicit parameters, this includes the case
+where an implicit parameter is available at both declaration-site and call-site (showing that the
+declaration-site value is captured). For data-flow, the examples include the comparison between the
+inferred type when using flat and structural type systems.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=16em]{images/df1.png}}
+\boxed{\includegraphics[width=16em]{images/df2.png}}
+\caption{Function smoothing the X coordinate (left) with a sample run (right).}
+\label{fig:essay-df}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Reactive data-flow.}
+
+The interactive program execution lets the reader run sample programs, but not in a realistic
+context. To show a more real-world scenario, the essay includes a widget shown in Figure~\ref{fig:essay-df}.
+This lets the user write a function taking a stream of X and Y coordinates and calculate value
+based on the current and past values of the mouse pointer. The X and Y values, together with the
+result are plotted using a live chart.
+
+In the example run shown above, the sample program calculates the average of the last 12 values
+of the X coordinate (green line in Figure~\ref{fig:essay-df}). The example also illustrates one
+practical use of the coeffect type system -- when running, the widget keeps the coordinates in a
+pre-allocated fixed-size array, because the coeffect type system guarantees that at most 12 past
+values will be accessed.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=32em]{images/types.png}}
+\caption{Source code with type information and explorable typing derivation.}
+\label{fig:essay-typing}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Explorable typing derivations.}
+
+Perhaps the most important aspect of the implemented context aware programming languages is their
+coeffect and type system. In a conventional implementation, the functioning of the type system
+would remain mostly hidden -- we would get an ``OK'' message for a well-typed program and a type
+error for invalid program (likely not very informative, given that reporting good error messages
+for type errors is a notoriously hard problem even for mature language implementations).
+
+The presented interactive essay provides two features to help the reader understand and explore
+typing derivations. First, when reading code samples in the text, tooltips show the typing of
+individual identifiers, most interestingly functions (Figure~\ref{fig:essay-typing}, above).
+
+Second, a later part of the essay provides a type checker that lets the user enter a source code
+in a context aware programming language and produces an explorable typing derivation for the
+program. The output (shown in Figure~\ref{fig:essay-typing}, below) displays a typing judgement
+with assumptions and conclusions and lets the reader navigate through the typing derivation by
+clicking on the assumptions or conclusions. This way, the reader can see how is the final typing
+derivation obtained, exploring interesting aspects, such as the abstraction rule (shown in
+Figure~\ref{fig:essay-typing}).
+
+\paragraph{Comonadically-inspired translation.}
+
+The last interactive element of the essay lets the reader explore the translation of source
+context aware language to a target simple functional language (Section~\ref{sec:impl-theory-transl}).
+Compared with the monadic do-notation \cite{other-haskell98}, the comonadic translation is more
+complex for two reasons. First, it merges all variables into a single (comonadic) value representing
+the context. Second, there is a flat and structural variation of the system. For these two reasons,
+understanding the translation based just on the rules is harder than for monads. The essay lets
+readers see translation for carefuly chosen case studies that illustrate the key aspects of the
+translation (some discussed in Section~\ref{sec:impl-case-transl}), but also for their own
+programs encouraging \emph{active reading}. Sample input and output are shown in
+Figure~\ref{fig:essay-transl}.
+
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=16em]{images/transl1.png}}
+\boxed{\includegraphics[width=16em]{images/transl2.png}}
+\caption{TBD}
+\label{fig:essay-transl}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Implementation overview}
+\label{sec:impl-essay-tech}
+
+The core part of our implementation mostly follows standard techniques for implementing type
+checkers and interpreters for statically-typed functional programming langauges. Two interesting
+aspects that are worth discussing is the JavaScript targetting (for running the langauge
+implementation in a web browser) and integration with client-side (JavaScript) libraries for
+building the user interface. The full source code can be obtained from
+\url{https://github.com/coeffects/coeffects-playground} and is structured as follows:
+%
+\begin{itemize}
+\item Parsing is implemented using smple parser combinator library; \strf{ast.fs} defines the
+  abstract syntax tree for the languages; \strf{parsec.fs} implements a small parser combinator
+  library and \strf{lexer.fs} with \strf{parser.fs} parse the source code by first tokenizing
+  the input and then parsing the stream of tokens.
+
+\item The type checking is implemented by \strf{typechecker.fs}, which annotates an untyped AST
+  with types and generates set of type and coeffect constraints. The constraints are later solved
+  (using domain-specific algorithms for each of the languages) in \strf{solver.fs}.
+
+\item Type-checked programs in context-aware languages are translated to simple target
+  functional subset of the language in \strf{translation.fs}; \strf{evaluation.fs} then interprets
+  programs in the target language. The interpretation does not handle the source
+  language and so programs containing context-aware contstructs cannot be interpreted directly.
+
+\item The user interface of the interactive essay discussed in Section~\ref{sec:impl-essay-features}
+  is implemented partly in F\# and partly in JavaScript. The two most important components include
+  a pretty-printer \strf{pretty.fs} which formats source code (with type tooltips) and typing
+  derivations and \strf{gui.fs} that implements user interaction (e.g.~navigation in explorable
+  typing derivations).
+\end{itemize}
+
+\noindent
+As discussed in Section~\ref{sec:impl-theory-ext}, the implementation can be easily extended to
+support additional context-aware programming languages. This is due to the fact that it is based
+on the unified theory of coeffects. In practice, adding support for liveness tracking would
+require adding a domain-specific constraint solver in \strf{solver.fs} and extending the
+interpreter in \strf{evaluation.fs} with a new kind of comonadically-inspired data type
+(indexed maybe comonad) with its associated operations.
+
+\section{Related work}
+\label{sec:impl-related}
+
+To our best knowledge, combining Bret Victor's idea of explorable explanations with programming
+language theory (as discussed in Section~\ref{sec:impl-essay}) is a novel contribution of our work.
+On the technical side, we build on a number of standard methods.
+
+\paragraph{Parsing and type checking.} The implementation of the parser, type checker and
+interpreter follows standard techniques for implementing functional programming languages.
+In order to be able to compile the implementation to JavaScript (see below), we built a
+small parser combinator library \cite{monad-parsing} rather than using one of the already
+available libraries \cite{other-fparsec}.
+
+\paragraph{Targetting JavaScript.} In order to make the implementation accessible to a broad
+audience, it can be executed in a web browser. This is achieved by automatically translating the
+implementation from F\# to JavaScript. We use an F\# library called FunScript \cite{other-funscript}
+(which is a more recent incarnation of the idea developed by the author \cite{app-fsharp-webtools}).
+We choose F\#, but similar tools exist for other functional languages such as OCaml \cite{other-js-ocaml}.
+It is worth noting that FunScript is implemented as a \emph{library} rather than as a compiler
+extension. This is done using the meta-programming capabilities of F\# \cite{app-fsharp-metaprog}.
+
+\paragraph{Client-side library integration.} An interesting aspect of the interactive essay
+user interface is the integration with third-party JavaScript libraries. We use a number of
+libraries including JQuery (for web browser DOM manipulation) and MathJax \cite{essay-mathjax}
+(for rendering of typing derivation). In order to call those from F\# code, we use a number
+of mapping methods described in \cite{app-age-of-web}. For example, the following F\# declaration
+is used to invoke the \ident{Queue} function in MathJax:
+%
+\begin{equation*}
+\begin{array}{l}
+\lbrack\langle\ident{JSEmitInline}(\str{MathJax.Hub.Queue(\{0\});})\rangle\rbrack\\[-0.25em]
+\kvd{let}~\ident{queueAction}~(\ident{f}:\ident{unit}~\rightarrow~\ident{unit}):\ident{unit}~=~\ident{failwith}~\str{JS only!}
+\end{array}
+\end{equation*}
+%
+The \ident{JSEmitInline} syntax on the first line is an attribute that instructs FunScript
+to compile all invocations of the \ident{queueAction} function into the JavaScript literal
+specified in the attribute (with \strf{\{0\}} replaced by the argument).
+
+
+% ==================================================================================================
+%
+%     #####
+%    #     # #    # #    # #    #   ##   #####  #   #
+%    #       #    # ##  ## ##  ##  #  #  #    #  # #
+%     #####  #    # # ## # # ## # #    # #    #   #
+%          # #    # #    # #    # ###### #####    #
+%    #     # #    # #    # #    # #    # #   #    #
+%     #####   ####  #    # #    # #    # #    #   #
+%
+% ==================================================================================================
+
+\section{Summary}
+
+This chapter supplements the theory of coeffects presented in the previous three chapters with
+a prototype implementation. We implemented three simple context-aware programming langauges that
+track implicit parameters and past values in dataflow computations (in flat and structural way).
+
+The implementation discussed in this chapter provides an evidence for our claim that the
+theory of coeffects can be used as a basis for a wide range of sound context-aware programming
+languages. Our implementation consists of a shared coeffect framework (handling type checking and
+translation). Each context-aware language then adds a domain-specific rule for choosing a unique
+typing derivation, an interpretation of comonadically-inspired primitives and (optionally)
+domain-specific primitives such as the \kvd{prev} construct for dataflow.
+
+We make the implementation available in the usual form (as source code that can be downloaded,
+compiled and executed), but we also present it in the form of interactive essay. This encourages
+\emph{active reading} and lets the reader explore a number of aspects of the implementation
+including the type checking (through explorable typing derivations) and the translation. The key
+contribution of this thesis is that it provides a unified way for \emph{thinking} about context in
+programming langauges and the interactive presentation of the implementation is aligned with this
+goal. Programming languages of the future will need a mechanism akin to coeffects and we aim to
+provide a convincing argument supported by a prototype implementation.
