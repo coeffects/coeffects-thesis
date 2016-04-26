@@ -4,51 +4,50 @@
 \label{ch:semantics}
 
 The \emph{flat coeffect calculus} introduced in the previous chapter uniformly captures a number
-of context-aware systems discussed in Chapter~\ref{ch:applications}. The coeffect calculus 
-can be seen as a \emph{language framework} that simplifies the construction of concrete 
-\emph{domain-specific} coeffect lnguages. In the previous chapter, we discussed how it provides a  
-type system that tracks the required context. In this chapter, we show that the langauge framework 
-also provides a way for defining the semantics of concrete domain-specific coeffect languages,  
+of context-aware systems outlined in Chapter~\ref{ch:applications}. The coeffect calculus
+can be seen as a \emph{language framework} that simplifies the construction of concrete
+\emph{domain-specific} coeffect lnguages. In the previous chapter, we discussed how it provides a
+type system that tracks the required context. In this chapter, we show that the langauge framework
+also provides a way for defining the semantics of concrete domain-specific coeffect languages,
 guides their implementation and simplifies safety proofs.
 
-This is done using a \emph{comonadically-inspired translation}. We translate a program written 
-using the coeffect calculus into a simple functional language with additional coeffect-specific 
-comonadically-inspired primitives that implement the concrete notion of context-awareness. 
+This is done using a \emph{comonadically-inspired translation}. We translate a program written
+using the coeffect calculus into a simple functional language with additional coeffect-specific
+comonadically-inspired primitives that implement the concrete notion of context-awareness.
 
-We use comonads in a syntactic way, following the example of Haskell's use of monads. The 
-translation is the same for all coeffect languages, but the safety depends on the concrete
-coeffect-specific comonadically-inspired primitives. We prove the soundness of two concrete
-coeffect calculi (dataflow and implicit parameters). We note that the proof crucially relies on a 
-relationship between coeffect annotations (provided by the type system) and the comonadically-inspired
-primitives (defining the semantics), which makes it easy to extend it to other concrete 
-context-aware langauges.
+We use comonads in a syntactic way, following the example of Wadler and Thiemann \cite{monads-effects-marriage}
+and Haskell's use of monads. The translation is the same for all coeffect languages, but the safety
+depends on the concrete coeffect-specific comonadically-inspired primitives. We prove the soundness
+of two concrete coeffect calculi (dataflow and implicit parameters). We note that the proof
+crucially relies on a relationship between coeffect annotations (provided by the type system) and
+the comonadically-inspired primitives (defining the semantics), which makes it easy to extend it to
+other concrete context-aware langauges.
 
 \paragraph{Chapter structure and contributions}
 
 \begin{itemize}
-\item We introduce \emph{indexed comonads}, a generalization of comonads, a category-theoretical 
+\item We introduce \emph{indexed comonads}, a generalization of comonads, a category-theoretical
   dual of monads (Section~\ref{sec:semantics-theory}) and we discuss how they provide semantics
-  for coeffect calculus. This provides an insight into how (and why) the calculus works and shows 
-  an intriguing link with effects and monads.
-  
+  for coeffect calculus. This provides an insight into how (and why) the coeffect calculus works and
+  shows an intriguing link with effects and monads.
+
 \item We use indexed comonads to guide our \emph{translational semantics} of coeffect calculus
-  (Section~\ref{sec:semantics-translation}). We define a simple functional programming language
-  (with type system and operational semantics) and prove that well-typed programs in the language
-  do not get stuck. We extend it with uninterpreted comonadically-inspired primitives and
-  define a translation that turns well-typed context-aware coeffect programs into programs of 
-  our functional language.
-  
-\item For two of the coeffect calculi discussed earlier (dataflow and implicit parameters),
+  (Section~\ref{sec:semantics-translation}). We define a simple sound functional programming
+  language (with type system and operational semantics). We extend it with uninterpreted
+  comonadically-inspired primitives and define a translation that turns well-typed context-aware
+  coeffect programs into programs of our functional language.
+
+\item For two sample coeffect calculi discussed earlier (dataflow and implicit parameters),
   we give reduction rules for the comonadically-inspired primitives and we extend the progress
   and preservation proofs, showing that well-typed programs produced by translation from two
   coeffect languages do not get stuck (Section~\ref{sec:semantics-proofs})
 
-\item We leave the details to future work, but we note that the proof for concrete coeffect language 
-  (dataflow and implicit parameters) can be generalized -- rather than reconsidering progress and 
-  preservation of the whole target language, we rely just on the correctness of the coeffect-specific 
-  comonadically-inspired primitives and abstraction mechanism provided by languages 
-  such as ML and Haskell (Section~\ref{sec:semantics-related}).
-\end{itemize}  
+\item We note that the proof for concrete coeffect language (dataflow and implicit parameters) can
+  be generalized -- rather than reconsidering progress and preservation of the whole target
+  language, we rely just on the correctness of the coeffect-specific comonadically-inspired
+  primitives and abstraction mechanism provided by languages such as ML and Haskell
+  (Section~\ref{sec:semantics-related}).
+\end{itemize}
 
 
 % ==================================================================================================
@@ -66,22 +65,22 @@ context-aware langauges.
 \section{Introduction and safety}
 \label{sec:semantics-intro}
 
-This chapter links together all the different technical developments presented in this thesis.
-We take the flat coeffect calculus introduced in Chatper~\ref{ch:flat}, define its \emph{abstract 
+This chapter links together a number of different technical developments presented in this thesis.
+We take the flat coeffect calculus introduced in Chatper~\ref{ch:flat}, define its \emph{abstract
 comonadic semantics} and use it to define a translation that gives a \emph{concrete operational
-semantics} to a number of concrete context-aware languages. The type system is used to guarantee 
-that the resulting programs are correct. Finally, the development in this chapter is closely 
-mirrored by the implementation presented in Chapter~\ref{ch:impl}, which implements the 
+semantics} to a number of concrete context-aware languages. The type system is used to guarantee
+that the resulting programs are correct. Finally, the development in this chapter is closely
+mirrored by the implementation presented in Chapter~\ref{ch:impl}, which implements the
 translation together with an interpreter for the target language.
 
 The key claim of this thesis is that writing context-aware programs using coeffects is easier and
-safer. In this chapter, we substantiate the claim by showing that programs written in the coeffect
-calculus and evaluated using the translation provided here do not ``go wrong''. 
+less error-prone. In this chapter, we substantiate the claim by showing that programs written in the
+coeffect calculus and evaluated using the translation provided here do not ``go wrong''.
 
 To provide an intuition, consider two context-aware programs. The first calls a function that
 adds two implicit parameters in a context where one of them is defined. The second calculates
 the difference between the current and the previous value in a dataflow computation.
-For comparison, we show the code written in a coeffect dataflow language (on the left) and 
+For comparison, we show the code written in a coeffect dataflow language (on the left) and
 using standard ML-like libraries (on the right):
 %
 \begin{equation*}
@@ -89,142 +88,148 @@ using standard ML-like libraries (on the right):
 \begin{array}{l}
 \kvd{let}~\ident{add}=\kvd{fun}~\ident{x}\rightarrow\\[-0.2em]
  \quad \ident{?one} + \ident{?two}~\kvd{in}\\[-0.2em]
-\kvd{let}~\ident{?one} = 10~\kvd{in}\\[-0.2em] 
+\kvd{let}~\ident{?one} = 10~\kvd{in}\\[-0.2em]
 \ident{add}~0
-\end{array} 
+\end{array}
 &\quad&
 \begin{array}{l}
 \kvd{let}~\ident{add}=\kvd{fun}~\ident{x}~\ident{params}\rightarrow\\[-0.2em]
  \quad \ident{lookup}~\str{one}~\ident{params}~+ \\[-0.2em]
  \quad\quad \ident{lookup}~\str{two}~\ident{params}~\kvd{in}\\[-0.2em]
-\ident{add}~0~(\ident{add}~\str{one}~10~\ident{params})
-\end{array} 
+\ident{add}~0~(\ident{cons}~\str{one}~10~\ident{params})
+\end{array}
 \\[3.5em]
 \begin{array}{l}
 \kvd{let}~\ident{diff}=\kvd{fun}~\ident{x}\rightarrow\\[-0.2em]
  \quad \ident{x}-\kvd{prev}~\ident{x}
-\end{array} 
+\end{array}
 &&
 \begin{array}{l}
 \kvd{let}~\ident{diff}=\kvd{fun}~\ident{x}\rightarrow\\[-0.2em]
  \quad \ident{List.head}~\ident{x}-\ident{List.head}~(\ident{List.tail}~\ident{x})
-\end{array} 
-\end{array} 
+\end{array}
+\end{array}
 \end{equation*}
 %
 The \ident{add} function (on the left) has a type $\ident{int}\xrightarrow{\cclrd{ \{ \ident{?one},\ident{?two} \} }}\ident{int}$.
 We call it in a context containing $\cclrd{\ident{?one}}$ and so the coeffect of the program is
 $\cclrd{ \{ \ident{?two} \} }$. The safety property for implicit parameters
 (Theorem~\ref{thm:semantics-sound-impl}) guarantees that, when executed in a context that
-provides a value for the implicit parameter $\cclrd{\ident{?one}}$, the program reduces to 
-a value of an correct type (or never terminates).
+provides a value for the implicit parameter $\cclrd{\ident{?one}}$, the program reduces to
+a value of the correct type (or never terminates).
 
 If we wrote the code without coeffects (on the right), we could use a dynamic map to pass around
 a dictionary of parameters (the \ident{lookup} function obtains a value and \ident{add} adds a new
 assignment to the map). In that case, the type of \ident{add} is just $\ident{int}\rightarrow\ident{int}$
-and so the user does not know which implicit parameters it will need. 
+and so the user does not know which implicit parameters it will need.
 
 Similarly, the \ident{diff} function can be implemented in terms of lists (on the right) as
-a function of type $\ident{num}~\ident{list}\rightarrow\ident{num}$. The function fails for input 
-lists containing only zero or one elements and this is not reflected in the type and it is not 
+a function of type $\ident{num}~\ident{list}\rightarrow\ident{num}$. The function fails for input
+lists containing only zero or one elements and this is not reflected in the type and is not
 enforced by the type checker.
 
-Using coeffects (on the left), the function has a type $\ident{num}\xrightarrow{\cclrd{1}}\ident{num}$ 
+Using coeffects (on the left), the function has a type $\ident{num}\xrightarrow{\cclrd{1}}\ident{num}$
 meaning that it requires one past value (in addition to the current value). The safety property
 for dataflow (Theorem~\ref{thm:semantics-sound-df}) shows that, when called with a context that
-contains the required number of past values as captured by the coeffect type system, the function 
+contains the required number of past values as captured by the coeffect type system, the function
 does not get stuck.
 
-In summary, coeffect type system, captures certain runtime 
-demands of context-aware programs and (as we show in this chapter), eliminates common errors 
+In summary, a coeffect type system, captures certain runtime
+demands of context-aware programs and (as we show in this chapter), eliminates common errors
 related to working with context.
 
 
 
 % ==================================================================================================
-%                
+%
 %    #######
 %       #    #    # ######  ####  #####  #   #
 %       #    #    # #      #    # #    #  # #
 %       #    ###### #####  #    # #    #   #
 %       #    #    # #      #    # #####    #
 %       #    #    # #      #    # #   #    #
-%       #    #    # ######  ####  #    #   #                              
+%       #    #    # ######  ####  #    #   #
 %
 % ==================================================================================================
 
 \section{Categorical motivation}
 \label{sec:semantics-theory}
 
-The type system of flat coeffect calculus arises syntactically, as a generalization of the examples 
-discussed in Chapter~\ref{ch:applications}, but we can also obtain it by looking at the categorical 
-semantics of context-dependent computations. This is a direction that we explore in this section. 
-Although the development presented here is interesting in its own, our main focus is \emph{using} 
-categorical semantics to motivate and explain the translation discussed in 
+The type system of the flat coeffect calculus arises syntactically, as a generalization of the examples
+discussed in Chapter~\ref{ch:applications}, but we can also obtain it by looking at the categorical
+semantics of context-dependent computations. This is a direction that we explore in this section.
+Although the development presented here is interesting in its own, our main focus is \emph{using}
+categorical semantics to motivate and explain the translation discussed in
 Section~\ref{sec:semantics-translation}.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Comonads are to coeffects what monads are to effects}
 
-The development in this chapter closely follows the example of effectful computations. 
-Effect systems provide a type system for tracking effects and monadic translation can be used as 
-a basis for implementing effectful domain-specific languages (e.g.~through the do-notation in 
-Haskell). 
+The development in this chapter closely follows the example of effectful computations.
+Effect systems provide a type system for tracking effects and monadic translation can be used as
+a basis for implementing effectful domain-specific languages (e.g.~through the do-notation in
+Haskell).
 
-The correspondence between effect system and monads has been pointed out by Wadler and Thiemann 
+The correspondence between effect system and monads has been pointed out by Wadler and Thiemann
 \cite{monads-effects-marriage} and further explored by Atkey \cite{monads-parameterised-notions}
-and Vazou and Leijen \cite{monads-effects-remarriage}). This line of work relates effectful 
-functions $\tau_1 \xrightarrow{\sigma} \tau_2$ to monadic computations 
-$\tau_1 \rightarrow \mtyp{\sigma} \tau_2$. In this chapter, we show a similar correspondence between 
-\emph{coeffect systems} and \emph{comonads}. However, due to the asymmetry of $\lambda$-calculus, 
+and Vazou and Leijen \cite{monads-effects-remarriage}). This line of work relates effectful
+functions $\tau_1 \xrightarrow{\sigma} \tau_2$ to monadic computations
+$\tau_1 \rightarrow \mtyp{\sigma} \tau_2$. In this chapter, we show a similar correspondence between
+\emph{coeffect systems} and \emph{comonads}. However, due to the asymmetry of $\lambda$-calculus,
 defining the semantics in terms of comonadic computations is not a simple mechanical dualisation
 of the work on effect systems and monads.
 
-Our approach is inspired by the work of Uustalu and Vene \cite{comonads-notions} who present the 
-semantics of contextual computations (mainly for dataflow) in terms of comonadic functions 
-$\ctyp{}\tau_1 \rightarrow \tau_2$. Our \emph{indexed comonads} annotate the structure with 
-information about the required context, \ie~$\ctyp{\cclrd{r}} \tau_1 \rightarrow \tau_2$.
+Our approach is inspired by the work of Uustalu and Vene \cite{comonads-notions} who present the
+semantics of contextual computations (mainly for dataflow) in terms of comonadic functions
+$\ctyp{}\tau_1 \rightarrow \tau_2$. We introduce \emph{indexed comonads} that annotate the structure
+with information about the required context, \ie~$\ctyp{\cclrd{r}} \tau_1 \rightarrow \tau_2$.
 This is similar to the recent development on monads and effects by Katsumata \cite{monads-parametric}
-who parameterizes monads in a similar way to our parameterization of comonads.
+who parameterizes monads in a similar way to our indexed comonads.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Categorical semantics}
 
-As discussed in Section~\ref{sec:path-sem}, categorical semantics interprets terms as morphisms
-in some category. For typed calculi, the semantics defined by $\sem{-}$ usually interprets typing 
-judgements $x_1 \!:\! \tau_1 \ldots x_n \!:\! \tau_n \vdash e: \tau$ as morphisms 
-$\sem{\tau_1 \times \ldots \times \tau_n} \rightarrow \sem{\tau}$.
+As discussed in Section~\ref{sec:path-sem}, a categorical semantics interprets terms as morphisms
+in some category. For typed calculi, the semantics defined by $\sem{-}$ usually interprets a term
+with a typing derivation leading to a judgement $x_1 \!:\! \tau_1 \ldots x_n \!:\! \tau_n \vdash e: \tau$
+as a morphism $\sem{\tau_1 \times \ldots \times \tau_n} \rightarrow \sem{\tau}$.
 
-As a best known example, Moggi \cite{monad-notions} showed that the semantics of various effectful 
-computations can be captured uniformly using (\emph{strong}) \emph{monads}. In that 
-approach, computations are interpreted as $\tau_1 \times \ldots \times \tau_n \rightarrow \mtyp{}{\tau}$
-for some monad $\mtyp{}{}$. For example, $\mtyp{}{\alpha} = \alpha \cup \{ \bot \}$ models 
-partiality (maybe monad), $\mtyp{}{\alpha} = \mathcal{P}(\alpha)$ models non-determinism (list 
-monad) and side-effects can be modelled using $\mtyp{}{\alpha} = S \rightarrow (\alpha \times S)$ 
-(state monad). Here, the structure of a strong monad provides necessary ``plumbing'' for composing 
+For a well-defined semantics, we need to ensure that a well-typed term is assigned exactly one
+meaning. This can be achieved in a number of ways. First, we can prove the \emph{coherence}
+\cite{semantics-bltres} and show the morhphisms assigned to multiple typing derivations are equivalent.
+Second, the typing judgement can have a unique typing derivation. We follow the latter approach,
+using the uniqye typing derivation specified in Section~\ref{sec:flat-unique}.
+
+As a best known example, Moggi \cite{monad-notions} showed that the semantics of various effectful
+computations can be captured uniformly using (\emph{strong}) \emph{monads}. In that
+approach, computations are interpreted as $\tau_1 \times \ldots \times \tau_n \rightarrow \mtyp{}{\tau}$,
+for some monad $\mtyp{}{}$. For example, $\mtyp{}{\alpha} = \alpha \cup \{ \bot \}$ models
+failures (the Maybe monad), $\mtyp{}{\alpha} = \mathcal{P}(\alpha)$ models non-determinism (list
+monad) and side-effects can be modelled using $\mtyp{}{\alpha} = S \rightarrow (\alpha \times S)$
+(state monad). Here, the structure of a strong monad provides necessary ``plumbing'' for composing
 monadic computations -- sequential composition and strength for lifting free variables into the
 body of computation under a lambda abstraction.
 
-Following similar approach to Moggi, Uustalu and Vene \cite{comonads-notions} showed that 
-(\emph{monoidal}) \emph{comonads} uniformly capture the semantics of various kinds of context-dependent 
+Following a similar approach to Moggi, Uustalu and Vene \cite{comonads-notions} showed that
+(\emph{monoidal}) \emph{comonads} uniformly capture the semantics of various kinds of context-dependent
 computations~\cite{comonads-notions}. For example, data-flow computations over non-empty lists
 are modelled using the non-empty list comonad $\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$.
 
-The monadic and comonadic model outlined here represents at most a binary analysis of effects or 
-context-dependence. A function $\tau_1 \rightarrow \tau_2$ performs \emph{no} effects (requires no 
+The monadic and comonadic model outlined aboe represents at most a binary analysis of effects or
+context-dependence. A function $\tau_1 \rightarrow \tau_2$ performs \emph{no} effects (requires no
 context) whereas $\tau_1 \rightarrow \mtyp{}{\tau_2}$ performs \emph{some} effects and
-$\ctyp{}{\tau_1} \rightarrow \tau_2$ requires \emph{some} context\footnote{This is an 
+$\ctyp{}{\tau_1} \rightarrow \tau_2$ requires \emph{some} context\footnote{This is an
 over-simplification as we can use \eg~stacks of monad transformers and model functions with
-two different effects using $\tau_1 \rightarrow M_1(M_2~\tau_2)$. However, monad transformers 
-require defining complex system of lifting to be composable. Consequently, they are usually used
+two different effects using $\tau_1 \rightarrow M_1(M_2~\tau_2)$. However, monad transformers
+require the user to define complex systems of lifting to be composable. Consequently, they are usually used
 for capturing different kinds of impurities (exceptions, non-determinism, state), but not for
 capturing fine-grained properties (\eg~a set of memory regions that may be accessed by a
-stateful computation).}. 
+stateful computation).}.
 
-In the next section, we introduce \emph{indexed comonads}, which provide a more precise analysis 
-and let us model computations with context demands $\cclrd{r}$ as functions 
+In the next section, we introduce \emph{indexed comonads}, which provide a more precise analysis
+and let us model computations with context demands $\cclrd{r}$ as functions
 $\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2$ using an \emph{indexed comonad} $\ctyp{\cclrd{r}}{}$.
 
 % --------------------------------------------------------------------------------------------------
@@ -232,16 +237,16 @@ $\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2$ using an \emph{indexed comonad} $\
 \subsection{Introducing comonads}
 
 In category theory, \emph{comonad} is a dual of \emph{monad}. As already outlined in
-Chapter~\ref{ch:pathways}, we obtain a definition of a comonad by taking a definition of a monad 
-and ``reversing the arrows''. More formally, one of the equivalent definitions of comonad 
+Chapter~\ref{ch:pathways}, we obtain a definition of a comonad by taking a definition of a monad
+and ``reversing the arrows''. More formally, one of the equivalent definitions of comonad
 looks as follows (repeated from Section~\ref{sec:path-sem}):
 
 \begin{definition}
 A \emph{comonad} over a category $\catc$ is a triple $(C, \ident{counit}, \ident{cobind})$ where:
 \begin{compactitem}
 \item $C$ is a mapping on objects (types) $C : \catc \rightarrow \catc$
-\item $\ident{counit}$ is a mapping $\ctyp{}{\alpha} \rightarrow \alpha$ 
-\item $\ident{cobind}$ is a mapping $(\ctyp{}{\alpha} \rightarrow \beta) 
+\item $\ident{counit}$ is a mapping $\ctyp{}{\alpha} \rightarrow \alpha$
+\item $\ident{cobind}$ is a mapping $(\ctyp{}{\alpha} \rightarrow \beta)
   \rightarrow (\ctyp{}{\alpha} \rightarrow \ctyp{}{\beta})$
 \end{compactitem}
 such that, for all $f:\ctyp{}{\alpha} \rightarrow \beta$ and $g:\ctyp{}{\beta} \rightarrow \gamma$:
@@ -259,8 +264,8 @@ such that, for all $f:\ctyp{}{\alpha} \rightarrow \beta$ and $g:\ctyp{}{\beta} \
 
 \noindent
 From the functional programming perspective, we can see $\ctyp{}{}$ as a parametric data type such as
-\ident{NEList}. The $\ident{counit}$ operations extracts a value $\alpha$ from a value that carries 
-additional context $\ctyp{}{\alpha}$. The $\ident{cobind}$ operation turns a context-dependent function 
+\ident{NEList}. The $\ident{counit}$ operations extracts a value $\alpha$ from a value that carries
+additional context $\ctyp{}{\alpha}$. The $\ident{cobind}$ operation turns a context-dependent function
 $\ctyp{}{\alpha} \rightarrow \beta$ into a function that takes a value with context, applies
 the context-dependent function to value(s) in the context and then propagates the context.
 
@@ -269,7 +274,7 @@ computations. They describe infinite (coinductive) streams and non-empty lists a
 
 \begin{example}[Non-empty list]
 A non-empty list is a recursive data-type defined as $\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$.
-We write \kvd{inl} and \kvd{inr} for constructors of the left and right cases, respectively. The 
+We write \kvd{inl} and \kvd{inr} for constructors of the left and right cases, respectively. The
 type \ident{NEList} forms a comonad together with the following \ident{counit} and \ident{cobind} mappings:
 %
 \begin{equation*}
@@ -285,7 +290,7 @@ type \ident{NEList} forms a comonad together with the following \ident{counit} a
 \noindent
 The \ident{counit} operation returns the head of the non-empty list. Note that it is crucial that
 the list is \emph{non-empty}, because we always need to be able to obtain a value. The \ident{cobind}
-operation defined here returns a list of the same length as the original where, for each element, the 
+operation defined here returns a list of the same length as the original where, for each element, the
 function $f$ is applied on a \emph{suffix} list starting from the element. Using a simplified
 notation for list, the result of applying \ident{cobind} to a function that sums elements of a
 list gives the following behaviour:
@@ -299,10 +304,10 @@ The fact that the function $f$ is applied to a \emph{suffix} is important in ord
 
 It is also interesting to examine some data types that do \emph{not} form a comonad. As already
 mentioned, list $\ident{List}~\alpha = 1 + (\alpha \times \ident{List}~\alpha)$ is not a comonad,
-because the \ident{counit} operation is not defined for the value $\kvd{inl}~()$. The \ident{Maybe} 
-data type defined as $1 + \alpha$ is not a comonad for the same reason. However, if we consider 
-flat coeffect calculus for liveness, it appears natural to model computations as functions 
-$\ident{Maybe}~\tau_1 \rightarrow \tau_2$. To use such a model, we need to generalise comonads 
+because the \ident{counit} operation is not defined for the value $\kvd{inl}~()$. The \ident{Maybe}
+data type defined as $1 + \alpha$ is not a comonad for the same reason. However, if we consider
+flat coeffect calculus for liveness, it appears natural to model computations as functions
+$\ident{Maybe}~\tau_1 \rightarrow \tau_2$. To use such a model, we need to generalise comonads
 to \emph{indexed comonads}.
 
 % --------------------------------------------------------------------------------------------------
@@ -311,19 +316,19 @@ to \emph{indexed comonads}.
 \label{sec:semantics-flat-idx}
 
 The flat coeffect algebra includes a monoid $(\C, \cseq, \cunit)$, which defines the behaviour of
-sequential composition, where the annotation $\cunit$ represents a variable access. An indexed 
-comonad is formed by a data type (object mapping) $\ctyp{\cclrd{r}}{\alpha}$ where the annotation 
-$\cclrd{r}$ determines what context is required. 
+sequential composition, where the element $\cunit$ represents a variable access. An indexed
+comonad is formed by a data type (object mapping) $\ctyp{\cclrd{r}}{\alpha}$ where the $\cclrd{r}$
+(also called \emph{annotation}) is a member of the set $\C$ and determines what context is required.
 
 \begin{definition}
-Given a monoid $(\C, \cseq, \cunit)$ with binary operator $\cseq$ and unit $\cunit$, an 
-\emph{indexed comonad} over a category $\catc$ is a triple 
+Given a monoid $(\C, \cseq, \cunit)$ with binary operator $\cseq$ and unit $\cunit$, an
+\emph{indexed comonad} over a category $\catc$ is a triple
 $(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, \ident{cobind}_{\cclrd{r}, \cclrd{s}})$ where:
 
 \begin{compactitem}
-\item $\ctyp{\cclrd{r}}{}$ for all $\cclrd{r} \in \C$ is a family of object mappings 
-\item $\ident{counit}_{\cunit}$ is a mapping $\ctyp{\cunit}{\alpha} \rightarrow \alpha$ 
-\item $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$ is a mapping $(\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) 
+\item $\ctyp{\cclrd{r}}{}$ for all $\cclrd{r} \in \C$ is a family of object mappings
+\item $\ident{counit}_{\cunit}$ is a mapping $\ctyp{\cunit}{\alpha} \rightarrow \alpha$
+\item $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$ is a mapping $(\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta)
   \rightarrow (\ctyp{\cclrd{r}\cseq\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta})$
 \end{compactitem}
 such that, for all $f:\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta$ and $g:\ctyp{\cclrd{s}}{\beta} \rightarrow \gamma$:f
@@ -336,46 +341,46 @@ such that, for all $f:\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta$ and $g:\ctyp{\
   \\
 \tag{\emph{associativity}}
 \hspace{-10em}
-  \ident{cobind}_{\cclrd{r}\cseq\cclrd{s},\cclrd{t}}~(g \circ \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f) &= 
+  \ident{cobind}_{\cclrd{r}\cseq\cclrd{s},\cclrd{t}}~(g \circ \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f) &=
     (\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g) \circ (\ident{cobind}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}~f)
 \end{align}
 \end{definition}
 
 \noindent
-Rather than defining a single mapping $\ctyp{}{}$, we are now defining a family of mappings 
-$\ctyp{\cclrd{r}}{}$ indexed by a monoid structure. Similarly, the $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$ 
-operation is now formed by a \emph{family} of mappings for different pairs of indices 
-$\cclrd{r}, \cclrd{s}$. To be fully precise, $\ident{cobind}$ is a family of natural transformations 
-and we should include $\alpha, \beta$ as indices, writing $\ident{cobind}_{\cclrd{r},\cclrd{s}}^{\alpha, \beta}$.
-For the purpose of this thesis, it is sufficient to omit the superscripts and treat $\ident{cobind}$ just 
-as a family of mappings (rather than natural transformations). When this does not introduce ambiguity, 
+Rather than defining a single mapping $\ctyp{}{}$, we are now defining a family of mappings
+$\ctyp{\cclrd{r}}{}$ indexed by elements of the monoid structure $\C$. Similarly, the $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$
+operation is now formed by a \emph{family} of mappings for different pairs of indices
+$\cclrd{r}, \cclrd{s}$. To be fully precise, $\ident{cobind}$ is a family of natural transformations
+and we should include objects $\alpha, \beta$ (modeling types) as indices, writing $\ident{cobind}_{\cclrd{r},\cclrd{s}}^{\alpha, \beta}$.
+For the purpose of this thesis, it is sufficient to omit the superscripts and treat $\ident{cobind}$ just
+as a family of mappings (rather than natural transformations). When this does not introduce ambiguity,
 we also occasionally omit the subscripts.
 
-The $\ident{counit}$ operation is not defined for all $\cclrd{r} \in \C$, but only for 
-the unit $\cunit$. We still include the unit as an index writing $\ident{counit}_{\cunit}$, 
-but this is merely for symmetry and as a useful reminder to the reader. Crucially, this means that 
+The $\ident{counit}$ operation is not defined for all $\cclrd{r} \in \C$, but only for
+the unit $\cunit$. Nevertheless we continue to write $\ident{counit}_{\cunit}$,
+but this is merely for symmetry and as a useful reminder to the reader. Crucially, this means that
 the operation is defined only for special contexts.
 
-If we look at the indices in the laws, we can see that the left and right identity 
-require $\cunit$ to be the unit of $\cseq$. Similarly, the associativity law implies the 
-associativity of the $\cseq$ operator. 
+If we look at the indices in the comonad axioms, we can see that the left and right identity
+require $\cunit$ to be the unit of $\cseq$. Similarly, the associativity law implies the
+associativity of the $\cseq$ operator.
 
 \paragraph{Composition.}
 The co-Kleisli category that models sequential composition is formed by the unit arrow (provided
-by $\ident{counit}$) together with the (associative) composition operation that composes computations 
+by $\ident{counit}$) together with the (associative) composition operation that composes computations
 with contextual demands as follows:
 %
 \begin{equation*}
 \begin{array}{ccl}
-\textnormal{--}\, \hat{\circ} \,\textnormal{--}&\narrow{:}& (\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2) 
-  \rightarrow (\ctyp{\cclrd{s}}{\tau_2} \rightarrow \tau_3) 
+\textnormal{--}\, \hat{\circ} \,\textnormal{--}&\narrow{:}& (\ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2)
+  \rightarrow (\ctyp{\cclrd{s}}{\tau_2} \rightarrow \tau_3)
   \rightarrow (\ctyp{\cclrd{r} \cseq \cclrd{s}}{\tau_1} \rightarrow \tau_3) \\
 g \, \hat{\circ} \, f &\narrow{=}& g \circ (\ident{cobind}_{\cclrd{r}, \cclrd{s}} f)
 \end{array}
 \end{equation*}
 %
 The composition $\hat{\circ}$ best expresses the intention of indexed comonads. Given two functions
-with contextual demands $\cclrd{r}$ and $\cclrd{s}$, their composition is a function that 
+with contextual demands $\cclrd{r}$ and $\cclrd{s}$, their composition is a function that
 requires $\cclrd{r}\,\cseq\,\cclrd{s}$. The contextual demands propagate \emph{backwards} and
 are attached to the input of the composed function.
 
@@ -384,7 +389,7 @@ are attached to the input of the composed function.
 \paragraph{Examples.}
 
 Any comonad can be turned into an indexed comonad using a trivial monoid. However, indexed comonads
-are more general and can be used with other data types, including indexed \ident{Maybe}. 
+are more general and can be used with other data types, including indexed \ident{Maybe}.
 
 \begin{example}[Comonads]
 Any comonad $\ctyp{}{}$ is an indexed comonad with an index provided by a trivial monoid $(\{1\},\ast,1)$
@@ -393,8 +398,8 @@ operations $\ident{counit}_1$ and $\ident{cobind}_{1,1}$ are defined by the oper
 and $\ident{cobind}$ of the comonad.
 \end{example}
 
-\begin{example}[Indexed option]
-The \emph{indexed option comonad} is defined over a monoid $(\{ \ident{L},\ident{D} \}, \sqcup,\ident{L})$ 
+\begin{example}[Indexed Maybe]
+The \emph{indexed Maybe comonad} is defined over a monoid $(\{ \ident{L},\ident{D} \}, \sqcup,\ident{L})$
 where $\sqcup$ is defined as earlier, \ie~$\ident{L} = \cclrd{r} \sqcup \cclrd{s} \Longleftrightarrow \cclrd{r}=\cclrd{s}=\ident{L}$.
 Assuming $1$ is the unit type inhabited by $()$, the mappings are defined as follows:
 %
@@ -409,7 +414,7 @@ Assuming $1$ is the unit type inhabited by $()$, the mappings are defined as fol
 \qquad
 \begin{array}{lcl}
 \multicolumn{3}{l}{
-  \ident{cobind}_{\cclrd{r},\cclrd{s}} ~:~ (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) 
+  \ident{cobind}_{\cclrd{r},\cclrd{s}} ~:~ (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta)
     \rightarrow (\ctyp{\cclrd{r}\sqcup\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta}) }\\
 \ident{cobind}_{\ident{L},\ident{L}}~f~x &\narrow{=}& f~x\\
 \ident{cobind}_{\ident{L},\ident{D}}~f~() &\narrow{=}& ()\\
@@ -420,26 +425,26 @@ Assuming $1$ is the unit type inhabited by $()$, the mappings are defined as fol
 \end{example}
 
 \noindent
-The \emph{indexed option comonad} models the semantics of the liveness coeffect system discussed in 
-Section~\ref{sec:applications-flat-live}, where $\ctyp{\ident{L}}{\alpha} = \alpha$ models a live context 
+The \emph{indexed Maybe comonad} models the semantics of the liveness coeffect system discussed in
+Section~\ref{sec:applications-flat-live}, where $\ctyp{\ident{L}}{\alpha} = \alpha$ models a live context
 and $\ctyp{\ident{D}}{\alpha}=1$ models a dead context which does not contain a value. The \ident{counit}
 operation extracts a value from a live context. As in the direct model discussed in Chapter~\ref{ch:appendix},
-the \ident{cobind} operation can be seen as an implementation of dead code elimination. The definition 
-only evaluates $f$ when the result is marked as live and is thus required, and it only accesses $x$ if 
+the \ident{cobind} operation can be seen as an implementation of dead code elimination. The definition
+only evaluates $f$ when the result is marked as live and is thus required, and it only accesses $x$ if
 the function $f$ requires its input.
 
 The indexed family $\ctyp{\cclrd{r}}{}$ in the above example is analogous to the \ident{Maybe}
-(or option) data type $\ident{Maybe}\,\alpha = 1 + \alpha$. As mentioned earlier, this type does not 
-permit (non-indexed) comonad structure, because $\ident{counit}~()$ is not defined. This is not a 
-problem with indexed comonads, because live contexts are distinguished by the (type-level) coeffect 
+(or option) data type $\ident{Maybe}\,\alpha = 1 + \alpha$. As mentioned earlier, this type does not
+permit (non-indexed) comonad structure, because $\ident{counit}~()$ is not defined. This is not a
+problem with indexed comonads, because live contexts are distinguished by the (type-level) coeffect
 annotation and \ident{counit} only needs to be defined on live contexts.
 
 \begin{example}[Indexed product]
 The semantics of implicit parameters is modelled by an indexed product comonad. We use a monoid
 $(\mathcal{P}(\ident{Id}), \cup, \emptyset)$ where \ident{Id} is the set of (implicit parameter) names.
-As previously, all parameters have the type $\rho$. The data type $\ctyp{\cclrd{r}}{\alpha}
-= \alpha \times (\cclrd{r} \rightarrow \rho)$ represents a value $\alpha$ together with a function that
-associates a parameter value $\rho$ with every implicit parameter name in $\cclrd{r} \subseteq \ident{Id}$.
+We assume that, all implicit parameters have the type $\ident{num}$. The data type $\ctyp{\cclrd{r}}{\alpha}
+= \alpha \times (\cclrd{r} \rightarrow \ident{num})$ represents a value $\alpha$ together with a function that
+associates a parameter value $\ident{num}$ with every implicit parameter name in $\cclrd{r} \subseteq \ident{Id}$.
 The cobind and counit operations are defined as:
 %
 \begin{equation*}
@@ -449,7 +454,7 @@ The cobind and counit operations are defined as:
 \end{array}
 \quad
 \begin{array}{l}
-\ident{cobind}_{\cclrd{r},\cclrd{s}} ~:~ (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) 
+\ident{cobind}_{\cclrd{r},\cclrd{s}} ~:~ (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta)
     \rightarrow (\ctyp{\cclrd{r}\cup\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta})\\[-0.25em]
 \ident{cobind}_{\cclrd{r},\cclrd{s}}~f~(a,g) = (f(a,\restr{g}{\cclrd{r}}), \restr{g}{\cclrd{s}})\\[0.5em]
 \end{array}
@@ -457,19 +462,19 @@ The cobind and counit operations are defined as:
 \end{example}
 
 \noindent
-In the definition, we use the notation $(a, g)$ for a pair containing the value of type $\alpha$
-together with $g$, which is a function $\cclrd{r} \rightarrow \rho$. The \ident{counit} operation
+In the definition, we use the notation $(a, g)$ for a pair containing a value of type $\alpha$
+together with $g$, which is a function of type $\cclrd{r} \rightarrow \ident{num}$. The \ident{counit} operation
 takes a value and a function (with empty set as a domain), ignores the function and extracts the
-value. The \ident{cobind} operation uses the restriction operation $\restr{g}{\cclrd{r}}$ to 
+value. The \ident{cobind} operation uses the restriction operation $\restr{g}{\cclrd{r}}$ to
 restrict the domain of $g$ to implicit parameters $\cclrd{r}$ and $\cclrd{s}$ in oder to get
 implicit parameters required by the argument of $f$ and by the resulting computation, respectively
-(\ie~semantically, it \emph{splits} the available context capabilities). The function $g$ passed 
-to \ident{cobind} is initially defined on $\cclrd{r} \cup \cclrd{s}$ and so the restriction is 
+(\ie~semantically, it \emph{splits} the available context capabilities). The function $g$ passed
+to \ident{cobind} is defined on $\cclrd{r} \cup \cclrd{s}$ and so the restriction is
 valid in both cases.
 
-The structure of \emph{indexed comonads} is sufficient to model sequential composition of 
-computations that use a single variable (as discussed in Section~\ref{sec:path-sem}). To model 
-full $\lambda$-calculus with lambda abstraction and multiple-variable contexts, we need 
+The structure of \emph{indexed comonads} is sufficient to model sequential composition of
+computations that use a single variable (as discussed in Section~\ref{sec:path-sem}). To model
+full $\lambda$-calculus with lambda abstraction and multiple-variable contexts, we need
 additional operations introduced in the next section.
 
 % --------------------------------------------------------------------------------------------------
@@ -478,30 +483,30 @@ additional operations introduced in the next section.
 \label{sec:semantics-flat-monoidal}
 
 Because of the asymmetry of $\lambda$-calculus (discussed in Section~\ref{sec:applications-structure}),
-the duality between monads and comonads can no longer help us with defining the additional structure
+the duality between monads and comonads does not lead us towards the additional structure
 required to model full $\lambda$-calculus. In comonadic computations, additional information is attached
-to the context. In application and lambda abstraction, the context is propagated differently than 
+to the context. In application and lambda abstraction, the context is propagated differently than
 in effectful computations.
 
 To model the effectful $\lambda$-calculus, Moggi~\cite{monad-notions} requires a \emph{strong} monad which
 has an additional operation $\ident{strength} : \alpha\times\mtyp{}{\beta} \rightarrow \mtyp{}{(\alpha\times\beta)}$.
 This allows lifting of free variables into an effectful computation. In Haskell, strength can be expressed
-in the host language and so it is implicit.
+in the host language and so is implicit.
 
-To model $\lambda$-calculus with contextual properties, Uustalu and Vene \cite{comonads-notions} 
+To model $\lambda$-calculus with contextual properties, Uustalu and Vene \cite{comonads-notions}
 require \emph{lax semi-monoidal} comonad. This structure requires an additional monoidal operation:
 %
 \begin{equation*}
 \ident{m} : \ctyp{}{\alpha} \times \ctyp{}{\beta} \rightarrow \ctyp{}{(\alpha \times \beta)}
 \end{equation*}
 %
-The \ident{m} operation is needed in the semantics of lambda abstraction. It represents merging of 
-contexts and is used to merge the context of the declaration site (containing free variables)
+The \ident{m} operation is needed in the semantics of lambda abstraction. Semantically, it represents
+merging of contextual capabilities attached to the variable contexts of the declaration site (containing free variables)
 and the call site (containing bound variable). For example, for implicit parameters, this combines
 the additional parameters defined in the two contexts.
 
-The semantics of flat coeffect calculus requires operations for \emph{merging}, but also for
-\emph{splitting} of contexts. 
+The semantics of flat coeffect calculus requires not only operations for \emph{merging}, but also for
+\emph{splitting} of contexts.
 
 \begin{definition}
 Given a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
@@ -518,22 +523,21 @@ equipped with families of operations $\ident{merge}_{\cclrd{r},\cclrd{s}}$, $\id
 
 \noindent
 The $\ident{merge}_{\cclrd{r},\cclrd{s}}$ operation is the most interesting one. Given two comonadic
-values with additional contexts specified by $\cclrd{r}$ and $\cclrd{s}$, it combines them into a 
+values with additional contexts specified by $\cclrd{r}$ and $\cclrd{s}$, it combines them into a
 single value with additional context $\cclrd{r}\,\czip\,\cclrd{s}$. The $\czip$ operation often represents
-\emph{greatest lower bound}\footnote{The $\czip$ and $\cpar$ operations are the greatest and least upper 
-bounds in the liveness and data-flow examples, but not for implicit parameters. However, they remain useful 
-as an informal analogy.}, elucidating the fact that merging may result in the loss of some parts of 
-the contexts $\cclrd{r}$ and $\cclrd{s}$. We look at examples of this operation in the next section.
+\emph{greatest lower bound}\footnote{The $\czip$ and $\cpar$ operations are the greatest and least upper
+bounds in the liveness and data-flow examples, but not for implicit parameters. However, they remain useful
+as an informal analogy.}. We look at examples of this operation in the next section.
 
 The $\ident{split}_{\cclrd{r},\cclrd{s}}$ operation splits a single comonadic value (containing a tuple)
 into two separate values. Note that this does not simply duplicate the value, because the additional
-context is also split. To obtain coeffects $\cclrd{r}$ and $\cclrd{s}$, the input needs to provide 
-\emph{at least} $\cclrd{r}$ and $\cclrd{s}$, so the tags are combined using the $\cpar$, which is often 
+context is also split. To obtain coeffects $\cclrd{r}$ and $\cclrd{s}$, the input needs to provide
+\emph{at least} $\cclrd{r}$ and $\cclrd{s}$, so the tags are combined using the $\cpar$, which is often
 the \emph{least upper-bound}\footnotemark[1].
 
 \paragraph{Semantics of sub-coeffecting.}
-Although we do not include sub-coeffecting in the core flat coeffect calculus, it is an interesting 
-extension to consider. Semantically, sub-coeffecting drops some of the available contextual 
+Although we do not include sub-coeffecting in the core flat coeffect calculus, it is an interesting
+extension to consider. Semantically, sub-coeffecting drops some of the available contextual
 capabilities (drops some of the implicit parameters or some of the past values). This can be
 modelled by adding a (family of) lifting operation(s):
 %
@@ -544,54 +548,54 @@ modelled by adding a (family of) lifting operation(s):
 %
 Although we do not demand this as a general law, in all our systems, it is the case that
 $\cclrd{r} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$ and $\cclrd{s} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$.
-This special case allows a simpler definition of \emph{indexed flat comonad} by expressing the 
+This special case allows a simpler definition of \emph{indexed flat comonad} by expressing the
 \ident{split} operation in terms of lifting (sub-coeffecting) as follows:
 %
 \begin{equation*}
 \begin{array}{rcl}
 \ident{map}_{\cclrd{r}}~f &\narrow{=}& \ident{cobind}_{\cclrd{r}, \cclrd{r}}~(f\circ\ident{counit}_{\cunit}) \\
 \ident{split}_{\cclrd{r}, \cclrd{s}}~c &\narrow{=}&
-  ( \ident{map}_{\cclrd{r}}~\ident{fst}~(\ident{lift}_{\cclrd{r}\cpar\cclrd{s}, \cclrd{r}}~c), 
+  ( \ident{map}_{\cclrd{r}}~\ident{fst}~(\ident{lift}_{\cclrd{r}\cpar\cclrd{s}, \cclrd{r}}~c),
     \ident{map}_{\cclrd{s}}~\ident{snd}~(\ident{lift}_{\cclrd{r}\cpar\cclrd{s}, \cclrd{s}}~c) )
 \end{array}
 \end{equation*}
 %
-The $\ident{map}_{\cclrd{r}}$ operation is the mapping on arrows that corresponds to the object 
-mapping $\ctyp{\cclrd{r}}{}$. The definition is dual to the standard definition of \ident{map} 
+The $\ident{map}_{\cclrd{r}}$ operation is the mapping on arrows that corresponds to the object
+mapping $\ctyp{\cclrd{r}}{}$. The definition is dual to the standard definition of \ident{map}
 for monads in terms of \ident{bind} and \ident{unit}. The functions \ident{fst} and \ident{snd}
-are first and second projections from a two-element pair. To define the 
+are first and second projections from a two-element pair. To define the
 $\ident{split}_{\cclrd{r}, \cclrd{s}}$ operation, we use the argument $c$ twice, use lifting
-to throw away additional parts of the context and then transform the values in the 
+to throw away additional parts of the context and then transform the values in the
 context.
 
 This alternative is valid for our examples, but we do not use it for three reasons. First, it
-requires making sub-coeffecting a part of the core definition. Second, this would be the only 
-place where our semantics uses a variable \emph{twice} (in this case $c$). Thus using an explicit 
-\ident{split} means that the structure required by our semantics does not need to provide variable 
-duplication and our model could be embedded in linear or affine category. Finally, explicit 
-\ident{split} is similar to the definition that is needed for structural coeffects in 
+requires making sub-coeffecting a part of the core definition. Second, this would be the only
+place where our semantics uses a variable \emph{twice} (in this case $c$). Thus using an explicit
+\ident{split} means that the structure required by our semantics does not need to provide variable
+duplication and our model could be embedded in linear or affine category. Finally, explicit
+\ident{split} is similar to the definition that is needed for structural coeffects in
 Chapter~\ref{ch:structural} and it makes the connection between the two easier to see.
 
 \paragraph{Examples.}
 All the examples of \emph{indexed comonads} discussed in Section~\ref{sec:semantics-flat-idx} can
-be extended into \emph{flat indexed comonads}. Note that this is not true \emph{in general}, 
+be extended into \emph{flat indexed comonads}. Note that this is not true \emph{in general},
 because each example requires us to define additional operations, specific for the example.
 
 \begin{example}[Monoidal comonads]
 Just like indexed comonads generalise co\-monads, the additional structure of
-flat indexed comonads generalises symmetric semimonoidal comonads of Uustalu 
+flat indexed comonads generalises symmetric semimonoidal comonads of Uustalu
 and Vene \cite{comonads-notions}. The flat coeffect algebra is defined as $(\{1\}, \ast, \ast, \ast, 1, 1, =)$
-where $1\ast1=1$ and $1=1$. The additional operation $\ident{merge}_{1,1}$ is provided by the 
-monoidal operation called \ident{m} by Uustalu and Vene. The $\ident{split}_{1,1}$ operation 
+where $1\ast1=1$ and $1=1$. The additional operation $\ident{merge}_{1,1}$ is provided by the
+monoidal operation called \ident{m} by Uustalu and Vene. The $\ident{split}_{1,1}$ operation
 is defined by duplication.
 \end{example}
 
-\begin{example}[Indexed option]
+\begin{example}[Indexed Maybe]
 \label{thm:semantics-indexed-opt}
-  
-Flat coeffect algebra for liveness defines $\cpar$ and $\czip$ as $\sqcup$ and $\sqcap$, respectively 
-and specifies that $\ident{D} \sqsubseteq \ident{L}$. Recall also that the object mapping is defined 
-as $\ctyp{\ident{L}}{\alpha} = \alpha$ and $\ctyp{\ident{D}}{\alpha} = 1$. The additional operations 
+
+Flat coeffect algebra for liveness defines $\cpar$ and $\czip$ as $\sqcup$ and $\sqcap$, respectively
+and specifies that $\ident{D} \sqsubseteq \ident{L}$. Recall also that the object mapping is defined
+as $\ctyp{\ident{L}}{\alpha} = \alpha$ and $\ctyp{\ident{D}}{\alpha} = 1$. The additional operations
 of a flat indexed comonad are defined as follows:
 %
 \begin{equation*}
@@ -612,19 +616,19 @@ of a flat indexed comonad are defined as follows:
 \end{example}
 
 \noindent
-Without the indexing, the \ident{merge} operations implements \emph{zip} on option values,
-returning an option only when both values are present. The behaviour of the \ident{split} 
-operation is partly determined by the indices. When the input is \emph{dead}, both values have 
+Without the indexing, the \ident{merge} operations implements \emph{zip} on Maybe values,
+returning a value only when both values are present. The behaviour of the \ident{split}
+operation is partly determined by the indices. When the input is \emph{dead}, both values have
 to be dead (this is also the only solution of $\cclrd{\ident{D}} =\cclrd{r}\sqcap\cclrd{s}$), but when
 the input is \emph{live}, the operation can perform implicit sub-coeffecting and drop one of
 the values.
 
 \begin{example}[Indexed product]
 \label{thm:semantics-indexed-prod}
-  
+
 For implicit parameters, both $\czip$ and $\cpar$ are the $\cup$ operation and the relation
 $\cleq$ is formed by the subset relation $\subseteq$. Recall that the data type $\ctyp{\cclrd{r}}{\alpha}$
-is $\alpha \times (\cclrd{r} \rightarrow \rho)$ where $\rho$ is the type of implicit parameter values.
+is $\alpha \times (\cclrd{r} \rightarrow \ident{num})$ where $\ident{num}$ is the type of implicit parameter values.
 The additional operations are defined as:
 %
 \begin{equation*}
@@ -635,14 +639,14 @@ The additional operations are defined as:
 \quad
 \begin{array}{l}
 \textnormal{where}~f \uplus g = \\[-0.25em]
-\quad\restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g 
+\quad\restr{f}{\, \textit{dom}(f) \setminus \textit{dom}(g)} \cup g
 \end{array}
 \end{equation*}
 \end{example}
 
 \noindent
 The \ident{split} operation splits the tuple and restricts the function (representing available
-implicit parameters) to the required sub-sets. The \ident{merge} operation is more 
+implicit parameters) to the required sub-sets. The \ident{merge} operation is more
 interesting. It uses the $\uplus$ operation that we defined when introducing implicit parameters
 in Section~\ref{sec:applications-flat-impl}. It merges the values, preferring the definitions from
 the right-hand side (call site) over left-hand side (declaration site). Thus the operation is not
@@ -650,12 +654,12 @@ symmetric.
 
 \begin{example}[Indexed list]
 \label{thm:semantics-indexed-list}
-  
-Our last example provides the semantics of data-flow computations. The flat coeffect algebra 
-is formed by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$. In a 
+
+Our last example provides the semantics of data-flow computations. The flat coeffect algebra
+is formed by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$. In a
 non-indexed version, the semantics is provided by a non-empty list. In the indexed semantics,
-the index represents the number of available past values. The data type is then a pair of 
-the current value, followed by $n$ past values. The mappings that form the flat indexed comonad 
+the index represents the number of available past values. The data type is then a pair of
+the current value, followed by $n$ past values. The mappings that form the flat indexed comonad
 are defined as follows:
 %
 \begin{equation*}
@@ -684,10 +688,10 @@ matches the number specified by the indices. The index specifies the number of \
 and so the list always contains at least one value. Thus \ident{counit} returns the element of a
 singleton list.
 
-The $\ident{cobind}_{m,n}$ operation requires $m + n$ elements in order to generate $n$ past results 
-of the $f$ function, which itself requires $m$ past values. When combining two lists, 
-$\ident{merge}_{m,n}$ behaves as \emph{zip} and produces a list that has the length of the shorter 
-argument. When splitting a list, $\ident{split}_{m, n}$ needs the maximum of the required lengths. 
+The $\ident{cobind}_{m,n}$ operation requires $m + n$ elements in order to generate $n$ past results
+of the $f$ function, which itself requires $m$ past values. When combining two lists,
+$\ident{merge}_{m,n}$ behaves as \emph{zip} and produces a list that has the length of the shorter
+argument. When splitting a list, $\ident{split}_{m, n}$ needs the maximum of the required lengths.
 Finally, the lifting operation just drops some number of elements from a list.
 
 
@@ -695,18 +699,18 @@ Finally, the lifting operation just drops some number of elements from a list.
 
 \begin{figure*}[t]
 The semantics is defined over a typing derivation:
-%  
+%
 \begin{equation*}
 \hspace{-3em}
 \begin{array}{ll}
 \hspace{5.2em}\semdef
   {\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }
-  {\pi_i \circ \ident{counit}_{\cunit}} 
+  {\pi_i \circ \ident{counit}_{\cunit}}
 & (\emph{var})
 \\[1em]
 \hspace{4.9em}\semdef
   {\coctx{\Gamma}{\czero} \vdash n : \ident{num} }
-  {\ident{const}~n} 
+  {\ident{const}~n}
 & (\emph{num})
 \\[1.5em]
 \hspace{2.2em}\semdeff
@@ -722,10 +726,10 @@ The semantics is defined over a typing derivation:
   {\begin{array}{l}\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2\\[-0.3em]~\end{array}}
   {f}
   {g}
-  {\hspace{-0.5em}\begin{array}{l} 
+  {\hspace{-0.5em}\begin{array}{l}
   \ident{app}~\circ~f\hspace{-0.15em}\times\hspace{-0.15em}(\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g)~\circ~\ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}} \\[-0.3em]
   ~~\circ~\ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~\ident{dup}\\[-0.3em]
-  \end{array}\hspace{-0.5em}}   
+  \end{array}\hspace{-0.5em}}
 & (\emph{app})
 \end{array}
 \end{equation*}
@@ -744,7 +748,7 @@ Assuming the following auxiliary operations:
   \ident{app}~(f, x) &=& f~x
 \end{array}
 \end{equation*}
-  
+
 
 \figcaption{Categorical semantics of the flat coeffect calculus}
 \label{fig:semantics-flat}
@@ -756,24 +760,24 @@ Assuming the following auxiliary operations:
 \label{sec:semantics-flat-calculus}
 
 In Section~\ref{sec:applications-flat}, we defined the semantics of concrete (flat) context-dependent
-computations including implicit parameters, liveness and data-flow. Using the \emph{flat indexed 
-comonad} structure, we can now define a single uniform semantics that is capable of capturing all 
+computations including implicit parameters, liveness and data-flow. Using the \emph{flat indexed
+comonad} structure, we can now define a single uniform semantics that is capable of capturing all
 our examples, as well as other computations that can be modelled by the structure.
 
-As discussed in Section~\ref{sec:flat-unique}, different typing derivations of coeffect programs 
+As discussed in Section~\ref{sec:flat-unique}, different typing derivations of coeffect programs
 may have different meaning (\eg~when working with implicit parameters) and so the semantics is
-defined over a \emph{typing derivation} rather than over an \emph{term}. To assign a 
-semantics to a term, we choose its unique coeffect-specific typing derivation as defined in 
+defined over a \emph{typing derivation} rather than over an \emph{term}. To assign a
+semantics to a term, we choose its unique coeffect-specific typing derivation as defined in
 Section~\ref{sec:flat-unique}.
 
 \paragraph{Contexts and types.}
-The modelling of contexts and functions generalizes the earlier concrete examples. We use the 
-family of mappings $\ctyp{\cclrd{r}}{}$ as an (indexed) data-type that wraps the product of 
+The modelling of contexts and functions generalizes the earlier concrete examples. We use the
+family of mappings $\ctyp{\cclrd{r}}{}$ as an (indexed) data-type that wraps the product of
 free variables of the context and the arguments of functions:
 %
 \begin{equation*}
 \begin{array}{rcl}
-\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{r} } \vdash e : \tau} 
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{r} } \vdash e : \tau}
   &:& \ctyp{\cclrd{r}}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau\\
 \sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} &=& \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2
 \end{array}
@@ -781,30 +785,30 @@ free variables of the context and the arguments of functions:
 
 \paragraph{Expressions.}
 The definition of the semantics is shown in Figure~\ref{fig:semantics-flat}. For consistency
-with earlier work \cite{comonads-notions,comonads-dom-thesis}, the definitions use a point-free 
+with earlier work \cite{comonads-notions,comonads-dom-thesis}, the definitions use a point-free
 categorical notation. The semantics uses a number of auxiliary definitions that can be expressed
 in a Cartesian-closed category such as currying \ident{curry}, value duplication \ident{dup},
 function pairing (given $f:A\rightarrow B$ and $g:C\rightarrow D$ then $f\times g : A\times C \rightarrow B \times D$)
-and application \ident{app}. We will embed the definitions in a simple programming language 
+and application \ident{app}. We will embed the definitions in a simple programming language
 later (Section~\ref{sec:semantics-translation}).
 
-The semantics of variable access and abstraction are the same as in the semantics of Uustalu and 
-Vene \cite{comonads-notions}, modulo the indexing. The semantics of variable access (\emph{var}) uses 
+The semantics of variable access and abstraction are the same as in the semantics of Uustalu and
+Vene \cite{comonads-notions}, modulo the indexing. The semantics of variable access (\emph{var}) uses
 $\ident{counit}_{\cunit}$ to extract a product of free variables and projection
 $\pi_i$ to obtain the variable value. Abstraction (\emph{abs}) is interpreted as a curried
 function that takes the declaration-site context and a function argument, merges them using
-$\ident{merge}_{\cclrd{r}, \cclrd{s}}$ and passes the result to the semantics of the body $f$. 
-Assuming the context $\Gamma$ contains variables of types $\sigma_1, \ldots, \sigma_n$, this gives 
+$\ident{merge}_{\cclrd{r}, \cclrd{s}}$ and passes the result to the semantics of the body $f$.
+Assuming the context $\Gamma$ contains variables of types $\sigma_1, \ldots, \sigma_n$, this gives
 us a value $\ctyp{\cclrd{r}\czip\cclrd{s}}((\sigma_1 \times \ldots \times \sigma_n) \times \tau_1)$.
 Assuming that $n$-element tuples are associated to the left, the wrapped context is equivalent to
 $\sigma_1 \times \ldots \times \sigma_n \times \tau_1$, which can then be passed to the body of the
 function.
 
-The semantics of application (\emph{app}) first duplicates the free-variable product inside the 
-context (using $\ident{map}_{\cclrd{r}}$ and duplication). Then it splits this context using 
+The semantics of application (\emph{app}) first duplicates the free-variable product inside the
+context (using $\ident{map}_{\cclrd{r}}$ and duplication). Then it splits this context using
 $\ident{split}_{\cclrd{r}, \cclrd{s} \cpar \cclrd{t}}$. The two contexts contain the same variables
 (as required by sub-expressions $e_1$ and $e_2$), but different coeffect annotations. The first
-context (with index $\cclrd{r}$) is used to evaluate $e_1$ using the semantic function $f$. The 
+context (with index $\cclrd{r}$) is used to evaluate $e_1$ using the semantic function $f$. The
 result is a function $\ctyp{\cclrd{t}}{\tau_1} \rightarrow \tau_2$. The second context
 (with index $\cclrd{s}\cseq\cclrd{t}$) is used to evaluate $e_2$ and using the semantic function $g$
 and wrap it with context required by the function $e_1$ by applying $\ident{cobind}_{\cclrd{s}, \cclrd{t}}$.
@@ -812,15 +816,15 @@ The \ident{app} operation than applies the function (first element) on the argum
 Finally, numbers (\emph{num}) become constant functions that ignore the context.
 
 \paragraph{Properties.}
-We the categorical semantics  in Section~\ref{sec:semantics-translation} to define a translation 
-that embeds context-dependent computations in a functional programming langauge, similarly to how 
+We the categorical semantics  in Section~\ref{sec:semantics-translation} to define a translation
+that embeds context-dependent computations in a functional programming langauge, similarly to how
 monads and the do notation provide a way of embedding effectful computations in Haskell.
 
-An important property of the translation is that it respects the coeffect annotations provided 
+An important property of the translation is that it respects the coeffect annotations provided
 by the type system. The annotations of the semantic functions match the annotations in the typing
-judgement and so the semantics is well-defined. 
-This provides a further validation for the design of the type system developed in 
-Section~\ref{sec:flat-calculus-types} -- if the coeffect annotations for (\emph{app}) and (\emph{abs}) 
+judgement and so the semantics is well-defined.
+This provides a further validation for the design of the type system developed in
+Section~\ref{sec:flat-calculus-types} -- if the coeffect annotations for (\emph{app}) and (\emph{abs})
 were different, we would not be able to provide a well-defined semantics using flat indexed comonads.
 
 Informally, the following states that if we see the semantics as a translation, the resulting code
@@ -829,9 +833,9 @@ the target langauge and its typing.
 
 \begin{lemma}[Correspondence]
 \label{thm:flat-correspondence}
-In the semantics defined in Figure~\ref{fig:semantics-flat}, the context annotations $\cclrd{r}$ of 
-typing judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and function types 
-$\tau_1 \xrightarrow{\cclrd{r}} \tau_2$  on the left-hand side correspond to the indices of mappings 
+In the semantics defined in Figure~\ref{fig:semantics-flat}, the context annotations $\cclrd{r}$ of
+typing judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and function types
+$\tau_1 \xrightarrow{\cclrd{r}} \tau_2$  on the left-hand side correspond to the indices of mappings
 $\ctyp{\cclrd{r}}{}$ in the corresponding semantic function on the right-hand side.
 \end{lemma}
 \begin{proof}
@@ -852,7 +856,7 @@ context-aware programming languages in Chapter~\ref{ch:applications}.
 \label{thm:flat-generalization}
 
 Consider a typing derivation obtained according to the rules for finding unique typing derivations
-as specified in Section~\ref{sec:flat-unique} for a coeffect language with liveness, dataflow or 
+as specified in Section~\ref{sec:flat-unique} for a coeffect language with liveness, dataflow or
 implicit parameters.
 
 The semantics obtained by instantiating the rules in Figure~\ref{fig:semantics-flat} with the
@@ -881,13 +885,13 @@ Simple expansion of the definitions for the unique typing derivation.
 
 
 \begin{figure}[t]
-\paragraph{Language syntax}  
+\paragraph{Language syntax}
 \begin{equation*}
 \begin{array}{rcl}
   v &  = & n \sep \lambda x.e \sep (v_1, \ldots, v_n) \\
   e &  = & x \sep n \sep \pi_i~e \sep (e_1, \ldots, e_n) \sep e_1~e_2 \sep \lambda x.e \\
   \tau &  = & \ident{num} \sep \tau_1 \times \ldots \times \tau_n \sep \tau_1 \rightarrow \tau_2 \\
-  C  & = & (v_1, \ldots, v_{i-1}, \_, e_{i+1}, \ldots e_n) \sep v~\_ \sep \_~e \sep \pi_i~\_   
+  C  & = & (v_1, \ldots, v_{i-1}, \_, e_{i+1}, \ldots e_n) \sep v~\_ \sep \_~e \sep \pi_i~\_
 \end{array}
 \end{equation*}
 
@@ -940,13 +944,13 @@ Simple expansion of the definitions for the unique typing derivation.
 \section{Embedding coeffect languages}
 \label{sec:semantics-translation}
 
-Although the notion of indexed comonads presented in the previous section is novel and interesting 
-in its own, the main reason for introducing it is that we can view it as a translation that provides 
+Although the notion of indexed comonads presented in the previous section is novel and interesting
+in its own, the main reason for introducing it is that we can view it as a translation that provides
 embedding of context-aware domain-specific languages in a simple target functional language.
-In this section, we follow the example of effects and monads and we use the semantics to define a 
+In this section, we follow the example of effects and monads and we use the semantics to define a
 translation akin to the do notation in Haskell.
 
-A context-aware \emph{source} program written using a concrete context-aware domain-specific 
+A context-aware \emph{source} program written using a concrete context-aware domain-specific
 language (capturing dataflow, implicit parameters or other kinds of context awareness) with
 domain-specific language extensions (the \kvd{prev} keyword, or the \ident{?impl} syntax)
 is translated to a \emph{target} langauge that is not context-aware. The target language is
@@ -961,8 +965,8 @@ a small functional language consisting of:
     \emph{letimpl} for the $\kvd{let}~\ident{?p}=\ldots$ notation).
 \end{itemize}
 %
-The syntx, typing and reduction rules of the first part (simple functional language) are used by 
-all concrete coeffect domain-specific langauges. The syntax and typing rules of the second part 
+The syntx, typing and reduction rules of the first part (simple functional language) are used by
+all concrete coeffect domain-specific langauges. The syntax and typing rules of the second part
 (comonadically-inspired) primitives are also shared by all coeffect DSLs, however the \emph{reduction
 rules} for the comonadically-inspired primitives differ -- they capture the concrete notion of
 context. Finally, the third part (domain-specific primitives) will differ for each coeffect DSL.
@@ -974,14 +978,14 @@ context. Finally, the third part (domain-specific primitives) will differ for ea
 
 The target langauge for the translation is a simply typed lambda calculus with integers and tuples.
 We include integers as an example of a concrete type. Tuples are needed by the translation, which
-keeps a tuple of variable assignments. Encoding those without tuples would be possible, but 
-cumbersome. In this section, we define the common parts of the language without the 
+keeps a tuple of variable assignments. Encoding those without tuples would be possible, but
+cumbersome. In this section, we define the common parts of the language without the
 comonadically-inspired primitives.
 
-The syntax of the target programming langauge is shown in Figure~\ref{fig:semantics-target}. 
-The values include numbers $n$, tuples and function values. The expressions include variables $x$, 
-values, lambda abstraction and application and operations on tuples. We do not need recursion or 
-other data types (although a realistic programming language would include them). 
+The syntax of the target programming langauge is shown in Figure~\ref{fig:semantics-target}.
+The values include numbers $n$, tuples and function values. The expressions include variables $x$,
+values, lambda abstraction and application and operations on tuples. We do not need recursion or
+other data types (although a realistic programming language would include them).
 In what follows, we also use the following syntactic sugar for let binding:
 %
 \begin{equation*}
@@ -991,15 +995,15 @@ In what follows, we also use the following syntactic sugar for let binding:
 \end{equation*}
 %
 Finally, $C[e]$ defines the context in which sub-expressions are evaluated. Together with the
-evaluation rules shown in  Figure~\ref{fig:semantics-target}, this captures the standard 
-call-by-name semantics of the common parts of the target language. The (standard) typing rules 
+evaluation rules shown in  Figure~\ref{fig:semantics-target}, this captures the standard
+call-by-name semantics of the common parts of the target language. The (standard) typing rules
 for the common expressions of the target langauge are also shown in Figure~\ref{fig:semantics-target}.
 
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Safety of functional target language}
 
-The functional subset of the langauge described so far models a simple ML-like langauge. We 
+The functional subset of the langauge described so far models a simple ML-like langauge. We
 choose call-by-value over call-by-name for no particular reason and Haskell-like language would
 work equally well.
 
@@ -1010,7 +1014,7 @@ languages in Section~\ref{sec:semantics-proofs}.
 
 We use the standard syntactic approach to type safety introduced by Milner \cite{syntactic-sml}.
 Following Wright, Felleisen and Pierce \cite{syntactic-tapl,syntactic-approach}, we prove the
-type preservation property (reduction does not change the type of an expression) and the progress 
+type preservation property (reduction does not change the type of an expression) and the progress
 property (a well-typed expression is either a value or can be further reduced).
 
 \begin{lemma}[Canonical forms]
@@ -1020,7 +1024,7 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
   \item If $\tau=\ident{num}$ then $e = n$ for some $n \in \mathbb{Z}$
   \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
   \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
-\end{enumerate}  
+\end{enumerate}
 \end{lemma}
 \begin{proof}
   For (1), the last typing rule must have been (\emph{num}); for (2), it must have been
@@ -1029,11 +1033,11 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
 
 \begin{lemma}[Preservation under substitution]
 \label{thm:semantics-fp-pres-subst}
-For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$ 
+For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$
 then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
 \end{lemma}
 \begin{proof}
-By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$. 
+By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$.
 \end{proof}
 
 \begin{theorem}[Type preservation]
@@ -1042,51 +1046,51 @@ By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$.
 \end{theorem}
 \begin{proof}
   Rule induction over $\rightarrow$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{fn}): $e = (\lambda x.e_0)~v$, from Lemma~\ref{thm:semantics-fp-pres-subst}
   it follows that $\Gamma \vdash e_0[x \leftarrow v] : \tau$.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{prj}): $e = \pi_i(v_1, \ldots, v_n)$ and so the last applied typing rule must have been
   (\emph{tup}) and $\Gamma \vdash (v_1, \ldots, v_n) : \tau_1 \times\ldots\times \tau_n$ and
   $\tau = \tau_i$. After applyng (\emph{prj}) reduction, $e' = v_i$ and so $\Gamma \vdash e' : \tau_i$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{ctx}): By induction hypothesis, the type of the reduced sub-expression does not change
   and the last used rule in the derivation of $\Gamma \vdash e : \tau$ also applies on $e'$
-  giving $\Gamma \vdash e' : \tau$.  
+  giving $\Gamma \vdash e' : \tau$.
 \end{proof}
 
 \begin{theorem}[Progress]
-\label{thm:semantics-fp-prog}  
+\label{thm:semantics-fp-prog}
   If $\vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
 \end{theorem}
 \begin{proof}
   By rule induction over $\vdash$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{num}): $e = n$ for some $n$ and so $e$ is a value.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{abs}): $e = \lambda x.e'$ for some $x, e'$, which is a value.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{var}): This case cannot occur, because $e$ is a closed expression.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{app}): $e = e_1~e_2$ which is not a value. By induction, $e_1$ is either
 a value or it can reduce. If it can reduce, apply (\emph{ctx}) reduction with context $\_~e$. Otherwise
 consider $e_2$. If it can reduce, apply (\emph{ctx}) with context $v~\_$. If both are values,
 Lemma~\ref{thm:semantics-fp-canon} guarantees that $e_1 = \lambda x.e_1'$ and so we can apply
 reduction (\emph{fn}).
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{proj}): $e = \pi_i e_0$ and $\tau=\tau_1\times\ldots\tau_n$. If $e_0$ can be reduced, 
-  apply (\emph{ctx}) with context $\pi_i~\_$. Otherwise from Lemma~\ref{thm:semantics-fp-canon}, 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{proj}): $e = \pi_i e_0$ and $\tau=\tau_1\times\ldots\tau_n$. If $e_0$ can be reduced,
+  apply (\emph{ctx}) with context $\pi_i~\_$. Otherwise from Lemma~\ref{thm:semantics-fp-canon},
   we have that $e_0=(v_1, \ldots, v_n)$ and we can apply reduction (\emph{prj}).
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{tup}): $e = (e_1, \ldots, e_n)$. If all sub-expressions are values, then $e$ is also
   a value. Otherwise, we can apply reduction using (\emph{ctx}) with a context $(v_1, \ldots, v_{i-1}, \_, e_{i+1}, \ldots, e_n)$.
 \end{proof}
@@ -1107,12 +1111,12 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, extend the syntax:
 
 \begin{equation*}
 \begin{array}{rcl}
-  e &  =  &\ldots \sep\ident{cobind}_{\cclrd{s},\cclrd{r}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~e 
+  e &  =  &\ldots \sep\ident{cobind}_{\cclrd{s},\cclrd{r}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~e
          \sep \ident{split}_{\cclrd{r},\cclrd{s}}~e \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~e \\
   \tau &  = &\ldots \sep \ctyp{\cclrd{r}}{\tau} \\
   C  & = &\ldots \sep \ident{cobind}_{\cclrd{s},\cclrd{r}}~\_~e \sep \ident{cobind}_{\cclrd{s},\cclrd{r}}~v~\_ \sep \ident{counit}_{\cunit}~\_ \\
     && \hspace{1.4em} \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~\_
-           \sep \ident{split}_{\cclrd{r},\cclrd{s}}~\_ \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~\_ \\  
+           \sep \ident{split}_{\cclrd{r},\cclrd{s}}~\_ \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~\_ \\
 \end{array}
 \end{equation*}
 
@@ -1134,7 +1138,7 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
   {\Gamma \vdash \ident{cobind}_{\cclrd{r}, \cclrd{s}}~e_1~e_2 : \ctyp{\cclrd{s}}{\tau_2}} \\
   \\
 \tyrule{merge}
-  {\Gamma \vdash  e : \ctyp{\cclrd{r}}{\tau_1} \times \ctyp{\cclrd{s}}{\tau_2} } 
+  {\Gamma \vdash  e : \ctyp{\cclrd{r}}{\tau_1} \times \ctyp{\cclrd{s}}{\tau_2} }
   {\Gamma \vdash  \ident{merge}_{\cclrd{r},\cclrd{s}}~e : \ctyp{\cclrd{r}\czip\cclrd{s}}{(\tau_1 \times \tau_2)} }\\
     \\
 \tyrule{split}
@@ -1152,26 +1156,26 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
 \subsection{Comonadically-inspired translation}
 \label{sec:semantics-translation-transl}
 
-In Section~\ref{sec:semantics-theory}, we presented the semantics of the flat coeffect calculus in 
-terms of indexed comonads. We treated the semantics as denotational -- interpreting the meaning of 
+In Section~\ref{sec:semantics-theory}, we presented the semantics of the flat coeffect calculus in
+terms of indexed comonads. We treated the semantics as denotational -- interpreting the meaning of
 a given typing derivation of a program in terms of category theory.
 
 In this chapter, we use the same structure in a different way. Rather than treating the rules as
-\emph{denotation} in categorical sense, we treat them as \emph{translation} from a source 
+\emph{denotation} in categorical sense, we treat them as \emph{translation} from a source
 domain-specific coeffect language into a target language with comonadically-inspired primitives
 described in the previous section.
 
 \paragraph{Language extension.}
 Given a coeffect language with a flat coeffect algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$,
-we first extend the language syntax and typing rules with terms that correspond to the 
-comonadically-inspired operations. This is done in the same way for all concrete coeffect 
-domain-specific languages and so we give the additional syntax, evaluation context and 
-typing rules in Figure~\ref{fig:semantics-ext} for all languages we consider later in 
+we first extend the language syntax and typing rules with terms that correspond to the
+comonadically-inspired operations. This is done in the same way for all concrete coeffect
+domain-specific languages and so we give the additional syntax, evaluation context and
+typing rules in Figure~\ref{fig:semantics-ext} for all languages we consider later in
 Section~\ref{sec:semantics-proofs}.
 
 The new type $\ctyp{\cclrd{r}}$ represents an indexed comonad, which is left abstract for now.
-The additional expressions such as $\ident{counit}_\cunit$ and $\ident{cobind}_{\cclrd{r,s}}$ 
-correspond to the operations of indexed comonads. Note that the we embed the coeffect annotations 
+The additional expressions such as $\ident{counit}_\cunit$ and $\ident{cobind}_{\cclrd{r,s}}$
+correspond to the operations of indexed comonads. Note that the we embed the coeffect annotations
 into the target language -- these are known when translationg a typed term from a source language
 and they will be useful when proving that sufficient context (as specified by the coeffect
 annotations) is available.
@@ -1193,7 +1197,7 @@ contexts in the source language into the types of the target language:
 \end{equation*}
 
 \noindent
-Here, a context becomes a comonadically-inspired data type wrapping a tuple of variable values 
+Here, a context becomes a comonadically-inspired data type wrapping a tuple of variable values
 and a coeffectful function is translated into an ordinary function in the target language
 with a comonadically-inspired data type wrapping the input type.
 
@@ -1208,22 +1212,22 @@ The translation is defined over a typing derivation:
 \begin{array}{ll}
 \hspace{4.8em}\semdef
   {\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }
-  {\lambda\ctx.\pi_i~(\ident{counit}_{\cunit}~\ctx)} 
+  {\lambda\ctx.\pi_i~(\ident{counit}_{\cunit}~\ctx)}
 & (\emph{var})
 \\[1em]
 \hspace{4.3em}\semdef
   {\coctx{\Gamma}{\czero} \vdash n : \ident{num} }
-  {\lambda\ctx.n} 
+  {\lambda\ctx.n}
 & (\emph{num})
 \\[1.5em]
 \hspace{1.5em}\semdeff
   {\coctx{\Gamma, x_i:\tau_1}{\cclrd{r}\;\czip\;\cclrd{s}} \vdash e : \tau_2}
-  {\hspace{-1em}\begin{array}{l}  
+  {\hspace{-1em}\begin{array}{l}
     \coctx{\Gamma}{\cclrd{r}} \vdash \lambda x_i.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2
     \\[-0.3em]~\\[-0.3em]~ \\[-0.3em]~
   \end{array} }
   {f}
-  {\hspace{-1em}\begin{array}{l}  
+  {\hspace{-1em}\begin{array}{l}
     \lambda \ctx.\lambda v.\\[-0.3em]
     \quad \kvd{let}~\ident{assoc} = \lambda x.\\[-0.3em]
     \quad\quad (\pi_1(\pi_1~x), \ldots, \pi_{i-1}(\pi_1~x), \pi_2~x)\\[-0.3em]
@@ -1237,13 +1241,13 @@ The translation is defined over a typing derivation:
   {\begin{array}\coctx{\Gamma}{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})} \vdash e_1~e_2 : \tau_2\\[-0.3em]~\\[-0.3em]~\\[-0.3em]~\end{array}}
   {f}
   {g}
-  {\hspace{-1em}\begin{array}{l}  
+  {\hspace{-1em}\begin{array}{l}
   \lambda\ctx.~~\\[-0.3em]
     \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~\ident{dup}~\ctx\\[-0.3em]
     \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}}~\ctx_0\\[-0.3em]
     \quad f~\ctx_1~
       (\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g~\ctx_2)
-  \end{array} }   
+  \end{array} }
 & (\emph{app})
 \end{array}
 \end{equation*}
@@ -1260,7 +1264,7 @@ Assuming the following auxiliary operations:
   \ident{dup} &=& \lambda x. (x, x)
 \end{array}
 \end{equation*}
-  
+
 
 \figcaption{Translation from a flat DSL to a comonadically-inspired target language}
 \label{fig:semantics-translation}
@@ -1273,39 +1277,39 @@ The rules shown in Figure~\ref{fig:semantics-translation} define how expressions
 language are translated into the target language. The rules are very similar to those shown earlier
 in Figure~\ref{fig:semantics-flat}. The result is now written as source code in the
 target programming language rather than as composition of morphisms in a category. However,
-thanks to the equivalence between $\lambda$-calculus and category theory, both interpretations 
+thanks to the equivalence between $\lambda$-calculus and category theory, both interpretations
 are equivalent.
 
 One change from Figure~\ref{fig:semantics-flat} is that we are now more explicit about the tuple
-that contains variable assignments. Previously, we assumed that the tuple is appropriately 
+that contains variable assignments. Previously, we assumed that the tuple is appropriately
 reassociated. Now, we perform the reassociation explicitly. We keep a flat tuple of variables, so
 given $\Gamma=x_1\!:\!\tau_1,\ldots,x_n\!:\!\tau_n$, the tuple has a type $\tau_1\times\ldots\times\tau_n$.
 In (\emph{var}), we access a variable using $\pi$, but in (\emph{abs}), the \ident{merge} operation
 produces a tuple $(\tau_1\times\ldots\times\tau_{i-1})\times\tau_i$ that we turn into a flat
 tuple $\tau_1\times\ldots\times\tau_{i-1}\times\tau_i$ using the \ident{assoc} function.
 
-\paragraph{Properties.} 
+\paragraph{Properties.}
 The most important property of the translation is that it produces well-typed programs in the
 target language. This is akin to the correspondence property of the semantics discussed earlier
 (Theorem~\ref{thm:flat-correspondence}), but now it has more obvious practical consequences.
 
-In Section~\ref{sec:semantics-proofs}, we will prove safety properties of well-typed programs in the 
+In Section~\ref{sec:semantics-proofs}, we will prove safety properties of well-typed programs in the
 target language. Thanks to the fact that the translation produces a well-typed program (as complex
-as it might be) means that we are also proving safety of well-typed programs in the source 
+as it might be) means that we are also proving safety of well-typed programs in the source
 context aware languages.
 
 \begin{theorem}[Well-typedness of the translation]
 \label{thm:semantics-welltyped}
 Given a typing derivation for a well-typed closed expression $\coctx{}{\cclrd{r}} \vdash e : \tau$
 written in a context-aware programming langugae that is translated to the target langauge as:
-%  
-\begin{equation*}  
+%
+\begin{equation*}
   \semdeff
     {(\ldots)\qquad~}
     {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau }
     {(\ldots)}
     { ~~f }
-\end{equation*}  
+\end{equation*}
 %
 Then $f$ is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
 \end{theorem}
@@ -1314,19 +1318,19 @@ By rule induction over the derivation of the translation. Given a judgement
 $\coctx{x_1\!:\!\tau_1 \ldots x_n\!:\!\tau_n}{\cclrd{c}} \vdash e : \tau$, the translation
 constructs a function of type $\ctyp{\cclrd{c}}(\sem{\tau_1} \times\ldots\times \sem{\tau_n}) \rightarrow \sem{\tau}$.
 
-\vspace{0.5em}\noindent\hangindent=0.6cm 
+\vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{var}): $\cclrd{c}=\cunit$ and $\tau = \tau_i$ and so $\pi_i ({\ident{counit}_\cunit}~\ctx)$ is well-typed.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{num}): $\tau = \ident{num}$ and so the body $n$ is well-typed.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\cclrd{r}}(\ldots)$ and the type of $v$ is $\ctyp{\cclrd{s}}\tau_1$,
   calling $\ident{merge}_{\cclrd{r},\cclrd{s}}$ and reassociating produces
   $\ctyp{\cclrd{r}\czip\cclrd{s}}(\ldots)$ as expected by $f$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of
   $\ctx_1, \ctx_2$ are $\ctyp{\cclrd{r}}(\ldots)$ and $\ctyp{\cclrd{s}\cseq\cclrd{t}}(\ldots)$, respectively.
   $g$ requires $\ctyp{\cclrd{s}}(\ldots)$ and so the result of $\ident{cobind}_{\cclrd{s},\cclrd{t}}$ is
   $\ctyp{\cclrd{t}}\tau_1$ as required by $f$.
@@ -1349,7 +1353,7 @@ Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclr
 \section{Safety of context-aware languages}
 \label{sec:semantics-proofs}
 
-The previous two languages provide a general structrue that we now use to prove the safety of 
+The previous two languages provide a general structrue that we now use to prove the safety of
 concrete context-aware programming languages based on the coeffect language framework. We
 consider a langauge for dataflow computations (Section~\ref{sec:semantics-proofs-df}) and
 for implicit parameters (Section~\ref{sec:semantics-proofs-impl}). In both cases, we extend
@@ -1366,18 +1370,18 @@ each DSL introduces its own \emph{values} of type $\ctyp{\cclrd{r}}\tau$ and als
 rules that define how comonadically-inspired operations evaluate.
 
 We first consider dataflow computations. As discussed earlier in the
-semantics of dataflow, the indexed comonad for a context with $n$ past values carries $n+1$ 
+semantics of dataflow, the indexed comonad for a context with $n$ past values carries $n+1$
 values. When reducing translated programs, the comonadic values will not be directly manipulated by the
 user code. In a programming language, it could be seen as an \emph{abstract data type} whose only
-operations are the comonadically-inspired ones defined earlier, together with an additional 
+operations are the comonadically-inspired ones defined earlier, together with an additional
 \emph{domain-specific} operation that models the \kvd{prev} construct.
 
 The Figure~\ref{fig:semantics-ext-df} extensionds the target language with syntax, typing rules,
-additional translation rule and reductions for modelling dataflow computations. We introduce a 
+additional translation rule and reductions for modelling dataflow computations. We introduce a
 new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
 and a matching kind of expressions. We specify how the \kvd{prev} keyword is translated into a
 $\ident{prev}_\cclrd{r}$ operation of the target language nd we also add a typing rule
-(\emph{df}) that checks the types of the elements of the stream and also guarantees 
+(\emph{df}) that checks the types of the elements of the stream and also guarantees
 that the number of elements in the stream matches the number in the coeffect.
 The additional reduction rules mirror the semantics that we discussed earlier when talking about
 indexed dataflow comonad.
@@ -1392,7 +1396,7 @@ indexed dataflow comonad.
 v &=& \ldots \sep \ident{Df}\langle v_0, \ldots, v_n\rangle \\
 e &=& \ldots \sep \ident{Df}\langle e_0, \ldots, e_n\rangle \sep \ident{prev}_{\cclrd{n}}~e\\
 C &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_ \sep \ident{Df}\langle v_0, \ldots, v_{i-1}, \_, e_{i+1} \ldots, e_n\rangle
-\end{array}  
+\end{array}
 \end{equation*}
 
 \vspace{1.25em}
@@ -1463,16 +1467,16 @@ C &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_ \sep \ident{Df}\langle v_0, \ldots
 
 \paragraph{Properties.}
 Now consider a target langauge consisting of the core (ML-subset) defined by the syntax,
-reduction rules and typing rules given in Figure~\ref{fig:semantics-target} and comonadically-inspired 
-primtives defined in Figure~\ref{fig:semantics-ext} and also concrete notion of comonadically-inspired 
+reduction rules and typing rules given in Figure~\ref{fig:semantics-target} and comonadically-inspired
+primtives defined in Figure~\ref{fig:semantics-ext} and also concrete notion of comonadically-inspired
 value and reduction rules for dataflow as defined in Figure~\ref{fig:semantics-ext-df}.
 
 In order to prove type safety, we first extend the canonical forms lemma
 (Lemma~\ref{thm:semantics-fp-canon}) and the preservation under substitution lemma
-(Lemma~\ref{thm:semantics-fp-pres-subst}). Those need to consider the new (\emph{df}) 
-and (\emph{prev}) typing rules and substitution under the newly introduced expression forms 
-$\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$. We show that the translation 
-rule for \kvd{prev} produces well-typed expressions. Finally, we extend the type preservation 
+(Lemma~\ref{thm:semantics-fp-pres-subst}). Those need to consider the new (\emph{df})
+and (\emph{prev}) typing rules and substitution under the newly introduced expression forms
+$\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$. We show that the translation
+rule for \kvd{prev} produces well-typed expressions. Finally, we extend the type preservation
 (Theorem~\ref{thm:semantics-fp-pres}) and progress (Theorem~\ref{thm:semantics-fp-prog}).
 
 \begin{theorem}[Well-typedness of the \kvd{prev} translation]
@@ -1482,12 +1486,12 @@ the translated program $f$ obtained using the rules in Figure~\ref{fig:semantics
 and Figure~\ref{fig:semantics-ext-df} is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
 \end{theorem}
 \begin{proof}
-By rule induction over the derivation of the translation. 
+By rule induction over the derivation of the translation.
 
-\vspace{0.5em}\noindent\hangindent=0.6cm 
+\vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{var, num, abs, app}): As before.
 
-\vspace{0.5em}\noindent\hangindent=0.6cm 
+\vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{prev}): Type of $\ctx$ is $\ctyp{\cclrd{n+1}}\tau$ and so we can apply the (\emph{prev}) rule.
 \end{proof}
 
@@ -1499,7 +1503,7 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
   \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
   \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
   \item If $\tau=\ctyp{\cclrd{n}}\tau_1$ then $e = \ident{Df}\langle v_0, \ldots v_n\rangle$ for some $v_i$
-\end{enumerate}  
+\end{enumerate}
 \end{lemma}
 \begin{proof}
   (1,2,3) as before; for (4) the last typing rule must have been (\emph{df}).
@@ -1507,7 +1511,7 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
 
 \begin{lemma}[Preservation under substitution]
 \label{thm:semantics-df-pres-subst}
-For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$ 
+For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$
 then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
 \end{lemma}
 \begin{proof}
@@ -1521,72 +1525,72 @@ then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
 \end{theorem}
 \begin{proof}
   Rule induction over $\rightarrow$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{fn}, \emph{prj}, \emph{ctx}): As before, using Lemma~\ref{thm:semantics-df-pres-subst} for (\emph{fn}).
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{counit}): $e = \ident{counit}_{\cclrd{0}}(\ident{Df} \langle v_0 \rangle)$. The last rule in the type
   derivation of $e$ must have been (\emph{counit}) with $\Gamma \vdash \ident{Df} \langle v_0 \rangle : \ctyp{\cclrd{0}}\tau$
   and therefore $\Gamma \vdash v_0 : \tau$.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \cclrd{n}}~f~(\ident{Df}\langle v_0, \ldots v_{m+n} \rangle)$. The
   last rule in the type derivation of $e$ must have been (\emph{cobind}) with a type $\tau = \ctyp{\cclrd{n}}\tau_2$ and assumptions
   $\Gamma \vdash f : \ctyp{\cclrd{m}}{\tau_1} \rightarrow \tau_2$ and $\Gamma \vdash \ident{Df}\langle v_0, \ldots v_{m+n} \rangle : \ctyp{\cclrd{m+n}}{\tau}$.
   The reduced expression has a type $\ctyp{\cclrd{n}}\tau_2$:
 \begin{equation*}
 \inference
-  { \inference 
-      { \Gamma \vdash f : \ctyp{\cclrd{m}}{\tau_1} \rightarrow \tau_2 & \forall i\in 0 \ldots n.~\Gamma\vdash \ident{Df}\langle v_i, \ldots, v_{i+m} \rangle :  \ctyp{\cclrd{m}}{\tau_1}}  
+  { \inference
+      { \Gamma \vdash f : \ctyp{\cclrd{m}}{\tau_1} \rightarrow \tau_2 & \forall i\in 0 \ldots n.~\Gamma\vdash \ident{Df}\langle v_i, \ldots, v_{i+m} \rangle :  \ctyp{\cclrd{m}}{\tau_1}}
       { \forall i\in 0 \ldots n.~\Gamma\vdash f (\ident{Df}\langle v_i, \ldots, v_{i+m} \rangle) : \tau_2} }
   { \Gamma \vdash \ident{Df}\langle f (\ident{Df}\langle v_0, \ldots, v_m \rangle), \ldots, f (\ident{Df}\langle v_{n}, \ldots, v_{m+n} \rangle) \rangle : \ctyp{\cclrd{n}}\tau_2 }
 \end{equation*}
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{merge}, \emph{split}, \emph{next}): Similar. In all three cases, the last typing rule in the derivation of $e$
   guarantees that the stream contains a sufficient number of elements of correct type.
 \end{proof}
 
 \begin{theorem}[Progress]
-\label{thm:semantics-df-prog}  
+\label{thm:semantics-df-prog}
   If $\vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
 \end{theorem}
 \begin{proof}
   By rule induction over $\vdash$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{num,abs,var,app,proj,tup}): As before, using the adapted canonical forms lemma
   (Lemma~\ref{thm:semantics-df-canon}) for (\emph{app}) and (\emph{proj}).
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced
   using (\emph{ctx}) with context ${\ident{counit}_\cunit}~\_$, otherwise it is a value. From Lemma~\ref{thm:semantics-df-canon},
   $e_1 = \ident{Df}\langle v\rangle$ and so we can apply (\emph{counit}) reduction rule.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \cclrd{n}}~e_1~e_2$. If $e_1$ is not a value,
   reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{m},\cclrd{n}}}~\_~e$. If $e_2$ is
   not a value reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{m},\cclrd{n}}}~v~\_$.
-  If both are values, then from Lemma~\ref{thm:semantics-df-canon}, we have that 
+  If both are values, then from Lemma~\ref{thm:semantics-df-canon}, we have that
   $e_2 = \ident{Df}\langle v_0, \ldots v_{m+n} \rangle$ and so we can apply the (\emph{cobind})
   reduction.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{merge}): $e = \ident{merge}_{\cclrd{m}, \cclrd{n}} e_1$. If $e_1$ is not a value, 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{merge}): $e = \ident{merge}_{\cclrd{m}, \cclrd{n}} e_1$. If $e_1$ is not a value,
   reduce using (\emph{ctx}) with context $e = \ident{merge}_{\cclrd{m}, \cclrd{n}}~\_$. If $e_1$ is
   a value, it must be a pair of streams $(\ident{Df}\langle v_0, \ldots, v_m \rangle, \ident{Df}\langle v'_0, \ldots, v'_n\rangle)$
   using Lemma~\ref{thm:semantics-df-canon} and it can reduce using (\emph{merge}) reduction.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{df}): $e = \ident{Df}\langle e_0, \ldots, e_n\rangle$. If $e_i$ is not a value
   then reduce using (\emph{ctx}) with context $\ident{Df}\langle v_0, \ldots, v_{i-1}, \_, e_{i+1} \ldots, e_n\rangle$.
   Otherwise, $e_0, \ldots, e_n$ are values and so $\ident{Df}\langle e_0, \ldots, e_n\rangle$
   is also a value.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value, or the type 
-  guarantees that it is a stream with correct number of elements to enable the (\emph{split}) 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value, or the type
+  guarantees that it is a stream with correct number of elements to enable the (\emph{split})
   or (\emph{prev}) reduction, respectively.
 \end{proof}
 
@@ -1604,23 +1608,23 @@ Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value,
 \subsection{Coeffect langauge for implicit parameters}
 \label{sec:semantics-proofs-impl}
 
-As discussed earlier (Example~\ref{thm:semantics-indexed-prod}), implicit parameters can be modelled 
-by an indexed product comonad, which annotates a value with additional context -- in our case, a 
+As discussed earlier (Example~\ref{thm:semantics-indexed-prod}), implicit parameters can be modelled
+by an indexed product comonad, which annotates a value with additional context -- in our case, a
 mapping from implicit parameter names to their values. In this section, we embed this model into
 the target language.
 
-As with dataflow computations, we take the core functional subset (Figure~\ref{fig:semantics-target}) 
+As with dataflow computations, we take the core functional subset (Figure~\ref{fig:semantics-target})
 with comonadically-inspired extensions (Figure~\ref{fig:semantics-ext}) and we specify a new kind
 of values of type $\ctyp{\cclrd{r}}\tau$ and domain-specific reduction rules that specify how
 the operations propagate and access the context containing implicit parameter bindings.
-Again, the $\ctyp{\cclrd{r}}\tau$ values can be seen as an \emph{abstract data type}, which are 
+Again, the $\ctyp{\cclrd{r}}\tau$ values can be seen as an \emph{abstract data type}, which are
 never manipulated directly.
 
 \paragraph{Domain-specific extensions.}
 
 The Figure~\ref{fig:semantics-ext-impl} shows extensions to the target language for modelling
 implicit parameters. A comonadic value with a coeffect $\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}$
-is modelled by a new kind of value written as 
+is modelled by a new kind of value written as
 $\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots \ident{?p}_n \mapsto v_n \})$ which contains
 a value $v$ together with implicit parameter assignments for all the parameters specified in the
 coeffect. We add a corresponding kind of expression with its typing rule (\emph{impl}).
@@ -1639,20 +1643,20 @@ function application -- we split the context, evaluate $e_1$ using the first par
 $\ctx_1$ and then add the new binding to the remaining context $\ctx_2$.
 
 Finally, Figure~\ref{fig:semantics-ext-impl} also defines the reduction rules. The (\emph{lookup})
-rule accesses an implicit parameter and (\emph{letimpl}) adds a new binding. The reduction rules 
-for comonadically-inspired primitives closely model the product comonad discussed in 
-Example~\ref{thm:semantics-indexed-prod}. Reductions for (\emph{cobind}) and (\emph{split}) 
-restrict the set of available implicit parameters according to the annotations and 
+rule accesses an implicit parameter and (\emph{letimpl}) adds a new binding. The reduction rules
+for comonadically-inspired primitives closely model the product comonad discussed in
+Example~\ref{thm:semantics-indexed-prod}. Reductions for (\emph{cobind}) and (\emph{split})
+restrict the set of available implicit parameters according to the annotations and
 (\emph{merge}) combines them, preferring the values from the call-site.
 
 For the semantics of implicit parameter programs that we consider, the preference of call-site
-bindings over declaration-site bindings in (\emph{merge}) does not matter. The unique typing 
+bindings over declaration-site bindings in (\emph{merge}) does not matter. The unique typing
 derivations for implicit parameter coeffects obtained in Section~\ref{sec:flat-unique} always
 split implicit parameters into \emph{disjoint sets}.
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}[h!]  
+\begin{figure}[h!]
 \paragraph{Language syntax}
 
 \begin{equation*}
@@ -1663,7 +1667,7 @@ e &=& \ldots \sep \ident{Impl}(e, \{\ident{?p}_1\mapsto e_1, \ldots, \ident{?p}_
 C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~\_~e \sep \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}~v~\_ \\
   && \hspace{1.4em} \sep \ident{Impl}(\_, \{ \ident{?p}_1\mapsto e_1, .., \ident{?p}_n\mapsto e_n\})\\
   && \hspace{1.4em} \sep \ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, .., \ident{?p}_{i-1} \mapsto v_{i-1}, \ident{?p}_i \mapsto \_, \ident{?p}_{i+1} \mapsto v_{i+1}, .. \ident{?p}_n \mapsto e_n\})
-\end{array}  
+\end{array}
 \end{equation*}
 
 \vspace{1em}
@@ -1686,7 +1690,7 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 \tyrule{letimpl}
   { \Gamma \vdash e_1 : \ident{num} &
     \Gamma \vdash e_2 : \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}{\tau} }
-  { \Gamma \vdash \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}~e_1~e_2 : 
+  { \Gamma \vdash \ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}~e_1~e_2 :
       \ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n, \ident{?p} \} }}{\tau} }
 \end{equation*}
 
@@ -1694,7 +1698,7 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 \paragraph{Translation}
 
 \begin{equation*}
-\begin{array}{rl}  
+\begin{array}{rl}
 (\footnotesize{\emph{lookup}}) &
 \semdef
   { \coctx{\Gamma}{\cclrd{ \{\ident{?p}\} }} \vdash \ident{?p} : \ident{num} }
@@ -1704,7 +1708,7 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 \semdefff
   { \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1}
   { \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2}
-  {\hspace{-1em}\begin{array}{l}  
+  {\hspace{-1em}\begin{array}{l}
       \coctx{\Gamma}{\cclrd{r} \;\cclrd{\cup\; (\cclrd{s} \setminus \{ \ident{?p}) \}} }\\[-0.3em]
         \quad \vdash \kvd{let}~\ident{?p}=e_1\\[-0.3em]
         \quad\qquad \kvd{in}~e_2 : \tau_2 \\[-0.3em]
@@ -1712,12 +1716,12 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
    \end{array}}
   {f}
   {g}
-  {\hspace{-1em}\begin{array}{l}  
+  {\hspace{-1em}\begin{array}{l}
   \lambda\ctx.~~\\[-0.3em]
     \quad \kvd{let}~\ctx_0 = \ident{map}_{\cclrd{r} \;\cclrd{\cup}\; \cclrd{(s\setminus\{\ident{?p}\})}}~\ident{dup}~\ctx\\[-0.3em]
     \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\cclrd{r}, \cclrd{(s\setminus\{\ident{?p}\})}}~\ctx_0\\[-0.3em]
     \quad g~(\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{(s\setminus\{\ident{?p}\})}}~(f~\ctx_1)~\ctx_2)
-  \end{array} }   
+  \end{array} }
 \end{array}
 \end{equation*}
 
@@ -1737,7 +1741,7 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 \end{array}
 \\[1em]
 {\footnotesize(\emph{merge})} & \begin{array}{l}
-\ident{merge}_{\cclrd{r}, \cclrd{s}} 
+\ident{merge}_{\cclrd{r}, \cclrd{s}}
               (~\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{n}\mapsto v_n \})  \\[-0.25em]
 \hspace{4.4em}    \ident{Impl}(v', \{ \ident{?p}'_1 \mapsto v'_1, \ldots, \ident{?p}'_{n}\mapsto v'_n \})~) \rightarrow \\[-0.25em]
 \quad \ident{Impl}((v, v'), \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}\in\cclrd{r \setminus s}  \} \cup \{ \ident{?p}'_i \mapsto v'_i \;|\; \ident{?p}'\in\cclrd{s}  \})
@@ -1773,10 +1777,10 @@ C &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 \newpage
 \paragraph{Properties.}
 
-The core functional language subset (Figure~\ref{fig:semantics-target}) with the comonadically-inspired 
-extensions (Figure~\ref{fig:semantics-ext}) and the domain-specific extensions for implicit 
-parameters defined in Figure~\ref{fig:semantics-ext-impl} is safe. Furthermore, the 
-translation from coeffect calculus produces well-typed programs. Together, these two properties 
+The core functional language subset (Figure~\ref{fig:semantics-target}) with the comonadically-inspired
+extensions (Figure~\ref{fig:semantics-ext}) and the domain-specific extensions for implicit
+parameters defined in Figure~\ref{fig:semantics-ext-impl} is safe. Furthermore, the
+translation from coeffect calculus produces well-typed programs. Together, these two properties
 also guarantee safety of the source coeffect calculus, when used with implicit parameters.
 
 
@@ -1784,7 +1788,7 @@ As for dataflow computations, we prove safety by extending the preservation
 (Theorem~\ref{thm:semantics-fp-pres}) and progress (Theorem~\ref{thm:semantics-fp-prog})
 for the core functional subset of the language, but it is worth noting that the key parts of
 the proofs are centered around the new reduction rules for comonadically-inspired primitives
-and newly defined \ident{Impl} values. These do not interact with the rest of the language in 
+and newly defined \ident{Impl} values. These do not interact with the rest of the language in
 any unexpected ways.
 
 
@@ -1795,21 +1799,21 @@ the translated program $f$ obtained using the rules in Figure~\ref{fig:semantics
 and Figure~\ref{fig:semantics-ext-impl} is well-typed, \ie~in the target langauge: $\vdash f : \sem{\coctx{\Gamma}{\cclrd{r}}} \rightarrow \sem{\tau}$.
 \end{theorem}
 \begin{proof}
-By rule induction over the derivation of the translation. 
+By rule induction over the derivation of the translation.
 
-\vspace{0.5em}\noindent\hangindent=0.6cm 
+\vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{var, num, abs, app}): As before.
 
-\vspace{0.5em}\noindent\hangindent=0.6cm 
+\vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{lookup}): The type of $\ctx$ has a coeffect  $\cclrd{ \{\ident{?p}\} }$
   which includes the parameter \ident{?p} as required in order to use the (\emph{lookup}) typing rule.
 
-\vspace{0.5em}\noindent\hangindent=0.6cm 
+\vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{letimpl}): The type of $\ctx$ matches with the input type of
   $\ident{map}_{  \cclrd{r \cup (s\setminus\{\ident{?p}\})} }$. After duplication and splitting
   the context, $\ctx_1$ and $\ctx_2$ have types $\ctyp{\cclrd{r}}(\ldots)$ and
   $\ctyp{\cclrd{s\setminus\{\ident{?p}\}}}(\ldots)$, respectively. This matches with the expected
-  types of $\ident{f}$ and $\ident{letimpl}$. The context returned by $\ident{letimpl}$ then 
+  types of $\ident{f}$ and $\ident{letimpl}$. The context returned by $\ident{letimpl}$ then
   matches the one required by $\ident{g}$.
 \end{proof}
 
@@ -1821,7 +1825,7 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
   \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
   \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
   \item If $\tau=\ctyp{\cclrd{ \{ \ident{?p}_1, \ldots, \ident{?p}_n \} }}\tau_1$ then $e = \ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_n \mapsto v_n \} )$
-\end{enumerate}  
+\end{enumerate}
 \end{lemma}
 \begin{proof}
   (1,2,3) as before; for (4) the last typing rule must have been (\emph{impl}).
@@ -1829,12 +1833,12 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
 
 \begin{lemma}[Preservation under substitution]
 \label{thm:semantics-impl-pres-subst}
-For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$ 
+For all $\Gamma, e, e' \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$
 then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
 \end{lemma}
 \begin{proof}
   By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$ as before, with new
-  cases for $\ident{Impl}(e, \{ \ldots \})$, $\ident{lookup}_{\cclrd{\ident{?p}}}$ and 
+  cases for $\ident{Impl}(e, \{ \ldots \})$, $\ident{lookup}_{\cclrd{\ident{?p}}}$ and
   $\ident{letimpl}_{\cclrd{\ident{?p}}, \cclrd{r}}$.
 \end{proof}
 
@@ -1844,87 +1848,87 @@ then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
 \end{theorem}
 \begin{proof}
   Rule induction over $\rightarrow$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{fn}, \emph{prj}, \emph{ctx}): As before, using Lemma~\ref{thm:semantics-impl-pres-subst} for (\emph{fn}).
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{counit}): $e = \ident{counit}_{\cclrd{0}}(\ident{Impl}(v, \{\;\}))$. The last rule in the type
   derivation of $e$ must have been (\emph{counit}) with $\Gamma \vdash \ident{Impl}(v, \{ \; \}) : \ctyp{\cclrd{\emptyset}}\tau$
   which, in turn, required that $\Gamma \vdash v : \tau$.
 
 \newpage
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f~(\ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n  \}))$.  
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f~(\ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n  \}))$.
   The last rule in the type derivation of $e$ must have been (\emph{cobind}) with a type $\tau = \ctyp{\cclrd{s}}\tau_2$ and assumptions
   $\Gamma \vdash \ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n  \}) : \ctyp{\cclrd{r}}{\tau}$ and
   $\Gamma \vdash f : \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2$.
   The reduced expression has a type $\ctyp{\cclrd{s}}\tau_2$:
 \begin{equation*}
 \inference
-  { \inference 
-      { \Gamma \vdash f : \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2 & 
-        \Gamma \vdash \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} ) :  \ctyp{\cclrd{r}}{\tau_1}}  
+  { \inference
+      { \Gamma \vdash f : \ctyp{\cclrd{r}}{\tau_1} \rightarrow \tau_2 &
+        \Gamma \vdash \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} ) :  \ctyp{\cclrd{r}}{\tau_1}}
       { \Gamma \vdash f~(\ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} )) : \tau_2} }
   { \Gamma \vdash \ident{Impl}(f~(\ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{r} \} )), \{ \ident{?p}_i \mapsto v_i \;|\; \ident{p}_i \in \cclrd{s} \}) : \ctyp{\cclrd{s}}\tau_2 }
 \end{equation*}
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{lookup}): $e = \ident{lookup}_{\cclrd{\ident{?p}_i}}(\ident{Impl}(v, \{\; \ldots, \ident{?p}_i \mapsto v_i \ldots \}))$. The last rule in the type
   derivation must have been (\emph{lookup}) with $\tau = \ident{num}$ and an assumption $\Gamma\vdash\ident{Impl}(v, \{\; \ldots, \ident{?p}_i\mapsto v_i \ldots \}) : \ctyp{\cclrd{ \{\ldots,\ident{?p}_i,\ldots\} }}{\tau}$,
   which requires $\Gamma \vdash v_i : \ident{num}$.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{merge}, \emph{split}, \emph{letimpl}): Similar. In all three cases, the last typing rule in the derivation of $e$
   guarantees that all values of all implicit parameters that are required for the reduction are available.
 \end{proof}
 
 \begin{theorem}[Progress]
-\label{thm:semantics-impl-prog}  
+\label{thm:semantics-impl-prog}
   If $\vdash e : \tau$ then either $e$ is a value or there exits $e'$ such that $e \rightarrow e'$
 \end{theorem}
 \begin{proof}
   By rule induction over $\vdash$.
-  
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{num,abs,var,app,proj,tup}): As before, using the adapted canonical forms lemma
   (Lemma~\ref{thm:semantics-impl-canon}) for (\emph{app}) and (\emph{proj}).
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced
   using (\emph{ctx}) with context ${\ident{counit}_\cunit}~\_$, otherwise it is a value. From Lemma~\ref{thm:semantics-df-canon},
   $e_1 = \ident{Impl}(v, \{\;\})$ and so we can apply (\emph{counit}) reduction rule.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
+\vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{r}, \cclrd{s}}~e_1~e_2$. If $e_1$ is not a value,
   reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{r},\cclrd{s}}}~\_~e$. If $e_2$ is
   not a value reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{r},\cclrd{s}}}~v~\_$.
-  If both are values, then from Lemma~\ref{thm:semantics-impl-canon}, we have 
-  $e_2 = \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in \cclrd{r}\cup\cclrd{s} \})$ 
+  If both are values, then from Lemma~\ref{thm:semantics-impl-canon}, we have
+  $e_2 = \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in \cclrd{r}\cup\cclrd{s} \})$
   and we apply the (\emph{cobind}) reduction.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{merge}): $e = \ident{merge}_{\cclrd{r}, \cclrd{s}} e_1$. If $e_1$ is not a value, 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{merge}): $e = \ident{merge}_{\cclrd{r}, \cclrd{s}} e_1$. If $e_1$ is not a value,
   reduce using (\emph{ctx}) with context $e = \ident{merge}_{\cclrd{r}, \cclrd{s}}~\_$. If $e_1$ is
-  a value, it must be a pair of values $(   
+  a value, it must be a pair of values $(
     \ident{Impl}(v, \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in\cclrd{r} \}),
     \ident{Impl}(v', \{ \ident{?p}_i \mapsto v_i \;|\; \ident{?p}_i \in\cclrd{s} \}))$
   using Lemma~\ref{thm:semantics-df-canon} and it can reduce using (\emph{merge}) reduction.
 
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{impl}): $e = \ident{Impl}(e', \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$. 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{impl}): $e = \ident{Impl}(e', \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$.
   If $e$ is not a value, reduce using (\emph{ctx}) with context
-  $\ident{Impl}(\_, \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$. 
-  If $e_i$ is not a value, reduce using (\emph{ctx}) with context 
+  $\ident{Impl}(\_, \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$.
+  If $e_i$ is not a value, reduce using (\emph{ctx}) with context
   $\ident{Impl}(v, \{ \ident{?p}_1 \mapsto v_1, \ldots, \ident{?p}_{i-1} \mapsto v_{i-1}, \ident{?p}_i \mapsto \_, \ident{?p}_{i+1} \mapsto v_{i+1}, \ldots \ident{?p}_n \mapsto e_n\})$.
-  Otherwise, $e, e_0, \ldots, e_n$ are values and so 
+  Otherwise, $e, e_0, \ldots, e_n$ are values and so
   $\ident{Impl}(e', \{ \ident{?p}_1 \mapsto e_1, \ldots, \ident{?p}_n \mapsto e_n\})$
   is also a value.
 
-\vspace{0.25em}\noindent\hangindent=0.6cm 
-Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a value, 
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a value,
   or the type guarantees that it is a comonadic value with implicit parameter bindings
   that enable the (\emph{split}) or (\emph{letimpl}) reduction, respectively.
 \end{proof}
@@ -1945,44 +1949,44 @@ Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a val
 \label{sec:semantics-generalising}
 
 In Section~\ref{sec:semantics-df} and Section~\ref{sec:semantics-proofs-impl}, we proved the
-safety property of two concrete context-aware programming langauges based on the coeffect 
+safety property of two concrete context-aware programming langauges based on the coeffect
 language framework. The proofs for the two systems were very similar and they relied on the
-same key principle. 
+same key principle.
 
-The principle is that the coeffect annotation $\cclrd{r}$ on the type modelling 
+The principle is that the coeffect annotation $\cclrd{r}$ on the type modelling
 the indexed comonad structure $\ctyp{\cclrd{r}}\tau$ in the target language guarantees
 that the comonadic value will provide the necessary context. As a result the reductions for
-operations accessing the context do not get stuck. In case of dataflow, $\ident{prev}_\cclrd{n}$ 
-can always access the tail of the stream and and $\ident{counit}_\cunit$ can always access the 
-head (because the stream has a sufficient number of elements). In case of implicit parameters, 
+operations accessing the context do not get stuck. In case of dataflow, $\ident{prev}_\cclrd{n}$
+can always access the tail of the stream and and $\ident{counit}_\cunit$ can always access the
+head (because the stream has a sufficient number of elements). In case of implicit parameters,
 the context passed to $\ident{lookup}_{\cclrd{\ident{?p}}}$ will always contain a binding for
 $\ident{?p}$.
 
 Our core functional target language is not expressive enough to capture the relationship between
 the coeffect annotation and the structure of the \ident{Df} or \ident{Impl} value and so we
-resorted to adding those as ad-hoc extensions. However, given a target language with a sufficiently 
+resorted to adding those as ad-hoc extensions. However, given a target language with a sufficiently
 expressive type system, the properties proved in Section~\ref{sec:semantics-proofs} would be
 guaranteed directly by the target language. This includes dependently-typed languages such as
 Idris or Agda \cite{other-idris,other-agda}, but type-level numerals and sets can also be encoded
 in the Haskell type system \cite{effects-embedding}.
 
-In other words, the flat coeffect type system, together with the translation for introduced in this 
-chapter, can be embedded into a Haskell-like languages and it can provide a succinct and safe way 
+In other words, the flat coeffect type system, together with the translation for introduced in this
+chapter, can be embedded into a Haskell-like languages and it can provide a succinct and safe way
 of implementing context-aware domain specific languages.
 
 \paragraph{Coeffects for liveness.}
-As an example, we consider the third instance of coeffect calculus that was discussed in 
-Chapter~\ref{ch:flat}. If we wanted to follow the development in the previous section for liveness, 
+As an example, we consider the third instance of coeffect calculus that was discussed in
+Chapter~\ref{ch:flat}. If we wanted to follow the development in the previous section for liveness,
 we would extend the target language with two kinds of expressions, \ident{Dead} representing a dead
 context with no value and \ident{Live} representing a context with a value:
 %
 \begin{equation*}
 \begin{array}{rcl}
 e &=& \ldots \sep \ident{Dead} \sep \ident{Live}~e \\
-\end{array}  
+\end{array}
 \end{equation*}
 %
-The typing rules promote the information about whether a value is available into the type-level 
+The typing rules promote the information about whether a value is available into the type-level
 and so a context carrying a live value is marked as $\ctyp{\cclrd{\ident{L}}}{\tau}$ while a
 dead context has a type $\ctyp{\cclrd{\ident{D}}}{\tau}$.
 %
@@ -2021,7 +2025,7 @@ when discussing the categorical semantics:
 %
 This language extension is safe because the reductions respect the typing of the
 comonadically-inspired operations. The $\ident{counit}_\cunit$ reduction does not get stuck
-for well-typed terms because $\cunit = \cclrd{\ident{L}}$ in the coeffect algebra and thus its 
+for well-typed terms because $\cunit = \cclrd{\ident{L}}$ in the coeffect algebra and thus its
 argument is of type $\ctyp{\cclrd{\ident{L}}}{\tau}$ and will always be a value $\ident{Live}~v$.
 
 Similarly, the when reducing $\ident{cobind}_{\cclrd{r}, \cclrd{s}}$, the typing ensures that
@@ -2040,9 +2044,9 @@ algebraic data types (GADTs) and type families \cite{haskell-faking,haskell-prom
 We do not aim to give a complete implementation, but to show that such encoding is possible and
 would provide the necessary safety guarantees.
 
-We first define types \ident{D} and \ident{L} to capture the coeffect annotations. 
+We first define types \ident{D} and \ident{L} to capture the coeffect annotations.
 Then we define a comonadically-inspired type $\ident{C}~r~a$ as a GADT with cases for
-\ident{Live} and \ident{Dead} contexts. The type parameter $r$ represents a coeffect 
+\ident{Live} and \ident{Dead} contexts. The type parameter $r$ represents a coeffect
 annotation:
 %
 \begin{equation*}
@@ -2055,7 +2059,7 @@ annotation:
 \end{array}
 \end{equation*}
 %
-The definition matches with the typing rules (\emph{live}) and (\emph{dead}). The coeffect 
+The definition matches with the typing rules (\emph{live}) and (\emph{dead}). The coeffect
 annotation for a live value is \ident{L} and the annotation for a dead value is \ident{D}.
 To give the type of \ident{cobind}, we need a type-level function that encodes the operations
 of the flat coeffect algebra. We model $\cseq$ as $\ident{Seq}~a~b$. The operation is defined
@@ -2086,11 +2090,11 @@ Here, the additional type annotation ensures that \ident{counit} can only be cal
 that contains a value and so calling the operation is not going to fail. Similarly, the type of the
 \ident{cobind} operation now guarantees that if a function (used as the first argument) or the result
 require a live context, it will be called with a value $\ident{C}~\ident{L}~a$ that is guaranteed
-to contain a value. 
+to contain a value.
 
 \paragraph{Coeffects in dependently-typed languages.}
-If we use the above encoding, type preservation is guaranteed by the type 
-system of the target language. The equivalent of the progress property is guaranteed by the 
+If we use the above encoding, type preservation is guaranteed by the type
+system of the target language. The equivalent of the progress property is guaranteed by the
 fact that the the implementation of the operations is well-defined.
 
 It is worth noting that this is where coeffects need a target language with a more expressive
@@ -2105,42 +2109,42 @@ context that has \emph{all possible context} available, which is rarely useful i
 
 
 % ==================================================================================================
-%                                                 
-%      ####           ##            #                # 
-%      #   #           #            #                # 
-%      #   #   ###     #     ###   ####    ###    ## # 
-%      ####   #   #    #        #   #     #   #  #  ## 
-%      # #    #####    #     ####   #     #####  #   # 
-%      #  #   #        #    #   #   #  #  #      #  ## 
-%      #   #   ###    ###    ####    ##    ###    ## # 
+%
+%      ####           ##            #                #
+%      #   #           #            #                #
+%      #   #   ###     #     ###   ####    ###    ## #
+%      ####   #   #    #        #   #     #   #  #  ##
+%      # #    #####    #     ####   #     #####  #   #
+%      #  #   #        #    #   #   #  #  #      #  ##
+%      #   #   ###    ###    ####    ##    ###    ## #
 %
 % ==================================================================================================
 
 \section{Related categorical structures}
 \label{sec:semantics-related}
 
-Related work leading to coeffects has already been discussed in Chapter~\ref{ch:pathways} 
+Related work leading to coeffects has already been discussed in Chapter~\ref{ch:pathways}
 and we covered work related to individual concepts throughout the thesis. However, there is a
 number of related categorical structures that are related to our \emph{indexed comonads}
 (Section~\ref{sec:semantics-flat-idx}) that deserve additional discussion.
 
-In Section~\ref{sec:semantics-related-related}, we discuss related approaches to adding 
+In Section~\ref{sec:semantics-related-related}, we discuss related approaches to adding
 indices to categorical structures (mostly monads). In Section~\ref{sec:semantics-related-monad},
-we discuss a question that often arises when discussing coeffects and that is 
+we discuss a question that often arises when discussing coeffects and that is
 \emph{when is a coeffect (not) an effect?}
 
 \subsection{Indexed categorical structures}
 \label{sec:semantics-related-related}
 
-Ordinary comonads have the \emph{shape preservation} property \cite{comonads-codo}. Intuitively, 
+Ordinary comonads have the \emph{shape preservation} property \cite{comonads-codo}. Intuitively,
 this means that the core comonad structure does not provide a way of modeling computations where
-the additional context changes during the computation. For example, in the \ident{NEList} comonad, 
+the additional context changes during the computation. For example, in the \ident{NEList} comonad,
 the length of the list stays the same after applying \ident{cobind}.
 
 Indexed comonads are not restricted by this property of comonads. For example, given the indexed
 product comonad, in the computation $\ident{cobind}_{\cclrd{r}, \cclrd{s}} f$, the shape of
 the context changes from providing implicit parameters $\cclrd{r} \cup \cclrd{s}$  to providing
-just implicit parameters $\cclrd{s}$. 
+just implicit parameters $\cclrd{s}$.
 Thus \emph{indexed comonads} are a generalization of \emph{comonads} that captures structures that
 do not form a (non-indexed) comonad. However, indexing has been also discussed in the case of
 \emph{monads.}
@@ -2152,27 +2156,27 @@ comonads}, is defined as follows.
 
 \begin{definition}
 \label{def:flat-family}
-A \emph{family of comonads} is formed by triples $(\ctyp{\cclrd{r}}{}, \ident{cobind}_{\cclrd{r}}, 
-  \ident{counit}_{\cclrd{r}})$ for all $\cclrd{r}$ such that each triple forms a comonad. Given 
-$\cclrd{r}, \cclrd{r'}$ such that $\cclrd{r} \leq \cclrd{r'}$, there is also a mapping 
+A \emph{family of comonads} is formed by triples $(\ctyp{\cclrd{r}}{}, \ident{cobind}_{\cclrd{r}},
+  \ident{counit}_{\cclrd{r}})$ for all $\cclrd{r}$ such that each triple forms a comonad. Given
+$\cclrd{r}, \cclrd{r'}$ such that $\cclrd{r} \leq \cclrd{r'}$, there is also a mapping
 $\iota_{\cclrd{r'}, \cclrd{r}} : \ctyp{\cclrd{r'}}{} \rightarrow \ctyp{\cclrd{r}}{}$ satisfying
 certain coherence conditions.
 \end{definition}
 
 \noindent
-A \emph{family of comonads} is more restrictive than an \emph{indexed comonad}, because each of the data 
-types needs to form a comonad separately. For example, our indexed option does not form a family of 
-comonads (again, because \ident{counit} is not defined on $\ctyp{\ident{D}}{\alpha}=1$). However, given 
-a family of comonads and indices such that $\cclrd{r} \leq \cclrd{r}\cseq\cclrd{s}$, we can define 
-an indexed comonad. Briefly, to define $\ident{cobind}_{\cclrd{r},\cclrd{s}}$ of an indexed comonad, 
+A \emph{family of comonads} is more restrictive than an \emph{indexed comonad}, because each of the data
+types needs to form a comonad separately. For example, our indexed Maybe does not form a family of
+comonads (again, because \ident{counit} is not defined on $\ctyp{\ident{D}}{\alpha}=1$). However, given
+a family of comonads and indices such that $\cclrd{r} \leq \cclrd{r}\cseq\cclrd{s}$, we can define
+an indexed comonad. Briefly, to define $\ident{cobind}_{\cclrd{r},\cclrd{s}}$ of an indexed comonad,
 we use $\ident{cobind}_{\cclrd{r}\cseq\cclrd{s}}$ from the family, together with two lifting operations:
 $\iota_{\cclrd{r}\cseq\cclrd{s}, \cclrd{r}}$ and $\iota_{\cclrd{r}\cseq\cclrd{s}, \cclrd{s}}$.
 
 \paragraph{Parameteric effect monads.}
-Parametric effect monads introduced by Katsumata \cite{monads-parametric} (independently to our 
-indexed comonads) are closely related to our definition.  Although presented in a more general 
-categorical framework (and using monads), the model defines the \ident{unit} operation only on the 
-unit of a monoid and the \ident{bind} operation composes effect annotations using the provided monoidal 
+Parametric effect monads introduced by Katsumata \cite{monads-parametric} (independently to our
+indexed comonads) are closely related to our definition.  Although presented in a more general
+categorical framework (and using monads), the model defines the \ident{unit} operation only on the
+unit of a monoid and the \ident{bind} operation composes effect annotations using the provided monoidal
 structure.
 
 \subsection{When is coeffect not a monad}
@@ -2181,7 +2185,7 @@ structure.
 Coeffect systems differ from effect systems in three important ways:
 
 \begin{itemize}
-\item Semantically, coeffects capture different notions of computation. As demonstrated in 
+\item Semantically, coeffects capture different notions of computation. As demonstrated in
   Chapter~\ref{ch:pathways}, coeffects track additional contextual properties required by a
   computation, many of which cannot be captured by a monad (\eg~liveness or data-flow).
 
@@ -2189,7 +2193,7 @@ Coeffect systems differ from effect systems in three important ways:
   sequential composition and context merging ($\cpar, \cseq$, and $\czip$) while most effect systems
   only use a single operation for sequential composition (used by monadic bind).
 
-\item Syntactically, the second difference is in the lambda abstraction (\emph{abs}). In 
+\item Syntactically, the second difference is in the lambda abstraction (\emph{abs}). In
   coeffect systems, the context demands of the body can be split between (or duplicated
   at) declaration site and call site, while monadic effect systems always defer all effects.
 \end{itemize}
@@ -2198,7 +2202,7 @@ Coeffect systems differ from effect systems in three important ways:
 Despite the differences, our implicit parameters example can be also represented by a monad.
 Semantically, the \emph{reader} monad is equivalent to the \emph{product} comonad. Syntactically,
 we use the $\cup$ operation for all three operations of the coeffect algebra. However, to enable
-splitting of implicit parameter demands using the reader monad, we need to extend the 
+splitting of implicit parameter demands using the reader monad, we need to extend the
 monad structure and change the translation of monadic lambda abstraction.
 
 % -------------------------------------------------------------------------------------------------
@@ -2208,11 +2212,11 @@ monad structure and change the translation of monadic lambda abstraction.
 
 Implicit parameters can be captured by a monad, but \emph{just} a monad is not enough.
 Lambda abstraction in effect systems does not provide a way of splitting the context
-demands between declaration site and call site (or, semantically, combining the implicit 
+demands between declaration site and call site (or, semantically, combining the implicit
 parameters available in the scope where the function is defined and those specified by the caller).
 
 \paragraph{Categorical relationship.}
-Before looking at the necessary extensions, consider the two ways of modelling implicit 
+Before looking at the necessary extensions, consider the two ways of modelling implicit
 parameters. We assume that the function $\cclrd{r} \rightarrow \sigma$ is a lookup function
 for reading implicit parameter values that is defined on a set $\cclrd{r}$. The two definitions
 are:
@@ -2221,12 +2225,12 @@ are:
 \begin{array}{lll}
  \ctyp{\cclrd{r}}\tau = \tau \times (\cclrd{r} \rightarrow \sigma) &~\hspace{10em}~& (\emph{product comonad}) \\
  \mtyp{\cclrd{r}}\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau && (\emph{reader monad})
-\end{array} 
+\end{array}
 \end{equation*}
 %
 The \emph{product comonad} simply pairs the value $\tau$ with the lookup function, while
 the \emph{reader monad} is a function that, given a lookup function, produces a $\tau$ value.
-As noted by Orchard \cite{comonads-vs-monads}, when used to model computation semantics, the 
+As noted by Orchard \cite{comonads-vs-monads}, when used to model computation semantics, the
 two representations are equivalent:
 %
 \begin{remark}
@@ -2251,9 +2255,9 @@ This equivalence holds for monads and comonads (as well as \emph{indexed} monads
 and comonads), but it does not extend to \emph{flat} indexed comonads which also provide
 the $\ident{merge}_{\cclrd{r}, \cclrd{s}}$ operation to model context merging.
 
-\paragraph{Delaying effects in monads.} 
-In the syntax of the language, the above difference is manifested by the (\emph{abs}) rules for 
-monadic effect systems and comonadic coeffect systems. The following listing shows the two rules 
+\paragraph{Delaying effects in monads.}
+In the syntax of the language, the above difference is manifested by the (\emph{abs}) rules for
+monadic effect systems and comonadic coeffect systems. The following listing shows the two rules
 side-by-side, using the effect system notation for both of them:
 %
 \begin{equation*}
@@ -2283,8 +2287,8 @@ use of \ident{unit} has a type:
 \ident{unit}~:~(\tau_1\rightarrow\mtyp{\cclrd{r \cup s}}{\tau_2}) \rightarrow \mtyp{\cclrd{\emptyset}}(\tau_1\rightarrow\mtyp{\cclrd{r \cup s}}{\tau_2})
 \end{equation*}
 %
-In order to split the implicit parameters of the body ($\cclrd{r \cup s}$ on the left-hand side) between 
-the declaration site ($\cclrd{\emptyset}$ on the outer $\mtyp{}$ on the right-hand side) and the 
+In order to split the implicit parameters of the body ($\cclrd{r \cup s}$ on the left-hand side) between
+the declaration site ($\cclrd{\emptyset}$ on the outer $\mtyp{}$ on the right-hand side) and the
 call site ($\cclrd{r \cup s}$ on the inner $\mtyp{}$ on the right-hand side), we need an operation
 (which we call \ident{delay}) with the following signature:
 %
@@ -2293,7 +2297,7 @@ call site ($\cclrd{r \cup s}$ on the inner $\mtyp{}$ on the right-hand side), we
 \end{equation*}
 %
 The operation reveals the difference between effects and coeffects -- intuitively, given a function
-with effects $\cclrd{r \cup s}$, it should execute the effects $\cclrd{r}$ when wrapping the 
+with effects $\cclrd{r \cup s}$, it should execute the effects $\cclrd{r}$ when wrapping the
 function, \emph{before} the function actually performs the effectful operation with the effects.
 The remaining effects $\cclrd{s}$ are delayed as usual, while effects $\cclrd{r}$ are removed
 from the effect annotation of the body.
@@ -2302,27 +2306,27 @@ Another important aspect of the signature is that the function needs to be index
 annotations $\cclrd{r}, \cclrd{s}$. The indices determine how the input context demands
 $\cclrd{r \cup s}$ are split -- and thus guarantee determinism of the function at run-time.
 
-The operation cannot be implemented in a useful way for most standard monads, but the 
+The operation cannot be implemented in a useful way for most standard monads, but the
 reader monad is, indeed, an exception. It is not difficult to see how it can be implemented
 when we expand the definitions of $\mtyp{\cclrd{r}}\tau$:
 %
 \begin{equation*}
 \ident{delay}_{\cclrd{r}, \cclrd{s}}~:~
-(\tau_1\rightarrow(\cclrd{r \cup s} \rightarrow \sigma) \rightarrow \tau_2) \rightarrow 
+(\tau_1\rightarrow(\cclrd{r \cup s} \rightarrow \sigma) \rightarrow \tau_2) \rightarrow
 ((\cclrd{r} \rightarrow \sigma) \rightarrow \tau_1\rightarrow(\cclrd{s} \rightarrow \sigma) \rightarrow \tau_2)
 \end{equation*}
 
-\paragraph{Restricting coeffects in comonads.} 
+\paragraph{Restricting coeffects in comonads.}
 As just demonstrated, we can extend monads so that the reader monad is capable of capturing
 the semantics of implicit parameters, including the splitting of implicit parameter demands
 in lambda abstraction. Can we also go the other way round and \emph{restrict} the comonadic
-semantics so that all demands are delayed as in the (\emph{mabs}) rule, thus modelling 
+semantics so that all demands are delayed as in the (\emph{mabs}) rule, thus modelling
 fully dynamically scoped parameters?
 
 This is, indeed, possible. Recall that the semantics of lambda abstraction in the flat
 coeffect calculus is modelled using $\ident{merge}_{\cclrd{r}, \cclrd{s}}$. The operation takes
-two contexts (wrapped in an indexed comonad $\ctyp{\cclrd{r}}\alpha$), combines their carried 
-values and additional contextual information (implicit parameters). To obtain the (\emph{mabs}) 
+two contexts (wrapped in an indexed comonad $\ctyp{\cclrd{r}}\alpha$), combines their carried
+values and additional contextual information (implicit parameters). To obtain the (\emph{mabs})
 rule, we can restrict the first parameter, which corresponds to the declaration site context:
 
 \begin{equation*}
@@ -2331,7 +2335,7 @@ rule, we can restrict the first parameter, which corresponds to the declaration 
  &\hspace{4em}(\textit{normal}) \\
  \ident{merge}_{\cclrd{r}, \cclrd{s}} &\narrow{:}& \ctyp{\cclrd{\emptyset}}\alpha \times \ctyp{\cclrd{s}}\beta \rightarrow \ctyp{\cclrd{s}}(\alpha \times \beta)
  &\hspace{4em}(\textit{restricted})
-\end{array} 
+\end{array}
 \end{equation*}
 %
 In the (\emph{restricted}) version of the operation, the declaration site context requires
@@ -2342,7 +2346,7 @@ The idea of restricting the operations of the coeffect calculus semantics could 
 generally. We could allow any of the coeffect algebra operations $\cseq, \czip, \cpar$ to be
 \emph{partial} and thus the restricted (fully dynamically-scoped) version of implicit parameters
 could be obtained just by changing the definition of $\czip$. Similarly, we could obtain \eg~a
-fully lexically-scoped version of the system. The ability to restrict operations to partial 
+fully lexically-scoped version of the system. The ability to restrict operations to partial
 functions has been used in the semantics of effectful computations by Tate~\cite{effects-producer-semantics}.
 
 
@@ -2371,38 +2375,23 @@ here also guides the implementation that is discussed later in Chapter~\ref{ch:i
 
 The development presented in this chapter follows the well-known example of effects and monads.
 We introduced the notion of \emph{indexed comonad}, which generalizes comonads
-and adds additional operations needed to provide categorical semantics of the flat coeffect 
+and adds additional operations needed to provide categorical semantics of the flat coeffect
 calculus and we demonstrated how implicit parameters, liveness and dataflow computations form
 indexed comonads.
 
 We then used the comonadic semantics to define a \emph{comonadically-inspired translation}
-that turns programs written in a domain-specific coeffect language into a functional target 
+that turns programs written in a domain-specific coeffect language into a functional target
 language. This is akin to the Haskell do notation for monads. Finally, we extended the target
 language with concrete implementation of comonadic operations for dataflow and implicit parameters
-and we presented syntactic safety proof. In summary, the proof states that well-typed 
+and we presented syntactic safety proof. In summary, the proof states that well-typed
 context-aware programs written in a coeffect language \emph{do not go wrong} (when translated
 to a simple functional language and evaluated).
 
 The proof relies on the fact that coeffect annotations (provided by the coeffect type system)
-guarantee that the required context is available in the comonadic value that represents the 
+guarantee that the required context is available in the comonadic value that represents the
 context and we also discussed how this would guarantee safety in languages with sufficiently
 expressive type system such as Haskell.
 
 In the following chapter, we move from \emph{flat} coeffect calculi, tracking whole-context
 properties to \emph{structural} coeffect calculi, tracking per-variable information, thus
 covering systems from the second half of Chapter~\ref{ch:applications}.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
