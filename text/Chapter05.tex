@@ -1788,9 +1788,6 @@ K &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 
 % --------------------------------------------------------------------------------------------------
 
-\newpage
-~
-\newpage
 \paragraph{Properties.}
 We now prove the type safety of of a context-aware programming language with implicit parameters.
 To do this, we prove safety of the target functional language with specific extensions for implicit
@@ -1875,8 +1872,6 @@ Case (\emph{counit}): $e = \ident{counit}_{\cclrd{0}}(\ident{Impl}(v, \{\;\}))$.
   derivation of $e$ must have been (\emph{counit}) with $\Gamma \vdash \ident{Impl}(v, \{ \; \}) : \ctyp{\cclrd{\emptyset}}\tau$
   which, in turn, required that $\Gamma \vdash v : \tau$.
 
-\newpage
-
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{r}, \cclrd{s}}~f~(\ident{Impl}(v, \{ \ident{?p}_1\mapsto v_1, \ldots, \ident{?p}_n\mapsto v_n  \}))$.
   The last rule in the type derivation of $e$ must have been (\emph{cobind}) with a type $\tau = \ctyp{\cclrd{s}}\tau_2$ and assumptions
@@ -1958,8 +1953,6 @@ Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a val
 \begin{proof}
   Rule induction over $\rightsquigarrow^*$ using Theorem~\ref{thm:semantics-impl-pres} and Theorem~\ref{thm:semantics-impl-prog}.
 \end{proof}
-
-\newpage
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2163,10 +2156,9 @@ the length of the list stays the same after applying \ident{cobind}.
 Indexed comonads are not restricted by this property of comonads. For example, given the indexed
 product comonad, in the computation $\ident{cobind}_{\cclrd{r}, \cclrd{s}} f$, the shape of
 the context changes from providing implicit parameters $\cclrd{r} \cup \cclrd{s}$  to providing
-just implicit parameters $\cclrd{s}$.
-Thus \emph{indexed comonads} are a generalization of \emph{comonads} that captures structures that
-do not form a (non-indexed) comonad. However, indexing has been also discussed in the case of
-\emph{monads.}
+just implicit parameters $\cclrd{s}$. Thus \emph{indexed comonads} are a generalization of
+\emph{comonads} that captures structures that fail to form a comonad without indexing. In the
+rest of the section, we look at work that discusses indexing in the context of \emph{monads.}
 
 \paragraph{Families of monads.}
 When linking effect systems and monads, Wadler and Thiemann \cite{monad-notions} propose a
@@ -2183,7 +2175,8 @@ certain coherence conditions.
 \end{definition}
 
 \noindent
-A \emph{family of comonads} is more restrictive than an \emph{indexed comonad}, because each of the data
+A \emph{family of comonads} is not as expressive as an \emph{indexed comonads}. Many indexed
+comonads cannot be captured by a family of comonads. This is because each of the data
 types needs to form a comonad separately. For example, our indexed Maybe does not form a family of
 comonads (again, because \ident{counit} is not defined on $\ctyp{\ident{D}}{\alpha}=1$). However, given
 a family of comonads and indices such that $\cclrd{r} \leq \cclrd{r}\cseq\cclrd{s}$, we can define
@@ -2194,9 +2187,9 @@ $\iota_{\cclrd{r}\cseq\cclrd{s}, \cclrd{r}}$ and $\iota_{\cclrd{r}\cseq\cclrd{s}
 \paragraph{Parameteric effect monads.}
 Parametric effect monads introduced by Katsumata \cite{monads-parametric} (independently to our
 indexed comonads) are closely related to our definition.  Although presented in a more general
-categorical framework (and using monads), the model defines the \ident{unit} operation only on the
-unit of a monoid and the \ident{bind} operation composes effect annotations using the provided monoidal
-structure.
+categorical framework (and using monads), the model (i) defines the \ident{unit} operation only on the
+unit of a monoid and (ii) the \ident{bind} operation composes effect annotations using the provided
+monoidal structure.
 
 \subsection{When is coeffect not a monad}
 \label{sec:semantics-related-monad}
@@ -2206,23 +2199,28 @@ Coeffect systems differ from effect systems in three important ways:
 \begin{itemize}
 \item Semantically, coeffects capture different notions of computation. As demonstrated in
   Chapter~\ref{ch:pathways}, coeffects track additional contextual properties required by a
-  computation, many of which cannot be captured by a monad (\eg~liveness or data-flow).
+  computation, many of which cannot be captured by a monad (\eg~liveness or dataflow).
+  In terms of program analysis \cite{other-optcomp}, monas capture forward dataflow analyses and
+  comonads correspond to backward dataflow analyses.
 
 \item Syntactically, coeffect calculi use a richer algebraic structure with pointwise composition,
   sequential composition and context merging ($\cpar, \cseq$, and $\czip$) while most effect systems
-  only use a single operation for sequential composition (used by monadic bind).
+  only use a single operation for sequential composition (used by monadic bind). Effect systems
+  may use a richer algebraic structure to support additional language constructs such as conditionals
+  \cite{effects-nielson,effects-revisited}, but not for abstraction and application.
 
 \item Syntactically, the second difference is in the lambda abstraction (\emph{abs}). In
   coeffect systems, the context demands of the body can be split between (or duplicated
-  at) declaration site and call site, while monadic effect systems always defer all effects.
+  at) declaration site and call site, while lambda abstraction in monadic effect systems always
+  defer all effects -- creating a function value has no effect.
 \end{itemize}
 
 \noindent
-Despite the differences, our implicit parameters example can be also represented by a monad.
-Semantically, the \emph{reader} monad is equivalent to the \emph{product} comonad. Syntactically,
-we use the $\cup$ operation for all three operations of the coeffect algebra. However, to enable
-splitting of implicit parameter demands using the reader monad, we need to extend the
-monad structure and change the translation of monadic lambda abstraction.
+Despite the differences, our implicit paremeters resemble, in many ways, the \emph{reader} monad.
+As discussed in Section~\ref{sec:semantics-related-monads}, the \emph{reader} monad is semantically
+equivalent to the \emph{product} comonad when we consider just sequential composition. For a
+language with lambda abstraction, we need a slight extension to the usual treatment of monads in
+order to model implicit parameters using a monad.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -2236,7 +2234,7 @@ parameters available in the scope where the function is defined and those specif
 
 \paragraph{Categorical relationship.}
 Before looking at the necessary extensions, consider the two ways of modelling implicit
-parameters. We assume that the function $\cclrd{r} \rightarrow \sigma$ is a lookup function
+parameters. We assume that the function $\cclrd{r} \rightarrow \ident{num}$ is a lookup function
 for reading implicit parameter values that is defined on a set $\cclrd{r}$. The two definitions
 are:
 %
@@ -2270,9 +2268,13 @@ The isomorphism is demonstrated by the following equation:
 \end{proof}
 
 \noindent
+This equivalence shows an intriguing relationship between the \emph{product comonad} and
+\emph{reader monad}, but it cannot be extended beyond that. In particular, comonads that model
+dataflow computations or liveness do not have a corresponding monadic structure.
 This equivalence holds for monads and comonads (as well as \emph{indexed} monads
 and comonads), but it does not extend to \emph{flat} indexed comonads which also provide
-the $\ident{merge}_{\cclrd{r}, \cclrd{s}}$ operation to model context merging.
+the $\ident{merge}_{\cclrd{r}, \cclrd{s}}$ operation to model context merging. This can be
+supported in monadic computations by adding an aditional operation discussed next.
 
 \paragraph{Delaying effects in monads.}
 In the syntax of the language, the above difference is manifested by the (\emph{abs}) rules for
@@ -2334,6 +2336,10 @@ when we expand the definitions of $\mtyp{\cclrd{r}}\tau$:
 (\tau_1\rightarrow(\cclrd{r \cup s} \rightarrow \sigma) \rightarrow \tau_2) \rightarrow
 ((\cclrd{r} \rightarrow \sigma) \rightarrow \tau_1\rightarrow(\cclrd{s} \rightarrow \sigma) \rightarrow \tau_2)
 \end{equation*}
+%
+This suggests that the \emph{reader monad} is a special case among monads. Our work suggests that
+passing read-only information to a computation is better captured by a product comonad, which also
+matches the intuition -- read-only information is a \emph{contextual capability}.
 
 \paragraph{Restricting coeffects in comonads.}
 As just demonstrated, we can extend monads so that the reader monad is capable of capturing
@@ -2386,7 +2392,7 @@ functions has been used in the semantics of effectful computations by Tate~\cite
 
 \section{SUmmary}
 
-In the previous chapter, we defined \emph{type system} for flat coeffect calculi that uniformly
+In the previous chapter, we defined a \emph{type system} for flat coeffect calculi that uniformly
 captures the shared structure of context-aware computations. In this chapter, we completed
 the unification by providing \emph{semantics} for flat coeffect calculi and proving the
 \emph{safety} of coeffect languages for dataflow and implicit parameters. The semantics shown
@@ -2400,9 +2406,9 @@ indexed comonads.
 
 We then used the comonadic semantics to define a \emph{comonadically-inspired translation}
 that turns programs written in a domain-specific coeffect language into a functional target
-language. This is akin to the Haskell do notation for monads. Finally, we extended the target
-language with concrete implementation of comonadic operations for dataflow and implicit parameters
-and we presented syntactic safety proof. In summary, the proof states that well-typed
+language. This is akin to the Haskell do-notation for monads. Finally, we extended the target
+language with concrete implementations of comonadic operations for dataflow and implicit parameters
+and we presented a syntactic safety proof. In summary, the proof states that well-typed
 context-aware programs written in a coeffect language \emph{do not go wrong} (when translated
 to a simple functional language and evaluated).
 
