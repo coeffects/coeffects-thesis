@@ -741,7 +741,7 @@ Case (\emph{param}): $e = \ident{?p}$, from Lemma~\ref{thm:flat-impl-invert}, $\
 Cases (\emph{var}), (\emph{const}) are direct consequence of Lemma~\ref{thm:flat-impl-invert}.
 
 \vspace{0.5em}\noindent\hangindent=0.7cm
-Cases (\emph{var}), (\emph{const}), (\emph{app}), (\emph{let}), (\emph{param}) and (\emph{letpar})
+Cases (\emph{app}), (\emph{let}) and (\emph{letpar})
   similarly to (\emph{abs}).
 \end{proof}
 
@@ -845,7 +845,7 @@ Follows from the individual rules given in Figure~\ref{fig:flat-resolve-impl}.
 
 \begin{theorem}[Uniqueness of coeffect typing for liveness and dataflow]
 \label{thm:flat-ldf-unique}
-In the type system for implicit parameters defined in Figure~\ref{fig:flat-types} with the (abs)
+In the type system for liveness and dataflow defined in Figure~\ref{fig:flat-types} with the (abs)
 rule replaced by (idabs), when $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and
 $\coctx{\Gamma}{\cclrd{r'}} \vdash e : \tau'$ then $\tau = \tau'$ and $\cclrd{r} = \cclrd{r'}$.
 \end{theorem}
@@ -855,20 +855,19 @@ Suppose that (A) $\coctx{\Gamma}{\cclrd{c}} \vdash e : \tau$ and
 derivation of $\coctx{\Gamma}{\cclrd{c}} \vdash e : \tau$ that $\tau = \tau'$ and $\cclrd{c}=\cclrd{c'}$.
 
 \vspace{0.5em}\noindent\hangindent=0.6cm
-Case (\emph{abs}): $e = \lambda x\!:\!\tau_1.e_1$. $\tau = \tau_1 \xrightarrow{\cclrd{c}} \tau_2$
+Case (\emph{abs}): $e = \lambda x\!:\!\tau_1.e_1$. Then $\tau = \tau_1 \xrightarrow{\cclrd{c}} \tau_2$
   for some $\tau_2$ and $\coctx{\Gamma, x\!:\!\tau_1}{\cclrd{c}} \vdash e : \tau_2}$.
   By case (5) of Lemma~\ref{thm:flat-ldf-invert}, the final rule of the derivation (B) must
   have also been (\emph{abs}) and this derivation has a sub-derivation with a conclusion
   ${\coctx{\Gamma, x\!:\!\tau_1}{\cclrd{c'}} \vdash e : \tau_2'}$.
   By the induction hypothesis $\tau_2 = \tau_2'$ and $\cclrd{c}=\cclrd{c'}$ and therefore
-  also so $\tau = \tau'$.
+  also $\tau = \tau'$.
 
 \vspace{0.5em}\noindent\hangindent=0.7cm
-Cases (\emph{var}), (\emph{const}) are direct consequence of Lemma~\ref{thm:flat-impl-invert}.
+Cases (\emph{var}), (\emph{const}) are direct consequence of Lemma~\ref{thm:flat-ldf-invert}.
 
 \vspace{0.5em}\noindent\hangindent=0.7cm
-Cases (\emph{var}), (\emph{const}), (\emph{app}), (\emph{let}), (\emph{param}) and (\emph{letpar})
-  similarly to (\emph{abs}).
+Cases (\emph{app}) and (\emph{let}) similarly to (\emph{abs}).
 \end{proof}
 
 % ==================================================================================================
