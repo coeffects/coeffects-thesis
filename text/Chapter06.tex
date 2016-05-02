@@ -1224,6 +1224,7 @@ no way of constructing values containing $\xtimes$.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Structural indexed comonads}
+\label{sec:struct-semantics-idxc}
 
 The flat indexed comonad structure extends indexed comonads with operations
 $\ident{merge}_{\cclrd{r},\cclrd{s}}$ and $\ident{split}_{\cclrd{r},\cclrd{s}}$ that combine or
@@ -1298,18 +1299,18 @@ The semantics is defined over a typing derivation:
   {\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}} \vdash e : \tau_2}
   {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
   {f}
-  {f \circ \ident{curry}~\ident{merge}_{\aclrd{\textbf{r}}, \cclrd{s}} }
+  {f \circ \ident{curry}~\ident{merge}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}}} }
 & (\emph{abs})
 \\[2em]
 \hspace{-1.85em}\emdefff
   {\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
   {\coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  {\begin{array}{l}\sem{\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}\,\atimes\,(\cclrd{t} \aseq \aclrd{\textbf{s}})}} \vdash e_1~e_2 : \tau_2}\\[-0.3em]~\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}\,\atimes\,(\cclrd{t} \aseq \aclrd{\textbf{s}})}} \vdash e_1~e_2 : \tau_2}\\[-0.25em]~\end{array}}
   {f}
   {g}
   {\hspace{-0.5em}\begin{array}{l}
-  \ident{app}~\circ~f\hspace{-0.15em}\times\hspace{-0.15em}(\ident{cobind}_{\cclrd{t}, \aclrd{\textbf{s}}}~g)\\[-0.3em]
-  ~~\circ~~\ident{split}_{\aclrd{\textbf{r}}, \cclrd{t} \,\aseq\, \aclrd{\textbf{s}}}\\[-0.3em]
+  \ident{app}~\circ~f\hspace{-0.15em}\times\hspace{-0.15em}(\ident{cobind}_{\cclrd{t}, \aclrd{\textbf{s}}}~g)\\[-0.25em]
+  ~~\circ~~\ident{split}_{\aclrd{\textbf{r}}, \cclrd{t} \,\aseq\, \aclrd{\textbf{s}}}\\[-0.25em]
   \end{array}\hspace{-0.5em}}
 & (\emph{app})
 \\[1.5em]
@@ -1351,18 +1352,17 @@ Assuming the following auxiliary operations:
   \ident{nest}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{s'}}, \aclrd{\textbf{t}}}~f &=&
     \ident{merge}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s'}}\atimes\aclrd{\textbf{t}}} \;\circ\;
       \ident{id} \times(\ident{merge}_{\aclrd{\textbf{s'}}, \aclrd{\textbf{t}}} \,\circ\, f \times \ident{id} \,\circ\, \ident{split}_{\aclrd{\textbf{s}}, \aclrd{\textbf{t}}}) \;\circ\;
-      \ident{split}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}\atimes\aclrd{\textbf{t}}} \\[-0.3em]
-  \ident{map}_\cclrd{r}}~f &=& \ident{cobind}_{\cunit, \cclrd{r}}~(f\circ\ident{counit}_\cunit) \\[-0.3em]
+      \ident{split}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}\atimes\aclrd{\textbf{t}}}
 \end{array}
 \end{equation*}
 \begin{equation*}
 \begin{array}{rcl}
-  \ident{id}~x &=& x \\[-0.3em]
-  \ident{const}~v &=& \lambda x.v \\[-0.3em]
-  \ident{curry}~f~x~y &=& \lambda f.\lambda x.\lambda y.f~(x, y)\\[-0.3em]
-  \ident{snd}~(x,y) &=& y\\[-0.3em]
-  \ident{swap}~(x,y) &=& (y,x)\\[-0.3em]
-  f \times g &=& \lambda (x, y).(f~x, g~y)\\[-0.3em]
+  \ident{id}~x &=& x \\[-0.25em]
+  \ident{const}~v &=& \lambda x.v \\[-0.25em]
+  \ident{curry}~f~x~y &=& \lambda f.\lambda x.\lambda y.f~(x, y)\\[-0.25em]
+  \ident{fst}~(x,y) &=& x\\[-0.25em]
+  \ident{swap}~(x,y) &=& (y,x)\\[-0.25em]
+  f \times g &=& \lambda (x, y).(f~x, g~y)\\[-0.25em]
   \ident{app}~(f, x) &=& f~x
 \end{array}
 \end{equation*}
@@ -1370,6 +1370,7 @@ Assuming the following auxiliary operations:
 \figcaption{Categorical semantics of the structural coeffect calculus}
 \label{fig:struct-semantics}
 \end{figure*}
+
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Semantics of structural calculus}
@@ -1468,6 +1469,7 @@ it can be modelled by a \emph{structural indexed comonad}. As we show in the nex
 this is the case for all three discussed examples (liveness, dataflow, bounded variable reuse).
 
 \begin{theorem}[Correspondence]
+\label{thm:struct-correspondence}
 In all of the typing rules of the structural coeffect system, the context annotations $\aclrd{\textbf{r}}$
 and $\cclrd{s}$ of typing judgements $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ and function types
 $\tau_1 \xrightarrow{\cclrd{s}} \tau_2$  correspond to the indices of mappings $\ctyp{\aclrd{\textbf{r}}}{}$
@@ -1717,11 +1719,292 @@ Simple expansion of the definitions for the unique typing derivation.
 %
 % ==================================================================================================
 
-\section{Translation}
+\section{Translational semantics}
 \label{sec:struct-transl}
+
+In the previous section, we used category theory to give a unified model capable of capturing
+the semantics of our three context-aware language based on the structural coeffect calculus.
+Although the categorical model is interesting on its own, we use it in the same way as in
+Chapter~\ref{ch:semantics} -- to define a translation from source context-aware languages to a
+simple target functional language. As for flat coeffect calculus, we show that the translation
+produces well-typed programs in the target language. For a sample context-aware programming
+language, we then show that well-typed programs (produced by the translation) do not get stuck.
+
+This section mirrors the development presented in Chapter~\ref{ch:semantics} for flat coeffect
+calculus. We extend the simple target language with additional constructs inspired by structural
+indexed comonads (Section~\ref{sec:struct-transl-ext}), define the translation to the target
+langauge (Section~\ref{sec:struct-transl-transl}) and prove safety of one sample language
+(Section~\ref{sec:struct-transl-safety}) -- we choose structural dataflow to allow easy
+comparison with the flat system.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\paragraph{Language syntax.}
+Given a structural coeffect algebra, extend the programming language syntax with the following
+constructs:
+
+\begin{equation*}
+\begin{array}{rcl}
+  e &  =  &\ldots \sep\ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e
+         \sep \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e \sep \ident{dup}_{\cclrd{r},\cclrd{s}}~e \\
+  \tau &  = &\ldots \sep \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} \\
+  K  & = &\ldots \sep \ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~\_~e \sep \ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~v~\_ \sep \ident{counit}_{\cunit}~\_ \\
+    && \hspace{1.4em} \sep \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~\_
+           \sep \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~\_ \sep \ident{dup}_{\cclrd{r},\cclrd{s}}~\_ \\
+\end{array}
+\end{equation*}
+
+~
+
+~
+
+\paragraph{Typing rules.}
+Given a structural coeffect algebra, add the typing rules:
+
+\begin{equation*}
+\begin{array}{l}
+\tyrule{counit}
+  {\Gamma \vdash e : \ctyp{\alift{\cunit}}{\tau}}
+  {\Gamma \vdash \ident{counit}_{\cunit}~e : \tau} \\
+\\
+\tyrule{cobind}
+  {\Gamma \vdash e_1 : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} \rightarrow \tau & \Gamma \vdash e_2 : \ctyp{\cclrd{s}\aseq\aclrd{\textbf{r}}}{\tau_1(\tau_1 \xtimes \ldots \xtimes \tau_k)} }
+  {\Gamma \vdash \ident{cobind}_{\cclrd{r}, \cclrd{s}}~e_1~e_2 : \ctyp{\alift{\cclrd{s}}}{\tau}} \\
+  \\
+\tyrule{merge}
+  {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \xtimes \ldots \xtimes \tau_k)} }
+  {\Gamma \vdash  \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e : \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} }\\
+\\
+\tyrule{split}
+  {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} }
+  {\Gamma \vdash  \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \xtimes \ldots \xtimes \tau_k)}} \\
+\\
+\tyrule{dup}
+  {\Gamma \vdash  e : \ctyp{\alift{\cclrd{r}\cpar\cclrd{s}}}{\tau} }
+  {\Gamma \vdash  \ident{dup}_{\cclrd{r},\cclrd{s}}~e : \ctyp{\alift{\cclrd{r},\cclrd{s}}}{(\tau \xtimes \tau)} } \\
+\end{array}
+\end{equation*}
+
+\caption{Comonadically-inspired extensions for structural coeffects}
+\label{fig:struct-semantics-ext}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Comonadically-inspired language extensions}
+\label{sec:struct-transl-ext}
+
+In Section~\ref{sec:semantics-translation-target}, we defined the syntax, typing rules and
+operational semantics for a simple functional programming language. We then extended it with
+uninterpreted constructs inspired by the \emph{flat indexed comonad} structure and used it as the
+translation target for the flat coeffect calculus. In this section, we take the same core language
+and extend it with constructs inspired by the \emph{structural indexed comonad}.
+
+Given a coeffect language with a structural coeffect algebra formed by
+$(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and operations $\alift{-}$ and $\aseq, \atimes$, we
+extend the core functional language with operations shown in Figure~\ref{fig:struct-semantics-ext}.
+The syntax extensions add comonadically-inspired operations that mirror those defined in
+Section~\ref{sec:struct-semantics-idxc}. The typing for the operations corresponds to their
+categorical counterparts.
+
+We also include an uninterpreted type $\ctyp{\aclrd{\textbf{r}}}{\tau_1\xtimes\ldots\xtimes\tau_k}$,
+which models a contextual (comonadic) value indexed by a vector of annotations. As in the
+categorical model for structural coeffects, context consisting of multiple variables is not modelled
+as ordinary tuple -- it can only be manipulated by the comonadically-inspired operations.
+In the target language, this is done by defining the $\ctyp{\aclrd{\textbf{r}}}{}$ type over
+zero or more underlying types. Here, our syntactic treatment differs slightly from the categorical
+model where objects created by $\xtimes$ were first-class values. In Figure~\ref{fig:struct-semantics-ext},
+we need to explicitly specify the types of individual components in typing rules for
+(\emph{merge}), (\emph{split}) and (\emph{cobind}).
+
+As with flat coeffects, the extensions described here are common for all concrete instances of
+structural context-aware languages. For each concrete language, we need to provide values of type
+$\ctyp{\aclrd{\textbf{r}}}{\tau}$ and reduction rules for comonadically-inspired operations.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure*}[!t]
+The translation is defined over a typing derivation:
+%
+\begin{equation*}
+\begin{array}{ll}
+\hspace{3.25em}\semdef
+  {\coctx{x\!:\!\tau}{\alift{\cunit}} \vdash x : \tau}
+  {\lambda\ctx.\ident{counit}_{\cunit}~\ctx}
+& (\emph{var})
+\\[1em]
+\hspace{4em}\semdef
+  {\coctx{()}{\alift{}} \vdash n : \ident{num} }
+  {\lambda\ctx.n}
+& (\emph{num})
+\\[1.5em]
+\hspace{0.8em}\semdeff
+  {\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
+  {f}
+  {\lambda\ctx.\lambda v.f~(\ident{merge}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}}}~(\ctx, v)) }
+& (\emph{abs})
+\\[2em]
+\hspace{-2.5em}\emdefff
+  {\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
+  {\coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}\,\atimes\,(\cclrd{t} \aseq \aclrd{\textbf{s}})}} \vdash e_1~e_2 : \tau_2}\\[-0.25em]~\\[-0.25em]~\end{array}}
+  {f}
+  {g}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda\ctx.~~\\[-0.25em]
+    \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\aclrd{\textbf{r}}, \cclrd{t} \,\aseq\, \aclrd{\textbf{s}}}~\ctx\\[-0.25em]
+    \quad f~\ctx_1~(\ident{cobind}_{\cclrd{t}, \aclrd{\textbf{s}}}~g~\ctx_2)
+  \end{array} }
+& (\emph{app})
+\\[1.5em]
+\hspace{0em}\emdeff
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
+  {\begin{array}{l}\sem{\coctx{\Gamma,x \!:\! \tau_1}{\aclrd{\textbf{r}} \atimes \alift{ \czero }} \vdash e : \tau}\\[-0.25em]~\\[-0.25em]~\\\end{array}}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda\ctx.~~\\[-0.25em]
+    \quad \kvd{let}~(\ctx_1, \_) = \ident{split}_{\aclrd{\textbf{r}}, \alift{\czero}}~\ctx\\[-0.25em]
+    \quad f~\ctx_1
+  \end{array} }
+& (\emph{weak})
+\\[1.5em]
+\hspace{0em}\mdeff
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2\\[-0.25em]\qquad}
+     {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2\\[-0.25em]\qquad}{\aclrd{\textbf{r}}
+          \atimes \alift{\cclrd{t},\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\\[-0.25em]~\end{array}}
+  {\begin{array}{l}~\\[-0.25em]\hspace{-0.5em}f\end{array}}
+  {\begin{array}{l}\hspace{-0.5em}
+    \lambda\ctx.~f (\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{t},\cclrd{s}},\alift{\cclrd{s},\cclrd{t}}, \aclrd{\textbf{q}}}~(\lambda\ctx'.\\[-0.25em]
+     \quad \kvd{let}~(\ctx_1, \ctx_2) = \ident{split}_{\alift{\cclrd{t}}, \alift{\cclrd{s}}} \\[-0.25em]
+     \quad \ident{merge}_{\alift{\cclrd{s}}, \alift{\cclrd{t}}}~(\ctx_2, \ctx_1)~))\end{array} }
+& (\emph{exch})
+\\[1.5em]
+\hspace{-0.5em}\mdeff
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2\\[-0.25em]\qquad}
+      {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}}
+          \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} \\[-0.25em] \qquad\vdash \subst{e}{z,y}{x} : \tau}\end{array}}
+  {\begin{array}{l}~\\[-0.25em]\hspace{-0.5em}f\end{array}}
+  {\begin{array}{l}\hspace{-0.5em}\lambda\ctx.f~(\ident{nest}_{\aclrd{\textbf{r}}, \alift{\cclrd{s}\,\cpar\,\cclrd{t}},
+      \alift{\cclrd{s},\cclrd{t}}, \aclrd{\textbf{q}}}\\[-0.25em]
+      \qquad \ident{dup}_{\cclrd{s}, \cclrd{t}}~\ctx)\hspace{-0.5em}\end{array}}
+& (\emph{contr})
+\end{array}
+\end{equation*}
+
+\vspace{2em}
+Assuming the following auxiliary definition:
+%
+\begin{equation*}
+\begin{array}{l}
+  \ident{nest}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{s'}}, \aclrd{\textbf{t}}} = \lambda f.\lambda \ctx.\\[-0.25em]
+  \qquad \kvd{let}~(\ctx_1, \ctx') = \ident{split}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}\atimes\aclrd{\textbf{t}}}~\ctx\\[-0.25em]
+  \qquad \kvd{let}~(\ctx_2, \ctx_3) = \ident{split}_{\aclrd{\textbf{s}},\aclrd{\textbf{t}}}~\ctx'\\[-0.25em]
+  \qquad \ident{merge}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s'}}\atimes\aclrd{\textbf{t}}}~(\ctx_1, \ident{merge}_{\aclrd{\textbf{s'}}, \aclrd{\textbf{t}}}~(f~\ctx_2, \ctx_3))
+\end{array}
+\end{equation*}
+
+\figcaption{Trnaslation from a structural coeffect calculus}
+\label{fig:struct-translation}
+\end{figure*}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Comonadically-inspired translation}
+\label{sec:struct-transl-transl}
+
+When translating context-aware programs to the functional language, variable contexts become
+values of comonadically-inspired data types containing a value for each variable in the context.
+Function inputs become comonadically-inspired values containing exactly one variable. More formally:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}}} &=&
+  \ctyp{\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}}{(\sem{\tau_1} \xtimes \ldots \xtimes \sem{\tau_n})} \\[0.5em]
+\sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} & = & \ctyp{\alift{\cclrd{r}}}{\sem{\tau_1}} \rightarrow \sem{\tau_2} \\[-0.2em]
+\sem{\ident{num}} & = & \ident{num} \\
+\end{array}
+\end{equation*}
+
+\noindent
+The definition differs from the one for flat coeffects (Section~\ref{sec:semantics-translation-transl})
+in that the comonadically-inspired data type takes multiple type parameters (separated using $\xtimes$),
+rather than wrapping a regular tuple in the target language.
+
+The translation rules are defined in Figure~\ref{fig:struct-translation}. As in the case of the flat
+coeffect calculus, the definition directly follows the categorical semantics shown in
+Figure~\ref{fig:struct-translation}. We expand the definitions so that the result is a valid
+program in the target language rather than a composition of morphisms.
+
+As with flat coeffects, the correspondence property of the semantics (Theorem~\ref{thm:struct-correspondence})
+can now be adapted into well-typedness of the translation. Given a well-typed program in the
+structural coeffect calculus, the translation produces a well-typed program in the target
+language. This is true for all context-aware languages based on the structural coeffect calculus
+and it provides us with the first part of type safety theorem. The second part is type safety
+of the target language with concrete domain-specific extensions as discussed in
+Section~\ref{sec:struct-transl-safety}.
+
+\begin{theorem}[Well-typedness of the translation]
+\label{thm:semantics-welltyped}
+Given a typing derivation for a well-typed closed expression $\coctx{}{\alift{}} \vdash e : \tau$
+written in a structural context-aware programming langugae that is translated to the target language as
+(we write $\ldots$ for the omitted part of the translation tree):
+%
+\begin{equation*}
+  \semdeff
+    {~~(\ldots)~~}
+    {\coctx{}{\alift{}} \vdash e : \tau }
+    {(\ldots)}
+    { ~~f }
+\end{equation*}
+%
+Then $f$ is well-typed, \ie~in the target language: $\vdash f : \sem{\coctx{()}{\alift{}}} \rightarrow \sem{\tau}$.
+\end{theorem}
+\begin{proof}
+By rule induction over the derivation of the translation. Given a judgement
+$\coctx{x_1\!:\!\tau_1 \ldots x_n\!:\!\tau_n}{\aclrd{\textbf{c}}} \vdash e : \tau$ where
+$\aclrd{\textbf{c}} = \alift{\cclrd{c_1},\ldots,\cclrd{c_n}}$, the translation
+constructs a function of type $\ctyp{\aclrd{\textbf{c}}}(\sem{\tau_1}\xtimes\ldots\xtimes\sem{\tau_n}}) \rightarrow \sem{\tau}$.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm
+Case (\emph{var}): $\aclrd{\textbf{c}}=\alift{\cunit}$ and so ${\ident{counit}_\cunit}~\ctx$ is well-typed.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{num}): $\tau = \ident{num}$ and so the body $n$ is well-typed.
+
+
+%
+%
+%
+%
+TODO
+%
+%
+%
+%
+%
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\cclrd{r}}(\ldots)$ and the type of $v$ is $\ctyp{\cclrd{s}}\tau_1$,
+  calling $\ident{merge}_{\cclrd{r},\cclrd{s}}$ and reassociating produces
+  $\ctyp{\cclrd{r}\czip\cclrd{s}}(\ldots)$ as expected by $f$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of
+  $\ctx_1, \ctx_2$ are $\ctyp{\cclrd{r}}(\ldots)$ and $\ctyp{\cclrd{s}\cseq\cclrd{t}}(\ldots)$, respectively.
+  $g$ requires $\ctyp{\cclrd{s}}(\ldots)$ and so the result of $\ident{cobind}_{\cclrd{s},\cclrd{t}}$ is
+  $\ctyp{\cclrd{t}}\tau_1$ as required by $f$.
+\end{proof}
+
+% --------------------------------------------------------------------------------------------------
 
 \subsection{Safety of concrete thing}
 \label{sec:struct-transl-safety}
+
+\newpage
 
 
 % ==================================================================================================

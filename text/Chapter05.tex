@@ -874,13 +874,13 @@ Simple expansion of the definitions for the unique typing derivation.
 
 % ==================================================================================================
 %
-%      #######
-%      #       #    # #####  ###### #####  #####  # #    #  ####
-%      #       ##  ## #    # #      #    # #    # # ##   # #    #
-%      #####   # ## # #####  #####  #    # #    # # # #  # #
-%      #       #    # #    # #      #    # #    # # #  # # #  ###
-%      #       #    # #    # #      #    # #    # # #   ## #    #
-%      ####### #    # #####  ###### #####  #####  # #    #  ####
+%    #######
+%       #    #####    ##   #    #  ####  #        ##   ##### #  ####  #    #
+%       #    #    #  #  #  ##   # #      #       #  #    #   # #    # ##   #
+%       #    #    # #    # # #  #  ####  #      #    #   #   # #    # # #  #
+%       #    #####  ###### #  # #      # #      ######   #   # #    # #  # #
+%       #    #   #  #    # #   ## #    # #      #    #   #   # #    # #   ##
+%       #    #    # #    # #    #  ####  ###### #    #   #   #  ####  #    #
 %
 % ==================================================================================================
 
@@ -1108,18 +1108,18 @@ Case (\emph{tup}): $e = (e_1, \ldots, e_n)$. If all sub-expressions are values, 
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
-\paragraph{Language syntax}
+\paragraph{Language syntax.}
 Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, extend the programming language
 syntax with the following constructs:
 
 \begin{equation*}
 \begin{array}{rcl}
   e &  =  &\ldots \sep\ident{cobind}_{\cclrd{s},\cclrd{r}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~e
-         \sep \ident{split}_{\cclrd{r},\cclrd{s}}~e \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~e \\
+         \sep \ident{split}_{\cclrd{r},\cclrd{s}}~e \\
   \tau &  = &\ldots \sep \ctyp{\cclrd{r}}{\tau} \\
   K  & = &\ldots \sep \ident{cobind}_{\cclrd{s},\cclrd{r}}~\_~e \sep \ident{cobind}_{\cclrd{s},\cclrd{r}}~v~\_ \sep \ident{counit}_{\cunit}~\_ \\
     && \hspace{1.4em} \sep \ident{merge}_{\cclrd{r},\cclrd{s}}~\_
-           \sep \ident{split}_{\cclrd{r},\cclrd{s}}~\_ \sep \ident{lift}_{\cclrd{r},\cclrd{r'}}~\_ \\
+           \sep \ident{split}_{\cclrd{r},\cclrd{s}}~\_  \\
 \end{array}
 \end{equation*}
 
@@ -1127,7 +1127,7 @@ syntax with the following constructs:
 
 ~
 
-\paragraph{Typing rules}
+\paragraph{Typing rules.}
 Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
 
 \begin{equation*}
