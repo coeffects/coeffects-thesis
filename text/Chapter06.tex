@@ -1770,7 +1770,7 @@ Given a structural coeffect algebra, add the typing rules:
 \\
 \tyrule{cobind}
   {\Gamma \vdash e_1 : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} \rightarrow \tau & \Gamma \vdash e_2 : \ctyp{\cclrd{s}\aseq\aclrd{\textbf{r}}}{\tau_1(\tau_1 \xtimes \ldots \xtimes \tau_k)} }
-  {\Gamma \vdash \ident{cobind}_{\cclrd{r}, \cclrd{s}}~e_1~e_2 : \ctyp{\alift{\cclrd{s}}}{\tau}} \\
+  {\Gamma \vdash \ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}~e_1~e_2 : \ctyp{\alift{\cclrd{s}}}{\tau}} \\
   \\
 \tyrule{merge}
   {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \xtimes \ldots \xtimes \tau_k)} }
@@ -1948,7 +1948,7 @@ of the target language with concrete domain-specific extensions as discussed in
 Section~\ref{sec:struct-transl-safety}.
 
 \begin{theorem}[Well-typedness of the translation]
-\label{thm:semantics-welltyped}
+\label{thm:struct-welltyped}
 Given a typing derivation for a well-typed closed expression $\coctx{}{\alift{}} \vdash e : \tau$
 written in a structural context-aware programming langugae that is translated to the target language as
 (we write $\ldots$ for the omitted part of the translation tree):
@@ -1975,36 +1975,308 @@ Case (\emph{var}): $\aclrd{\textbf{c}}=\alift{\cunit}$ and so ${\ident{counit}_\
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{num}): $\tau = \ident{num}$ and so the body $n$ is well-typed.
 
-
-%
-%
-%
-%
-TODO
-%
-%
-%
-%
-%
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\aclrd{\textbf{r}}}(\ldots)$ and the type of $v$ is $\ctyp{\alift{\cclrd{s}}}\tau_1$,
+  calling $\ident{merge}_{\aclrd{\textbf{r}},\alift{\cclrd{s}}}$ produces a context of type
+  $\ctyp{\aclrd{\textbf{r}}\atimes\alift{\cclrd{s}}}(\ldots\xtimes\tau_1)$ as expected by $f$.
 
 \vspace{0.25em}\noindent\hangindent=0.6cm
-Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\cclrd{r}}(\ldots)$ and the type of $v$ is $\ctyp{\cclrd{s}}\tau_1$,
-  calling $\ident{merge}_{\cclrd{r},\cclrd{s}}$ and reassociating produces
-  $\ctyp{\cclrd{r}\czip\cclrd{s}}(\ldots)$ as expected by $f$.
+Case (\emph{app}): After applying $\ident{split}_{\aclrd{\textbf{r}}, \cclrd{t}\aseq\aclrd{\textbf{s}}}$ the types of
+  $\ctx_1, \ctx_2$ are $\ctyp{\aclrd{\textbf{r}}}(\ldots)$ and $\ctyp{\cclrd{t}\aseq\aclrd{\textbf{s}}}(\ldots)$, respectively.
+  $g$ requires $\ctyp{\aclrd{\textbf{s}}}(\ldots)$ and so the result of $\ident{cobind}_{\cclrd{t},\aclrd{\textbf{s}}}$ is
+  $\ctyp{\alift{\cclrd{t}}}\tau_1$ as required by $f$.
 
 \vspace{0.25em}\noindent\hangindent=0.6cm
-Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclrd{t}}$, the types of
-  $\ctx_1, \ctx_2$ are $\ctyp{\cclrd{r}}(\ldots)$ and $\ctyp{\cclrd{s}\cseq\cclrd{t}}(\ldots)$, respectively.
-  $g$ requires $\ctyp{\cclrd{s}}(\ldots)$ and so the result of $\ident{cobind}_{\cclrd{s},\cclrd{t}}$ is
-  $\ctyp{\cclrd{t}}\tau_1$ as required by $f$.
+Case (\emph{weak}): After applying $\ident{split}_{\aclrd{\textbf{r}}, \alift{\czero}}$ the type of
+  $\ctx_1$ is $\ctyp{\aclrd{\textbf{r}}}(\ldots)$ as required.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{exch}), (\emph{contr}): The auxiliary definition $\ident{nest}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{s'}}, \aclrd{\textbf{t}}}$
+  keeps parts of the context corresponding to coeffect annotations $\aclrd{\textbf{r}}, \aclrd{\textbf{q}}$ unchanged and transforms
+  the nested part. In (\emph{exch}), the provided lambda function is of type $\ctyp{\alift{\cclrd{s},\cclrd{t}}}{(\tau_1\xtimes\tau_2)}
+  \rightarrow \ctyp{\alift{\cclrd{t},\cclrd{s}}}{(\tau_2\xtimes\tau_1)}$. In (\emph{contr}), the type of
+  $\ident{dup}_{\cclrd{s},\cclrd{t}}$ is $\ctyp{\alift{\cclrd{s}\cpar\cclrd{t}}}{\tau} \rightarrow \ctyp{\alift{\cclrd{s},\cclrd{t}}}{(\tau\xtimes\tau)}$
+  (assuming \ident{nest} is expanded, rather than treated as a value within the language).
 \end{proof}
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Safety of concrete thing}
+\subsection{Structural coeffect language for dataflow}
 \label{sec:struct-transl-safety}
 
-\newpage
+The target language with comonadically-inspired primitives provides a framework that can be used
+to model a variety of structural context-aware langauges and prove their safety. As outlined in
+Section~\ref{sec:semantics-generalising}, the key principle that guarantees the safety of the
+target language is a correspondence between coeffect annotations and the values they represent.
+In a more expressive target language (such as Haskell or Agda), it would be sufficient to
+provide an implementation of the comonadically-inspired primitives for the concrete domain-specific
+language.
+
+Our simple target language is not expressive enough to capture the correspondence in the type
+system and so we instead follow the same methodology as when discussing safety for flat coeffect
+languages in section Section~\ref{sec:semantics-proofs} and show safety for a sample concrete
+context-aware language. We consider the structural coeffect language for dataflow. The definitions
+can be compared with the flat version discussed in Section~\ref{sec:semantics-proofs-df}, which
+highlights the similarities and differences between the flat and structural notion of context.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\vspace{-0.5em}
+\paragraph{Language syntax}
+\begin{equation*}
+\begin{array}{rcl}
+v &=& \ldots \sep \ident{Df}\langle \textbf{v}_0, \ldots, \textbf{v}_k \rangle
+    \hspace{9.5em} \textbf{v} ~=~ \langle v_0, \ldots, v_k \rangle \\
+e &=& \ldots \sep \ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_k \rangle \sep \ident{prev}_{\cclrd{n_0}, \ldots, \cclrd{n_k}}~e
+    \quad\qquad \textbf{e} ~=~ \langle e_0, \ldots, e_k \rangle \\
+K &=& \ldots \sep \ident{Df}\langle \textbf{v}_0, \ldots, \langle v_{j,0}, \ldots, v_{j, i-1}, \_, e_{j, i+1} \ldots, e_{j, n}\rangle, \ldots, \textbf{e}_k\rangle \\
+   && \ldots \sep \ident{prev}_{\cclrd{n_0}, \ldots, \cclrd{n_k}}~\_
+\end{array}
+\end{equation*}
+
+\vspace{0.75em}
+\paragraph{Typing rules}
+
+\begin{equation*}
+\tyrule{vec}
+  { \forall i\in\{0\ldots n\}. ~ \Gamma \vdash e_i : \tau}
+  { \Gamma \vdash_{\ident{vec}} \langle e_0, \ldots, e_n \rangle : \tau, \cclrd{n} }
+\end{equation*}
+\begin{equation*}
+\tyrule{df}
+  { \forall i\in\{0\ldots k\}. ~ \Gamma \vdash_{\ident{vec}} \textbf{e}_i : \tau_i, \cclrd{n_i}}
+  { \Gamma \vdash \ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_k \rangle : \ctyp{\alift{\cclrd{n_0}, \ldots, \cclrd{n_k}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)} }
+\end{equation*}
+\begin{equation*}
+\tyrule{prev}
+  { \Gamma \vdash e : \ctyp{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)} }
+  { \Gamma \vdash \ident{prev}_{\cclrd{n_0},\ldots,\cclrd{n_k}}~e : \ctyp{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)} }
+\end{equation*}
+
+\vspace{1em}
+\paragraph{Translation}
+
+\begin{equation*}
+\semdeff
+  { \coctx{\Gamma}{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}} \vdash e : \tau }
+  { \coctx{\Gamma}{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}} \vdash \kvd{prev}~e : \tau }
+  {f}
+  {\lambda ctx.\ident{prev}_{\cclrd{n_0},\ldots,\cclrd{n_k}}~\ctx }
+\end{equation*}
+
+\vspace{1em}
+\paragraph{Reduction rules}
+
+\begin{equation*}
+\begin{array}{rl}
+{\footnotesize(\emph{counit})} & \begin{array}{l}
+\ident{counit}_{\cclrd{0}}(\ident{Df} \langle\langle v_0 \rangle\rangle)   \rightsquigarrow v_0
+\end{array}
+\\[0.25em]
+{\footnotesize(\emph{cobind})} & \begin{array}{l}
+\ident{cobind}_{\cclrd{m}, \alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}~f~\ident{Df}\langle \langle a_{1,0}, \ldots a_{1,m+{n_1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,m+{n_k}} \rangle \rangle \rightsquigarrow \\[-0.25em]
+\quad \ident{Df}\langle\langle\; f (\ident{Df}\langle \langle a_{1,0}, \ldots a_{1,{n_1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,{n_k}} \rangle \rangle), ~\ldots~, \\[-0.25em]
+\qquad ~~~\, f (\ident{Df}\langle \langle a_{1,m}, \ldots a_{1,m+{n_1}} \rangle, \ldots, \langle a_{k,m}, \ldots a_{k,m+{n_k}} \rangle \rangle)~\; \rangle\rangle
+\end{array}
+\\[0.25em]
+{\footnotesize(\emph{merge})} & \begin{array}{l}
+\ident{merge}_{\alift{\cclrd{m_0},\ldots,\cclrd{m_k}}, \alift{\cclrd{n_0},\ldots,\cclrd{n_l}}} ((\ident{Df}\langle \textbf{v}_0, \ldots, \textbf{v}_k \rangle), (\ident{Df}\langle \textbf{v}'_0, \ldots, \textbf{v}'_l\rangle)) \rightsquigarrow
+\\[-0.25em]
+\quad \ident{Df}\langle \textbf{v}_0, \ldots, \textbf{v}_k, \textbf{v}'_0, \ldots, \textbf{v}'_l \rangle
+\end{array}
+\\[0.25em]
+{\footnotesize(\emph{split})} & \begin{array}{l}
+\ident{split}_{\alift{\cclrd{m_0},\ldots,\cclrd{m_k}}, \alift{\cclrd{n_0},\ldots,\cclrd{n_l}}} (\ident{Df}\langle \textbf{v}_0, \ldots, \textbf{v}_k, \textbf{v}'_0, \ldots, \textbf{v}'_l \rangle)  \rightsquigarrow
+\\[-0.25em]
+\quad (\ident{Df}\langle \textbf{v}_0, \ldots, \textbf{v}_k \rangle, ~\ident{Df}\langle \textbf{v}'_0, \ldots, \textbf{v}'_l\rangle)
+\end{array}
+\\[0.25em]
+{\footnotesize(\emph{prev})} & \begin{array}{l}
+\ident{prev}_{\alift{\cclrd{n_1},\ldots,\cclrd{n_k}}} (\ident{Df}\langle\langle v_{1,0}, \ldots, v_{1, n_1}, v_{1,{n_1}+1} \rangle,\ldots,\langle v_{k,0}, \ldots, v_{k, n_k}, v_{k,{n_k}+1} \rangle\rangle) \rightsquigarrow
+\\[-0.25em]
+\quad \ident{Df}\langle\langle v_{1,0}, \ldots, v_{1, n_1} \rangle,\ldots,\langle v_{k,0}, \ldots, v_{k, n_k} \rangle\rangle
+\end{array}
+\\[0.25em]
+{\footnotesize(\emph{dup})} & \begin{array}{l}
+\ident{dup}_{\cclrd{m},\cclrd{n}} (\ident{Df}\langle\langle v_0, \ldots, v_{\mathit{max}(m,n)} \rangle\rangle) \rightsquigarrow
+  \ident{Df}\langle\langle v_0, \ldots, v_m \rangle, \langle v_0, \ldots, v_n \rangle\rangle
+\end{array}
+\end{array}
+\end{equation*}
+
+\caption{Additional constructs for modelling structural dataflow}
+\label{fig:structural-ext-df}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Domain-specific extensions.}
+
+The Figure~\ref{fig:structural-ext-df} extends the target functional langauge with constructs,
+typing rules, translation rules and reduction rules needed for modelling structural dataflow.
+In the structural model, the type $\ctyp{\alift{\cclrd{r_0}, \ldots, \cclrd{r_n}}}{(\tau_0\xtimes\ldots\xtimes\tau_n)}$
+represents a structure that provides values and additional contexts for variables of types
+$\tau_0,\ldots,\tau_n$ with contextual capabilities as specified by corresponding coeffect annotations
+$\cclrd{r_0}, \ldots, \cclrd{r_n}$.
+
+In case of dataflow, the comonadically-inspired structure keeps vectors of past values for each of
+the variables in the context. In the syntax, we write $\textbf{v}$ and $\textbf{e}$ for vectors of
+values and expressions, respectively. The expression $\ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_k \rangle$
+is then formed by a vector of variable assignments where each variable assignment is a vector
+of current and past values. When reducing expressions to values, we reduce values from left to
+right and from current-most value to the last past value. This is specified by the context $K$.
+
+When type-checking expressions that create the \ident{Df} values, we use an auxiliary judgement
+$\Gamma \vdash_{\ident{vec}} e : \tau, \cclrd{n}$. The judgement checks that a vector of expressions
+$\textbf{e}$ contains exactly $\cclrd{n}$ expressions of type $\tau$. This is caputred by the
+(\emph{vec}) rule, which is then used to check individual elements of the context in the
+(\emph{df}) rule.
+
+\paragraph{Properties.}
+
+Now consider a target language consisting of the core (ML-subset) defined by the syntax,
+reduction rules and typing rules given in Figure~\ref{fig:semantics-target} (Chapter~\ref{ch:semantics})
+with primitives inspired by structural indexed comonads defined in Figure~\ref{fig:struct-semantics-ext}
+and also concrete notion of comonadically-inspired value and reduction rules for dataflow as
+defined in Figure~\ref{fig:structural-ext-df}.
+
+As with the examples discussed in Chapter~\ref{ch:semantics}, the resulting language is type safe.
+Together with the well-typedness of the translation (Theorem~\ref{thm:struct-welltyped}), this
+guarantees type safety of the structural coeffect calculus for dataflow.
+In order to prove type safety, we first extend the \emph{canonical forms lemma}
+(Lemma~\ref{thm:semantics-fp-canon}) and the \emph{preservation under substitution lemma}
+(Lemma~\ref{thm:semantics-fp-pres-subst}). Those need to consider the new (\emph{df})
+and (\emph{prev}) typing rules and substitution under the newly introduced expression forms
+$\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\cclrd{n}}$. We show that the translation
+rule for \kvd{prev} produces well-typed expressions. Finally, we extend the type preservation
+(Theorem~\ref{thm:structural-fp-pres}) and progress (Theorem~\ref{thm:structural-fp-prog}) theorems.
+
+\begin{theorem}[Well-typedness of the \kvd{prev} translation]
+\label{thm:structural-df-welltyped}
+Given a typing derivation for a well-typed closed expression $\coctx{}{\alift{}} \vdash e : \tau$,
+the translated program $f$ obtained using the rules in Figure~\ref{fig:struct-translation}
+and Figure~\ref{fig:structural-ext-df} is well-typed, \ie~in the target language: $\vdash f : \sem{\coctx{()}{\alift{}}} \rightarrow \sem{\tau}$.
+\end{theorem}
+\begin{proof}
+By rule induction over the derivation of the translation.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm
+Case (\emph{var, num, abs, app}): As before.
+
+\vspace{0.5em}\noindent\hangindent=0.6cm
+Case (\emph{prev}): Type of $\ctx$ is $\ctyp{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)}$
+  and so we can apply the (\emph{prev}) rule to obtain $\ctyp{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)}$
+  as required by $f$.
+\end{proof}
+
+\begin{lemma}[Canonical forms]
+\label{thm:structural-df-canon}
+For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
+\begin{enumerate}
+  \item If $\tau=\ident{num}$ then $e = n$ for some $n \in \mathbb{Z}$
+  \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
+  \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
+  \item If $\tau=\ctyp{\alift{\cclrd{n_1}, \ldots, \cclrd{n_k}}}{(\tau_1\xtimes\ldots\xtimes\tau_k)}$
+    then $e = \ident{Df}\langle \textbf{v}_0, \ldots \textbf{v}_n\rangle$ for some $\textbf{v}_i$
+    such that $\textbf{v}_i = \langle v_0, \ldots, v_{n_i}\rangle$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+  (1,2,3) as before; for (4) the last typing rule must have been (\emph{df}).
+\end{proof}
+
+\begin{lemma}[Preservation under substitution]
+\label{thm:structural-df-pres-subst}
+For all $\Gamma, e, e', \tau, \tau'$, if $\Gamma, x:\tau \vdash e : \tau'$ and $\Gamma \vdash e' : \tau$
+then $\Gamma \vdash e[x \leftarrow e'] : \tau$.
+\end{lemma}
+\begin{proof}
+  By induction over the derivation of $\Gamma, x:\tau \vdash e : \tau'$ as before, with new
+  cases for $\ident{Df}\langle\ldots\rangle$ and $\ident{prev}_{\aclrd{\textbf{n}}}$.
+\end{proof}
+
+\begin{theorem}[Type preservation]
+\label{thm:structural-df-pres}
+  If $\Gamma \vdash e : \tau$ and $e \rightsquigarrow e'$ then $\Gamma \vdash e' : \tau$
+\end{theorem}
+\begin{proof}
+  Rule induction over $\rightsquigarrow$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{fn}, \emph{prj}, \emph{ctx}): As before, using Lemma~\ref{thm:structural-df-pres-subst} for (\emph{fn}).
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{counit}): $e = \ident{counit}_{\cclrd{0}}(\ident{Df} \langle\langle v_0 \rangle\rangle)$. The last rule in the type
+  derivation of $e$ must have been (\emph{counit}) with $\Gamma \vdash \ident{Df} \langle\lange v_0 \rangle\rangle : \ctyp{\alift{\cclrd{0}}}\tau$
+  and therefore $\Gamma \vdash v_0 : \tau$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}~f~(\ident{Df}\langle \textbf{v}_0, \ldots \textbf{v}_{k} \rangle)$
+  such that $\forall i\in\{1\ldots k\}$ $\textbf{v}_i = \langle v_0, \ldots, v_{n_i}\rangle$. The last rule in the type derivation of $e$ must have been
+  (\emph{cobind}) with a type $\tau = \ctyp{\alift{\cclrd{m}}}\tau'$ and assumptions:
+\begin{itemize}[noitemsep,leftmargin=1.5cm,topsep=0pt]
+  \item[--] $\Gamma \vdash f : \ctyp{\alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}{(\tau_1\xtimes\ldots\xtimes\tau_k)} \rightarrow \tau_2$ and
+  \item[--] $\Gamma \vdash \ident{Df}\langle \textbf{v}_0, \ldots \textbf{v}_{k} \rangle : \ctyp{\alift{\cclrd{m}+\cclrd{n_1},\ldots,\cclrd{m}+\cclrd{n_k}}}{(\tau_1\xtimes\ldots\xtimes\tau_k)}$
+\end{itemize}
+%
+\hspace{0.5cm} Using the (\emph{df}) rule, the reduced expression has a type $\ctyp{\alift{\cclrd{m}}}\tau'$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{merge}, \emph{split}, \emph{next}): Similar. In all three cases, the last typing rule in the derivation of $e$
+  guarantees that the context contains correct number of vectors and each vector contains a
+  sufficient number of values of a correct type.
+\end{proof}
+
+\begin{theorem}[Progress]
+\label{thm:structural-df-prog}
+  If $\vdash e : \tau$ then either $e$ is a value or there exists $e'$ such that $e \rightsquigarrow e'$
+\end{theorem}
+\begin{proof}
+  By rule induction over $\vdash$.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{num,abs,var,app,proj,tup}): As before, using the adapted canonical forms lemma
+  (Lemma~\ref{thm:structural-df-canon}) for (\emph{app}) and (\emph{proj}).
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{counit}): $e = {\ident{counit}_\cunit}~e_1$. If $e_1$ is not a value, it can be reduced
+  using (\emph{ctx}) with context ${\ident{counit}_\cunit}~\_$, otherwise it is a value. From Lemma~\ref{thm:structural-df-canon},
+  $e_1 = \ident{Df}\langle\langle v \rangle\rangle$ and so we can apply (\emph{counit}) reduction rule.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}~e_1~e_2$. If $e_1$ is not a value,
+  reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{m},\alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}}~\_~e$. If $e_2$ is
+  not a value reduce using (\emph{ctx}) with context ${\ident{cobind}_{\cclrd{m},\alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}}~v~\_$.
+  If both are values then we have
+  $e_2 = \ident{Df}\langle \langle a_{1,0}, \ldots a_{1,m+{n_1}} \rangle, \ldots, \langle a_{k,0}, \ldots a_{k,m+{n_k}} \rangle \rangle$
+  from Lemma~\ref{thm:structural-df-canon} and so we can apply the (\emph{cobind}) reduction.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{merge}): $e = \ident{merge}_{\alift{\cclrd{m_0},\ldots,\cclrd{m_k}}, \alift{\cclrd{n_0},\ldots,\cclrd{n_l}}} e_1$. If $e_1$ is not a value,
+  reduce using (\emph{ctx}) with context $e = \ident{merge}_{\alift{\cclrd{m_0},\ldots,\cclrd{m_k}}, \alift{\cclrd{n_0},\ldots,\cclrd{n_l}}}~\_$. If $e_1$ is
+  a value, it must be a pair of vectors $(\ident{Df}\langle \textbf{v}_0, \ldots, \textbf{v}_k \rangle, \ident{Df}\langle \textbf{v}'_0, \ldots, \textbf{v}'_l\rangle)$
+  using Lemma~\ref{thm:structural-df-canon} and it can reduce using (\emph{merge}) reduction.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{df}): $e = \ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_n\rangle$. If $\textbf{e}_i$ is not a value
+  then reduce using (\emph{ctx}) with the context $\ident{Df}\langle \ldots \rangle$.
+  Otherwise, $\textbf{e}_0, \ldots, \textbf{e}_n$ are values and so $\ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_n\rangle$
+  is also a value.
+
+\vspace{0.25em}\noindent\hangindent=0.6cm
+Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value, or the type
+  guarantees that it is a stream with correct number of elements to enable the (\emph{split})
+  or (\emph{prev}) reduction, respectively.
+\end{proof}
+
+\begin{theorem}[Safety of context-aware dataflow language]
+  If $\Gamma \vdash e : \tau$ and $e \rightsquigarrow^{*} e'$ then either $e'$ is a value of type $\tau$ or
+  there exists $e''$ such that $e' \rightsquigarrow e''$ and $\Gamma \vdash e'' : \tau$.
+\end{theorem}
+\begin{proof}
+  Rule induction over $\rightsquigarrow^*$ using Theorem~\ref{thm:structural-df-pres} and Theorem~\ref{thm:structural-df-prog}.
+\end{proof}
 
 
 % ==================================================================================================
@@ -2024,33 +2296,31 @@ Case (\emph{app}): After applying $\ident{split}_{\cclrd{r}, \cclrd{s}\cseq\cclr
 
 This chapter completes the key development of this thesis -- the presentation of the coeffect
 framework, consisting of two calculi capturing properties of context-aware computations introduced
-in Chapter~\ref{ch:applications}. In the previous chapter, we focused on the whole-context
-properties of computations and we developed \emph{flat coeffect calculus} to capture them.
+in Chapter~\ref{ch:applications}. In Chapters~\ref{ch:flat} and \ref{ch:semantics}, we focused on
+whole-context properties of computations and we developed \emph{flat coeffect calculus} to capture them.
 This chapter develops \emph{structural coeffect calculus}, which captures \emph{per-variable}
 contextual properties. The system provides a precise analysis of liveness and dataflow and allows
 other interesting uses such as tracking of variable accesses based on bounded linear logic.
 
-Following the structure of the previous chapter, the structural coeffect calculus is parameterized
+Following the structure of the previous two chapters, the structural coeffect calculus is parameterized
 by a \emph{structural coeffect algebra}. The two definitions are similar -- both require operations
 $\cseq$ and $\cpar$ that model sequential and pointwise composition, respectively. For flat
 coeffects, we required $\czip$ to model context merging. For structural coeffects, we
 instead use a vector (free monoid) with the $\atimes$ operation -- which serves a similar purpose
-as $\czip$.
-
-In order to keep track of separate annotations for each variable, we use a system with
+as $\czip$. In order to keep track of separate annotations for each variable, we use a system with
 explicit structural rules (contraction, weakening and exchange) that manipulate the structure
 of variables and the structure of annotations at the same time.
 
-The chapter presents two technical results. The first is the semantics of structural coeffect
-calculus in terms of \emph{structural indexed comonads}. The semantics serves two purposes --
-it unifies our three examples (bounded reuse, dataflow and liveness) and it demonstrates
-suitability of the type system. The second technical result is equational theory for the structural
-coeffect calculus. In particular, we show that $\beta$-reduction and $\eta$-expansion have the
-typing preservation property for any instance of the structural coeffect calculus. These two
-strong properties are desirable for programming languages, but are often not satisfied
+The structural coeffect calculus has desirable equational properties that are satisfied only by
+certain flat coeffect calculi. In particular, we show that $\beta$-reduction and $\eta$-expansion
+have the typing preservation property for any instance of the structural coeffect calculus. These
+two strong properties are desirable for programming languages, but are often not satisfied
 (\eg~by languages with effects).
 
-Two questions remain open for the upcoming chapter. Firstly, is there a way to present
-flat and structural coeffect calculi in a uniform way as a single system? Secondly, what
-is the best pathway towards a practical implementation of programming languages based on
-coeffect systems?
+Finally, we discuss the semantics of the structural coeffect calculus in in terms of \emph{structural
+indexed comonads}. As in Chapter~\ref{ch:semantics}, we first use the categorical semantics
+to unify the different notions of context (bounded reuse, dataflow and liveness) and then use
+it as a basis for translation that turns well-typed programs written in the structural coeffect
+calculus into well-typed programs of a simple functional language. We give concrete reduction
+rules for the target language, modelling \emph{structural dataflow} and prove type safety
+of the language.

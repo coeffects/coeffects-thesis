@@ -1396,7 +1396,7 @@ The Figure~\ref{fig:semantics-ext-df} extensionds the target language with synta
 additional translation rule and reductions for modelling dataflow computations. We introduce a
 new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
 and a matching kind of expressions. We specify how the \kvd{prev} keyword is translated into a
-$\ident{prev}_\cclrd{r}$ operation of the target language nd we also add a typing rule
+$\ident{prev}_\cclrd{r}$ operation of the target language and we also add a typing rule
 (\emph{df}) that checks the types of the elements of the stream and also guarantees
 that the number of elements in the stream matches the number in the coeffect.
 The additional reduction rules mirror the semantics that we discussed in
@@ -1434,8 +1434,8 @@ K &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_ \sep \ident{Df}\langle v_0, \ldots
 
 \begin{equation*}
 \semdeff
-  { \coctx{\Gamma}{\cclrd{n}} \vdash e : \tau }
-  { \coctx{\Gamma}{\cclrd{n+1}} \vdash \kvd{prev}~e : \tau }
+  { \coctx{\Gamma}{\cclrd{n+1}} \vdash e : \tau }
+  { \coctx{\Gamma}{\cclrd{n}} \vdash \kvd{prev}~e : \tau }
   {f}
   {\lambda ctx.\ident{prev}_{\cclrd{n}}~\ctx }
 \end{equation*}
