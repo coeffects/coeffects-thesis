@@ -1,1326 +1,684 @@
-%!TEX root = ../main.tex
+% ==================================================================================================
 
-\chapter{Unified coeffect languages} 
-\label{ch:unified} 
+\chapter{Implementation}
+\label{ch:impl}
 
-%===================================================================================================
+In the previous three chapters, we presented the theory of coeffects consisting of type system
+and comonadically inspired semantics of two parameterized coeffect calculi. The theory provides
+a framework that simplifies the implementation of safe context-aware programming languages. To
+support this claim, this chapter presents a prototype implementation of three coeffect languages --
+language with implicit parameters and both flat and structural versions of a data-flow language.
 
-The main goal of this thesis is to provide a \emph{unified} calculus for tracking context 
-dependence. We have not achieved this goal yet. In Chapter~\ref{ch:applications}, we identified 
-two kinds of contextual properties that we further covered separately. Flat coeffects in 
-Chapter~\ref{ch:flat} track whole-context properties, while structural coeffects, covered in 
-Chapter~\ref{ch:structural}, track per-variable properties. In this chapter, we unify the two 
-notions.
+The implementation directly follows the thoery presented in the previous three chapters. It
+consists of a common framework that provides type checking and translation to a simple functional
+target language with comonadically-inspired primitives. Each concrete context-aware language then
+adds a domain-specific rule for choosing unique typing derivation (as discussed in
+Section~\ref{sec:flat-unique}) together with a domain-specific definition of the
+comonadically-inspired primitives that define the runtime semantics (see Section~\ref{sec:semantics-proofs}).
 
-Although the results presented in this thesis are mainly of a theoretical nature, we indeed 
-believe that coeffects should be integrated in main-stream programming languages. This is addressed
-in the second part of the chapter, where we outline possible approach for a practical implementation
-of coeffect systems. Finally, we conclude the chapter with a brief discussion of an alternative
-approach to coeffect system, based on the meta-language style.
+The main goal of the implementation is to show that the theory is practically useful and to present it
+in a more practical way. However, we do not intend to build a complete real-world programming language.
+For this reason, the implementation is available primarilly as an interactive web-based essay, though
+it can be also downloaded and run locally.
 
 \paragraph{Chapter structure and contributions}
-\begin{itemize}
-\item We start by unifying the two kinds of coeffects discussed so far. In 
-  Section~\ref{sec:unified-unified}, we introduce the \emph{unified coeffect calculus}, which 
-  generalizes flat and structural systems and can be instantiated to track both flat and structural 
-  properties. 
-
-\item We outline one possible approach for practical implementations of coeffects 
-  (Section~\ref{sec:unified-impl}). The technique is based on embedding comonadic computations
-  via a lightweight syntactic extension and using rich type systems for capturing the structure of 
-  coeffect algebra.
-
-\item Finally, we discuss an alternative approach to defining coeffect systems based on the
-  meta-language style, which highlights the relationship between our work and related work arising 
-  from modal logics such as CMTT \cite{logic-cmtt} (Section~\ref{sec:unified-meta}).
-\end{itemize}
-
-\noindent
-The unified coeffect calculus presented in the first part of the chapter is a novel result that
-completes the theory developed in this thesis. The next two sections present important future and
-related work, respectively.
-
-% ==================================================================================================
-
-\section{The unified coeffect calculus}
-\label{sec:unified-unified}
-
-The type systems of the flat coeffect calculus (Figure~\ref{fig:flat-types}) and the structural 
-coeffect calculus (Figure~\ref{fig:struct-types}) differ in a number of ways. Understanding the 
-differences is the key to reconciling the two systems:
 
 \begin{itemize}
-\item The structural coeffect calculus contains explicit rules for context manipulation
-  (weakening, contraction, exchange). In the flat coeffect calculus, these rules are not defined
-  explicitly, but are admissible.
+\item We discuss how the implementation follows from the theory presented earlier (Section~\ref{sec:impl-theory}).
+  This applies to the implementation of the \emph{type checker} and the implementation of the \emph{translation}
+  to a simple target langauge that is then iterpereted. We also discuss how the common framework makes it
+  easy to implement additional context-aware languages (Section~\ref{sec:impl-theory-ext}).
 
-\item In the structural coeffect calculus, the variable context is treated as a vector
-  and is annotated with a vector of (scalar) coeffects. In the flat coeffect calculus,
-  the variable context is a finite partial function (from names to types) and is annotated with 
-  a single (scalar) coeffect.
+\item We consider a number of case studies (Section~\ref{sec:impl-case}) that illustrate interesting
+  aspects of the theories discussed earlier. This includes the typing of lambda abstraction and the
+  difference between flat and structural systems (Section~\ref{sec:impl-case-typing}) and the
+  comonadically-inspired translation (Section~\ref{sec:impl-case-transl}).
 
-\item In the flat coeffect calculus, we distinguish between \emph{splitting} context requirements
-  and \emph{merging} of context requirements ($\cpar$ and $\czip$, respectively). In the structural
-  coeffect calculus, the operations (which model appending and splitting vectors) are invertible 
-  and so the structural coeffect algebra uses the same tensor product $\atimes$.
+\item The implementation is available not just as downloadable code, but also in the format of
+  interactive web-based essay (Section~\ref{sec:impl-essay}), which aims to make coeffects
+  accessible to a broader audience. We discuss the most interesting aspects of the essay format and
+  briefly discuss some of the interesting implementation detail (Section~\ref{sec:impl-essay-tech}).
 \end{itemize}
-
-\noindent
-In the unified calculus presented in this section, we address the three differences as follows.
-We include explicit rules for context manipulation in the calculus; in systems that arise from flat
-calculi, the structural rules do not change coeffects and can thus be applied freely. We generalize 
-the structure of coeffect annotations using the notion of a ``container'' which can be specialized 
-to obtain a single annotation or a vector of annotations. This could potentially be used to capture
-other structures such as trees in bunched typing \cite{substruct-bunched}. Finally, we distinguish 
-between splitting and merging of context requirements (using the notation $\apar$ and $\azip$, 
-respectively). For structural coeffect calculi, the two operators coincide, but for flat
-coeffect calculi, they provide the needed flexibility.
-
-\subsection{Shapes and containers}
-Our generalization of coeffect structure using a \emph{coeffect container} is based on containers of 
-Abbott et al. \cite{types-containers}. Interestingly, containers have later been linked
-to comonads by Ahman et al. \cite{comonads-containers}. Intuitively a container describes data
-types such as lists, trees or streams. A container is formed by shapes (\eg~lengths of 
-lists)\footnote{Shapes can also be intuitively thought of as sizes, but this is not fully precise 
-as some containers may have multiple shapes of the same length, \eg~differently balanced trees.}.
-For every shape, we can obtain a set of positions in the container (\eg~offsets in a list of a
-specified length). More formally:
-
-\begin{definition}
-A \emph{container} consists of a pair $(S,P)$, usually written as $S \triangleleft P$. 
-Here, $S$ is a set of shapes and $P$ is a shape-indexed family $P : S \rightarrow \ident{Set}$ 
-of positions.
-\end{definition}
-
-\noindent
-Well-known examples of containers include lists, non-empty lists, (un\-boun\-ded) streams,
-trees and the singleton data type (which contains exactly one element). Containers relevant 
-to our work are lists and singleton data types:
-
-\begin{itemize}
-\item The container representing lists is given by $S \triangleleft P$ where 
-  shapes are integers $S = \ident{Nat}$ (lengths of a list). The set of positions for a 
-  given length $n$ is the set of indices $P(n)= \{ 1 \ldots n \}$.
-
-\item The container representing the singleton data type is given by $S \triangleleft P$ where
-  shapes are given by a singleton set $S = \{ \ast \}$ and the set of positions for the
-  shape $\ast$ contains exactly one position. To follow the intuition based on offset or 
-  index, we write the single position as $0$, that is $P(\ast) = \{ 0 \}$.
-\end{itemize}
-
-\noindent
-In the unified coeffect calculus, the structure of coeffect annotations is defined by a 
-container with additional operations (discussed later) that links it with the free-variable 
-context $\Gamma$. 
-
-\subsection{Structure of coeffects}
-In the structural coeffect calculus, the coeffect annotation was formed by a vector of coeffect
-scalars. The annotations in the unified coeffect calculus are similar, but a \emph{vector} is 
-replaced with a more general \emph{container}. The primitive coeffect annotations in the unified 
-calculus are formed of \emph{coeffect scalars}. The coeffect scalars are equipped with the same
-structure as in structural coeffect calculus (Definition~\ref{def:structural-scalar}). In this 
-section, we refer to it as \emph{\cclrd{unified coeffect scalar}} (and we repeat the definition 
-below). Then we define \emph{\sclrd{unified coeffect containers}} which determines how coeffect 
-scalar values are attached to the free-variable context. Finally, we define the 
-\emph{\aclrd{unified coeffect algebra}} which consists of shape-indexed coeffect scalar values.
-
-As in the structural coeffect calculus, the contexts in the unified calculus are annotated with 
-shape-indexed coeffects, written as $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$; 
-functions take just a single input parameter and so are annotated with scalar coeffect values 
-$\sigma \xrightarrow{\cclrd{r}} \tau$.
-
-\paragraph{Coeffect scalars.}
-The following definition of the coeffect scalar structure repeats the 
-Definition~\ref{def:structural-scalar} from the previous chapter.
-
-\begin{definition}
-A \emph{\cclrd{unified coeffect scalar}} $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ is a set 
-$\C$ together with elements $\cunit, \czero \in \C$, relation $\cleq$ and binary operations 
-$\cseq, \cpar$ such that $(\C, \cseq, \cunit)$ and $(\C, \cpar, \czero)$ are monoids and
-$(\C, \cleq)$ is a pre-order. That is, for all $r,s,t\in \C$:
-%
-\begin{equation*}
-\begin{array}{ccr}
-r \;\cseq\; (s \;\cseq\; t) = (r \;\cseq\; s) \;\cseq\; t  &
-\cunit \;\cseq\; r = r = r \;\cseq\; \cunit &
-\textnormal{(monoid)}   
-\\
-r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &
-\czero \;\cpar\; r = r = r \;\cpar\; \czero &
-\textnormal{(monoid)}   
-\\
-\textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t&
-t\; \cleq\; t &
-\textnormal{(pre-order)}   
-\\
-\end{array}
-\end{equation*}
-%
-The following distributivity axioms hold:
-\begin{align*}
-\quad (\cclrd{r}\, \cpar\, \cclrd{s}) \;\cseq\; \cclrd{t} & = (\cclrd{r} \,\cseq\, \cclrd{t}) \;\cpar\; (\cclrd{s}\, \cseq\, \cclrd{t}) \\
-\quad \cclrd{t} \;\cseq\; (\cclrd{r}\, \cpar\, \cclrd{s}) & = (\cclrd{t} \,\cseq\, \cclrd{r}) \;\cpar\; (\cclrd{t}\, \cseq\, \cclrd{s})
-\end{align*}
-%
-In addition, we require the following two properties of $\czero, \cpar$ and $\cleq$:
-\begin{equation*}
-\begin{array}{l}
- \quad \cclrd{r}\,\cleq\,\cclrd{r'} \; \Rightarrow \; \forall\cclrd{s}.\;(\cclrd{r}\,\cseq\,\cclrd{s})\;\cleq\;(\cclrd{r'}\,\cseq\,\cclrd{s}) \\
- \quad \czero\;\cleq\;(\czero\,\cseq\,\cclrd{r})
-\end{array}
-\end{equation*}
-\end{definition}
-
-\noindent
-As previously, the monoid $(\C,\cseq,\cunit)$ models sequential composition; the laws guarantee
-an underlying category structure; $\cunit$ and $\czero$ represent an accessed and unused variable, 
-respectively.
-
-The $\cpar$ operation models combining of context requirements arising from multiple parts of a 
-program. The meaning depends on the coeffect container. The operation can either combine requirements
-of individual variables (structural coeffects) or requirements attached to the whole context of 
-multiple sub-exp\-ressions (flat coeffects).
-
-\paragraph{Coeffect containers.}
-The coeffect container is a container that determines how are scalar coeffects attached to 
-free-variable contexts. In addition to a container $\SHP$ formed by shapes and shape-indexed positions, 
-the coeffect container provides a mapping that returns the shape corresponding to a free-variable context. 
-
-The mapping between the shape of the variable context and the shape of the coeffect annotation
-is not necessarily bijective. For example, coeffect annotations in flat systems have just a single 
-shape $\SH = \{ \ast \}$.
-
-In the coeffect judgment $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$, the coeffect annotation
-$\aclrd{\textbf{r}}$ is drawn from the set of coeffect scalars $\C$ indexed by the shape corresponding
-to $\Gamma$. We write $\sclrd{s} = \slen{\Gamma}$ for the shape corresponding to $\Gamma$. The operation 
-$\SP(\sclrd{s})$ returns a \emph{set} of positions and so we can write $\aclrd{\textbf{r}} \in 
-  \SP(\sclrd{s}) \rightarrow \C$  as a mapping from positions (defined by the shape) to scalar coeffects. 
-We usually write this as the exponent $\aclrd{\textbf{r}} \in \C^{\SP(\sclrd{s})}$.
-The coeffect container is also equipped with an operation that appends shapes (when we concatenate
-variable contexts) and two special shapes in $\SH$ representing the empty context and the singleton 
-context. 
-
-\begin{definition}
-A \emph{\sclrd{coeffect container}} structure $(\SHP, \stimes, \sempty, \sunit, \slen{-})$ 
-comprises a container $\SHP$ with a binary operation $\stimes$ on $\SH$ for appending shapes, a 
-mapping from free-variable contexts to shapes $\slen{\Gamma} \in \SH$, and elements $\sempty,\sunit \in
-\SH$ such that $(\SH, \stimes, \sempty)$ is a monoid.
-
-The elements $\sempty$ and $\sunit$ represent the shapes of the empty and the singleton free-variable 
-context, respectively. The $\stimes$ operation corresponds to concatenation of free-variable contexts.
-Given $\Gamma_1$ and $\Gamma_2$ such that $\sclrd{s_1}=\slen{\Gamma_1}, \sclrd{s_2}=\slen{\Gamma_2}$, 
-we require that $\sclrd{s_1}\,\stimes\,\sclrd{s_2}=\slen{\Gamma_1, \Gamma_2}$. 
-\end{definition}
-
-\noindent
-As discussed earlier, we use two kinds of coeffect containers that describe the structure of vectors 
-(for structural coeffects) and the shape of trivial singleton container (for flat coeffects): 
-
-\begin{example}
-\label{ex:unified-struct-shape}
-Structural coeffect container is defined as $\sclrd{(\SHP, {|}\textnormal{--}{|}, +, 0, 1)}$
-where $\SH=\mathbb{N}$ and $\SP(\sclrd{n})=\{ 1 \ldots n \}$. The shape mapping ${|}\Gamma{|}$ returns the 
-number of variables in $\Gamma$. Empty and singleton contexts are annotated with $0$ and $1$, 
-respectively, and shapes of combined contexts are added so that ${|}\Gamma_1, \Gamma_2{|} = 
-{|}\Gamma_1{|} + {|}\Gamma_2{|}$. 
-
-Therefore, a coeffect annotation is a \emph{vector} 
-$\aclrd{\textbf{r}} \in \C^{\SP(\sclrd{n})}$ and assigns a coeffect scalar $\aclrd{\textbf{r}}(i) \in \C$ 
-for each position (corresponding to a variable $x_i$ in the context).
-\end{example}
-
-\begin{example}
-\label{ex:unified-flat-shape}
-Flat coeffect container is defined as $\sclrd{(\SHP, {|}-{|}, \diamond, \sflat, \sflat)}$.
-The container is defined as a singleton data type $\SH = \{\sflat \}$ and $\SP(\sflat) = \{ 0 \}$
-with a constant function ${|}\Gamma{|}=\sflat$ and a trivial operation $\sflat\,\diamond\,\sflat = \sflat$. 
-
-That is, there is a single shape
-$\sflat$ with a single position and all free-variable contexts have the same singleton shape.
-Therefore, a coeffect annotation is drawn from $\C^{\{\sflat\}}$ which is isomorphic to $\C$
-and so a coeffect scalar $\cclrd{r}\in \C$ is associated with every free-variable context.
-\end{example}
-
-\begin{example}
-Similarly to the previous example, we can also define a coeffect container with \emph{no} positions,
-\ie~$\sclrd{(\SHP, {|}-{|}, \diamond, \sflat, \sflat)}$ where $\SH = \{\sflat \}$, $\SP(\sflat) = \emptyset$,
-${|}\Gamma{|}=\sflat$ and $\sflat\,\diamond\,\sflat = \sflat$. 
-This reduces our system to the simply-typed $\lambda$-calculus with no context annotations, because
-$\SP(\sflat)=\emptyset$ and so coeffect annotations would be from the empty set $\C^\emptyset$.
-\end{example}
-
-
-\paragraph{Unified coeffect algebra.}
-The unified coeffect calculus annotates typing judgments with shape-indexed coeffect annotations.
-The \emph{\aclrd{unified coeffect algebra}} combines a coeffect scalar and a coeffect container
-to define shape-indexed coeffects and operations for manipulating these. 
-
-The definition here reconciles the third point discussed in Section~\ref{sec:unified-unified} --
-the fact that flat coeffects use separate operations for splitting and merging ($\cpar$ and $\czip$)
-while structural coeffects use the tensor $\atimes$. In the unified calculus, we use two operators
-that can, however, coincide.
-
-\begin{definition}
-Given a \cclrd{unified coeffect scalar} $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and a 
-\sclrd{coeffect container} $(\SHP, \slen{-}, \stimes, \sempty, \sunit)$ a \emph{\aclrd{unified 
-coeffect algebra}} extends the two structures with $(\azip, \apar, \azero)$ where $\azero \in \C^{\SP(\sempty)}$
-is a coeffect annotation for the empty context and $\azip, \apar$ are families of operations that 
-combine coeffect annotations indexed by shapes. That is $\forall \sclrd{n},\sclrd{m} \in \SH$:
-%
-\begin{equation*}
-\apar_{\sclrd{m},\sclrd{n}}, \azip_{\sclrd{m},\sclrd{n}} ~:~ \C^{\SP \sclrd{m}} \times \C^{\SP \sclrd{n}} \rightarrow \C^{\SP (\sclrd{m}\,\stimes\,\sclrd{n})}
-\end{equation*}
-\end{definition}
-
-\noindent
-A coeffect algebra induces the following three additional operations:
-%
-\begin{equation*}
-\begin{array}{rclcrcl}
- \alift{-} &\narrow{:}& \C \rightarrow \C^{\SP(\sunit)}  \\
- \alift{\cclrd{x}} &\narrow{=}& \lambda \_ . \cclrd{x}   \\
-\\[-0.5em]
- \aseq_{\sclrd{m}} &\narrow{:}&  \C \times \C^{\SP(\sclrd{m})} \rightarrow \C^{\SP(\sclrd{m})}   \\
- \cclrd{r}\, \aseq\, \aclrd{\textbf{s}} &\narrow{=}& \lambda \sclrd{s} . \cclrd{r}\, \cseq\, \aclrd{\textbf{s}}(\sclrd{s}) \\
-\\[-0.5em]
- \alen{-} &\narrow{:}& \C^{\SP(\sclrd{m})} \rightarrow \sclrd{m}\\
- \alen{\aclrd{\textbf{r}}} &\narrow{=}& \sclrd{m}
-\end{array}
-\end{equation*}
-%
-The $\alift{-}$ operation lifts a scalar coeffect to a shape-indexed coeffect that is indexed by 
-the shape of a singleton context. The $\aseq_{\sclrd{m}}$ operation is a left multiplication of a 
-vector by a scalar. As we always use bold face for vectors and ordinary face for scalars (as well 
-as a distinct colour), using the same symbol is not ambiguous. We also tend to omit the subscript
-$\sclrd{m}$ and write~$\aseq$. 
-
-Finally, we define $\alen{-}$ as an operation that returns the shape of a given shape-indexed 
-coeffect. The only purpose is to simplify notation, as we tend to avoid subscripts, but often need 
-to specify that shapes of variable context and coeffect match, 
-\eg~$\alen{\aclrd{\textbf{r}}} = \slen{\Gamma}$.
-
-\paragraph{Splitting and merging coeffects.}
-The operators $\apar$ and $\azip$ combine shape-indexed coeffects associated with two contexts. 
-For example, assume we have $\Gamma_1$ and $\Gamma_2$ with coeffects $\aclrd{\textbf{r}} \in 
-\C^{\SP(\sclrd{m})}$ and $\aclrd{\textbf{s}} \in \C^{\SP(\sclrd{n})}$. In the structural system, the 
-context shapes $\sclrd{m}, \sclrd{n}$ denote the number of variables in the two contexts. The 
-combined context $\Gamma_1, \Gamma_2$ has a shape $\sclrd{m}\,\stimes\,\sclrd{n}$ and the combined 
-coeffects $\aclrd{\textbf{r}} \,\azip\, \aclrd{\textbf{s}}, \aclrd{\textbf{r}} \,\apar\, \aclrd{\textbf{s}} 
-\in \C^{\SP(\sclrd{m} \stimes \sclrd{n})}$ are indexed by that shape.
-
-For structural coeffect systems such as bounded reuse, both $\apar$ and $\azip$ are
-just the tensor product $\times$ of vectors. For flat coeffect systems, the operations
-can be defined independently, letting $\azip=\czip$ and $\apar=\cpar$.
-
-The difference between $\azip$ and $\apar$ is clarified by the semantics (Sec\-tion~\ref{sec:unified-semantics}), 
-where $\aclrd{\textbf{r}}\,\azip\,\aclrd{\textbf{s}}$ is an annotation of the \emph{codomain} of 
-a morphism that merges the capabilities provided by two contexts (in the syntactic 
-reading, splits the context requirements), while $\aclrd{\textbf{r}}\,\apar\,\aclrd{\textbf{s}}$ 
-is an annotation of the \emph{domain} of a morphism that splits the capabilities of a single 
-context into two parts (in the syntactic reading, merges their context requirements). 
-Syntactically, this means that we always use $\azip$ in the rule \emph{assumptions} and 
-$\apar$ in \emph{conclusions}. 
-
-% --------------------------------------------------------------------------------------------------
-
-\newcommand{\tystmt}[2]{ (\text{\footnotesize{#1}})~~{#2} }
-\newcommand{\ctxtrans}[3]{ #2 \rightsquigarrow #1, #3 }
-\newcommand{\ctxtransnl}[3]{ \begin{array}{l} #2 \rightsquigarrow\\ #1, #3 \end{array}}
-
-\begin{figure}[t]
-
-{\small a.) Syntax-driven typing rules:}
-\begin{equation*}
-\tyrule{var}
-  { }
-  {\coctx{x\!:\!\tau}{\alift{\cunit}} \vdash x : \tau }
-\end{equation*}
-\begin{equation*}
-\tyrule{const}
-  {c \!:\! \tau \in \Delta}
-  {\coctx{()}{\azero} \vdash c : \tau }
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  {\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 &
-   \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1 }
-  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}\;\apar\;(\cclrd{t} \,\aseq\, \aclrd{\textbf{s}})}} \vdash e_1~e_2 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{abs}
-  {\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\azip\,\alift{\cclrd{s}}} \vdash e : \tau_2}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
-\end{equation*}
-\begin{equation*}
-\tyrule{let}
-  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 &
-    \coctx{\Gamma_2, x\!:\!\tau_1}{\aclrd{\textbf{s}}\;\azip\;\alift{\cclrd{t}}} \vdash e_2 : \tau_2}
-  {\coctx{\Gamma_1, \Gamma_2}{(\cclrd{t} \,\aseq\, \aclrd{\textbf{r}}) \;\apar\; \aclrd{\textbf{s}}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
-\end{equation*}
-
-\vspace{1.5em}
-{\small b.) Structural rules for context manipulation:}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \azip \alift{\cclrd{s'}} \azip \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \apar \alift{\cclrd{s}} \apar \aclrd{\textbf{q}}} \vdash e : \tau}
-\quad
-(\cclrd{s'} \cleq \cclrd{s})
-\end{equation*}
-\begin{equation*}
-\tyrule{weak}
-  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \tau}
-  {\coctx{\Gamma,x \!:\! \tau_1}{\aclrd{\textbf{r}} \apar \alift{ \czero }} \vdash e : \tau} 
-\end{equation*}
-\begin{equation*}
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\aclrd{\textbf{r}} \azip \alift{\cclrd{s}} \azip \alift{\cclrd{t}} \azip \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \apar \alift{\cclrd{t}} \apar \alift{\cclrd{s}} \apar \aclrd{\textbf{q}}} \vdash e : \tau}
-\quad
-\begin{array}{l}
- \slen{\Gamma_1} = \alen{\aclrd{\textbf{r}}}\\[-0.25em]
- \slen{\Gamma_2} = \alen{\aclrd{\textbf{s}}}
-\end{array}
-\end{equation*}
-\begin{equation*}
-\hspace{2.5em} 
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \azip \alift{\cclrd{s}} \azip \alift{\cclrd{t}} \azip \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \apar \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \apar \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
-~
-\begin{array}{l}
- \slen{\Gamma_1} = \alen{\aclrd{\textbf{r}}}\\[-0.25em]
- \slen{\Gamma_2} = \alen{\aclrd{\textbf{s}}}
-\end{array}
-\end{equation*}
-
-\vspace{0.5em}
-\figcaption{Type system for the unified coeffect calculus}
-\label{fig:unif-types}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Unified coeffect type system}
-\label{sec:unified-types}
-The unified coeffect system in Figure~\ref{fig:unif-types} resembles the structural type system
-shown in Figure~\ref{fig:struct-types}. Rather than explaining the rules one-by-one, we focus on
-how the unified system differs from the structural system.
-
-The type system for the unified coeffect calculus is parameterized by a coeffect scalar 
-$(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ together with a coeffect algebra $(\azip, \apar, \azero)$ 
-and the derived constructs $\alift{-}$, $\alen{-}$ and $\aseq$. 
-As in the structural system, free-variable contexts $\Gamma$ are treated as vectors modulo duplicate
-use of variables -- the associativity is built-in. The order of variables matters, but can be changed 
-using the exchange rule. The context annotations $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ 
-are shape-indexed coeffects (rather than simple vectors as before). As before, functions are
-annotated with coeffects scalars.
-
-\paragraph{Syntax-driven rules.} 
-The (\emph{var}) rule is syntactically the same as in the structural system, but it should be read
-differently. The $\alift{-}$ operation does not create a \emph{vector}, but a \emph{shape-indexed
-coeffect} that returns $\cunit$ for all positions in the singleton shape $\sunit$. 
-The (\emph{const}) rule annotates empty context with a special annotation of the shape $\sempty$.
-
-In a structural system, the two annotations correspond to a singleton and empty vector, respectively.
-However, for a singleton shape with one position, the annotations are equivalent to annotating
-variables with a scalar $\cunit$ and constants with a scalar $\czero$.
-
-In the (\emph{app}), (\emph{abs}) and (\emph{let}) rules, the only change from the structural
-system is that the vector concatenation $\atimes$ is now replaced with context splitting/merging 
-of the unified coeffect algebra. As already mentioned, we use splitting of context requirements $\azip$
-in rule \emph{assumptions} and merging of context requirements $\apar$ in rule \emph{conclusions}.
-
-Note that we use the terms \emph{merging} and \emph{splitting} in the syntactic (top-down) sense. As 
-discussed in Chapter~\ref{ch:flat}, Section~\ref{sec:flat-calculus-undestanding}, we can also read 
-the rules in semantic (bottom-up) sense, in which case assumptions merge available contextual 
-information and conclusions split available contextual information.
-
-\paragraph{Structural rules.}
-The merging/splitting operations in the structural rules are changed in the same way as in the
-rules above. It is also worth noting that structural coeffect system used vectors of multiple 
-elements. For example, $\alift{\cclrd{s},\cclrd{t}}$ and $\alift{\cclrd{t},\cclrd{s}}$ in the (\emph{exch}) 
-rule denoted two-element vectors. In the unified system, this is replaced with merging/splitting
-of two lifted scalars: $\alift{\cclrd{s}} \azip \alift{\cclrd{t}}$ and $\alift{\cclrd{t}} \apar \alift{\cclrd{s}}$.
-
-In structural systems, the two notations mean the same thing -- we are simply concatenating or splitting two 
-singleton vectors. However, this generalization allows us to capture flat coeffect systems as well.
-The lifting operation in flat systems simply returns the lifted scalar and operators $\azip$ and
-$\apar$ correspond to operations on coeffect scalars. As discussed in Section~\ref{sec:unified-flat},
-thanks to the properties of coeffect scalars, contraction, weakening and exchange that do not 
-affect the coeffect annotation are admissible for all flat systems embedded in the unified 
-coeffect calculus.
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Structural coeffects}
-\label{sec:unified-structural}
-
-The unified coeffect system uses a general notion of context shape, but it has been designed with 
-structural and flat systems in mind. In this and the next section, we show how it captures 
-the two coeffect systems from Chapter~\ref{ch:flat} and Chapter~\ref{ch:structural}. 
-
-The unified calculus closely resembles the structural system and so using it to model structural
-systems is easy -- given a coeffect scalar, we use the coeffect container that describes a \emph{vector} 
-of annotations (Example~\ref{ex:unified-struct-shape}) and define a coeffect algebra formed by
-a vector (free monoid) of scalars.
-
-\begin{definition}
-\label{def:unified-struct}
-Given a coeffect scalar $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ a \emph{structural coeffect system} 
-is defined by: 
-
-\begin{itemize}
-\item A coeffect container $\sclrd{(\SHP, {|}\textnormal{--}{|}, +, 0, 1)}$ where $\SH=\mathbb{N}$ and
-  $\SP(\sclrd{n})=\{ 1 \ldots n \}$ and  ${|}x_1\!:\!\tau_1,\ldots,x_n\!:\!\tau_n{|}=n$.
-
-\item A coeffect algebra $\aclrd{(\times, \times, \epsilon)}$ where $\times$ and $\epsilon$ are
-  shape-indexed versions of the binary operation and the unit of a free monoid over $\C$.
-  That is $\epsilon : \C^{\SP(\sclrd{0})}$ is an empty vector and 
-  $\times : \C^{\SP(\sclrd{n})} \times \C^{\SP(\sclrd{m})} \rightarrow \C^{\SP(\sclrd{n + m})}$ 
-  appends vectors.
-\end{itemize}
-\end{definition}
-
-\noindent
-The definition is valid since the shape operations form a monoid
-$\sclrd{(\mathbb{N}, +, 0)}$ and $\slen{\textnormal{--}}$ (calculating the length of
-a list) is a monoid homomorphism from the free monoid to the monoid of
-shapes.
-
-\paragraph{Properties.}
-An important property of the unified system is that, when used in a structural way as discussed
-above, it gives calculi with the same properties as the structural system described in 
-Chapter~\ref{ch:structural}. This can be easily seen by comparing the Figure~\ref{fig:unif-types}
-with the Figure~\ref{fig:struct-types} and using the free monoid interpretation of the unified
-coeffect algebra.
-
-\begin{remark}
-The system described in Definition~\ref{def:unified-struct} is equivalent to the structural coeffect
-system described in Figure~\ref{fig:struct-types}. That is, a typing derivation using a structural
-coeffect embedded in the unified system is valid if and only if the corresponding derivation is
-valid in the structural system.
-\end{remark}
-
-\noindent
-Using the above definition, our unified coeffect system can capture per-variable coeffect properties
-discussed in Section~\ref{sec:applications-structural}. This includes the system for bounded reuse 
-(which is only used in the structural form) and precise tracking of per-variable dataflow and liveness. 
-
-% --------------------------------------------------------------------------------------------------
-
-\subsection{Flat coeffects}
-\label{sec:unified-flat}
-
-The same unified coeffect system can be used to capture systems that track whole-context (flat) 
-coeffects such as implicit parameters. This is achieved using a singleton-shaped container for
-coeffect annotations. The resulting system has explicit structural rules (and is syntactically
-different from the standard flat coeffect system), but we show that they are equivalent.
-
-Flat coeffect systems are characterised by a singleton set of shapes (Example~\ref{ex:unified-flat-shape}).
-In this setting, the context annotations $\C^{ \SP(\sflat) } = \{0\} \rightarrow \C$ are equivalent 
-to coeffect scalars $\C$. In addition to the coeffect scalar structure, we need to define $\apar$ 
-and $\azip$. Our examples of flat coeffects use $\cpar$ (merging of scalar coeffects) for $\apar$ 
-(merging of shaped coeffect annotations). The $\azip$ operation (corresponding to $\czip$
-in flat coeffect calculus) needs to be provided explicitly.
-
-\begin{definition}
-\label{def:unified-flat}
-Given a coeffect scalar $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and a binary operation 
-$\cclrd{\wedge} : \C \times \C \rightarrow \C$ such that $(\cclrd{r \wedge s}) \,\cleq\, (\cclrd{r}\,\cpar\,\cclrd{s})$, 
-the unified coeffect algebra modelling a flat coeffect systems consists of:
-%
-\begin{itemize}{}
-\item A flat coeffect container $\sclrd{(\SHP, {|}-{|}, \diamond, \sflat, \sflat)}$ as defined in 
-  Example~\ref{ex:unified-flat-shape}.
-
-\item A flat coeffect algebra $(\czip, \cpar, \czero)$, \ie~$\apar = \cpar$ 
-  and $\azero = \czero$ with an\\ additional binary operation $\azip = \czip$. 
-\end{itemize}
-\end{definition}
-
-\noindent
-Intuitively, the requirement $(\cclrd{r}\,\czip\,\cclrd{s}) \;\cleq\; (\cclrd{r}\,\cpar\,\cclrd{s})$,
-which could be also written as $(\aclrd{r}\,\azip\,\aclrd{s}) \;\aclrd{\leq}\; (\aclrd{r}\,\apar\,\aclrd{s})$,
-denotes that splitting context requirements and then re-combining them preserves all the requirements
-from the assumptions. The system may be imprecise and conclusions can overapproximate assumptions, but
-it cannot lose requirements. This is fundamental for showing that exchange and contraction are admissible
-in the unified system. 
-
-\paragraph{Properties.}
-To show that the typing of flat properties in the unified system is equivalent to the typing in the
-flat system, we show that a valid typing judgement in the first system is a valid typing judgement in 
-the second system and vice versa.
-
-In one direction, we show that the unified system (capturing flat properties) permits weakening, 
-contraction and exchange rules that do not change the coeffect annotations. This guarantees that
-a valid judgement in flat system is also valid in the unified system.
-
-\begin{lemma}
-\label{thm:unified-weak}
-A unified coeffect calculus capturing flat properties admits weakening that does not change the
-coeffect annotation.
-\end{lemma}
-\begin{proof}
-The rule is admissible using the following derivation:
-\begin{equation*}
-\inference
-  { \inference
-      {\coctx{\Gamma}{ \cclrd{r} } \vdash e : \tau}
-      {\coctx{\Gamma,x \!:\! \tau_1}{\cclrd{r} \;\apar\; \alift{ \czero }} \vdash e : \tau} }
-  { \inference
-      {\coctx{\Gamma,x \!:\! \tau_1}{\cclrd{r} \,\cpar\, \czero} \vdash e : \tau}      
-      {\coctx{\Gamma,x \!:\! \tau_1}{\cclrd{r}} \vdash e : \tau} }
-\end{equation*}
-
-\noindent
-We write $\cclrd{r}$ rather than $\aclrd{\textbf{r}}$, because we are tracking flat properties.
-The first step is an application of the (\emph{weak}) rule. Next, we use the fact that
-$\apar=\cpar$ and $\alift{\czero}=\czero$, which is the unit of the monoid $(\C, \cpar, \czero)$.
-\end{proof}
-
-\begin{lemma}
-A unified coeffect calculus capturing flat properties admits exchange that does not change the
-coeffect annotation.
-\end{lemma}
-\begin{proof}
-We use the idempotence of $\czip$ and $\cpar$ together with the (\emph{exch}) rule:
-\begin{equation*}
-\inference
-  { \inference
-      { \inference
-          {\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\cclrd{r}} \vdash e : \tau}
-          {\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\cclrd{r} \,\czip\, \cclrd{r} \,\czip\, \cclrd{r} \,\czip\, \cclrd{r}} \vdash e : \tau} }
-      { \coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\cclrd{r} \azip \alift{\cclrd{r}} \azip \alift{\cclrd{r}} \azip \cclrd{r}} \vdash e : \tau } }
-  { \inference 
-      {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \apar \alift{\cclrd{r}} \apar \alift{\cclrd{r}} \apar \cclrd{r}} \vdash e : \tau}
-      {\inference
-         {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\cclrd{r}\,\cpar\,\cclrd{r}\,\cpar\,\cclrd{r}\,\cpar\,\cclrd{r}} \vdash e : \tau}
-         {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\cclrd{r}} \vdash e : \tau} } }
-\end{equation*}
-
-\noindent
-Using idempotence, we first duplicate the annotation $\cclrd{r}$ to get a coeffect in the form
-$\cclrd{r} \azip \alift{\cclrd{r}} \azip \alift{\cclrd{r}} \azip \cclrd{r}$ as required by the
-assumption of the (\emph{exch}) rule. Note that $\alift{-}$ can be added freely as
-$\alift{\cclrd{r}}$ is equivalent to $\cclrd{r}$. After applying (\emph{exch}), we use 
-idempotence of $\apar$.
-\end{proof}
-
-\begin{lemma}
-A unified coeffect calculus capturing flat properties admits contraction that does not change the
-coeffect annotation.
-\end{lemma}
-\begin{proof}
-Similarly to exchange, the proof uses idempotence of $\czip$ and $\cpar$:
-\begin{equation*}
-\inference
-  { \inference
-      {\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\cclrd{r} \czip\, \cclrd{r} \czip\, \cclrd{r} \czip\, \cclrd{r}} \vdash e : \tau}
-      {\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\cclrd{r} \azip \alift{\cclrd{r}} \azip \alift{\cclrd{r}} \azip \cclrd{r}} \vdash e : \tau} }
-  { \inference
-      {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \apar \alift{\cclrd{r} \,\cpar\, \cclrd{r}} \apar \cclrd{r}} \vdash \subst{e}{z,y}{x} : \tau}
-      {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\cpar\, \cclrd{r} \,\cpar\, \cclrd{r} \,\cpar\, \cclrd{r}} \vdash \subst{e}{z,y}{x} : \tau} }
-\begin{array}{r} \\[2.5em] \qedhere \end{array}
-\end{equation*}
-\end{proof}
-
-\noindent
-In the last two cases, we need to turn the coeffect into a form that is required by the exchange
-and contraction rules. Aside from idempotence, we could use the unit property and obtain 
-\eg~$\czero\,\czip\,\cclrd{r}\,\czip\,\czero\,\czip\,\czero$. However, this approach does not 
-work because $\cpar$ and $\czip$ may have different unit elements (in fact, we do not ever require
-the existence of a unit for $\czip$).
-
-In the other direction, we need to show that any valid judgement in the unified system (tracking
-flat properties) is also valid in the flat system. The syntax-directed rules are the same in both
-systems, but we need to show that any use of (explicit) weakening, contraction and exchange can be
-derived in the flat system. 
-
-\begin{lemma}
-Weakening, as defined in a unified coeffect calculus capturing flat properties, is admissible in 
-the flat coeffect calculus.
-\end{lemma}
-\begin{proof}
-Similar to the proof in Lemma~\ref{thm:unified-weak}. The property follows from the fact that 
-$\bot=\alift{\czero}$ is the unit of $\cpar$.
-\end{proof}
-
-\begin{lemma}
-\label{thm:unified-rev-contr}
-Contraction, as defined in a unified coeffect calculus capturing flat properties, is admissible in 
-the flat coeffect calculus.
-\end{lemma}
-\begin{proof}
-The application of (\emph{contr}) rule has the following form:
-\begin{equation*}
-\inference
- { \inference
-    {\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\czip\, \cclrd{s} \,\czip\, \cclrd{t} \,\czip\, \cclrd{q}} \vdash e : \tau}
-    {\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\azip\, \alift{\cclrd{s}} \,\azip\, \alift{\cclrd{t}} \,\azip\, \cclrd{q}} \vdash e : \tau} }
- { \inference
-    {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\apar\, \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \,\apar\, \cclrd{q}} \vdash \subst{e}{z,y}{x} : \tau}
-    {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\cpar\, \cclrd{s} \,\cpar\, \cclrd{t} \,\cpar\, \cclrd{q}} \vdash \subst{e}{z,y}{x} : \tau} } 
-\end{equation*}
-%
-From Definition~\ref{def:unified-flat}, we know that $(\cclrd{r} \,\czip\, \cclrd{s} \,\czip\, \cclrd{t} \,\czip\, \cclrd{q}) 
-\;\cleq\; (\cclrd{r} \,\cpar\, \cclrd{s} \,\cpar\, \cclrd{t} \,\cpar\, \cclrd{q})$. Thus, the judgement
- can be derived using the (\emph{sub}) rule of flat coeffect calculus.
-\end{proof}
-
-
-\begin{lemma}
-\label{thm:unified-rev-exch}
-Exchange, as defined in a unified coeffect calculus capturing flat properties, is admissible in 
-the flat coeffect calculus.
-\end{lemma}
-\begin{proof}
-The application of (\emph{exch}) rule has the following form:
-\begin{equation*}
-\inference
- {\inference
-    {\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\cclrd{r} \,\czip\, \cclrd{s} \,\czip\, \cclrd{t} \,\czip\, \cclrd{q}} \vdash e : \tau}
-    {\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2}{\cclrd{r} \,\azip\, \alift{\cclrd{s}} \,\azip\, \alift{\cclrd{t}} \,\azip\, \cclrd{q}} \vdash e : \tau} }
- {\inference
-    {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\apar\, \alift{\cclrd{t}} \,\apar\, \alift{\cclrd{s}} \,\apar\, \cclrd{q}} \vdash e : \tau}
-    {\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2}{\cclrd{r} \,\cpar\, \cclrd{t} \,\cpar\, \cclrd{s} \,\cpar\, \cclrd{q}} \vdash e : \tau} }
-\end{equation*}
-%
-From idempotence of $\czip$, we get that $\cclrd{r} \,\czip\, \cclrd{s} \,\czip\, \cclrd{t} \,\czip\, \cclrd{q} =
-\cclrd{r} \,\czip\, \cclrd{t} \,\czip\, \cclrd{s} \,\czip\, \cclrd{q}$. Thus the judgement can be derived using
-(\emph{sub}) as in contraction.
-\end{proof}
-
-\noindent
-A consequence of the equivalence discussed above is that the unified coeffect system can capture 
-all properties that can be captured by the flat coeffect system -- including implicit parameters,
-rebindable resources, Haskell type classes (discussed by Orchard~\cite{comonads-dom-thesis}),
-data-flow and variable liveness.
-
-%--------------------------------------------------------------------------------------------------
-
-\subsection{Semantics of unified calculus}
-\label{sec:unified-semantics}
-
-The semantics of the unified calculus can be obtained by generalizing the semantics of the structural
-calculus in the same way as we generalized the type system. However, it is worth exploring the type 
-signatures of the operations of the underlying (comonad-based) structure.
-
-The semantics of the unified coeffect calculus follows the same pattern as the semantics of the
-structural calculus (Section~\ref{sec:struct-semantics}) with a number of differences. The 
-index $\aclrd{\textbf{r}}$ of the object mapping $\ctyp{\aclrd{\textbf{r}}}$ is an element of 
-the structure $\C^{\SP(\sclrd{n})}$ for a specified container $\SH \triangleleft \SP$ and a shape 
-$\sclrd{n}$ determined as $\sclrd{n} = \slen{\Gamma}$. To match the type system discussed in 
-Section~\ref{sec:unified-types}, we need to modify the domains and codomains of the \ident{merge}, 
-\ident{split} and \ident{dup} operations as follows.
-%
-\begin{equation*}
-\begin{array}{lcl}
- \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} &\narrow{:}& 
-  \ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta} \rightarrow \ctyp{\aclrd{\textbf{r}}\azip\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)} \\
- \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} &\narrow{:}& 
-  \ctyp{\aclrd{\textbf{r}}\apar\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)} \rightarrow \ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta} \\
- \ident{dup}_{\cclrd{r}, \cclrd{s}} &\narrow{:}& 
-  \ctyp{\alift{\cclrd{r} \cpar \cclrd{s}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{r}}\,\azip\,\alift{\cclrd{s}}}{(\alpha \xtimes \alpha)} \\
-\end{array}
-\end{equation*}
-%
-The key difference is that the vector concatenation $\atimes$ is replaced with $\apar$ in the
-\emph{domain} of the operations (in \ident{split}) and with $\azip$ in the codomain
-(in \ident{merge}, but also in \ident{dup} which models contraction).
-This means that the splitting and merging the context can change the coeffect annotation:
-%
-\begin{equation*}
-\ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} \circ \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}} ~:~
-  \ctyp{\aclrd{\textbf{r}}\apar\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)}
-  \rightarrow \ctyp{\aclrd{\textbf{r}}\azip\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)} 
-\end{equation*}
-%
-For flat coeffect calculi where $(\aclrd{r}\,\azip\,\aclrd{s}) \;\aclrd{\leq}\; (\aclrd{r}\,\apar\,\aclrd{s})$,
-splitting and then merging a context may lose some of the available contextual capabilities
-(and increase context requirements). This illuminates why our proofs of Lemma~\ref{thm:unified-rev-contr} 
-and Lemma~\ref{thm:unified-rev-exch} relied on sub-coeffecting in the flat system.
-
-\paragraph{Related and future work.}
-The semantics presented here serves main\-ly to inform the design of the type system. For this 
-reason, we keep the semantics simple and close to the concrete notions used in the type system
-such as flat, structural and unified coeffect algebras. In particular, the indexed comonad 
-structure consists of object mapping $\ctyp{r}{}$ that is indexed by a corresponding algebra:
-
-\begin{compactitem}
-\item[--] In the flat coeffect calculus, $\ctyp{\cclrd{r}}{}$ is indexed by scalar coeffects $\cclrd{r} \in \C$
-\item[--] In the structural coeffect calculus, the object mapping $\ctyp{\aclrd{\textbf{r}}}{}$ is 
-  indexed by vectors of scalars $\aclrd{\textbf{r}} \in \bigcup_{\sclrd{m}\in \sclrd{\mathbb{N}}} \C^{\sclrd{m}}$
-\item[--] In unified coeffect calculus with a coeffect container $\SH\,\sclrd{\triangleleft}\,\SP$,
-  the mapping $\ctyp{\aclrd{\textbf{r}}}{}$ is indexed by shape-indexed scalars 
-  $\aclrd{\textbf{r}} \in \bigcup_{\sclrd{s}\in \SH} \C^{\SP(\sclrd{m})}$
-\end{compactitem}
-
-\noindent
-In this treatment, the indices are formed by objects that are modelled outside of category theory.
-A fully categorical semantics can be found in a joint paper with Orchard \cite{coeffects-icfp14}. 
-There, the index (coeffect scalars and shape-indexed scalars) are modelled as categories too.
-The definition is written using the following notation:
-
-\begin{compactitem}
-\item[--] $[\mathbb{C}, \mathbb{D}]$ is a category of functors between categories $\mathbb{C}$ and $\mathbb{D}$
-\item[--] $B^A$ is an exponential object $A \Rightarrow B$ in a Cartesian-closed category
-\end{compactitem}
-
-\noindent
-In the categorical semantics of coeffect calculi, coeffect scalars are modelled as a
-category of scalars $\cclrd{\mathbb{I}}$ such that $\textit{obj}(\cclrd{\mathbb{I}}) = \C$.
-The structure of the context (indexed comonad) over the input then becomes a functor
-indexed by the free-variable context shape $\slen{\Gamma}$ and coeffect annotations
-$\aclrd{\textbf{r}}$, \ie~$\ctyp{\slen{\Gamma}}_{\aclrd{\textbf{r}}}$:
-%
-\begin{equation*}
-\sem{\coctx{\Gamma}{\aclrd{R}} \vdash e : \tau} : \ctyp{\slen{\Gamma}}_{\aclrd{R}}
-\sem{\Gamma} \rightarrow \sem{\tau}
-\end{equation*}
-%
-The structure $\ctyp{}$ can be thought of as a dependent product of functors $\ctyp{\sclrd{n}}$ 
-over possible shapes $\sclrd{n} \in \SH$ where:
-%
-\begin{equation*}
-\ctyp{\sclrd{n}} : \cclrd{\mathbb{I}}^{\SP(\sclrd{n})} \rightarrow [\mathbb{C}^{\SP(\sclrd{n})}, \mathbb{C}]
-\end{equation*}
-%
-For a fixed context shape $\sclrd{n}$ the functor 
-$\ctyp{\sclrd{n}} : \cclrd{\mathbb{I}}^{\SP(\sclrd{n})} \rightarrow [\mathbb{C}^{\SP(\sclrd{n})}, \mathbb{C}]$ 
-maps a coeffect indexed by positions $\SP(\sclrd{n})$ to a functor from a context 
-$\mathbb{C}^{\sclrd{n}}$ to an object in $\mathbb{C}$. That is, given a coeffect annotation 
-(matching the shape of the context), we get a functor $\in [\mathbb{C}^{\sclrd{n}},\mathbb{C}]$. 
-From a programming perspective, this functor defines a data structure that models the additional
-context provided to the program. The shape of this data structure depends on the coeffect
-annotation $\cclrd{\mathbb{I}}^{\sclrd{n}}$. For example, in bounded reuse, the annotation defines
-the number of values needed for each variable and the functor will be 
-formed by lists of length matching the required number. 
-
-In the model above, shapes and positions are still treated as ordinary sets. Indeed, in the 
-joint paper \cite{coeffects-icfp14}, we treat shapes as just sets of sets. In this chapter, we 
-instead define \emph{coeffect container} as an extension of containers, which have a well-defined 
-categorical structure \cite{semantics-containers}. A future work is adapting the semantics of
-the unified coeffect calculus so that it is based on the semantics of containers. However, note 
-that context is \emph{not} a (simple) container, because containers are used as indices (coeffect
-annotations) of the object that wrap the free-variable context.
-
-
-
-% =================================================================================================
-%                                                                   
-%      ####                         #       #                   ##   
-%      #   #                        #                            #   
-%      #   #  # ##    ###    ###   ####    ##     ###    ###     #   
-%      ####   ##  #      #  #   #   #       #    #   #      #    #   
-%      #      #       ####  #       #       #    #       ####    #   
-%      #      #      #   #  #   #   #  #    #    #   #  #   #    #   
-%      #      #       ####   ###     ##    ###    ###    ####   ###  
-%                                                                
-% =================================================================================================
-
-\section{Towards practical coeffects}
-\label{sec:unified-impl}
-
-As discussed earlier, the main focus of this thesis is the development of the much needed 
-\emph{theory of context-aware programming languages} and so discussing the details of a practical 
-implementation of coeffect tracking is beyond the scope of the thesis. However, this section
-briefly outlines one possible pathway towards this goal.
-
-Many of the examples of contextual computation that we discussed earlier have been implemented as 
-a single-purpose programming language feature (\eg~implicit parameters \cite{app-implicit-parameters} 
-or distributed computations \cite{app-distributed-ml5,app-distributed-links}). However, 
-the main contribution of this thesis is that it captures
-\emph{multiple} different notions of context-aware computations using just a \emph{single}
-common abstraction. For this reason, we advocate that future practical implementations of
-coeffects should not be single-purpose language features, but rather reusable abstractions that
-can be instantiated with a concrete \emph{coeffect algebra} specified by the user.
-
-In order to do this, programming languages need to provide two features; one that allows 
-embedding of context-aware computations themselves in programs akin to the ``do'' notation
-in Haskell (Section~\ref{sec:unified-impl-embed}) and one that allows tracking of the 
-contextual information in the type system (Section~\ref{sec:unified-impl-types}). To make
-constraint resolution in type inference easier, we also discuss how the coeffect algebra 
-can be simplified (Section~\ref{unified-impl-semilattice})
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Embedding contextual computations}
-\label{sec:unified-impl-embed}
-
-The embedding of \emph{contextual} computations into programming languages can follow the successful
-model of \emph{effectful} computations. In purely functional programming languages such as Haskell, 
-effectful computations are embedded by \emph{implementing} their model within the language 
-and inserting the necessary (monadic) plumbing. This is made easier by the ``do'' notation or
-monad comprehensions \cite{other-haskell98,monads-compre}, which insert the monadic operations 
-automatically.
-
-The recently proposed ``codo'' notation \cite{comonads-codo} provides similar automation for
-context-aware computations based on comonads. The notation follows the semantics of our 
-flat coeffect calculus (Chapter~\ref{ch:flat}). Extending the ``codo'' notation to support calculi based 
-on the structural coeffect calculus (Chapter~\ref{ch:structural}) is an interesting future work -- 
-this would require explicitly manipulating individual context variables and application of structural
-rules, which is not needed in flat coeffects.
-
-In ML-like languages, effects (and many coeffects) are built-in into the language semantics, 
-but they can still benefit from a special notation for explicitly marking effectful (coeffectful) 
-blocks of code. In F\#, this is done using \emph{computation expressions}  \cite{app-computation-zoo}
-that differ from the ``do'' notation in two ways. First, they support wider range of 
-constructs, making it possible to wrap existing F\# code within a block without other changes.
-Second, they support other abstractions including monads, applicative functors and monad
-transformers. It would be interesting to see if computation expressions can be extended to
-support programming with computations based on flat/structural indexed comonads.
-
-More lightweight syntax for effectful computation can be obtained using
-techniques that automatically insert the necessary monadic plumbing (without
-special syntax). This has been done for effectful computations \cite{monads-lightweight-ml}
-and a similar approach would be worth exploring for coeffects. 
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Coeffect annotations as types}
-\label{sec:unified-impl-types}
-
-The other aspect of practical implementation of coeffects is that of tracking the context requirements
-(coeffect annotations) in the type system. To achieve this (without resorting to a single-purpose
-language feature) the type system needs to be able to capture various kinds of coeffect algebras. 
-The structures required in this thesis include sets (with union or intersection), natural numbers (with 
-addition, maximum, minimum and multiplication), two-point lattice (for liveness) and free monoids 
-(vectors of annotations).
-
-The work \cite{effects-embedding} on embedding effect systems in Haskell demonstrated that the
-recent additions to the Haskell type system provide enough power to implement structures such
-as sets at the type level. Using these to embed coeffect systems in Haskell is one fruitful 
-future direction for applied coeffects.  
-
-In dependently-typed programming languages such as Agda or Idris \cite{other-agda,other-idris},
-the embedding of coeffects can be implemented more directly (as terms implementing sets or lattices
-can be lifted to the type level). However, we believe that coeffect tracking does not require full 
-dependent types and can be made accessible in more mainstream languages. Dependent ML 
-\cite{types-dependent-ml} provides an interesting example of a language with some dependent typing 
-(\eg~computations with integers) which is still close to its non-dependently-typed predecessor ML.
-
-Another approach for embedding computations into the type system has been pioneered by F\#
-\emph{type providers} \cite{app-inforich}. Technically, type providers are compiler extensions 
-that generate types based on external data sources or other information in order to provide easy 
-access to data or services. A similar approach could be used for embedding \emph{algberas} such
-as coeffect algebras into the type system. An \emph{algebra provider} would then be a library that 
-specifies the objects of the algebra, its equational laws and generalization rules for type inference.
-This could provide an easy-to-use way of embedding coeffect tracking in pragmatic languages
-such as F\#. It is worth noting that the mechanism could also subsume F\# units of measure
-\cite{types-units-of-measure}; these could be alternatively provided via one such \emph{algebra
-provider}.
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Alternative formulation using coeffect lattice}
-\label{sec:unified-impl-semilattice}
-
-Compared to typical effect systems based on sets, coeffect systems have richer structure consisting
-of four operations ($\cseq,\czip,\cpar$ and a relation $\cleq$). This allows capturing interesting 
-properties, but it makes working with coeffect annotations difficult -- it complicates tasks
-such as type generalization and constraint solving in type inference. Here, we look at one possible 
-simplification of the structure.
-
-\begin{itemize}
-\item As mentioned in Section~\ref{sec:flat-calculus-algebra}, when the monoid $(\C,\cpar,\czero)$ is a
-semi-lattice, the $\cleq$ relation can often be expressed in terms of the $\cpar$ operation 
-($\cclrd{r} \;\cleq\; \cclrd{s} \;\Longleftrightarrow\; \cclrd{r} \;\cpar\; \cclrd{s} \;=\; \cclrd{s}$).
-This does not give a definition equivalent to our, but it is a simplification that is consistent 
-with all examples in this thesis.
-
-\item Another approach that works for most (but not all) systems we discussed is to require the structure
-$(\C,\cpar,\czip)$ to form a lattice. This is consistent with all our structural coeffect systems as
-well as flat systems for liveness and data-flow, but not with the system for tracking of implicit
-parameters (or sets of rebindable resources).
-\end{itemize}
-
-\noindent
-The system for tracking implicit parameters does not fit the lattice-based model, because it uses the 
-same operation $\cup$ for both $\cpar$ and $\czip$. 
-
-This also means that the system for implicit parameters cannot be used with a system where lambda 
-abstraction duplicates the context requirements (Section~\ref{sec:flat-exts-lambda}). 
-
-\paragraph{Lattice-based coeffects.} Putting implicit parameters aside, there are many other coeffect
-systems for which we could use the following definition of coeffect scalars (for simplicity, we only 
-consider flat systems):
-
-\begin{definition}
-A \emph{\cclrd{flat coeffect lattice}} $(\C, \cseq, \cleq, \cunit, \czero)$ is a set 
-$\C$ together with elements $\cunit, \czero \in \C$ and an ordering $\cleq$ such 
-that $(\C, \cseq, \cunit)$ is a monoid and $(\C, \cleq)$ is a lattice with the least 
-element $\czero$. 
-
-Assuming $\cpar$ and $\czip$ are the \emph{least upper bound} and \emph{greatest lower bound}
-of the lattice, we require the following distributivity axioms:
-%
-\begin{align*}
-\quad (\cclrd{r}\, \cpar\, \cclrd{s}) \;\cseq\; \cclrd{t} & = (\cclrd{r} \,\cseq\, \cclrd{t}) \;\cpar\; (\cclrd{s}\, \cseq\, \cclrd{t}) \\
-\quad \cclrd{t} \;\cseq\; (\cclrd{r}\, \cpar\, \cclrd{s}) & = (\cclrd{t} \,\cseq\, \cclrd{r}) \;\cpar\; (\cclrd{t}\, \cseq\, \cclrd{s})
-\end{align*}
-\end{definition}
-
-\noindent
-The definition provides all the operations of a flat coeffect algebra, but it defines a more rigid 
-structure. In particular, $\czip$ and $\cpar$ are both defined in terms of $\cleq$. This simplifies 
-the system as the operations of the underlying indexed comonad structure can be expressed using just
-$\cseq$ and $\cleq$:
-%
-\begin{equation*}
-\begin{array}{lcll}
- \ident{counit}_{\cunit} &\narrow{:}& 
-    \ctyp{\cunit}{\alpha} \rightarrow \alpha \\
- \ident{cobind}_{\cclrd{r}, \cclrd{s}} &\narrow{:}& 
-    (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) \rightarrow (\ctyp{\cclrd{r}\cseq\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta}) \\
-\ident{merge}_{\cclrd{r},\cclrd{s},\cclrd{t}} &\narrow{:}& 
-    \ctyp{\cclrd{r}}{\alpha} \times \ctyp{\cclrd{s}}{\beta} \rightarrow \ctyp{\cclrd{t}}{(\alpha \times \beta)} &
-    (\cclrd{t}\,\cleq\,\cclrd{r}, \cclrd{t}\,\cleq\,\cclrd{s}) \\
-\ident{split}_{\cclrd{r},\cclrd{s},\cclrd{t}} &\narrow{:}& 
-    \ctyp{\cclrd{t}}{(\alpha \times \beta)} \rightarrow \ctyp{\cclrd{r}}{\alpha} \times \ctyp{\cclrd{s}}{\beta} &
-    (\cclrd{r}\,\cleq\,\cclrd{t}, \cclrd{s}\,\cleq\,\cclrd{t}) \\
-\ident{lift}_{\cclrd{r},\cclrd{s}} &\narrow{:}& 
-    \ctyp{\cclrd{r}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\alpha} & 
-    (\cclrd{s}\,\cleq\,\cclrd{r})
-\end{array}
-\end{equation*}
-%
-Note that we still need \emph{two distinct} operators in the system. Analysis of our examples shows
-that the operator used for sequential composition $\cseq$ is not necessarily related in any way to 
-the ordering on the lattice provided by $\cleq$. 
-
-However, the operations $\ident{merge}$, $\ident{split}$ and $\ident{lift}$ can now all
-use ordering. For example, the \ident{merge} operation previously returned
-a result with greatest lower bound $\cclrd{r}\;\czip\;\cclrd{s}$. Now, we require any
-element that is smaller than $\cclrd{r}$ and $\cclrd{s}$. This adds an implicit sub-coeffecting
-to the operation -- for any $\cclrd{t}$ such that $\cclrd{t}\;\cleq\;\cclrd{r}$ and 
-$\cclrd{t}\;\cleq\;\cclrd{s}$, it is also the case that $\cclrd{t}\;\cleq\;(\cclrd{r}\,\czip\,\cclrd{s})$.
-This means that we can compose the original \ident{merge} operation which returns greatest lower
-bound with $\ident{lift}$ to get the (less precise) operation required here.
-
-% -------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-{\small a.) Lattice-based flat systems (selected rules):}
-
-\begin{equation*}
-\tyrule{abs}
-  {\coctx{\Gamma, x:\tau_1}{\cclrd{t}} \vdash e : \tau_2}
-  {\coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
-~~(\cclrd{t}\,\cleq\,\cclrd{r}, \cclrd{t}\,\cleq\,\cclrd{s})
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 &
-   \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }
-  {\coctx{\Gamma}{\cclrd{u}} \vdash e_1~e_2 : \tau_2}
-~~(\cclrd{r}\,\cleq\,\cclrd{u}, (\cclrd{s} \,\cseq\, \cclrd{t})\,\cleq\,\cclrd{u})
-\end{equation*}
-
-\vspace{1.5em}
-{\small b.) Lattice-based structural systems (selected rules):}
-
-\begin{equation*}
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{u}} \atimes \aclrd{\textbf{q}}} \vdash \subst{e}{z,y}{x} : \tau}
-~~(\cclrd{s}\,\cleq\,\cclrd{u}, \cclrd{t}\,\cleq\,\cclrd{u})
-\end{equation*}
-
-\figcaption{Flat and structural coeffects using lattice-based formulation}
-\label{fig:unified-lattice-types}
-\end{figure}
-
-% -------------------------------------------------------------------------------------------------
-
-\paragraph{Lattice-based type system.}
-\hspace{-1em}
-Using lattice-based coeffect structure leads to the typing rules shown in Figure~\ref{fig:unified-lattice-types}.
-In the flat coeffect system, this affects both application and abstraction -- in abstraction,
-the context-requirements of the body should be smaller than the context available on the 
-call site and declaration site. In application, we require more than what is required by
-the sub-expressions.
-
-Structural coeffect systems only require least upper bound $\cpar$ in the (\emph{contr}) rule.
-This can be rewritten similarly to the flat (\emph{app}) rule --  when contracting two variables, the
-context requirements of the resulting variable are greater than the requirements associated with
-each of the original variables.
-
-In summary, the lattice-based coeffect system has some advantages over the design used in this
-thesis. In particular, it uses better-known structures and is simpler. However, we do not use
-it as it rules out one of the important motivating examples (implicit parameters) and, even with
-the simplification, solving constraints with $\cseq$ and $\cleq$ is still an open question.
-
-
-
-% =================================================================================================
-%                                                                                             
-%    #   #          #                    ##                                                    
-%    #   #          #                     #                                                    
-%    ## ##   ###   ####    ###            #     ###   # ##    ## #  #   #   ###    ## #   ###  
-%    # # #  #   #   #         #  #####    #        #  ##  #  #  #   #   #      #  #  #   #   # 
-%    #   #  #####   #      ####           #     ####  #   #   ##    #   #   ####   ##    ##### 
-%    #   #  #       #  #  #   #           #    #   #  #   #  #      #  ##  #   #  #      #     
-%    #   #   ###     ##    ####          ###    ####  #   #   ###    ## #   ####   ###    ###  
-%                                                            #   #                #   #        
-%                                                             ###                  ###         
-% =================================================================================================
-
-\section{Coeffect meta-language}
-\label{sec:unified-meta} 
-
-In Section~\ref{sec:path-sem-langs}, we discussed two ways of using monads in programming
-language semantics as introduced by Moggi \cite{monad-notions}. The first approach is to use
-monads in the \emph{semantics} of an effectful language. The second approach is to extend the
-language with (additional) monadic constructs that can then be used for writing effectful
-monads explicitly.
-
-In this thesis, we focused on the first approach. In both flat and structural coeffect calculi,
-the term language is that of a simply-typed $\lambda$-calculus, and we used (flat or structural)
-indexed comonads to give the semantics for the language and to derive type system for it.
-
-In this section, we briefly discuss the other technique. That is, we embed indexed
-comonads into a $\lambda$-calculus as additional constructs. To do that, we introduce the
-type constructor $\ctyp{\cclrd{r}}{\tau}$ which represents a value $\tau$ wrapped in additional
-context (semantically, this corresponds to an indexed comonad) and we add language constructs
-that correspond to the operations of indexed comonads.
-
-This section provides a brief sketch of the coeffect meta-language in order to highlight the relationship
-between coeffects and closely related work on contextual modal type theory (CMTT) \cite{logic-cmtt}.
-Developing the system further is an interesting future research direction.
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Coeffects and contextual modal type theory}
-
-As discussed in Section~\ref{sec:path-sem-contextdep}, context-aware computations are related
-to modal logics -- comonads have been used to model the $\square$ modality and as a basis for
-meta-languages that include $\square$ as a type constructor
-\cite{logic-intuitionistic-modal,logic-modal-reconstruction,logic-intuitionistic-modal,logic-cmtt}.
-Nanevski et al. \cite{logic-cmtt} extend an S4 term language to a contextual modal type theory (CMTT).
-From the perspective of this thesis, CMTT can be viewed as a \emph{meta-language} version of our
-coeffect calculus.
-
-\paragraph{Context in CMTT and coeffects.}
-Aside from the fact that coeffect calculi use comonads for \emph{semantics} and CMTT embeds
-comonads (the $\square$ modality) into the meta-language, there are two important differences.
-
-Firstly, the \emph{context} in CMTT is a set of variables required by a computation, which
-makes CMTT useful for meta-programming and staged computations. In coeffect calculi, the context
-requirements are formed by an abstract coeffect algebra, which is more general and can capture
-variable contexts, but also integers, two-point lattices, etc.
-
-Secondly, CMTT uses different intuitive understanding of the comonad (type constructor) and
-the associated operations. In categorical semantics of coeffect calculi, the $\ctyp{\cclrd{r}}{\tau}$
-constructor refers to a value of type $\tau$ \emph{together} with additional context specified
-by the coeffect annotation $\cclrd{r}$ (\eg~a list of past values or additional resources).
-
-In contrast in CMTT\footnote{To avoid using different notations, we write $\ctyp{\Psi}{\tau}$ instead of the 
-original $[\Psi]{\tau}$} the type $\ctyp{\Psi}{\tau}$ models a value that \emph{requires} the 
-context $\Psi$ in order to produce value $\tau$. This also changes the interpretation of the 
-two operations of a comonad:
-\begin{equation*}
-\begin{array}{rcl}
- \ident{counit} &\narrow{:}& \ctyp{\cunit}{\alpha} \rightarrow \alpha\\
- \ident{cobind} &\narrow{:}& (\ctyp{\cclrd{r}}{\alpha} \rightarrow \beta) \rightarrow 
-    \ctyp{\cclrd{r}\cseq\cclrd{s}}{\alpha} \rightarrow \ctyp{\cclrd{s}}{\beta}
-\end{array}
-\end{equation*}
-Two readings of the signatures are possible, but they give quite different meanings to the operations:
-
-\begin{itemize}
-\item \emph{Coeffect interpretation.} The \ident{counit} operation extracts a value 
-  and does not require any additional context; the \ident{cobind} operation requires
-  context $\cclrd{r}\,\cseq\,\cclrd{s}$, uses the part specified by $\cclrd{r}$ to 
-  evaluate the function, ending with a value $\beta$ together with remaining context
-  $\cclrd{s}$.
-\item \emph{CMTT interpretation.} The \ident{counit} operation evaluates a computation 
-  that requires no additional context to obtain a $\alpha$ value; given a function that
-  turns a computation requiring context $\cclrd{r}$ into a value $\beta$, the \ident{cobind}
-  operation can turn a computation that requires context $\cclrd{r}\,\cseq\,\cclrd{s}$ 
-  into a computation that requires just $\cclrd{s}$ and contains $\beta$ (a part of the
-  context requirements is eliminated by the function).
-\end{itemize}
-
-\noindent
-Although the different reading does not affect formal properties of the systems, it is important
-to understand the difference when discussing the two systems as they provide a different 
-intuition.
-
-The sketch of a coeffect meta-language in the following section attempts to bridge the gap
-between coeffects and CMTT. Just like CMTT, it embeds comonads as language constructs, but
-it annotates them with a (flat) coeffect algebra, thus it generalizes CMTT which tracks only
-sets of variables. Future work on the coeffect meta-language would thus be an interesting 
-development for both coeffect systems and CMTT.
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Coeffect meta-language}
-
-The coeffect meta-language could be designed using both flat and structural indexed comonads.
-For simplicity, this section only discusses the flat variant. The syntax of types and terms
-of the language includes the type constructor $\ctyp{\cclrd{r}}{\tau}$ and four additional
-language constructs:
-%
-\begin{equation*}
-\begin{array}{rcl}
- \tau &\narrow{::=}& \alpha \sep \tau_1 \rightarrow \tau_2 \sep \ctyp{\cclrd{r}}{\tau}\\
- e &\narrow{::=}& v \sep \lambda x.e \sep e_1~e_2 \sep !e    \\[-0.25em]
-  &        \sep& \kvd{let\;box}~x=e_1~\kvd{in}~e_2           \\[-0.25em]
-  &        \sep& \kvd{split}~e_1~\kvd{into}~x,y~\kvd{in}~e_2 \\[-0.25em]
-  &        \sep& \kvd{merge}~e_1, e_2~\kvd{into}~x~\kvd{in}~e_2 
-\end{array}
-\end{equation*}
-%
-The $!e$ and $\kvd{let\;box}$ constructs correspond to the \ident{counit} and \ident{cobind}
-operation of the comonad. To define meta-language for flat indexed comonads, we also include 
-\kvd{split} and \kvd{merge} that embed the corresponding operations. 
-
-\paragraph{Types for coeffect meta-language.}
-The type system for the language is shown in Figure~\ref{fig:conclusions-cml}. The first part
-shows the usual typing rules for simply-typed $\lambda$-calculus. For simplicity, we omit typing 
-rules for pairs, but those need to be present as the \kvd{merge} operation works on tuples.
-
-The second part of the typing rules is more interesting. The (\emph{counit}) operation extracts
-a value from a comonadic context and corresponds to variable access in coeffect calculi. The
-\kvd{let\;box} construct (\emph{cobind}) takes an input $e_1$ with context $\cclrd{r}\,\cseq\,\cclrd{s}$
-and a computation that turns a variable $x$ with a context $\cclrd{r}$ into a value $\tau_2$.
-The result is a computation that produces a $\tau_2$ value with the remaining context specified
-by $\cclrd{s}$. Note that the expressions $e_2$ and $e_1$ correspond to the first and second
-arguments of the \ident{cobind} operation. The keyword \kvd{let\;box} is chosen following 
-CMTT\footnote{The rule is similar to the \ident{letbox} rule for ICML \cite[p. 14]{logic-cmtt},
-although it differs because of our generalization of comonads where \ident{bind} composes
-coeffect annotations rather than requiring the same annotation everywhere.}.
-
-The \kvd{split} and \kvd{merge} constructs follow a similar pattern. They both apply some 
-transformation on one or two values in a context and then add the new value as a fresh variable
-to the variable context. We omit sub-coeffecting, but it could be easily added following 
-the method used elsewhere.
-
-% -------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-
-{\small a.) Typing rules for the simply typed $\lambda$-calculus}
-
-\begin{equation*}
-\tyrule{var}
-  {x : \tau \in \Gamma}
-  {\Gamma \vdash x : \tau }
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  {\Gamma \vdash e_1 : \tau_2 \rightarrow \tau_1 &
-   \Gamma \vdash e_2 : \tau_2 }
-  {\Gamma \vdash e_1~e_2 : \tau_1 }
-\end{equation*}
-\begin{equation*}
-\tyrule{abs}
-  {\Gamma, x:\tau_1 \vdash e : \tau_2}
-  {\Gamma \vdash \lambda x.e : \tau_1 \rightarrow \tau_2 }
-\end{equation*}
-
-\vspace{1em}
-{\small b.) Additional typing rules arising from \emph{flat indexed comonads}}
-
-\begin{equation*}
-\tyrule{cobind}
-  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}\,\cseq\,\cclrd{s}}{\tau_1} & \Gamma, x : \ctyp{\cclrd{r}}{\tau_1} \vdash e_2 : \tau_2 }
-  {\Gamma \vdash \kvd{let\;box}~x=e_1~\kvd{in}~e_2 : \ctyp{\cclrd{s}}{\tau_2}}
-\end{equation*}
-\begin{equation*}
-\tyrule{counit}
-  {\Gamma \vdash e : \ctyp{\cunit}{\tau}}
-  {\Gamma \vdash !e : \tau}
-\end{equation*}
-\begin{equation*}
-\tyrule{split}
-  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}\,\cpar\,\cclrd{s}}{\tau_1} &
-   \Gamma, x:\ctyp{\cclrd{r}}{\tau_1}, y:\ctyp{\cclrd{s}}{\tau_1} \vdash e_2 : \tau_2 }
-  {\Gamma \vdash \kvd{split}~e_1~\kvd{into}~x,y~\kvd{in}~e_2 : \tau_2 }
-\end{equation*}
-\begin{equation*}
-\tyrule{merge}
-  {\Gamma \vdash e_1 : \ctyp{\cclrd{r}}{\tau_1} &
-   \Gamma \vdash e_2 : \ctyp{\cclrd{s}}{\tau_2} \\
-   \Gamma, x:\ctyp{\cclrd{r}\,\czip\,\cclrd{s}}{(\tau_1 \times \tau_2)} \vdash e_2 : \tau_3 }
-  {\Gamma \vdash \kvd{merge}~e_1, e_2~\kvd{into}~x~\kvd{in}~e_2 : \tau_3 }
-\end{equation*}
-
-\figcaption{Type system for the (flat) coeffect meta-language}
-\label{fig:conclusions-cml}
-\end{figure}
-
-% -------------------------------------------------------------------------------------------------
-
-\subsection{Embedding flat coeffect calculus}
-
-The \emph{meta-language} approach of embedding comonads in a language is more general than the
-\emph{semantics} approach. This thesis focuses on a narrower use that better guides the design of
-a type system for context-aware programming languages. 
-
-However, it is worth demonstrating that the (flat) coeffect calculus can be embedded in the 
-meta-language described in the previous section. This may be desirable, \eg~when using the 
-meta-language for reasoning about context-aware computations. We briefly consider the embedding 
-as it illuminates the relationship between coeffects and CMTT (unfortunately it is not possible 
-to embed coeffect calculi in CMTT because of the more general annotations structure).
-
-Given a typing judgement $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ in the flat coeffect calculus,
-we define $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}_v$ as its embedding in the coeffect
-meta-language. Note that the translation is indexed by $v$, which is a name of variable used 
-to represent the entire variable context of the source language. The translation is defined in
-Figure~\ref{fig:conclusions-embed}. The embedding resembles the semantics discussed in 
-Section~\ref{sec:flat-semantics}. This is not surprising as the meta-language directly mirrors
-the operations of an indexed comonad.
-
-% -------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-\begin{equation*}
-\begin{array}{l}
- \sem{ \coctx{\Gamma}{\cunit}\vdash x_i : \tau_i }_v = \pi_i (!v) \\[0.25em]
- \sem{ \coctx{\Gamma}{\cclrd{r}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{t})} \vdash e_1~e_2 : \tau_2 }_v =\\[-0.25em]
-   \qquad \kvd{split}~v~\kvd{into}~v_s, v_{rt}~\kvd{in} \\[-0.25em]
-   \qquad \sem{ \coctx{\Gamma}{\cclrd{s}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }_{v_s}
-      ~(\kvd{let\;box}~v_r = v_{rt}~\kvd{in}~\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_2 : \tau_1}_{v_r}) \\[0.25em]
- \sem{ \coctx{\Gamma}{\cclrd{r}} \vdash \lambda x.e:\tau_1 \xrightarrow{\cclrd{s}} \tau_2 }_v = \lambda x. \\[-0.25em]
-   \qquad \kvd{merge}~v,x~\kvd{into}~v_{rs}~\kvd{in}~\sem{ \coctx{(\Gamma,x:\tau_1)}{\cclrd{r}\,\czip\,\cclrd{s}} \vdash e : \tau_2 }_{v_{rs}}
-\end{array}
-\end{equation*}
-\figcaption{Embedding flat coeffect calculus in coeffect meta-language }
-\label{fig:conclusions-embed}
-\end{figure}
 
 
 % ==================================================================================================
-%                                                                             
-%        ###                         ##                    #                        
-%       #   #                         #                                             
-%       #       ###   # ##    ###     #    #   #   ###    ##     ###   # ##    ###  
-%       #      #   #  ##  #  #   #    #    #   #  #        #    #   #  ##  #  #     
-%       #      #   #  #   #  #        #    #   #   ###     #    #   #  #   #   ###  
-%       #   #  #   #  #   #  #   #    #    #  ##      #    #    #   #  #   #      # 
-%        ###    ###   #   #   ###    ###    ## #  ####    ###    ###   #   #  ####  
-%                                                                             
+%
+%    #######
+%       #    #    # ######  ####  #####  #   #
+%       #    #    # #      #    # #    #  # #
+%       #    ###### #####  #    # #    #   #
+%       #    #    # #      #    # #####    #
+%       #    #    # #      #    # #   #    #
+%       #    #    # ######  ####  #    #   #
+%
 % ==================================================================================================
 
-\section{Conclusions}
+\section{From theory to implementation}
+\label{sec:impl-theory}
 
-In this chapter, we completed our quest of presenting a \emph{unified} system for tracking contextual
-properties and then we discussed two important topics of future and related work that require 
-in-depth discussion.
+The theory discussed so far provides the two key components of the implementation. In
+Chapter~\ref{ch:flat}, we discussed the type checking of context-aware programs and
+Chapter~\ref{ch:semantics} models the execution of context-aware programs (in terms of
+translation and operational semantics). For structural coeffects, the same components are discussed
+in Chapter~\ref{ch:structural}. In this section, we discuss how those provide foundation for the
+implementation.
 
-The key technical contribution of this chapter is the \emph{unified coeffect system} 
-(Section~\ref{sec:unified-unified}), which unifies the flat and structural system presented
-in the previous two chapters. To achieve this, we introduced \emph{coeffect container}, which
-determines how are coeffect annotations attached to variable contexts. We then discussed two
-instances of the structure that capture flat and structural properties.
+% --------------------------------------------------------------------------------------------------
 
-In the rest of the chapter, we discussed two topics of future and related work. First
-(Section~\ref{sec:unified-impl}), we considered pathways to practical implementations of
-coeffect systems, including a discussion of a novel lattice-based coeffect system, which is simpler,
-but cannot capture all our motivating examples. Finally, we discussed how our work relates to 
-meta-language based on comonads (Section~\ref{sec:unified-meta}). We present a \emph{coeffect 
-meta-language} that follows similar style to CMTT, but is based on indexed comonads. Next, we 
-discussed how to embed flat coeffect systems in this coeffect meta-language, which elucidates the 
-relationship between our work and CMTT. 
+\subsection{Type checking and inference}
+\label{sec:impl-theory-typing}
+
+To simplify the writing of context-aware programs, the implementation provides a limited form of
+type inference (Section~\ref{sec:impl-tech}). This is available just for convenience and so we do
+not claim any completeness or complexity result about the algorithm and we do not present full
+formalization. However, it is worth noting how the domain-specific procedures for choosing a unique
+type derivation (Section~\ref{sec:flat-unique}) are adapted.
+
+The type inference works in the standard way \cite{types-mlessence,types-inference} by generating
+type constraints and solving them. Solving of type constraints is done in the standard way, but we
+additionally collect and solve \emph{coeffect constraints}. In order to obtain unique type
+derivation, we generate additional coeffect constraints in lambda abstraction of each flat
+coeffect language.
+
+\paragraph{Flat implicit parameters.}
+
+As discussed in Section~\ref{sec:flat-unique}, when choosing unique typing derivation for
+implicit parameters, we keep track of the implicit parameters available in lexical scope
+(written as $\cclrd{\Delta}$). In lambda abstraction rule, the implicit parameters required by
+the body (tracked by $\ccclrd{r}$) are split so that all parameters available in lexical scope
+are captured and only the remaining parameters ($\cclrd{r}\setminus\cclrd{\Delta}$) are required
+from the caller of the function.
+
+From the presentation in Section~\ref{sec:flat-unique}, it might appear that resolving the ambiguity
+related to lambda abstraction for implicit parameters requires a type system different from
+the core flat coeffect type system shown earlier in Section ~\ref{sec:flat-calculus-types}.
+This is not the case.
+
+We track implicit parameters in scope $\cclrd{\Delta}$, but the rest of the (\emph{abs}) rule from
+the implementation only generates an additional coeffect constraint. Writing
+$\coctx{\Gamma}{\cclrd{t}} \vdash e : \tau ~|~ C}$ for a judgement that generates coeffect
+constraints $C$, the (\emph{abs}) rule used for implicit parameters looks as follows:
+%
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x\!:\!\tau_1;\cclrd{\Delta}}{\cclrd{t}} \vdash e : \tau_2 ~|~ C}
+  {\coctx{\Gamma;\cclrd{\Delta}}{\cclrd{r}} \vdash \lambda x\!:\!\tau_1.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 ~|~
+    C\cup\{\cclrd{t}=\cclrd{r} \,\czip\, \cclrd{s}, \cclrd{r}=\cclrd{\Delta} \}}
+\end{equation*}
+%
+Given a typing derivation for the body that produced constraints $C$, we generate an additional
+constraint that restricts $\cclrd{r}$ (declaration-site demands) to those available in the
+current static scope $\cclrd{\Delta}$. It is not necessary to generate a constraint for the
+coeffect $\cclrd{s}$, because our constraint satisfaction algorithm finds
+the minimal set $\cclrd{s}$ which is $\cclrd{t}\cclrd{\setminus \Delta}$.
+
+\paragraph{Flat data-flow.}
+In context-aware language for data-flow (and in language with liveness tracking), the inherent
+ambiguity of the (\emph{abs}) rule is resolved by duplicating the context requirements of the body.
+In Section~\ref{sec:flat-unique}, this was defined by replacing the standard coeffect (\emph{abs})
+rule with a rule (\emph{idabs}) that uses an annotation $\cclrd{r}$ for the body of the function,
+declaration-site coeffect and call-site coeffect.
+
+As with implicit parameters, the implementation does not require changing the core (\emph{abs})
+typing rule of the flat coeffect system. Instead, the unique resulution is obtained by generating
+additional coeffect constraints:
+%
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x\!:\!\tau_1}{\cclrd{t}} \vdash e : \tau_2 ~|~ C}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash \lambda x\!:\!\tau_1.e : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 ~|~
+    C\cup\{\cclrd{t}=\cclrd{r} \,\czip\, \cclrd{s}, \cclrd{r}=\cclrd{t}, \cclrd{s}=\cclrd{t} \}}
+\end{equation*}
+%
+Here, the two additional constraints restrict both $\cclrd{r}$ and $\cclrd{s}$ to be equal to the
+coeffect of the body $\cclrd{t}$ and so the only possible resolution is the one specified by
+(\emph{idabs}).
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Execution of context-aware programs}
+\label{sec:impl-theory-transl}
+
+Context-aware programs are executed by translating the source program into a simple functional
+target language. For simplicity, programs in the simple target language are then interpreted, but
+they could equally be compiled using standard techniques for compiling functional code. The
+translation follows the rules defined in Section~\ref{sec:semantics-translation} (for flat coeffect
+languages) and Section~X (for structural coeffect languages). The result of the translation is a
+program that consists of the following:
+
+\begin{itemize}
+\item {\sc Functional constructs.} Those include binary operations, tuples, let binding,
+  constants, variables, function abstraction and application. The interpreter keeps a map of
+  assignments for variables in scope and recursively evaluates the expression.
+
+\item {\sc Comonadic operations.} Those are the comonadic primitives provided by indexed comonads --
+  \ident{cobind}, \ident{counit} together with \ident{merge} and \ident{split} for flat coeffects
+  or \ident{merge} and \ident{choose} for structural coeffects. The translation that produces these
+  is shared by all context-aware languages, but their definition in the interpreter is
+  domain-specific.
+
+\item {\sc Domain-specific operations.} Each context-aware language may additionally include
+  operations that model domain-specific operations. For data-flow, this is \ident{prev} (accessing
+  past values) and for implicit parameters, this is \ident{letimpl} and \ident{lookup} for implicit
+  parameter binding and access, respectively.
+\end{itemize}
+
+\noindent
+The fact that the prototype implementation is based on the theoretical framework provided by
+coeffect calculi means that it has the desirable properties proved in Section~\ref{sec:semantics-proofs}
+and Section~X. In particular, evaluating a well-typed context-aware program in a context that
+provides sufficient contextual capabilities will not cause an error.
+
+In the interactive essay (Section~\ref{sec:impl-essay}), we further use the coeffects to
+automatically generate a user interface that requires the user to provide the required contextual
+capabilities (past values for individual variables, or values for implicit parameters).
+
+Another benefit of using the common framework is that the implementation can be easily extended
+to support additional context-aware languages.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Supporting additional context-aware languages}
+\label{sec:impl-theory-ext}
+
+The prototype implementation supports two of the context-aware languages discussed in this thesis:
+implicit parameters and data-flow. The remaining examples are calculus for tracking variable
+liveness (of ordinary variables) and the structural language based on bounded reuse (counting
+number of times values are used). However, the prototype implementation is based on the
+common coeffect framework and makes it easy to add support for these and also for other context
+aware languages based on coeffects.
+
+In order to extend the implementation with support for liveness or bounded reuse tracking (or
+other context-aware language), the following 4 additions are required:
+
+\begin{enumerate}
+\item A domain-specific function abstraction rule that resolves the ambiguity in the general
+  (\emph{abs}) rule of the flat coeffect calculus. For liveness, the handling would be the same
+  as for data-flow, but for other flat coeffect systems, another resolution mechanism might be used
+  instead.
+
+\item A domain-specific instance of coeffect algebra needs to be provided. In order to support
+  the type inference in the prototype implementation, the constraint solver needs to be extended
+  to solve constraint using the coeffect algebra. For liveness, this would be solving simple
+  two-point lattice constraints.
+
+\item For evaluation, a new kind of comonadic values needs to be added. For liveness, this would be
+  an option value that may or may not contain a value. The semantics of comonadic operations on the
+  values needs to be defined.
+
+\item For context-aware languages that have additional primitives (such as \kvd{prev} or \ident{?param}),
+  the parser and AST needs to be extended, custom type-checking and translation rules added and
+  domain-specific primitive operations (with their semantics) provided. Liveness and bounded reuse
+  do not have additional custom syntax and so supporting these would not require this step.
+\end{enumerate}
+
+\noindent
+The list mirrors a list of steps that need to be done when supporting a new effectful computation
+in a language that supports monadic do-notation. The step (3) corresponds to implementing a new
+monad and (4) corresponds to adding monad-specific effectful operations. The step (2) applies when
+using indexing to track effects more precisely \cite{effects-embedding}. The only step that does not
+have effectful/monadic counterpart is (1).
+
+When adding a new context-aware programming language support, much of the existing infrastructure
+can be reused. This includes the implementation of the core coeffect and type checking rules and
+also the translation for standard language constructs as well as the interpreter for the target
+language.
+
+
+% ==================================================================================================
+%
+%     #####
+%    #     #   ##    ####  ######     ####  ##### #    # #####  # ######  ####
+%    #        #  #  #      #         #        #   #    # #    # # #      #
+%    #       #    #  ####  #####      ####    #   #    # #    # # #####   ####
+%    #       ######      # #              #   #   #    # #    # # #           #
+%    #     # #    # #    # #         #    #   #   #    # #    # # #      #    #
+%     #####  #    #  ####  ######     ####    #    ####  #####  # ######  ####
+%
+% ==================================================================================================
+
+\section{Case studies}
+\label{sec:impl-case}
+
+The prototype implementation illustrates a number of interesting aspects of coeffect systems.
+Those appear as examples in the interactive essay (discussed in Section~\ref{sec:impl-essay}), but
+we briefly review them in this section.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Typing context-aware programs}
+\label{sec:impl-case-typing}
+
+We first consider two case studies of how coeffect type checking works. The first one exposes the
+resolution of the ambiguity in typing for implicit parameters and the second one exposes the
+difference between flat and structural system for data-flow.
+
+\paragraph{Abstraction for implicit parameters.}
+As discussed in Section~\ref{sec:impl-theory-typing}, the implementation of the language with
+implicit parameters resolves the ambiguity in the lambda abstraction by generating a coeffect
+constraint that restricts the set of parameters required from the declaration-site to those that
+are lexically available. Remaining parameters are required from the call-site. This is illustrated
+by the following example:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{both}~=\\[-0.25em]
+\quad \kvd{let}~\ident{?fst}~=~100~\kvd{in}\\[-0.25em]
+\quad \kvd{fun}~\ident{trd}~\rightarrow~\ident{?fst}~+~\ident{?snd}~+~\ident{trd}~\kvd{in}\\[-0.25em]
+\kvd{let}~\ident{?fst}~=~200~\kvd{in}\\[-0.25em]
+\ident{both}~1
+\end{array}
+\end{equation*}
+%
+In this expression, the lambda function on line 3 requires implicit parameters \ident{?fst} and
+\ident{?snd}. Since \ident{?fst} is available in scope, the type of \ident{both} is a function that
+requires only \ident{?snd}. In the text-based notation used in the prototype, the type of the
+function \ident{both} is: {\tt num -\{?snd:num\}-> num}.
+
+\paragraph{Flat and structural data-flow.}
+In flat data-flow, the context requirements of the body is required from both the declaration-site
+and from the call-site. In structural data-flow, the context requirements are tracked separately
+for each variable, which provides a more precise type. Consider the following two examples (the
+\kvd{let} keyword is used to define a curried function of two arguments):
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{oldy}~\ident{x}~\ident{y}~=~\ident{x}~+~\kvd{prev}~\ident{y}~\kvd{in}\\[-0.25em]
+\ident{oldy}
+\end{array}
+\end{equation*}
+%
+When type checking the expression using the flat system, the type of \ident{oldy} is inferred as {\tt num -\{1\}-> num -\{1\}-> num},
+but when using the structural system, the type becomes {\tt num -\{0\}-> num -\{1\}-> num}.
+
+This illustrates the difference between the two - the flat system keeps only one annotation
+for the whole body (which requires 1 past value). In lambda abstraction (or function declaration
+written using \kvd{let}), this requirement is duplicated. The structural system keeps information
+per-variable and so the resulting type reflects the fact that only the variable \idnet{y} appears
+inside \kvd{prev}.
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Comonadically-inspired translation}
+\label{sec:impl-case-transl}
+
+In addition to running coeffect programs, the implementation can also print the result of the
+translation to the simple functional target language with comonadically-inspired primitives.
+The following two case studies illustrate important aspects of the translation for flat coeffect
+systems (Section~\ref{sec:semantics-translation}) and structural coeffect systems (Section~?).
+
+\paragraph{Merging implicit parameter contexts.}
+
+The following example illustrates the lambda abstraction for implicit parameters.
+It defines a parameter \ident{?param} and then returns a function value that captures it, but
+also requires an implicit parameter \ident{?other}:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~\ident{?param} ~=~ \num{10}~\kvd{in}\\[-0.25em]
+\kvd{fun}~\ident{x}~\rightarrow~\ident{?param} ~+~ \ident{?other}
+\end{array}
+\end{equation*}
+%
+Translating the code to the target language produces the code below. The reader is encouraged to
+view the translation in the interactive essay (Section~\ref{sec:impl-essay}), which displays the
+types and coeffect annotations of the individual values and primitives. As in the theory, the
+comonadically-inspired primitives are families of operations indexed by the coeffects (we
+omit the annotations here):
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{let}~(\ident{ctx2}, \ident{ctx3}) ~=~ \ident{split}~(\ident{duplicate}~\kvd{finput})~\kvd{in}\\[-0.25em]
+\kvd{let}~\ident{ctx1} ~=~ \ident{letimpl}_{\ident{?param}}~(\ident{ctx2}, \num{10})~\kvd{in}\\[-0.25em]
+\kvd{fun}~\ident{x}~\rightarrow\\[-0.25em]
+\quad \kvd{let}~\ident{ctx4} ~=~ \ident{merge}~(\ident{x}, \ident{ctx1})~\kvd{in}\\[-0.25em]
+\quad \kvd{let}~(\ident{ctx5}, \ident{ctx6}) ~=~ \ident{split}~(\ident{duplicate}~\ident{ctx4})~\kvd{in}\\[-0.25em]
+\quad \ident{lookup}_{\ident{?param}}~\ident{ctx5} ~+~ \ident{lookup}_{\ident{?other}}~\ident{ctx6}
+\end{array}
+\end{equation*}
+%
+The \kvd{finput} value on the first line represents an empty context in which the expression is
+evaluated and is of type $\ctyp{\czero}{\ident{unit}}$. The context is duplicated; \ident{ctx3}
+is not needed, because $\num{10}$ is a constant; \ident{ctx2} is passed to \ident{letimpl}, which
+assigns an implicit parameter value in the newly returned context \ident{ctx1} of type
+$\ctyp{\cclrd{\{\ident{?param}\}}}{\ident{unit}}$ (this now carries the implicit parameter value, but
+it does not represent any ordinary variables, thus the \ident{unit} type representing an empty
+tuple).
+
+In the body of the function, the context \ident{ctx1} is merged with the context provided by the
+variable \ident{x}. The type of \ident{ctx4} is $\ctyp{\ccrld{\{\ident{?param},\ident{?other}\}}}{(\ident{num}\times\ident{unit})}$.
+This is then split into two parts that contain just one of the implicit parameters and those are
+then accessed using \ident{lookup}.
+
+\paragraph{Composition in structural data-flow.}
+
+In structural coeffect systems, the translation works differently in that the context passed to
+a sub-expression contains only assignments for the variables used in the sub-expression (in the
+flat version, we always duplicated the variable context before using \ident{split}). To illustrate
+this, consider the following simple function:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{fun}~\ident{x} \rightarrow \kvd{fun}~\ident{y} \rightarrow \kvd{prev}~\ident{x}
+\end{array}
+\end{equation*}
+%
+In structural coeffect systems, the comonadic value is annotated with a vector of coeffect
+annotations that correspond to individual variables. The initial structural input \kvd{sinput}
+is a value of type $\ctyp{\cclrd{[]}}{()}$ containing no variables (we write $()$ rather than
+\ident{unit} to make that more explicit). The translated code then looks as follows:
+%
+\begin{equation*}
+\begin{array}{l}
+\kvd{fun}~\ident{x} \rightarrow\\[-0.25em]
+\quad \kvd{let}~\ident{ctx1} ~=~ \ident{merge}~(\ident{x}, \kvd{sinput}) \kvd{in}\\[-0.25em]
+\quad (\kvd{fun}~\ident{y} \rightarrow\\[-0.25em]
+\quad \quad \kvd{let}~\ident{ctx2} ~=~ \ident{merge}~(\ident{y}, \ident{ctx1})~\kvd{in}\\[-0.25em]
+\quad \quad \ident{counit}~(\ident{prev}~(\ident{choose}_{\langle 0,1\rangle}~\ident{ctx2}))
+\end{array}
+\end{equation*}
+%
+The two variables are merged with the initial context, obtaining a value \ident{ctx2} of type
+$\ctyp{\cclrd{[0, 1]}}{\ident{num}\times\ident{num}}$ that contains two values with 0 and 1 past
+values, respectively.
+
+For simplicity, the implementation does not use the \ident{split}/\ident{merge} pair of operations
+of the structural coeffects to obtain the correct subset of variables. This can be done, but it
+would make the translated code longer and more cumbersome. Instead, we use a higher-level operation
+\ident{choose} (which can be expressed in terms of \ident{split}/\ident{merge}) that projects the
+variable subset as specified by the index. Here, $\langle 0, 1\rangle$ means that the first variable
+should be dropped an the second one should be kept.
+
+The resulting single-variable context is then passed to \ident{prev} (to shift the stream by one)
+and then to \ident{counit} to obtain the current value.
+
+
+% ==================================================================================================
+%
+%    #######
+%    #        ####   ####    ##   #   #
+%    #       #      #       #  #   # #
+%    #####    ####   ####  #    #   #
+%    #            #      # ######   #
+%    #       #    # #    # #    #   #
+%    #######  ####   ####  #    #   #
+%
+% ==================================================================================================
+
+\section{Interactive essay}
+\label{sec:impl-essay}
+
+As explained in the introduction of this chapter, the purpose of the implementation presented in
+this thesis is not to provide a real-world programming language, but to support the theory
+discussed in the rest of the thesis. The goal is to explain the theory and inspire authors of
+real-world programming langauges to include support for context-aware programming, ideally using
+coeffects as a sound foundation. For this reason, the implementation needs to be:
+
+\begin{itemize}
+\item {\sc Accessible.}  Anyone interested should be able to use the implemented langauges without
+  downloading the source code and compiling it and without installing specialized software.
+
+\item {\sc Explorable.}  It should be possible to explore the inner workings -- how is the typing
+  derived, how is the source code translated to the target language and how is it evaluated.
+\end{itemize}
+
+\noindent
+To make the work \emph{accessible}, we implement sample context-aware languages in a way that makes it
+possible to use them in any standard web browser with JavaScript support (Section~\ref{sec:impl-essay-tech})
+without requiring any server-side component. Following the idea that ``the medium is the message'' \cite{essay-medium},
+we choose medium that encourages \emph{exploration} and make the implementation available not just
+as source code that can be compiled and run locally, but also in the format of
+interactive essay (Section~\ref{sec:impl-essay-features}). The live version of the essay can be
+found at: \url{http://tomasp.net/coeffects}.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=16em]{images/eval1.png}}
+\boxed{\includegraphics[width=16em]{images/eval2.png}}
+\caption{Interactive evaluation of implicit parameters (left) and data-flow (right)}
+\label{fig:essay-eval}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Explorable language implementation}
+\label{sec:impl-essay-features}
+
+The interactive essay format used of the implementation is inspired by Bret Victor's work on
+\emph{explorable explanations} \cite{essay-explorable}:
+%
+\begin{quote}
+\emph{Do our reading environments encourage active reading? Or do they utterly oppose it? A
+  typical reading tool, such as a book or website, displays the author's argument, and nothing
+  else. The reader's line of thought remains internal and invisible, vague and speculative. We
+  form questions, but can't answer them. We consider alternatives, but can't explore them. We
+  question assumptions, but can't verify them. And so, in the end, we blindly trust, or blindly
+  don't, and we miss the deep understanding that comes from dialogue and exploration.}
+\end{quote}
+%
+The interactive essay we present encourages active reading in the sense summarized in Victor's quote.
+We show the reader an example (program, typing derivation or translation), but the reader is
+encouraged to modify it and see how the explanation in the essay adapts.
+
+The idea of active reading is older and has been encouraged in the context of art Josef Albers'
+classic 1963 work on color \cite{essay-albers} (which has been turned into an interactive essay
+60 years later \cite{essay-albers-app}). More recently, similar formats have been used to explain
+topics in areas such as signal processing \cite{essay-seeing} (explaining Fourrier transformations)
+and sociology \cite{essay-polygons} (visualizing and explaining game theoretical model of segregation
+in the society \cite{essay-segregation}). To our best knowledge, no such work exists in the area
+of programming language theory and so we briefly outline some of the interesting features that
+our essay provides in order to encourage active reading.
+
+\paragraph{Interactive program excution.}
+
+After providing the practical motivation for coeffects (based on Chapter~\ref{ch:intro}), the
+interactive essay shows the reader the two sample context-aware programming languages. Readers can
+write code in a panel that type checks the input, generates user interface for entering the
+required context and runs the sample code.
+
+The panels for implicit parameters and for data-flow computations are shown in Figure~\ref{fig:essay-eval}.
+The sample code on the left adds two implicit parameters and the generated UI lets the user
+enter implicit parameter values as required by the context in the typing judgement. The sample on
+the right calculates the average of the current and past value in a data-flow; the UI lets the user
+enter past values required by the type of the function.
+
+The essay guides the readers through a number of interesting programs (shown in Section~\ref{sec:impl-case-typing})
+and encourages them to run and try modifying them. For implicit parameters, this includes the case
+where an implicit parameter is available at both declaration-site and call-site (showing that the
+declaration-site value is captured). For data-flow, the examples include the comparison between the
+inferred type when using flat and structural type systems.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=16em]{images/df1.png}}
+\boxed{\includegraphics[width=16em]{images/df2.png}}
+\caption{Function smoothing the X coordinate (left) with a sample run (right).}
+\label{fig:essay-df}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Reactive data-flow.}
+
+The interactive program execution lets the reader run sample programs, but not in a realistic
+context. To show a more real-world scenario, the essay includes a widget shown in Figure~\ref{fig:essay-df}.
+This lets the user write a function taking a stream of X and Y coordinates and calculate value
+based on the current and past values of the mouse pointer. The X and Y values, together with the
+result are plotted using a live chart.
+
+In the example run shown above, the sample program calculates the average of the last 12 values
+of the X coordinate (green line in Figure~\ref{fig:essay-df}). The example also illustrates one
+practical use of the coeffect type system -- when running, the widget keeps the coordinates in a
+pre-allocated fixed-size array, because the coeffect type system guarantees that at most 12 past
+values will be accessed.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=32em]{images/types.png}}
+\caption{Source code with type information and explorable typing derivation.}
+\label{fig:essay-typing}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\paragraph{Explorable typing derivations.}
+
+Perhaps the most important aspect of the implemented context aware programming languages is their
+coeffect and type system. In a conventional implementation, the functioning of the type system
+would remain mostly hidden -- we would get an ``OK'' message for a well-typed program and a type
+error for invalid program (likely not very informative, given that reporting good error messages
+for type errors is a notoriously hard problem even for mature language implementations).
+
+The presented interactive essay provides two features to help the reader understand and explore
+typing derivations. First, when reading code samples in the text, tooltips show the typing of
+individual identifiers, most interestingly functions (Figure~\ref{fig:essay-typing}, above).
+
+Second, a later part of the essay provides a type checker that lets the user enter a source code
+in a context aware programming language and produces an explorable typing derivation for the
+program. The output (shown in Figure~\ref{fig:essay-typing}, below) displays a typing judgement
+with assumptions and conclusions and lets the reader navigate through the typing derivation by
+clicking on the assumptions or conclusions. This way, the reader can see how is the final typing
+derivation obtained, exploring interesting aspects, such as the abstraction rule (shown in
+Figure~\ref{fig:essay-typing}).
+
+\paragraph{Comonadically-inspired translation.}
+
+The last interactive element of the essay lets the reader explore the translation of source
+context aware language to a target simple functional language (Section~\ref{sec:impl-theory-transl}).
+Compared with the monadic do-notation \cite{other-haskell98}, the comonadic translation is more
+complex for two reasons. First, it merges all variables into a single (comonadic) value representing
+the context. Second, there is a flat and structural variation of the system. For these two reasons,
+understanding the translation based just on the rules is harder than for monads. The essay lets
+readers see translation for carefuly chosen case studies that illustrate the key aspects of the
+translation (some discussed in Section~\ref{sec:impl-case-transl}), but also for their own
+programs encouraging \emph{active reading}. Sample input and output are shown in
+Figure~\ref{fig:essay-transl}.
+
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+\boxed{\includegraphics[width=16em]{images/transl1.png}}
+\boxed{\includegraphics[width=16em]{images/transl2.png}}
+\caption{TBD}
+\label{fig:essay-transl}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Implementation overview}
+\label{sec:impl-essay-tech}
+
+The core part of our implementation mostly follows standard techniques for implementing type
+checkers and interpreters for statically-typed functional programming langauges. Two interesting
+aspects that are worth discussing is the JavaScript targetting (for running the langauge
+implementation in a web browser) and integration with client-side (JavaScript) libraries for
+building the user interface. The full source code can be obtained from
+\url{https://github.com/coeffects/coeffects-playground} and is structured as follows:
+%
+\begin{itemize}
+\item Parsing is implemented using smple parser combinator library; \strf{ast.fs} defines the
+  abstract syntax tree for the languages; \strf{parsec.fs} implements a small parser combinator
+  library and \strf{lexer.fs} with \strf{parser.fs} parse the source code by first tokenizing
+  the input and then parsing the stream of tokens.
+
+\item The type checking is implemented by \strf{typechecker.fs}, which annotates an untyped AST
+  with types and generates set of type and coeffect constraints. The constraints are later solved
+  (using domain-specific algorithms for each of the languages) in \strf{solver.fs}.
+
+\item Type-checked programs in context-aware languages are translated to simple target
+  functional subset of the language in \strf{translation.fs}; \strf{evaluation.fs} then interprets
+  programs in the target language. The interpretation does not handle the source
+  language and so programs containing context-aware contstructs cannot be interpreted directly.
+
+\item The user interface of the interactive essay discussed in Section~\ref{sec:impl-essay-features}
+  is implemented partly in F\# and partly in JavaScript. The two most important components include
+  a pretty-printer \strf{pretty.fs} which formats source code (with type tooltips) and typing
+  derivations and \strf{gui.fs} that implements user interaction (e.g.~navigation in explorable
+  typing derivations).
+\end{itemize}
+
+\noindent
+As discussed in Section~\ref{sec:impl-theory-ext}, the implementation can be easily extended to
+support additional context-aware programming languages. This is due to the fact that it is based
+on the unified theory of coeffects. In practice, adding support for liveness tracking would
+require adding a domain-specific constraint solver in \strf{solver.fs} and extending the
+interpreter in \strf{evaluation.fs} with a new kind of comonadically-inspired data type
+(indexed maybe comonad) with its associated operations.
+
+\section{Related work}
+\label{sec:impl-related}
+
+To our best knowledge, combining Bret Victor's idea of explorable explanations with programming
+language theory (as discussed in Section~\ref{sec:impl-essay}) is a novel contribution of our work.
+On the technical side, we build on a number of standard methods.
+
+\paragraph{Parsing and type checking.} The implementation of the parser, type checker and
+interpreter follows standard techniques for implementing functional programming languages.
+In order to be able to compile the implementation to JavaScript (see below), we built a
+small parser combinator library \cite{monad-parsing} rather than using one of the already
+available libraries \cite{other-fparsec}.
+
+\paragraph{Targetting JavaScript.} In order to make the implementation accessible to a broad
+audience, it can be executed in a web browser. This is achieved by automatically translating the
+implementation from F\# to JavaScript. We use an F\# library called FunScript \cite{other-funscript}
+(which is a more recent incarnation of the idea developed by the author \cite{app-fsharp-webtools}).
+We choose F\#, but similar tools exist for other functional languages such as OCaml \cite{other-js-ocaml}.
+It is worth noting that FunScript is implemented as a \emph{library} rather than as a compiler
+extension. This is done using the meta-programming capabilities of F\# \cite{app-fsharp-metaprog}.
+
+\paragraph{Client-side library integration.} An interesting aspect of the interactive essay
+user interface is the integration with third-party JavaScript libraries. We use a number of
+libraries including JQuery (for web browser DOM manipulation) and MathJax \cite{essay-mathjax}
+(for rendering of typing derivation). In order to call those from F\# code, we use a number
+of mapping methods described in \cite{app-age-of-web}. For example, the following F\# declaration
+is used to invoke the \ident{Queue} function in MathJax:
+%
+\begin{equation*}
+\begin{array}{l}
+\lbrack\langle\ident{JSEmitInline}(\str{MathJax.Hub.Queue(\{0\});})\rangle\rbrack\\[-0.25em]
+\kvd{let}~\ident{queueAction}~(\ident{f}:\ident{unit}~\rightarrow~\ident{unit}):\ident{unit}~=~\ident{failwith}~\str{JS only!}
+\end{array}
+\end{equation*}
+%
+The \ident{JSEmitInline} syntax on the first line is an attribute that instructs FunScript
+to compile all invocations of the \ident{queueAction} function into the JavaScript literal
+specified in the attribute (with \strf{\{0\}} replaced by the argument).
+
+
+% ==================================================================================================
+%
+%     #####
+%    #     # #    # #    # #    #   ##   #####  #   #
+%    #       #    # ##  ## ##  ##  #  #  #    #  # #
+%     #####  #    # # ## # # ## # #    # #    #   #
+%          # #    # #    # #    # ###### #####    #
+%    #     # #    # #    # #    # #    # #   #    #
+%     #####   ####  #    # #    # #    # #    #   #
+%
+% ==================================================================================================
+
+\section{Summary}
+
+This chapter supplements the theory of coeffects presented in the previous three chapters with
+a prototype implementation. We implemented three simple context-aware programming langauges that
+track implicit parameters and past values in dataflow computations (in flat and structural way).
+
+The implementation discussed in this chapter provides an evidence for our claim that the
+theory of coeffects can be used as a basis for a wide range of sound context-aware programming
+languages. Our implementation consists of a shared coeffect framework (handling type checking and
+translation). Each context-aware language then adds a domain-specific rule for choosing a unique
+typing derivation, an interpretation of comonadically-inspired primitives and (optionally)
+domain-specific primitives such as the \kvd{prev} construct for dataflow.
+
+We make the implementation available in the usual form (as source code that can be downloaded,
+compiled and executed), but we also present it in the form of interactive essay. This encourages
+\emph{active reading} and lets the reader explore a number of aspects of the implementation
+including the type checking (through explorable typing derivations) and the translation. The key
+contribution of this thesis is that it provides a unified way for \emph{thinking} about context in
+programming langauges and the interactive presentation of the implementation is aligned with this
+goal. Programming languages of the future will need a mechanism akin to coeffects and we aim to
+provide a convincing argument supported by a prototype implementation.
