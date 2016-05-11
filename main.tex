@@ -35,14 +35,16 @@
 % Formatting for source code & types
 \definecolor{cmtclr}{rgb}{0.0,0.6,0.0}
 \definecolor{kvdclr}{rgb}{0.0,0.0,0.6}
-\definecolor{strclr}{rgb}{0.5,0.1,0.0}
-\definecolor{prepclr}{rgb}{0.0,0.0,0.0}
+\definecolor{numclr}{rgb}{0.0,0.4,0.0}
+\definecolor{strclr}{rgb}{0.4,0.3,0.0}
+\definecolor{prepclr}{rgb}{0.6,0.0,0.2}
 
 \newcommand{\sep}[0]{\; | \;}
 \newcommand{\kvd}[1]{\textnormal{\textcolor{kvdclr}{\ttfamily #1}}}
-\newcommand{\str}[1]{\textnormal{\textcolor{strclr}{\ttfamily "#1"}}}
-\newcommand{\strf}[1]{\textnormal{\textcolor{strclr}{\ttfamily #1}}}
-\newcommand{\prepk}[1]{\textnormal{\textcolor{prepclr}{\bfseries\sffamily #1}}}
+\newcommand{\num}[1]{\textcolor{numclr}{#1}}
+\newcommand{\str}[1]{\textnormal{\textcolor{strclr}{\sffamily "#1"}}}
+\newcommand{\strf}[1]{\textnormal{\textcolor{strclr}{\sffamily #1}}}
+\newcommand{\prepk}[1]{\textnormal{\textcolor{prepclr}{\sffamily #1}}}
 \newcommand{\prepi}[1]{\textnormal{\textcolor{prepclr}{\ttfamily #1}}}
 \newcommand{\ident}[1]{\textnormal{\sffamily #1}}
 \newcommand{\cmt}[1]{\textit{\sffamily\textcolor{cmtclr}{#1}}}
@@ -134,6 +136,7 @@
 \newcommand{\catc}{\mathcal{C}}
 \newcommand{\idf}[1]{ {\textnormal{\sffamily id}}_{#1} }
 
+\urlstyle{sf}
 
 \newcommand{\figcaption}[1]{
   \vspace{0.5em}
@@ -233,7 +236,22 @@
 
 % ==================================================================================================
 
-\ctparttext{ TBD }
+\ctparttext{  The computing ecosystem is becoming increasingly heterogeneous and rich. Modern
+  programs need to run on a variety of devices that are all different, but provide unique rich
+  capabilities. For example, application running on a phone can access the GPS sensor, while
+  application running in the cloud can access GPU computing resources. Both diversity and richness
+  can only be expected to increase with trends such as the internet of things.
+
+  In this thesis, we argue that the creating programming languages that allow the programmer to
+  better work with the environment or \emph{context} in which applications execute is the next
+  big challenge for programming language designers.
+
+  We start with a detailed discussion of the motivation for the thesis and an overview of our
+  methodology (Chapter~\ref{ch:intro}). Next, we discuss previous programming langauge research that
+  leads to the work presented in this thesis (Chapter~\ref{ch:pathways}) and we examine a number
+  of practical context-aware systems in detail (Chapter~\ref{ch:applications}), identifying two
+  kinds of context that we later capture by \emph{flat} and \emph{structural coeffects}.
+}
 \part{Context-aware programming}
 \label{part:context-aware}
 
@@ -324,17 +342,17 @@
 
 % ==================================================================================================
 
-\include{text/Chapter04}
-\include{text/Chapter05}
-\include{text/Chapter06}
+%\include{text/Chapter04}
+%\include{text/Chapter05}
+%\include{text/Chapter06}
 
 \ctparttext{ TBD }
-\part{Random stuff}
+\part{Towards practical coeffects}
 \label{part:context-aware}
 
-\include{text/Chapter07}
-\include{text/Chapter08}
-\include{text/Chapter09}
+%\include{text/Chapter07}
+%\include{text/Chapter08}
+%\include{text/Chapter09}
 
 % ==================================================================================================
 

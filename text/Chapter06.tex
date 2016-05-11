@@ -10,7 +10,7 @@ The flat coeffect system captures a number of interesting use-cases (implicit pa
 and dataflow), but provides relatively imprecise approximation and weak syntactical properties.
 Some of those examples can be also seen as per-variable properties. For those, structural coeffect
 systems give a more precise information about the context. However, we also look at other applications
-that arise from the work on sub-structural logics, a pathway to coeffects discussed in
+that arise from the work on substructural logics, a pathway to coeffects discussed in
 Section~\ref{sec:path-logic}.
 
 We mirror the development for flat coeffect calculus and develop a small calculus with a type system
@@ -78,8 +78,8 @@ $\lambda$-calculus is asymmetric in that an expression has multiple inputs (vari
 context), but just a single result (the resulting value) and so monads and effects have no notion
 directly corresponding to structural coeffect systems.
 
-The work in this chapter is more closely related to sub-structural type systems \cite{substruct-attpl-intro}.
-Sub-structural systems remove some or all of \emph{weakening}, \emph{contraction} and
+The work in this chapter is more closely related to substructural type systems \cite{substruct-attpl-intro}.
+Substructural systems remove some or all of \emph{weakening}, \emph{contraction} and
 \emph{exchange} rules. In contrast, our systems keep all three structural rules, but use them to
 manipulate the coeffect annotations in a way that matches the variable manipulations.
 
@@ -352,17 +352,17 @@ and structural systems.
 \subsection{Structural coeffect types}
 \label{sec:struct-calculus-types}
 
-The type system for the structural coeffect calculus is similar to sub-structural type systems
+The type system for the structural coeffect calculus is similar to substructural type systems
 in how it handles free variable contexts. The \emph{syntax-driven} rules do not implicitly allow
 weakening, exchange or contraction -- this is done by checking the types of sub-expressions
-in disjoint parts of the free variable context. Unlike in sub-structural logics, our system
+in disjoint parts of the free variable context. Unlike in substructural logics, our system
 does allow weakening, exchange and contraction, but via explicit \emph{structural} rules that
 perform corresponding transformation on the coeffect annotation.
 
 \paragraph{Syntax-driven rules.}
 The syntax-driven rules of the type system are shown in Figure~\ref{fig:struct-types} (a).
 The variable access rule (\emph{var}) annotates the corresponding variable as being accessed
-using $\cunit$. Note that, as in sub-structural systems, the free variable context contains
+using $\cunit$. Note that, as in substructural systems, the free variable context contains
 \emph{only} the accessed variable. Other variables can be introduced using explicit weakening.
 Constants (\emph{const}) are type checked in an empty variable context, which is annotated with
 an empty vector of coeffect annotations.
@@ -386,7 +386,7 @@ composed with the function, resulting in $\cclrd{t}\,\aseq\,\aclrd{\textbf{s}}$.
 The rules shown in Figure~\ref{fig:struct-types} (b) are not syntax-directed and
 allow different transformation of the free variable context. They correspond to the
 transformations known as \emph{weakening}, \emph{exchange} and \emph{contraction}
-from sub-structural systems.
+from substructural systems.
 
 Rule (\emph{weak}) allows adding a variable to the context, extending the coeffect
 vector with $\czero$ to mark it as unused, (\emph{exch}) provides a way to rearrange variables
@@ -628,7 +628,7 @@ In this section, we specify how to choose the desired \emph{unique} typing deriv
 
 \subsection{Syntax-directed type system}
 
-In order to choose a unique typing derivation, we follow the example of sub-structural type systems
+In order to choose a unique typing derivation, we follow the example of substructural type systems
 \cite{substruct-attpl-intro} and introduce a syntax-directed version of the type system (also called
 \emph{algorithmic}). This replaces the non-syntax-directed rules for weakening, exchange and
 contraction with additional logic in places where contexts are combined. Given a typing derivation
