@@ -198,7 +198,7 @@ denoting that we access only the current value in $x$, but we need access to bot
 neighbours in the $y$ array. In order to unify the flat and structural notions, we attach this information
 as a \emph{vector} of annotations associated with a \emph{vector} of variable and write:
 $\coctx{x\!:\!\ident{Arr},\, y\!:\!\ident{Arr}}{ \aclrd{\alift{ (0,0), (-1,1) }} }$.
-The unification is outlined in Section~\ref{ch:further-unified}.
+The unification is outlined in Section~\ref{sec:further-unified}.
 
 In structural systems, the splitting of context is determined by the name (variable) binding.
 For example, consider a function that takes $y$ and contains the above body:
@@ -236,7 +236,7 @@ We use bold face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\t
 vectors and normal face $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars. We also say that a
 \emph{shape} of a vector $\slen{\aclrd{\textbf{r}}}$ (or more generally any container)
 determines the set of \emph{positions} in a vector. So, a vector of a shape (length) $n$ has positions
-$\{ 1, 2, \ldots, n \}$. We discuss containers and shapes further in Section~\ref{ch:further-unified} and also
+$\{ 1, 2, \ldots, n \}$. We discuss containers and shapes further in Section~\ref{sec:further-unified} and also
 discuss how our use relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
 
 Just as in the usual pointwise multiplication of a vector by a scalar, we lift any binary operation on scalars into a
@@ -2905,4 +2905,4 @@ properties. Both of the variants are useful and important -- for example, implic
 only be expressed as \emph{flat} system, but liveness analysis is only useful as \emph{structural}.
 For this reason, we explore both of these variants in this thesis (Chapter~\ref{ch:flat} and
 Chapter~\ref{ch:structural}, respectively). We can, however, unify the two variants into a single
-system discussed in Section~\ref{ch:further-unified}.
+system discussed in Section~\ref{sec:further-unified}.

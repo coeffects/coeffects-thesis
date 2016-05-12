@@ -6,7 +6,7 @@
 In the previous chapter, we outlined a number of systems that capture how computations
 access the environment in which they are executed. We identified two kinds of systems --
 \emph{flat systems} capturing whole-context properties and \emph{structural systems} capturing
-per-variable properties. As we show in Section~\ref{sec:unified-unified}, the systems can be
+per-variable properties. As we show in Section~\ref{sec:further-unified}, the systems can be
 further unified using a single abstraction, but such abstraction is \emph{less powerful} -- \ie~its
 generality hides useful properties that we can see when we consider the systems separately. For
 this reason, we discuss \emph{flat coeffects} (Chapter~\ref{ch:flat} and Chapter~\ref{ch:semantics})
@@ -240,7 +240,7 @@ semantics (Section~\ref{sec:flat-semantics}).
 \ie~the case when the same context is passed to multiple (independent) computations. The monoid
 axioms guarantee that usual syntactic transformations on tuples and the unit value
 (Section~\ref{sec:flat-exts}) preserve the coeffect. Idempotence holds for all our examples
-and allows us to unify the flat and structural systems in Chapter~\ref{ch:unified}.
+and allows us to unify the flat and structural systems in Section~\ref{sec:further-unified}.
 
 \item For the $\czip$ operation, we require associativity and idempotence. The idempotence
 demand makes it possible to duplicate the given coeffects and place the same demand on both
