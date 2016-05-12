@@ -29,7 +29,7 @@ disconnected at first!}.
 
 \item We describe a number of simple calculi for tracking a wide range of contextual properties.
   The systems are adapted from diverse sources (type systems, static analyses, logics) and apply to
-  various domains (cross-compilation, liveness, distributed computing, data-flow, security), but
+  various domains (cross-compilation, liveness, distributed computing, dataflow, security), but
   share a common structure.
 
 \item The uniform presentation of the systems is the key contribution of this chapter. We distinguish
@@ -38,8 +38,8 @@ disconnected at first!}.
   captured by the two \emph{coeffect calculi} in the upcoming chapters.
 
 \item In addition, the coeffect systems for tracking the number of accessed past values in
-  data-flow languages (Sections~\ref{sec:applications-flat-dataflow} and \ref{sec:applications-structural-dataflow})
-  presents novel results and can be used to optimize data-flow programs.
+  dataflow languages (Sections~\ref{sec:applications-flat-dataflow} and \ref{sec:applications-structural-dataflow})
+  presents novel results and can be used to optimize dataflow programs.
 \end{itemize}
 
 
@@ -280,7 +280,7 @@ As mentioned in the introduction, coeffect systems in this chapter may appear as
 set of examples at first. Indeed, this section covers a diverse set of calculi including
 Haskell's implicit parameters (Section~\ref{sec:applications-flat-impl}), distributed computing and
 cross-compilation (Section~\ref{sec:applications-flat-distr}), liveness analysis
-(Section~\ref{sec:applications-flat-live}) and data-flow (Section~\ref{sec:applications-flat-dataflow}).
+(Section~\ref{sec:applications-flat-live}) and dataflow (Section~\ref{sec:applications-flat-dataflow}).
 
 For three of the examples, we present a type system and a simple semantics (given inductively over
 the typing derivation). We informally discuss how preferred typing derivation is chosen (to resolve
@@ -1352,7 +1352,7 @@ is shared by multiple sub-expressions.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Data-flow languages}
+\subsection{Dataflow languages}
 \label{sec:applications-flat-dataflow}
 
 We used implicit parameters as our first example, because they show the simplest form of coeffects.
@@ -1362,14 +1362,14 @@ In this section, we look at a system with a structure similar to liveness that i
 The Section~\ref{sec:intro-why-array} briefly demonstrated that we can treat array access as an
 operation that accesses a context. In case of arrays, the context is neighbourhood of a current
 location in the array specified by a cursor. In this section, we make the example more concrete,
-using a simpler and better studied programming model, data-flow languages.
+using a simpler and better studied programming model, dataflow languages.
 
-Lucid \cite{app-lucid} is a declarative data-flow language designed by Wadge and Ashcroft. In Lucid,
+Lucid \cite{app-lucid} is a declarative dataflow language designed by Wadge and Ashcroft. In Lucid,
 variables represent streams and programs are written as transformations over streams. A function
 application $\ident{square}(x)$ represents a stream of squares calculated from the stream of values $x$.
 
-The data-flow approach has been successfully used in domains such as development of real-time embedded
-application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the data-flow
+The dataflow approach has been successfully used in domains such as development of real-time embedded
+application where many \emph{synchronous languages} \cite{app-synchronous-lang} build on the dataflow
 paradigm. The following example is inspired by the Lustre \cite{app-synchronous-lustre} language
 and implements a program to count the number of edges on a Boolean stream:
 %
@@ -1405,7 +1405,7 @@ Formally, the constructs are defined as follows (writing $x_n$ for $n$-th elemen
   \end{array} \right.
 \]
 %
-When reading data-flow programs, we do not need to think about variables in terms of streams --
+When reading dataflow programs, we do not need to think about variables in terms of streams --
 we can see them as simple values. Most of the operations perform calculation just on the
 \emph{current} value of the stream. However, the operation \kvd{fby} and \kvd{prev} are different.
 They require additional \emph{context} which provides past values of variables
@@ -1414,13 +1414,13 @@ They require additional \emph{context} which provides past values of variables
 The semantics of Lucid-like languages can be captured using a number of mathematical
 structures. Wadge \cite{app-lucid-monads} originally defined a monadic semantics, while Uustalu
 and Vene later used comonads \cite{app-dataflow-essence}. In Chapter~\ref{ch:flat}, we extend
-the latter approach. The present chapter presents a sketch of a concrete data-flow semantics
+the latter approach. The present chapter presents a sketch of a concrete dataflow semantics
 defined directly on streams.
 
 In the introductory example with array access patterns, we used coeffects to track the range
 of values accessed. In this section, we look at a simpler example -- we only consider the
 \kvd{prev} operation and track the maximal number of \emph{past values} needed. This is an
-important information for efficient implementation of data-flow languages. When we can guarantee
+important information for efficient implementation of dataflow languages. When we can guarantee
 that at most $x$ past values are accessed, the values can be stored in a pre-allocated buffer
 rather than using \eg~on-demand computed lazy streams.
 
@@ -1460,7 +1460,7 @@ rather than using \eg~on-demand computed lazy streams.
   {\coctx{\Gamma}{\cclrd{n}} \vdash \lambda x.e : \tau_1 \xrightarrow{\cclrd{n}} \tau_2 }
 \end{equation*}
 
-\figcaption{Coeffect rules for tracking context-usage in data-flow language}
+\figcaption{Coeffect rules for tracking context-usage in dataflow language}
 \label{fig:applications-flat-dataflow}
 \end{figure}
 
@@ -1478,7 +1478,7 @@ in (\emph{prev}), which increments the number of past values by one. Thus, for e
 $\kvd{prev}~(\kvd{prev}~x)$ requires 2 past values.
 
 The (\emph{app}) rule follows the same intuition as for liveness. It combines \emph{sequential}
-and \emph{pointwise} composition of semantic functions. In case of data-flow, the operations
+and \emph{pointwise} composition of semantic functions. In case of dataflow, the operations
 combine annotations using $+$ and \emph{max} operations:
 %
 \begin{equation*}
@@ -1550,11 +1550,11 @@ past value) and then $\kvd{prev}~(\kvd{prev}~\ident{counter}))$ (using two past 
 
 
 \paragraph{Semantics.}
-The language discussed in this section is a \emph{causal} data-flow language. This means that
+The language discussed in this section is a \emph{causal} dataflow language. This means that
 a computation can access \emph{past} values of the stream (but not future values). In the semantics,
 we again need richer structure over the input.
 
-Uustalu and Vene \cite{comonads-notions} model causal data-flow computations using a non-empty list
+Uustalu and Vene \cite{comonads-notions} model causal dataflow computations using a non-empty list
 $\ident{NeList}~\tau = \tau \times (\ident{NeList}~\tau + 1)$ over the input. A function $\tau_1 \rightarrow \tau_2$
 is thus modelled as $\ident{NeList}~\tau_1 \rightarrow \tau_2$. This model is difficult to implement
 efficiently, as it creates unbounded lists of past elements.
@@ -1634,7 +1634,7 @@ zero as in (\emph{var}).
 \end{array}
 \end{equation*}
 
-\figcaption{Semantics showing how past values are accessed in a data-flow language}
+\figcaption{Semantics showing how past values are accessed in a dataflow language}
 \label{fig:applications-flat-dfsem}
 \end{figure}
 
@@ -1664,12 +1664,12 @@ with the semantics of $e_2$. To call the function, we need to evaluate $e_2$ rep
 $\cclrd{p}+1$ times, which results in the overall requirement for $\cclrd{n}+\cclrd{p}$ past values.
 
 \paragraph{Summary.}
-Type systems have been used in the context of data-flow languages, for example to check
+Type systems have been used in the context of dataflow languages, for example to check
 initialization properties \cite{app-dataflow-init}, but to our knowledge, not for checking
 the maximal number of required past values. Thus this section serves not just as an example,
 but also shows how coeffects can lead to novel results.
 
-The most interesting point about the data-flow system is that it is remarkably similar to our
+The most interesting point about the dataflow system is that it is remarkably similar to our
 earlier liveness example. In the type system, abstraction (\emph{abs}) duplicates the context
 requirements and application (\emph{abs}) arises from sequential and pointwise composition.
 We capture this striking similarity in Chapter~\ref{ch:flat}. Before doing that, we look at one
@@ -1678,7 +1678,7 @@ more example and then explore the \emph{structural} class of systems.
 % --------------------------------------------------------------------------------------------------
 
 \subsection{Permissions and safe locking}
-In the implicit parameters and data-flow examples, the context provides additional resources or
+In the implicit parameters and dataflow examples, the context provides additional resources or
 values that may be accessed at runtime. However, coeffects can also track \emph{permissions} or
 \emph{capabilities} to perform some operation. We can invert the intuition behind liveness and
 use it as a trivial example. When the context is live, it contains a \emph{permission} to access
@@ -1764,7 +1764,7 @@ may be accessed.
 
 In this section, we look at three examples in detail -- we revisit liveness and show a practically
 useful structural version of the system; we consider an example inspired by linear logic; finally,
-we revisit data-flow to get a more precise analysis. Although quite different, the common pattern
+we revisit dataflow to get a more precise analysis. Although quite different, the common pattern
 among these three examples is somewhat easier to see, because they all track information about
 variable usage. We finish the section with a brief outline of several other applications.
 
@@ -2458,13 +2458,13 @@ of our approach is that it lets us unify flat and structural systems (Chapter~\r
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Data-flow languages revisited}
+\subsection{Dataflow languages revisited}
 \label{sec:applications-structural-dataflow}
 
-When discussing data-flow languages in an earlier section, we said that the context provides
+When discussing dataflow languages in an earlier section, we said that the context provides
 past values of variables. In Section~\ref{sec:applications-flat-dataflow}, we tracked this as
 a \emph{flat} property, which gives us a system that keeps the same number of past values for
-all variables. However, data-flow can also be adapted to a structural system which keeps the number
+all variables. However, dataflow can also be adapted to a structural system which keeps the number
 of required past values individually for each variable. Consider the
 following example:
 %
@@ -2477,9 +2477,9 @@ To evaluate a current value of the stream, we need the current value of \ident{l
 value of \ident{right}. Flat system is not able to capture this level-of-detail and simply
 requires $1$ past values of both streams in the variable context.
 
-Turning a flat data-flow system to a structural data-flow system is a change similar to the one
+Turning a flat dataflow system to a structural dataflow system is a change similar to the one
 between flat ans structural liveness. In case of liveness analysis, we included the flat system
-only as an illustration (it is not practically useful). For data-flow, the flat system is less
+only as an illustration (it is not practically useful). For dataflow, the flat system is less
 precise, but still practically useful (simplicity may outweigh precision).
 
 % --------------------------------------------------------------------------------------------------
@@ -2524,13 +2524,13 @@ vector of integers. This is similar as in the bounded reuse system, but the inte
 different thing. Consequently, they are also calculated differently. We omit rules that are the
 same for all structural coeffect systems (exchange, lambda abstraction).
 
-In data-flow, we annotate both used variables (\emph{var}) and unused variables (\emph{weak}) with
-$0$, meaning that no past values are required. This is the same as in flat data-flow, but different
+In dataflow, we annotate both used variables (\emph{var}) and unused variables (\emph{weak}) with
+$0$, meaning that no past values are required. This is the same as in flat dataflow, but different
 from bounded reuse and liveness (where unused variables have a different coeffect). Primitive
 requirements are introduced by the (\emph{prev}) rule, which increments the annotations of
 all variables.
 
-In flat data-flow, we identified sequential composition and pointwise composition as two primitive
+In flat dataflow, we identified sequential composition and pointwise composition as two primitive
 operations that were used in the (flat) application. In the structural system, these are used in
 (\emph{app}) and (\emph{contr}). Thus application combines coeffect annotations using $+$ and
 contraction using \emph{max}. This contrasts with bounded reuse, which uses $\ast$ and $+$,
@@ -2570,7 +2570,7 @@ Semantically, this performs stream lookups $y[1]$ and $y[3]$ where the indices a
 number of enclosing $\kvd{prev}$ constructs.
 
 \paragraph{Semantics.}
-To define the semantics of our structural data-flow language, we can use the same approach as when
+To define the semantics of our structural dataflow language, we can use the same approach as when
 adapting flat liveness to structural liveness. Rather than wrapping the whole context in a type
 constructor (list or option), we now wrap the individual components of the product representing
 the variables in the context.
@@ -2632,12 +2632,12 @@ require $\cclrd{s}$ and $\cclrd{t}$ past values. Both of these numbers are certa
 contraction for BLL, the values are duplicated and the same values are used for both variables.
 
 \paragraph{Summary.}
-Two of the structural examples shown so far (liveness and data-flow) extend an earlier flat
+Two of the structural examples shown so far (liveness and dataflow) extend an earlier flat
 version of a similar system. We discuss this relation in general later. However, a flat system
 can generally be turned into a structural one -- although this only gives a useful system when
 the flat version captures statically scoped properties, \ie~related to variables.
 
-The data-flow example demonstrates that the a flat system can also be turned into structural
+The dataflow example demonstrates that the a flat system can also be turned into structural
 system. In general, this only works for systems where lambda abstraction duplicates context
 requirements (as in Figure~\ref{fig:applications-flat-liveness}).
 
@@ -2760,7 +2760,7 @@ the language, it is impossible to write a function that modifies the context. We
 
 There is a number of systems that also capture contextual properties, but that make it possible to
 \emph{change} the context -- not just by evaluating certain code block in a locally modified context
-(\eg by wrapping it in $\ident{prev}$ in data-flow), but also by calling a function that, for example,
+(\eg by wrapping it in $\ident{prev}$ in dataflow), but also by calling a function that, for example,
 acquires new capabilities and returns those to the caller. Such actions appear to be closer to
 effects than to coeffects. While this thesis focuses on systems with passive contexts, we briefly
 consider the most important examples of the \emph{active} variant.
@@ -2890,7 +2890,7 @@ languages and systems that include some notion of \emph{context}. Because there 
 abstraction capturing contextual properties, the languages use a wide range of formalisms -- including
 principled approaches based on comonads and modal S4, ad-hoc type system extensions and static analyses
 as well as approaches based on monads. We looked at a number of applications including Haskell's implicit
-parameters and type classes, data-flow languages such as Lucid, liveness analysis and also a number of
+parameters and type classes, dataflow languages such as Lucid, liveness analysis and also a number of
 security properties.
 
 The second aim of this chapter was to re-formulate the existing work in a more uniform style and thus

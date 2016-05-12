@@ -456,7 +456,7 @@ $(\mathcal{L}, \sqcap, \sqcup, \sqcap, \ident{L}, \ident{D}, \sqsubseteq)$.
 
 \noindent
 The liveness example is interesting because it does not require any additional syntactic extensions
-to the langauge. It annotates constants and variables with $\ident{D}$ and $\ident{L}$, respectively
+to the language. It annotates constants and variables with $\ident{D}$ and $\ident{L}$, respectively
 and it captures how those annotation propagate through the remaining language constructs.
 
 As in Section~\ref{sec:applications-flat-live}, sequential composition $\cseq$ is modelled by
@@ -488,7 +488,7 @@ and $(\mathbb{N}, \mathit{min})$ forms a band. Note that dataflow is our first e
 $\cseq$ is not idempotent. The distributivity axioms require the following to be the case:
 $\mathit{max}(r,s) + t = \mathit{max}(r+t, s+t)$, which is easy to see.
 
-A simple dataflow langauge includes an additional construct $\kvd{prev}$ for accessing the
+A simple dataflow language includes an additional construct $\kvd{prev}$ for accessing the
 previous value in a stream with an additional typing rule that look as follows:
 %
 \begin{equation*}
@@ -539,7 +539,7 @@ for $\mathbb{N}_{\bot}$.
 As discussed in Chapter~\ref{sec:applications}, the lambda abstraction rule for coeffect systems
 differs from the rule for effect systems in that it does not delay all context demands.
 In case of implicit parameters (Section~\ref{sec:applications-flat-impl}), the demands
-can be satisfied either by the call-site or by the declaration-site. In case of dataflow and
+can be satisfied either by the call site or by the declaration-site. In case of dataflow and
 liveness, the rule discussed in Section~\ref{sec:flat-calculus} reintroduces similar ambiguity
 because it allows multiple valid typing derivations.
 
@@ -566,7 +566,7 @@ that lead to two possible meanings of the program -- evaluating to $1$ and $2$, 
   \item $f : \ident{num} \xrightarrow{\cclrd{\emptyset}} \ident{num}$ -- in this case, the value
     of \ident{?x} is captured from the declaration-site and the program produces $1$.
   \item $f : \ident{num} \xrightarrow{\cclrd{\{ \ident{?x} \}}} \ident{num}$ -- in this case, the
-    parameter \ident{?x} is required from the call-site and the program produces $2$.
+    parameter \ident{?x} is required from the call site and the program produces $2$.
 \end{itemize}
 %
 The coeffect calculus intentionally allows both of the options, acknowledging the fact that the
@@ -633,7 +633,7 @@ coeffects to otherwise well-typed programs.
 
 For implicit parameters we choose to follow the behaviour implemented by Haskell~\cite{app-implicit-parameters}
 where function abstraction captures all parameters that are statically available at the declaration-site
-and places all other demands on the call-site. For the example above, this means
+and places all other demands on the call site. For the example above, this means
 that the body of $f$ captures the value of \ident{?p} available from the declaration-site
 and $f$ will be typed as a function requiring no parameters (coeffect $\cclrd{\emptyset}$). The
 program thus evaluates to a numerical value $42$.
@@ -657,7 +657,7 @@ The most interesting rule is (\emph{abs}). The body of a function requires impli
 tracked by $\cclrd{r}$ and the parameters currently in (static) scope are $\cclrd{\Delta}$.
 The coeffect on the declaration site becomes $\cclrd{\Delta}$ (capture all available parameters)
 and the latent coeffect attached to the function becomes $\cclrd{r\setminus\Delta}$ (require any
-remaining parameters from the call-site). Finally, in the (\emph{letpar}) rule, we add the newly
+remaining parameters from the call site). Finally, in the (\emph{letpar}) rule, we add the newly
 bound implicit parameter \ident{?p} to the static scope in the sub-expression $e_2$.
 
 \paragraph{Properties.}
@@ -921,7 +921,7 @@ e &{\reduce_\eta}& \lambda x.e~x                                    &&(\textit{$
 The rules capture syntactic reductions that can be performed in a general calculus, without any
 knowledge of the specific notion of context. If the reductions preserve the type of the expression
 (type preservation), then operational semantics can be defined as a repeated application of the
-rules, together with additional domain-specific rules for each context-aware langauge, until
+rules, together with additional domain-specific rules for each context-aware language, until
 a specified normal form (\ie~a value) is reached.
 
 In the rest of the section, we briefly outline the interpretation of the three
@@ -1687,7 +1687,7 @@ Section~\ref{sec:applications-flat}.
 
 An inherent property of flat coeffect systems is the ambiguity of the typing for lambda
 abstraction. The body of a function requires certain context, but the context can be often
-provided by either the declaration-site or the call-site. Resolving this ambiguity has to be
+provided by either the declaration-site or the call site. Resolving this ambiguity has to be
 done differently for each concrete coeffect system, depending on its specific notion of context.
 We discussed this for implicit parameters, dataflow and liveness in Section~\ref{sec:flat-unique}
 and noted that the result for dataflow and liveness generalizes for any coeffect calculus

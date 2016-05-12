@@ -313,8 +313,8 @@ run-time semantics needs to be reflected in the type system.
 \paragraph{Resolution in Haskell.}
 In Haskell, the implicit parameters from the \emph{declaration-site} are preferred and so the result
 is 10. Correspondingly, the type system only permits one typing -- with the parameter \ident{?x}
-required on the declaration-side (allowing no rebinding at the call-site). However, if the function
-value was defined in a context not containing \ident{?x}, the value from the call-site would be used.
+required on the declaration-side (allowing no rebinding at the call site). However, if the function
+value was defined in a context not containing \ident{?x}, the value from the call site would be used.
 Thus, Haskell uses a \emph{defaulting mechanism} for implicit parameters, similar to that of F\#
 operators discussed in Section~\ref{sec:background-practice}.
 
@@ -413,7 +413,7 @@ The type systems guarantee that \emph{coeffect indices} will match in the result
 translation. The relationship from indices to values is injective in the general case, but 
 we can also show a number of important properties (which will be clarified in the revised
 version) for the concrete systems, \eg~an upper bound on the number of required
-past values in causal data-flow.
+past values in causal dataflow.
 
 
 % ==================================================================================================
@@ -422,7 +422,7 @@ past values in causal data-flow.
 
 An interesting aspect of many context-aware computations is that they require access to some
 context, but do not explicitly specify where the context comes from. In case of implicit parameters,
-the values can be provided either by the call-site or by the declaration-site.
+the values can be provided either by the call site or by the declaration-site.
 
 In some systems like Haskell's implicit parameters, this aspect is hidden through a mechanism that
 chooses a \emph{default typing} (and a \emph{default semantics}) and thus hides the ambiguity. Our approach is

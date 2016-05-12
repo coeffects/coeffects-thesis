@@ -247,7 +247,7 @@
   big challenge for programming language designers.
 
   We start with a detailed discussion of the motivation for the thesis and an overview of our
-  methodology (Chapter~\ref{ch:intro}). Next, we discuss previous programming langauge research that
+  methodology (Chapter~\ref{ch:intro}). Next, we discuss previous programming language research that
   leads to the work presented in this thesis (Chapter~\ref{ch:pathways}) and we examine a number
   of practical context-aware systems in detail (Chapter~\ref{ch:applications}), identifying two
   kinds of context that we later capture by \emph{flat} and \emph{structural coeffects}.
@@ -255,13 +255,13 @@
 \part{Context-aware programming}
 \label{part:context-aware}
 
-\include{text/Chapter01}
-\include{text/Chapter02}
-\include{text/Chapter03}
+%\include{text/Chapter01}
+%\include{text/Chapter02}
+%\include{text/Chapter03}
 
 % ==================================================================================================
 
-\ctparttext{In this part, we capture the similarities between the concrete context-aware langauges
+\ctparttext{In this part, we capture the similarities between the concrete context-aware languages
   presented in the previous chapter. We also develop the key novel technical contributions of
   the thesis. We define a \emph{flat coeffect type system} (Chapter~\ref{ch:flat}) that is
   parameterized by a \emph{coeffect algebra} and a mechanism for choosing unique typing derivation.
@@ -340,13 +340,34 @@
 \end{tabular}
 \end{center}
 
+% --------------------------------------------------------------------------------------------------
+
+%\include{text/Chapter04}
+%\include{text/Chapter05}
+%\include{text/Chapter06}
+
 % ==================================================================================================
 
-\include{text/Chapter04}
-\include{text/Chapter05}
-\include{text/Chapter06}
+\ctparttext{ In the first part of the thesis, we argued for the importance of \emph{context} in
+  programming languages. As programs execute in increasingly diverse and rich environments,
+  languages need to understand and check how programs use such context. In the second part, we
+  developed theoretical foundations (type system and semantics) for context-aware programming
+  languages. What remains to be done if context-aware programming languages are to become
+  ``the next big thing''?
 
-\ctparttext{ TBD }
+  In this part, we explore practical aspects of implementing context-aware programming languages
+  based on coeffects and related future work. We discuss a prototype implementation (Chapter~\ref{ch:impl}),
+  which links together all parts of the theory discussed in the previous part. Building a
+  production-ready programming language is outside the scope of the thesis, so we instead focus
+  on conveying the concept of coeffects to broader audience and make the implementation available
+  as a web-based interactive essay (Section~\ref{sec:impl-essay}) at: \url{http://tomasp.net/coeffects}.
+
+  In further work (Chapter~\ref{ch:further}), we outline unification of flat and structural
+  coeffects (Section~\ref{sec:further-unified}), which may be more suited for embedding in practical
+  languages and we discuss alternative approaches for using coeffects in programming languages
+  (\ref{sec:further-meta}).
+}
+
 \part{Towards practical coeffects}
 \label{part:context-aware}
 
@@ -362,7 +383,7 @@
 % --------------------------------------------------------------------------------------------------
 
 %\appendix
-\include{text/AppendixA}
-\include{text/AppendixB}
+%\include{text/AppendixA}
+%\include{text/AppendixB}
 
 \end{document}

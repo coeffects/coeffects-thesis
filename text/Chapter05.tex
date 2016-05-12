@@ -214,7 +214,7 @@ body of computation under a lambda abstraction.
 
 Following a similar approach to Moggi, Uustalu and Vene \cite{comonads-notions} showed that
 (\emph{monoidal}) \emph{comonads} uniformly capture the semantics of various kinds of context-dependent
-computations~\cite{comonads-notions}. For example, data-flow computations over non-empty lists
+computations~\cite{comonads-notions}. For example, dataflow computations over non-empty lists
 are modelled using the non-empty list comonad $\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$.
 
 The monadic and comonadic model outlined aboe represents at most a binary analysis of effects or
@@ -269,14 +269,14 @@ additional context $\ctyp{}{\alpha}$. The $\ident{cobind}$ operation turns a con
 $\ctyp{}{\alpha} \rightarrow \beta$ into a function that takes a value with context, applies
 the context-dependent function to value(s) in the context and then propagates the context.
 
-As mentioned earlier, Uustalu and Vene \cite{comonads-notions} use comonads to model data-flow
+As mentioned earlier, Uustalu and Vene \cite{comonads-notions} use comonads to model dataflow
 computations. They describe infinite (coinductive) streams and non-empty lists as example comonads.
 
 \begin{example}[Non-empty list]
 A non-empty list is a recursive data-type defined as $\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$.
 We write \kvd{inl} and \kvd{inr} for constructors of the left and right cases, respectively. The
 type \ident{NEList} forms a comonad together with the following \ident{counit} and \ident{cobind} mappings:
-%
+
 \begin{equation*}
 \begin{array}{rclll}
 \ident{counit}~l &\narrow{=}& h &\quad&\textnormal{when}~l=\kvd{inl}~h\\[-0.25em]
@@ -532,7 +532,7 @@ into two separate values. Note that this does not simply duplicate the value, be
 context is also split. To obtain coeffects $\cclrd{r}$ and $\cclrd{s}$, the input needs to provide
 \emph{at least} $\cclrd{r}$ and $\cclrd{s}$, so the tags are combined using the $\cpar$, which is often
 the \emph{least upper-bound}\footnote{The $\czip$ and $\cpar$ operations are the greatest and least upper
-bounds in the liveness and data-flow examples, but not for implicit parameters. However, they remain useful
+bounds in the liveness and dataflow examples, but not for implicit parameters. However, they remain useful
 as an informal analogy.}.
 
 \paragraph{Semantics of subcoeffecting.}
@@ -656,7 +656,7 @@ symmetric.
 \begin{example}[Indexed list]
 \label{thm:semantics-indexed-list}
 
-Our last example provides the semantics of data-flow computations. The flat coeffect algebra
+Our last example provides the semantics of dataflow computations. The flat coeffect algebra
 is formed by $(\mathbb{N}, +, \mathit{max}, \mathit{min}, 0, 0, \leq)$. In a
 non-indexed version, the semantics is provided by a non-empty list. In the indexed semantics,
 the index represents the number of available past values. The data type is then a pair of
@@ -690,9 +690,9 @@ and so the list always contains at least one value. Thus \ident{counit} returns 
 singleton list.
 
 The $\ident{cobind}_{m,n}$ operation requires $m + n$ elements in order to generate $n$ past results
-of the $f$ function, which itself requires $m$ past values. When combining two lists,
-$\ident{merge}_{m,n}$ behaves as \emph{zip} and produces a list that has the length of the shorter
-argument. When splitting a list, $\ident{split}_{m, n}$ needs the maximum of the required lengths.
+of $f$, which itself requires $m$ past values. When combining two lists, $\ident{merge}_{m,n}$
+behaves as \emph{zip} and produces a list of length of the shorter argument. When splitting a list,
+$\ident{split}_{m, n}$ needs the maximum of the lengths.
 
 
 % --------------------------------------------------------------------------------------------------
@@ -701,7 +701,7 @@ argument. When splitting a list, $\ident{split}_{m, n}$ needs the maximum of the
 The semantics is defined over a typing derivation:
 %
 \begin{equation*}
-\hspace{-3em}
+\hspace{-2em}
 \begin{array}{ll}
 \hspace{5.2em}\semdef
   {\coctx{\Gamma}{\cunit} \vdash x_i : \tau_i }
@@ -729,7 +729,7 @@ The semantics is defined over a typing derivation:
   {\hspace{-0.5em}\begin{array}{l}
   \ident{app}~\circ~f\hspace{-0.15em}\times\hspace{-0.15em}(\ident{cobind}_{\cclrd{s}, \cclrd{t}}~g)~\circ~\ident{split}_{\cclrd{r}, \cclrd{s} \,\cseq\, \cclrd{t}} \\[-0.3em]
   ~~\circ~\ident{map}_{\cclrd{r} \;\cpar\; (\cclrd{s} \,\cseq\, \cclrd{t})}~\ident{dup}\\[-0.3em]
-  \end{array}\hspace{-0.5em}}
+  \end{array}\hspace{-2em}~}
 & (\emph{app})
 \end{array}
 \end{equation*}
@@ -760,7 +760,7 @@ Assuming the following auxiliary operations:
 \label{sec:semantics-flat-calculus}
 
 In Section~\ref{sec:applications-flat}, we defined the semantics of concrete (flat) context-dependent
-computations including implicit parameters, liveness and data-flow. Using the \emph{flat indexed
+computations including implicit parameters, liveness and dataflow. Using the \emph{flat indexed
 comonad} structure, we can now define a single uniform semantics that is capable of capturing all
 our examples, as well as various other computations.
 
@@ -868,7 +868,8 @@ Figure~\ref{fig:applications-flat-implsem} and Figure~\ref{fig:applications-flat
 respectively.
 \end{theorem}
 \begin{proof}
-Simple expansion of the definitions for the unique typing derivation.
+Expansion of the definitions, using the unique typing derivation
+for dataflow and liveness and any typing derivation for implicit parameters.
 \end{proof}
 
 
@@ -936,7 +937,7 @@ Simple expansion of the definitions for the unique typing derivation.
 \end{array}
 \end{equation*}
 
-\caption{Common syntax and reduction rules of the target language}
+\figcaption{Common syntax and reduction rules of the target language}
 \label{fig:semantics-target}
 \end{figure}
 
@@ -1150,7 +1151,7 @@ Given $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$, add the typing rules:
 \end{array}
 \end{equation*}
 
-\caption{Comonadically-inspired extensions for the target language}
+\figcaption{Comonadically-inspired extensions for the target language}
 \label{fig:semantics-ext}
 \end{figure}
 
@@ -1475,7 +1476,7 @@ K &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_ \sep \ident{Df}\langle v_0, \ldots
 \end{array}
 \end{equation*}
 
-\caption{Additional constructs for modelling dataflow in the target language}
+\figcaption{Additional constructs for modelling dataflow in the target language}
 \label{fig:semantics-ext-df}
 \end{figure}
 
@@ -1663,9 +1664,9 @@ Finally, Figure~\ref{fig:semantics-ext-impl} also defines the reduction rules. T
 rule accesses an implicit parameter and (\emph{letimpl}) adds a new binding. The reduction rules
 closely model the product comonad discussed in Example~\ref{thm:semantics-indexed-prod}. Reductions
 for (\emph{cobind}) and (\emph{split}) restrict the set of available implicit parameters according
-to the annotations and (\emph{merge}) combines them, preferring the values from the call-site.
+to the annotations and (\emph{merge}) combines them, preferring the values from the call site.
 
-For the semantics of implicit parameter programs that we consider, the preference of call-site
+For the semantics of implicit parameter programs that we consider, the preference of call site
 bindings over declaration-site bindings in (\emph{merge}) does not matter. The unique typing
 derivations for implicit parameter coeffects obtained in Section~\ref{sec:flat-unique} always
 split implicit parameters into \emph{disjoint sets}, so preferences do not come into play.
@@ -1673,6 +1674,7 @@ split implicit parameters into \emph{disjoint sets}, so preferences do not come 
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}[h!]
+\vspace{2em}
 \paragraph{Language syntax}
 
 \begin{equation*}
@@ -1781,9 +1783,9 @@ K &=& \ldots \sep \ident{lookup}_{\cclrd{\ident{?p}}}~\_ \sep \ident{letimpl}_{\
 \end{array}
 \end{equation*}
 
-\vspace{-0.5em}
-\caption{Additional constructs embedding implicit parameters into the language}
+\figcaption{Additional constructs embedding implicit parameters into the language}
 \label{fig:semantics-ext-impl}
+\vspace{1em}
 \end{figure}
 
 % --------------------------------------------------------------------------------------------------
@@ -1946,7 +1948,7 @@ Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a val
   that enable the (\emph{split}) or (\emph{letimpl}) reduction, respectively.
 \end{proof}
 
-\begin{theorem}[Safety of context-aware langauge with implicit parameters]
+\begin{theorem}[Safety of context-aware language with implicit parameters]
   If $\Gamma \vdash e : \tau$ and $e \rightsquigarrow^* e'$ then either $e'$ is a value of type $\tau$ or
   there exists $e''$ such that $e' \rightsquigarrow e''$ and $\Gamma \vdash e'' : \tau$.
 \end{theorem}
@@ -1959,7 +1961,7 @@ Case (\emph{split}, \emph{letimpl}): Similar. Either sub-expression is not a val
 \section{Generalized safety of comonadic embedding}
 \label{sec:semantics-generalising}
 
-In Section~\ref{sec:semantics-df} and Section~\ref{sec:semantics-proofs-impl}, we proved the
+In Section~\ref{sec:semantics-proofs-df} and Section~\ref{sec:semantics-proofs-impl}, we proved the
 safety property of two concrete context-aware programming languages based on the coeffect
 language framework. The proofs for the two systems were very similar and relied on the
 same key principle.

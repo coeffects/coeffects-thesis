@@ -43,7 +43,7 @@ language, showing that ``well-typed context-aware programs do not get stuck''.
 \item We give a \emph{translational semantics} (Section~\ref{sec:struct-transl}) that translates
   programs from the structural coeffect calculus into a simple functional language with
   uninterpreted comonadically-inspired primitivies. We give concrete operational semantics for the
-  target language for one of our sample langauges and show that well-typed programs, produced by
+  target language for one of our sample languages and show that well-typed programs, produced by
   translation from the coeffect calculus do not get stuck.
 \end{itemize}
 
@@ -614,7 +614,7 @@ the one shown in Figure~\ref{fig:applications-struct-live} in Chapter~\ref{ch:ap
 In the structural coeffect calculus, the lambda abstraction rule does not introduce ambiguity
 in the typing. This is in contrast with flat coeffect systems (most importantly, the one for
 implicit parameters), where lambda abstraction allowed arbitrary splitting of context requirements.
-In structural coeffect systems, the context requirements placed on the call-site (attached to
+In structural coeffect systems, the context requirements placed on the call site (attached to
 the function type) are those of the bound variable.
 
 However, the type system for structural coeffect calculus in Figure~\ref{fig:struct-types}
@@ -1415,7 +1415,7 @@ of the variable context is another reason for using $-\xtimes-$ when interpretin
 A semantics of structural coeffect calculi is shown in Figure~\ref{fig:struct-semantics}. The
 semantics is written as composition of morphisms using a number of auxiliary definitions. Due to
 the eqivalence between Cartesian Closed Categories and the $\lambda$-calculus, we will treat it
-as specifying translation to a target functional langauge in Section~\ref{sec:struct-transl}.
+as specifying translation to a target functional language in Section~\ref{sec:struct-transl}.
 
 The following summarizes how the standard syntax-driven rules work, highlighting the differences
 from the flat version:
@@ -1703,7 +1703,7 @@ Section~\ref{sec:applications-structural-dataflow} and Section~\ref{sec:applicat
 respectively.
 \end{theorem}
 \begin{proof}
-Simple expansion of the definitions for the unique typing derivation.
+Expansion of the definitions for the unique typing derivation.
 \end{proof}
 
 
@@ -1733,7 +1733,7 @@ language, we then show that well-typed programs (produced by the translation) do
 This section mirrors the development presented in Chapter~\ref{ch:semantics} for flat coeffect
 calculus. We extend the simple target language with additional constructs inspired by structural
 indexed comonads (Section~\ref{sec:struct-transl-ext}), define the translation to the target
-langauge (Section~\ref{sec:struct-transl-transl}) and prove safety of one sample language
+language (Section~\ref{sec:struct-transl-transl}) and prove safety of one sample language
 (Section~\ref{sec:struct-transl-safety}) -- we choose structural dataflow to allow easy
 comparison with the flat system.
 
@@ -1786,7 +1786,7 @@ Given a structural coeffect algebra, add the typing rules:
 \end{array}
 \end{equation*}
 
-\caption{Comonadically-inspired extensions for structural coeffects}
+\figcaption{Comonadically-inspired extensions for structural coeffects}
 \label{fig:struct-semantics-ext}
 \end{figure}
 
@@ -2005,7 +2005,7 @@ Case (\emph{exch}), (\emph{contr}): The auxiliary definition $\ident{nest}_{\acl
 \label{sec:struct-transl-safety}
 
 The target language with comonadically-inspired primitives provides a framework that can be used
-to model a variety of structural context-aware langauges and prove their safety. As outlined in
+to model a variety of structural context-aware languages and prove their safety. As outlined in
 Section~\ref{sec:semantics-generalising}, the key principle that guarantees the safety of the
 target language is a correspondence between coeffect annotations and the values they represent.
 In a more expressive target language (such as Haskell or Agda), it would be sufficient to
@@ -2105,7 +2105,7 @@ K &=& \ldots \sep \ident{Df}\langle \textbf{v}_0, \ldots, \langle v_{j,0}, \ldot
 \end{array}
 \end{equation*}
 
-\caption{Additional constructs for modelling structural dataflow}
+\figcaption{Additional constructs for modelling structural dataflow}
 \label{fig:structural-ext-df}
 \end{figure}
 
@@ -2113,7 +2113,7 @@ K &=& \ldots \sep \ident{Df}\langle \textbf{v}_0, \ldots, \langle v_{j,0}, \ldot
 
 \paragraph{Domain-specific extensions.}
 
-The Figure~\ref{fig:structural-ext-df} extends the target functional langauge with constructs,
+The Figure~\ref{fig:structural-ext-df} extends the target functional language with constructs,
 typing rules, translation rules and reduction rules needed for modelling structural dataflow.
 In the structural model, the type $\ctyp{\alift{\cclrd{r_0}, \ldots, \cclrd{r_n}}}{(\tau_0\xtimes\ldots\xtimes\tau_n)}$
 represents a structure that provides values and additional contexts for variables of types

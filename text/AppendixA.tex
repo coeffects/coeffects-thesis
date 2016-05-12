@@ -4,7 +4,7 @@
 \label{ch:appendix} 
 
 This appendix gives full typing derivations for the examples presented in Chapter~\ref{ch:applications},
-which demonstrate simple coeffect calculi for implicit parameters, liveness and data-flow.
+which demonstrate simple coeffect calculi for implicit parameters, liveness and dataflow.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -63,11 +63,11 @@ from the variable context. Finally, the derivation for ($3$) is shown in Figure~
 
 % --------------------------------------------------------------------------------------------------
 
-\section{Coeffect typing for data-flow}
+\section{Coeffect typing for dataflow}
 \label{sec:appendixa-dataflow}
 
 The Section~\ref{sec:applications-flat-dataflow} presents a coeffect type system that tracks the 
-maximal number of past values required by a data-flow computation. The discussion includes the 
+maximal number of past values required by a dataflow computation. The discussion includes the 
 following example:
 %
 \begin{equation*}
@@ -265,7 +265,7 @@ past values, calculated as $\textnormal{max}(\cclrd{1}, \cclrd{1}+\cclrd{1})$.
      { \coctx{\Gamma_0}{\cclrd{2}} \vdash (\kvd{if}\ldots\kvd{then}\ldots\kvd{else}\ldots)~(\ldots) : \ident{int} } }
 \end{equation*}
 
-\figcaption{Coeffect typing for data-flow}
+\figcaption{Coeffect typing for dataflow}
 \label{fig:appendixa-dfl}
 \end{figure}
 

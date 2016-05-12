@@ -11,7 +11,7 @@ This thesis aims to change how developers and programming language designers thi
 \emph{context} or \emph{execution environments} of programs. Such context or execution environment
 has numerous forms -- mobile applications access network, GPS location or user's personal data;
 journalists obtain information published on the web or through open government data initiatives;
-in data-flow programming, we have access to past values of expressions.
+in dataflow programming, we have access to past values of expressions.
 This thesis aims to change our understanding of \emph{context} so that the above examples are
 viewed uniformly through a single programming language abstraction, which we call \emph{coeffects},
 rather than as disjoint cases.
@@ -52,7 +52,7 @@ building programming languages that simplify writing software for such rich and 
 In $\lambda$-calculus, the term \emph{context} is usually refers to the free-variable context.
 However, other programming language features are also related to context or program's
 execution environment. In Chapter~\ref{ch:applications}, we revisit many of such features --
-including resource tracking in distributed computing, cross-platform development, data-flow
+including resource tracking in distributed computing, cross-platform development, dataflow
 programming and liveness analysis, but also Haskell's implicit parameters.
 
 The main contribution of the chapter is that it presents the disjoint language features in a
@@ -77,7 +77,7 @@ In Chapter~\ref{ch:flat}, we develop a \emph{flat coeffect calculus} which gives
 of tracking \emph{whole-context} properties. The calculus is parameterized by a \emph{flat coeffect
 algebra} that captures the algebraic properties of contextual information. Concrete
 instances of flat coeffects include Haskell's implicit parameters, whole-context liveness and
-whole-context data-flow.
+whole-context dataflow.
 
 Our focus is on the syntactic properties of the calculus -- we give a type system
 (Section~\ref{sec:flat-calculus}) and discuss equational theory of the calculus (Section~\ref{sec:flat-syntax}).
@@ -101,7 +101,7 @@ We unify systems with \emph{per-variable} contextual properties in Chapter~\ref{
 which describes our \emph{structural coeffect calculus} (Section~\ref{sec:struct-calculus}).
 Similarly to the flat variant, the calculus is parameterized by a \emph{structural coeffect algebra}.
 Concrete instances of the calculus track bounded variable use (\ie~how many times is a variable
-accessed), data-flow properties (how many past values are needed) and liveness (\ie~can variable
+accessed), dataflow properties (how many past values are needed) and liveness (\ie~can variable
 be accessed).
 
 The structural coeffect calculus has desirable equational properties (Section~\ref{sec:struct-syntax}).
@@ -249,7 +249,7 @@ state, I/O) as instances of the same concept and thus reduce the number of disti
 features that developers need to understand.
 
 This thesis aims to provide a similar unifying theory and tools for capturing context-dependence
-in programming languages. We showed that programming language features (liveness, data-flow,
+in programming languages. We showed that programming language features (liveness, dataflow,
 implicit parameters, etc.) that were previously treated separately can be captured by a common
 framework developed in this thesis. The main technical contribution of this thesis is that it
 provides the necessary tools for programming language designers -- including parameterized type

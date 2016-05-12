@@ -72,7 +72,7 @@ only evaluated if the environment provides values for variables $x$ and $y$. A v
 The program can be evaluated in two ways, depending on the variable binding mechanism:
 %
 \begin{itemize}
-\item \textsc{Static (lexical) binding.} In a langauge with static binding (such as ML or Java),
+\item \textsc{Static (lexical) binding.} In a language with static binding (such as ML or Java),
   the variable \ident{x} inside the body of the lambda function is statically bound to the
   declaration in the lexical scope -- that is, the variable on the second line -- and the
   expression evaluates to 10.
@@ -88,7 +88,7 @@ When we view variable access as a context requirement, we can see that the body 
 ($\ident{x}+\ident{y}$) requires a context that provides values for variables \ident{x} and
 \ident{y}. In static binding, the context requirements of the body can be placed on the scope in
 which the function is defined (declaration-site). In dynamic binding, the requirements are
-\emph{delayed} and are placed on the scope in which the function is called (call-site).
+\emph{delayed} and are placed on the scope in which the function is called (call site).
 
 In static and dynamic scoping, all variable requirements are always placed on one site. However,
 those are not the only two options. It is conceivable that a language would use a mechanism that
@@ -115,8 +115,8 @@ written as \ident{?param}, which use a particular combination of static and dyna
 
 The following two examples are variations on the one discussed in the Section~\ref{sec:path-binding-var}.
 We replace a variable \ident{x} with an implicit parameter \ident{?x}. On the left, the
-implicit parameter is defined both at declaration-site and at the call-site. On the right, the
-implicit parameter is available only at the call-site:
+implicit parameter is defined both at declaration-site and at the call site. On the right, the
+implicit parameter is available only at the call site:
 
 \begin{equation*}
 \begin{array}{l}
@@ -136,7 +136,7 @@ implicit parameter is available only at the call-site:
 The binding rules for implicit parameters can be summarized as ``\emph{static binding when possible,
 dynamic binding when needed}''. If an implicit parameter is available in scope, then the value
 is statically bound and the context requirement is satisfied using the declaration-site context.
-Otherwise, the context requirement is delayed and has to be satisfied at the call-site.
+Otherwise, the context requirement is delayed and has to be satisfied at the call site.
 In the example on the left, \ident{?x} is bound to $10$ the function \ident{f} has no
 delayed context requirements and the expression evalautes to $10$. In the example on the right,
 the context requirement \ident{?x} is delayed and is satisfied via dynamic binding when calling
@@ -159,10 +159,10 @@ In this thesis, we consider different notions of context, using implicit paramet
 of several motivating examples. However, implicit parameters are a valuable example, because they
 clearly illustrate the ambiguity inherent in context-aware programs -- the context requirements of
 a function can be satisfied using the context available at declaration-site or using the context
-available at the call-site.
+available at the call site.
 
 We also aim to find a description of context-aware languages that does not make ad-hoc decisions
-about how context requirements are split between the declaration-site and the call-site. While
+about how context requirements are split between the declaration-site and the call site. While
 Haskell's solution for implicit parameters might be the most reasonable one, different notions
 of context might require different domain-specific choices and the general framework of
 context-aware programming should make that possible.
@@ -225,7 +225,7 @@ possible typing derivations and its semantics varies depending on the type. If t
 scope contains a binding for $\ident{?x}$, the function type is $\kvd{int}\rightarrow\kvd{int}$
 and it captures the value from the lexical scope. Otherwise, the type of the function is
 $\{\ident{?x}:\kvd{int}\}\Rightarrow\kvd{int}\rightarrow\kvd{int}$ and it reads the parameter
-value from a hidden dictionary that is passed together with the input from the call-site.
+value from a hidden dictionary that is passed together with the input from the call site.
 
 \paragraph{Thesis perspective.}
 Just like the F\# function in the above example, certain expressions in context-aware languages
@@ -566,7 +566,7 @@ with \emph{comonads} -- the categorical dual of monads.
 \label{sec:path-sem-contextdep}
 
 The theoretical parts of this thesis extend the work of Uustalu and Vene who use comonads
-to give the semantics of data-flow computations \cite{comonads-dataflow} and more generally,
+to give the semantics of dataflow computations \cite{comonads-dataflow} and more generally,
 notions of \emph{context-dependent computations} \cite{comonads-notions}. The computations discussed
 in the latter work include streams, arrays and containers. This is a more diverse set of examples,
 but they all mostly represent forms of collections. Ahman et al. \cite{comonads-containers} discuss
@@ -646,12 +646,12 @@ to the entire list, to the suffix of the list, to the suffix of the suffix and s
 it preserves the \emph{shape} of the list as it turns a list of $n$ elements into another list
 of $n$ elements.
 
-In causal data-flow, we can interpret the list as a list consisting of past values, with the
+In causal dataflow, we can interpret the list as a list consisting of past values, with the
 current value in the head. Then, the $\ident{cobind}$ operation calculates the current value
 of the output based on the current and all past values of the input; the second element is
 calculated based on all past values and the last element is calculated based just on the initial
 input $(l_n)$. In addition to the operations of comonad, the model also uses some operations that
-are specific to causal data-flow:
+are specific to causal dataflow:
 %
 \begin{equation*}
 \begin{array}{rcl}
@@ -659,14 +659,14 @@ are specific to causal data-flow:
 \end{array}
 \end{equation*}
 %
-The operation drops the first element from the list. In the data-flow interpretation, this means
+The operation drops the first element from the list. In the dataflow interpretation, this means
 that it returns the previous state of a value.
 
-Now, consider a simple data-flow language with single-variable contexts, variables,
+Now, consider a simple dataflow language with single-variable contexts, variables,
 primitive built-in functions and a construct $\kvd{prev}~e$ that returns the previous
 value of the computation $e$. We omit the typing rules, but they are simple -- assuming $e$
 has a type $\tau$, the expression $\kvd{prev}~e$ has also type $\tau$. The fact that
-the language models data-flow and values are lists (of past values) is a matter of semantics,
+the language models dataflow and values are lists (of past values) is a matter of semantics,
 which is defined as follows:
 %
 \begin{equation*}
