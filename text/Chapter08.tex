@@ -430,7 +430,7 @@ of the unified coeffect algebra. As already mentioned, we use splitting of conte
 in rule \emph{assumptions} and merging of context requirements $\apar$ in rule \emph{conclusions}.
 
 Note that we use the terms \emph{merging} and \emph{splitting} in the syntactic (top-down) sense. As
-discussed in Chapter~\ref{ch:flat}, Section~\ref{sec:flat-calculus-undestanding}, we can also read
+discussed in Chapter~\ref{ch:flat}, Section~\ref{sec:flat-calculus-understanding}, we can also read
 the rules in semantic (bottom-up) sense, in which case assumptions merge available contextual
 information and conclusions split available contextual information.
 
@@ -737,7 +737,7 @@ This means that the splitting and merging the context can change the coeffect an
 For flat coeffect calculi where $(\aclrd{r}\,\azip\,\aclrd{s}) \;\aclrd{\leq}\; (\aclrd{r}\,\apar\,\aclrd{s})$,
 splitting and then merging a context may lose some of the available contextual capabilities
 (and increase context requirements). This illuminates why our proofs of Lemma~\ref{thm:further-rev-contr}
-and Lemma~\ref{thm:further-rev-exch} relied on sub-coeffecting in the flat system.
+and Lemma~\ref{thm:further-rev-exch} relied on subcoeffecting in the flat system.
 
 \paragraph{Related and future work.}
 The semantics presented here serves main\-ly to inform the design of the type system. For this
@@ -990,7 +990,7 @@ the ordering on the lattice provided by $\cleq$.
 However, the operations $\ident{merge}$, $\ident{split}$ and $\ident{lift}$ can now all
 use ordering. For example, the \ident{merge} operation previously returned
 a result with greatest lower bound $\cclrd{r}\;\czip\;\cclrd{s}$. Now, we require any
-element that is smaller than $\cclrd{r}$ and $\cclrd{s}$. This adds an implicit sub-coeffecting
+element that is smaller than $\cclrd{r}$ and $\cclrd{s}$. This adds an implicit subcoeffecting
 to the operation -- for any $\cclrd{t}$ such that $\cclrd{t}\;\cleq\;\cclrd{r}$ and
 $\cclrd{t}\;\cleq\;\cclrd{s}$, it is also the case that $\cclrd{t}\;\cleq\;(\cclrd{r}\,\czip\,\cclrd{s})$.
 This means that we can compose the original \ident{merge} operation which returns greatest lower
@@ -1192,7 +1192,7 @@ coeffect annotations rather than requiring the same annotation everywhere.}.
 
 The \kvd{split} and \kvd{merge} constructs follow a similar pattern. They both apply some
 transformation on one or two values in a context and then add the new value as a fresh variable
-to the variable context. We omit sub-coeffecting, but it could be easily added following
+to the variable context. We omit subcoeffecting, but it could be easily added following
 the method used elsewhere.
 
 % -------------------------------------------------------------------------------------------------
@@ -1302,7 +1302,7 @@ the operations of an indexed comonad.
 %
 % ==================================================================================================
 
-\section{Conclusions}
+\section{Summary}
 
 In this chapter, we completed our quest of presenting a \emph{unified} system for tracking contextual
 properties and then we discussed two important topics of future and related work that require

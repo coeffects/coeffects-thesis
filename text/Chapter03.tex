@@ -1,5 +1,3 @@
-% ==================================================================================================
-
 \chapter{Context-aware systems}
 \label{ch:applications}
 
@@ -17,9 +15,14 @@ examples. Existing systems that capture contextual properties use a wide range o
 special-purpose type systems, approaches arising from modal logic S4, as well as techniques based
 on abstractions designed for other purpose, most frequently monads.
 
+This chapter reviews some of the existing context-aware programming abstractions and presents them
+in a uniform way. We start with disconnected examples, but at the end, we will see that they
+share a common pattern\footnote{The different properties captured by monads may appear similarly
+disconnected at first!}.
+
 \paragraph{Chapter structure and contributions}
 \begin{itemize}
-\item We start with a characterization of contextual properties. The Section~\ref{sec:applications-structure}
+\item We characterize contextual properties -- the Section~\ref{sec:applications-structure}
   explains what is a \emph{coeffect} and contrasts it with a better known notion of
   \emph{effect}. It explains what is the nature of properties that can be tracked using
   coeffect systems presented in this thesis.
@@ -31,18 +34,14 @@ on abstractions designed for other purpose, most frequently monads.
 
 \item The uniform presentation of the systems is the key contribution of this chapter. We distinguish
   between \emph{flat coeffect} systems (Section~\ref{sec:applications-flat}) and \emph{structural coeffect}
-  systems (Section~\ref{sec:applications-structural}). The fact that we find a common structure in
-  all systems presented here lets us develop unified coeffect calculi in the upcoming three chapters.
+  systems (Section~\ref{sec:applications-structural}). This common structure is precisely
+  captured by the two \emph{coeffect calculi} in the upcoming chapters.
 
 \item In addition, the coeffect systems for tracking the number of accessed past values in
   data-flow languages (Sections~\ref{sec:applications-flat-dataflow} and \ref{sec:applications-structural-dataflow})
   presents novel results and can be used to optimize data-flow programs.
 \end{itemize}
 
-\noindent
-As mentioned, this chapter may appear as a collection of disconnected
-examples\footnote{The different properties captured by monads may appear similarly
-disconnected at first!}. But at the end, we will see that they share a common pattern.
 
 
 % ===================================================================================================
@@ -134,15 +133,16 @@ with values in data structures (\eg~fields of a tuple), but this is left as futu
 
 \paragraph{Variable coeffects.}
 
-In standard $\lambda$-calculus, variable access can be seen as a primitive operation that
-accesses the context. The variable access expression introduces a context requirement -- the
-expression $x$ is typeable only in a context that contains $x:\tau$ for some type $\tau$.
+As discussed in Section~\ref{sec:path-binding}, variable access can be seen as a basic form
+of context requirement in $\lambda$-calculus. The expression $x$ is typeable only in a context
+that contains $x:\tau$ for some type $\tau$.
 
-The standard lambda abstraction (\emph{pure}), shown in Figure~\ref{fig:applications-abs},
-splits the free-variable context of an expression into two parts. At runtime, the value of the parameter
-has to be provided by the \emph{call site} (dynamic scope) and the remaining values are provided
-by the \emph{declaration site} (lexical scope). In the type checking, the splitting is determined
-syntactically -- the notation $\lambda x.e$ names the variable whose value comes from the call site.
+In lexically scoped languages, lambda abstraction (\emph{pure}), as shown in
+Figure~\ref{fig:applications-abs}, splits the free-variable context of an expression into two parts.
+At runtime, the value of the parameter has to be provided by the \emph{call site} (dynamic scope)
+and the remaining values are provided by the \emph{declaration site} (lexical scope). In the type
+checking, the splitting is determined syntactically. The notation $\lambda x.e$ \emph{names} the
+variable whose value comes from the call site.
 
 Flat and structural coeffects also split context-requirements between the declaration site and
 the call site. The flat and structural coeffects capture two different ways of doing this.
@@ -173,8 +173,11 @@ to the function, writing $\tau_1 \xrightarrow{ \cclrd{r} } \tau_2$.
 We look at resources in distributed programming in more details in Section~\ref{sec:applications-flat-distr}.
 The important point here is that in flat coeffect systems, contextual requirements are
 \emph{split} between the call site and declaration site. Furthermore, there is no syntactic
-structure that determines how the requirements are split. In the case of distributed
-programming, the resources can be freely associated with either of the two sites.
+structure that determines how the requirements are split. As mentioned in Section~\ref{sec:path-binding-amb},
+we decouple the definition of semantics from the domain-specific choice that determines how
+context requirements are satisfied. We capture the choice in the type and give semantics over a
+\emph{typing derivation}. A domain-specific algorithm then chooses the desirable typing -- for
+example, by preferring resources available on the client over resources available on the server.
 
 \paragraph{Structural coeffects.}
 On the one hand, variable context provides a \emph{fine-grained tracking} mechanism of how context
@@ -195,14 +198,14 @@ denoting that we access only the current value in $x$, but we need access to bot
 neighbours in the $y$ array. In order to unify the flat and structural notions, we attach this information
 as a \emph{vector} of annotations associated with a \emph{vector} of variable and write:
 $\coctx{x\!:\!\ident{Arr},\, y\!:\!\ident{Arr}}{ \aclrd{\alift{ (0,0), (-1,1) }} }$.
-The unification is discussed in Chapter~\ref{ch:unified}.
+The unification is outlined in Section~\ref{ch:further-unified}.
 
 In structural systems, the splitting of context is determined by the name (variable) binding.
 For example, consider a function that takes $y$ and contains the above body:
 $\lambda y.x[\kvd{cursor}] = y[\kvd{cursor}-1] + y[\kvd{cursor}+1]$. Here, the declaration site
 contains $x$ and needs to provide access at least within a range $(0,0)$. The call site provides
 a value for $y$, which needs to be accessible at least within $(-1, 1)$. In this way, structural
-coeffects remove the non-determinism arising from the splitting of requirements in flat coeffect systems.
+coeffects remove the ambiguity arising from the splitting of requirements in flat coeffect systems.
 
 Before looking at concrete flat and structural systems, we briefly overview
 some notation used in this thesis. Structural coeffects keep annotations as \emph{vectors} and
@@ -216,25 +219,24 @@ use a number of operations related to scalars and vectors.
 The $\lambda$-calculus is asymmetric. It maps a context with \emph{multiple} variables to a
 \emph{single} result. An expression with $n$ free variables of types $\tau_i$ can be modelled by a function
 $\tau_1 \times \ldots \times \tau_n \rightarrow \tau$ with a product on the left, but a single value
-on the right. In both effect systems and coeffect systems, we \emph{write} the annotation as part of
+on the right. In both effect systems and coeffect systems, we write the annotation as part of
 the function arrow. However, in the underlying categorical model, effects are attached to the result
 $\tau$, while coeffects are attached to the context $\tau_1 \times \ldots \times \tau_n$.
 
-Structural coeffects have one coeffect annotation per each variable. Thus, the annotation consists
+Structural coeffects have one annotation per each variable. Thus, the annotation consists
 of multiple values -- one belonging to each variable. To distinguish between the overall annotation
 and individual (per-variable) annotations, we call the overall coeffect a \emph{vector} consisting of
-\emph{scalar} coeffects. This asymmetry also explains why coeffect systems are not trivially dual to
-effect systems.
+\emph{scalar} coeffects. This asymmetry also explains why coeffects are not trivially dual to
+effects.
 
 It is useful to clarify how vectors are used in this thesis. Suppose we have a set $\C$ of
 \emph{scalars} ranged over by $\cclrd{r},\cclrd{s},\cclrd{t}$. A vector $\aclrd{R}$
 over $\C$ is a tuple $\alift{ \cclrd{r_1}, \ldots, \cclrd{r_n} }$ of scalars.
-We use bold face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ for vectors and
-normal face $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars\footnote{For better readability, the thesis
-also distinguishes different structures using colours. However ignoring the colour does not introduce
-any ambiguity.}. We also say that a \emph{shape} of a vector $\slen{\aclrd{\textbf{r}}}$ (or more generally any container)
+We use bold face letters like $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ for
+vectors and normal face $\cclrd{r},\cclrd{s},\cclrd{t}$ for scalars. We also say that a
+\emph{shape} of a vector $\slen{\aclrd{\textbf{r}}}$ (or more generally any container)
 determines the set of \emph{positions} in a vector. So, a vector of a shape (length) $n$ has positions
-$\{ 1, 2, \ldots, n \}$. We discuss containers and shapes further in Chapter~\ref{ch:unified} and also
+$\{ 1, 2, \ldots, n \}$. We discuss containers and shapes further in Section~\ref{ch:further-unified} and also
 discuss how our use relates to containers of Abbott, Altenkirch and Ghani \cite{types-containers}.
 
 Just as in the usual pointwise multiplication of a vector by a scalar, we lift any binary operation on scalars into a
@@ -243,7 +245,7 @@ scalar-vector one. For a binary operation on scalars $\circ : \C \times \C \righ
 Relations on scalars can be also lifted to vectors. Given two vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$ of the
 same shape with positions $\{ 1, \ldots, n \}$ and a relation $\varpropto\, \subseteq \C \times \C$ we define
 $\aclrd{\textbf{r}} \varpropto \aclrd{\textbf{s}} \Leftrightarrow (\cclrd{r_1} \varpropto \cclrd{s_1}) \wedge \ldots \wedge (\cclrd{r_n} \varpropto \cclrd{s_n}) $
-Finally, we often concatenate vectors -- for example, when joining two variable contexts.
+Finally, we often concatenate vectors, for example, when joining two variable contexts.
 Given vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$ with (possibly different) shapes $\{ 1, \ldots, n \}$ and
 $\{ 1, \ldots, m \}$, the associative operation for concatenation $\times$ is defined as
 $\aclrd{\textbf{r}}\times\aclrd{\textbf{s}} = \alift{\cclrd{r_1},\ldots,\cclrd{r_n},\cclrd{s_1},\ldots,\cclrd{s_m}}$.
@@ -280,7 +282,9 @@ Haskell's implicit parameters (Section~\ref{sec:applications-flat-impl}), distri
 cross-compilation (Section~\ref{sec:applications-flat-distr}), liveness analysis
 (Section~\ref{sec:applications-flat-live}) and data-flow (Section~\ref{sec:applications-flat-dataflow}).
 
-For three of the examples, we present a type system and a simple semantics. Although the examples
+For three of the examples, we present a type system and a simple semantics (given inductively over
+the typing derivation). We informally discuss how preferred typing derivation is chosen (to resolve
+the inherent ambiguity), but leave details to later chapters. Although the examples
 are not new, our novel presentation of the systems (and the fact that they appear side-by-side)
 makes it possible to see that they share a common structure. The structure is captured by
 a unified \emph{flat coeffect calculus} in Chapter~\ref{ch:flat}.
@@ -302,17 +306,18 @@ In this section, we present a type system for implicit parameters in terms of th
 judgement. We briefly consider type classes, but do not give a full type system.
 
 \paragraph{Implicit parameters.}
-Implicit parameters are a special kind of variables that support dynamic scoping.
-They make it possible to parameterise a computation (involving a long chain of function calls)
-without passing parameters explicitly as additional arguments of all involved functions.
+As discussed in Section~\ref{sec:path-binding-impl}, implicit parameters are a special kind of
+variables that support dynamic scoping. They make it possible to parameterise a computation
+(involving a long chain of function calls) without passing parameters explicitly as additional
+arguments of all involved functions.
 
 The dynamic scoping means that if a function uses a parameter $\ident{?param}$ then the caller of the
 function must set a value of $\ident{?param}$ before calling the function. However, implicit
 parameters also support lexical scoping. If the parameter $\ident{?param}$ is available in the
 lexical scope where a function is defined, then the function will not require a value from the caller.
 
-A simple language with implicit parameters has an expression $\ident{?param}$ to read a parameter
-and an expression\footnote{Haskell uses $\kvd{let}~\ident{?p} = e_1~\kvd{in}~e_2$, but we use a
+A simple language with support for implicit parameters has an expression $\ident{?param}$ to read a
+parameter and an expression\footnote{Haskell uses $\kvd{let}~\ident{?p} = e_1~\kvd{in}~e_2$, but we use a
 different keyword to avoid confusion.} $\kvd{letdyn}~\ident{?param} = e_1~\kvd{in}~e_2$ that sets a
 parameter $\ident{?param}$ to the value of $e_1$ and evaluates $e_2$ in a context containing
 $\ident{?param}$.
@@ -321,7 +326,7 @@ The fact that implicit parameters support both lexical and dynamic scoping becom
 when we consider nested functions. The following function does some pre-processing and then returns a
 function that builds a formatted string based on two implicit parameters $\ident{?width}$ and
 $\ident{?size}$:
-%
+
 \begin{equation*}
 \begin{array}{l}
 \kvd{let}~\ident{format} = \lambda \ident{str}~\rightarrow \\[-0.25em]
@@ -332,33 +337,36 @@ $\ident{?size}$:
 \end{equation*}
 %
 The body of the outer function accesses the parameter $\ident{?width}$, so it certainly requires a context
-$\{ \ident{?width} : \ident{int} \}$. The nested function (returned as a result) uses the parameter
+$\{ \ident{?width} \}$. The nested function (returned as a result) uses the parameter
 $\ident{?width}$, but in addition also uses $\ident{?size}$. Where should the parameters used by the
 nested function come from?
 
 To keep examples in this chapter uniform, we do not use the Haskell notation and instead
 write $\tau_1 \xrightarrow{r} \tau_2$ for a function that requires implicit parameters specified by $r$.
-In a purely dynamically scoped system, they would have to be defined when the user invokes the nested function.
+We also assume that are implicit parameters are of type $\ident{num}$, so the annotation can be a
+simple set of names (rather than mapping from names to types). In a purely dynamically scoped system,
+implicit parameters would have to be defined when the user invokes the nested function.
 However, implicit parameters behave as a combination of lexical and dynamic scoping. This means
 that the nested function can capture the value of $\ident{?width}$ and require just $\ident{?size}$.
 The following shows the two options:
 %
 \begin{equation}
 \tag{\emph{dynamic}}
-\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int} \} }
-  (\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int}, \ident{?size} : \ident{int} \} } \ident{string})
+\ident{string} \xrightarrow{ \{ \ident{?width} \} }
+  (\ident{string} \xrightarrow{ \{ \ident{?width}, \ident{?size} \} } \ident{string})
 \end{equation}
 \vspace{-1em}
 \begin{equation}
 \tag{\emph{mixed}}
-\ident{string} \xrightarrow{ \{ \ident{?width} : \ident{int} \} }
-  (\ident{string} \xrightarrow{ \{ \ident{?size} : \ident{int} \} } \ident{string})
+\ident{string} \xrightarrow{ \{ \ident{?width} \} }
+  (\ident{string} \xrightarrow{ \{ \ident{?size} \} } \ident{string})
 \end{equation}
 %
 This is not a complete list of possible typings, but it demonstrates the options. The (\emph{dynamic})
-case requires the parameter \ident{?width} twice (this may be confusing when the caller provides
-two different values). In the (\emph{mixed}) case, the nested function captures the \ident{?width}
-parameter available from the declaration site. Using the latter typing, the function can be called as follows:\
+case requires the parameter \ident{?width} twice (the caller may provide different value, in which
+case, the semantics needs to specify which value is preferred). In the (\emph{mixed}) case, the
+nested function captures the \ident{?width} parameter available from the declaration site. Using
+the latter typing, the function can be called as follows:
 %
 \begin{equation*}
 \begin{array}{l}
@@ -368,9 +376,9 @@ parameter available from the declaration site. Using the latter typing, the func
 \end{equation*}
 %
 For different typings of \ident{format}, different ways of calling it are valid. This illustrates
-the point made in Section~\ref{sec:applications-structure-lam} -- flat coeffect systems may
-introduce certain non-determinism in the typing. The following section shows how this looks in the
-type system for implicit parameters.
+the point made in Section~\ref{sec:applications-structure-lam} -- flat coeffect programs have
+multiple typing derivations and the semantics depends on the domain-specific choice of preferred
+typing. The following section shows how this looks in the type system for implicit parameters.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -428,22 +436,22 @@ implicit parameters. The type system uses judgements of the form $\coctx{\Gamma}
 meaning that an expression $e$ has a type $\tau$ in a free-variable context $\Gamma$ with a set
 of implicit parameters specified by $\cclrd{r}$. The annotations $\cclrd{r},\cclrd{s},\cclrd{t}$ are
 finite partial functions mapping implicit parameter names to types, \ie~$\cclrd{r},\cclrd{s},\cclrd{t} \subseteq
-\ident{Names} \mapsto \ident{Types}$. The expressions include \ident{?param} to read implicit
+\ident{Names}$. The expressions include \ident{?param} to read implicit
 parameter and \kvd{letdyn} to bind an implicit parameter. The types are standard, but functions are
 annotated with the set of implicit parameters that must be available on the call site, \ie~
 $\tau_1 \xrightarrow{\cclrd{s}} \tau_2$.
 
 Accessing an ordinary variable (\emph{var}) does not require any implicit parameters. The rule that
 introduces primitive context requirements is (\emph{param}). Accessing a parameter \ident{?param}
-of type $\tau$ requires it to be available in the context. The context may provide more (unused)
-implicit parameters thanks to the (\emph{sub}) rule.
+requires it to be available in the context. The context may provide more (unused)
+implicit parameters thanks to the subcoeffecting rule (\emph{sub}).
 
 When we read the rules from the top to the bottom, application (\emph{app}) and let binding
 (\emph{let}) simply union the context requirements of the sub-expressions. However, lambda abstraction
 (\emph{abs}) is where the example differs from effect systems. The implicit parameters required by
 the body $\cclrd{r} \cup \cclrd{s}$ can be freely split between the declaration site ($\coctx{\Gamma}{\cclrd{r}}$)
-and the call site ($\tau_1 \xrightarrow{\cclrd{s}} \tau_2$). Finally, (\emph{letdyn}) defines an implicit
-parameter and removes it from the set of requirements.
+and the call site ($\tau_1 \xrightarrow{\cclrd{s}} \tau_2$) and thus an expression may have multiple
+valid typing derivations. Finally, (\emph{letdyn}) removes the bound parameter from the set of requirements.
 
 The union operation $\cup$ is not a disjoint union, which means that the values for implicit
 parameters can also be provided by both sites. For example, consider a function with a body
@@ -477,58 +485,66 @@ typing for this situation.
 
 %---------------------------------------------------------------------------------------------------
 
-\begin{figure}
-
-{\small The semantics is defined inductively over the typing derivation:}
-\begin{equation}
-\tag{\emph{var}}
-\sem{\coctx{\Gamma}{\cclrd{r}} \vdash x_i : \tau_i} = \lambda ((x_1, \ldots, x_n), \_) \rightarrow x_i
-\end{equation}
-\vspace{-1.5em}
-\begin{equation}
-\tag{\emph{param}}
-\sem{\coctx{\Gamma}{\cclrd{r}} \vdash ?p : \sigma} = \lambda (\_, f) \rightarrow f~?p
-\end{equation}
-\vspace{-1.5em}
-\begin{equation}
-\tag{\emph{sub}}
-\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau} = \lambda (x, f) \rightarrow
-  \sem{\coctx{\Gamma}{\cclrd{r'}} \vdash e : \tau}~(x, \restr{f}{\cclrd{r'}})
-\end{equation}
-\vspace{-1.5em}
-\begin{equation}
-\tag{\emph{abs}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 } = \lambda ((x_1, \ldots, x_n), f) \rightarrow\\[-0.25em]
-  \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\cclrd{r}\cup\cclrd{s}} \vdash e : \tau_2 }~((x_1, \ldots, x_n, y), f \uplus g)
-\end{array}
-\end{equation}
-\vspace{-1.0em}
+\begin{figure}[t]
 \begin{equation*}
-\tag{\emph{app}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{r}\cup\cclrd{s}\cup\cclrd{t}} \vdash e_1~e_2 : \tau_2 } = \lambda (x, f) \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }~(x, \restr{f}{\cclrd{r}})\\[-0.25em]
-  \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }~(x, \restr{f}{\cclrd{s}} ), \restr{f}{\cclrd{t}})
+\hspace{0em}
+\begin{array}{ll}
+\hspace{4.5em}\semdef
+  {\coctx{\Gamma}{\cclrd{r}} \vdash x_i : \tau_i}
+  {\lambda ((x_1, \ldots, x_n), \_) . x_i}
+& (\emph{var})
+\\[0.0em]
+\hspace{3.5em}\semdef
+  {\coctx{\Gamma}{\cclrd{r}} \vdash \ident{?p} : \ident{num}}
+  {\lambda (\_, f) . f~\ident{?p}}
+& (\emph{param})
+\\[1.5em]
+\hspace{5em}\semdeff
+  {\coctx{\Gamma}{\cclrd{r'}} \vdash e : \tau}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}
+  {f}
+  {\lambda (x, g) . f~(x, \restr{g}{\cclrd{r'}})}
+& (\emph{sub})
+\\[1.5em]
+\hspace{0em}\emdeff
+  {\coctx{\Gamma,y:\tau_1}{\cclrd{r}\cup\cclrd{s}} \vdash e : \tau_2}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{r}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}\\[-0.25em]~\end{array}}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda ((x_1, \ldots, x_n), g_1) . \lambda (y, g_2) .\\[-0.25em]
+  \quad f~((x_1, \ldots, x_n, y), g_1 \uplus g_2)
+  \end{array}\hspace{-1em}~}
+& (\emph{abs})
+\\[1.5em]
+\hspace{-0.8em}\emdefff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{r}\cup\cclrd{s}\cup\cclrd{t}} \vdash e_1~e_2 : \tau_2}\\[-0.25em]~\end{array}}
+  {f_1}
+  {f_2}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda (x, g) . \\[-0.25em]
+  \quad(f_1~(x, \restr{g}{\cclrd{r}}))~(f_2~(x, \restr{g}{\cclrd{s}} ), \restr{g}{\cclrd{t}})
+  \end{array}\hspace{-2em}~}
+& (\emph{app})
+\\[1.5em]
+\hspace{-3.3em}\emdefff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \ident{num}}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{r \cup (s \setminus \{ \ident{?p} \})}} \vdash\\[-0.25em]
+    \qquad\kvd{letdyn}~\ident{?p}=e_1~\kvd{in}~e_2 : \tau_2}\end{array}}
+  {f_1}
+  {f_2}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda (x, g) . f_2~(x, \restr{g}{\cclrd{s} \setminus \cclrd{\{ \ident{?p} \}}} \,\uplus \\[-0.25em]
+    \qquad \{ \ident{?p} \mapsto (f_1~(x, \restr{g}{\cclrd{r}})) \} )
+  \end{array}\hspace{-1em}~}
+& (\emph{letdyn})
 \end{array}
 \end{equation*}
-\vspace{-1.0em}
-\begin{equation}
-\tag{\emph{letdyn}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{r \cup (s \setminus \{ \ident{?p}:\tau_1 \})}} \vdash \kvd{letdyn}~\ident{?p}=e_1~\kvd{in}~e_2 : \tau_2 } =
-     \lambda (x, f) \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~v=\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 }~(x, \restr{f}{\cclrd{r}})\\[-0.25em]
-  \qquad\kvd{in}~\sem{ \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_2 }~
-     (x, \restr{f}{\cclrd{s} \setminus \cclrd{\{ \ident{?p}:\tau_1 \}}} \uplus \{ \ident{?p} \mapsto v \} )
-\end{array}
-\end{equation}
 
 \vspace{1em}
-{\small Here $\uplus$ and $\restr{f}{\cclrd{r}}$ are auxiliary definitions:}
+Assuming the following auxiliary definitions:
 \begin{equation*}
 \begin{array}{rcl}
  \restr{f}{\cclrd{r}} &=& \{ (p,v) \;|\; (p,v) \in f, \;p \in \cclrd{r} \}\\[-0.25em]
@@ -538,6 +554,7 @@ typing for this situation.
 
 \figcaption{Semantics of a language with implicit parameters}
 \label{fig:applications-flat-implsem}
+\vspace{-0.5em}
 \end{figure}
 
 %---------------------------------------------------------------------------------------------------
@@ -549,21 +566,19 @@ the new \kvd{letdyn} construct extends the dictionary. To elucidate how such hid
 are propagated through the program when using lambda abstractions and applications, we present a
 simple semantics for implicit parameters. The goal here is not to prove properties of the language,
 but simply to provide a better explanation. A detailed semantics in terms of indexed comonads is
-shown in Chapter~\ref{ch:flat}.
+shown in Chapter~\ref{ch:semantics}.
 
-For simplicity, we assume that all implicit parameters have a type $\sigma$. In that setting,
-coeffect annotations $\cclrd{r}$ are just sets of names, \ie~$\cclrd{r}, \cclrd{s}, \cclrd{t} \subseteq \ident{Names}$.
 Given an expression $e$ of type $\tau$ that requires free variables $\Gamma$ and implicit parameters
 $\cclrd{r}$, the semantics is a function that takes a product of variables from $\Gamma$ together
 with a dictionary of implicit parameters and returns $\tau$:
-
+%
 \begin{equation*}
 \sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{r} } \vdash e : \tau}
-  ~:~ (\tau_1 \times \ldots \times \tau_n) \times (\cclrd{r} \rightarrow \sigma) \rightarrow \tau
+  ~:~ (\tau_1 \times \ldots \times \tau_n) \times (\cclrd{r} \rightarrow \ident{num}) \rightarrow \tau
 \end{equation*}
 %
-The dictionary is represented as a function from $\cclrd{r}$ to $\sigma$. This means that it
-provides a $\sigma$ value for all implicit parameters that are required according to the typing.
+The dictionary is represented as a function from $\cclrd{r}$ to $\ident{num}$. This means that it
+provides a $\ident{num}$ value for all implicit parameters that are required according to the typing.
 Note that the domain of the function is not the set of all possible implicit parameter names, but
 only the finite subset of names that are required according to the typing.
 
@@ -573,20 +588,23 @@ implicit parameters in $\cclrd{s}$:
 %
 \begin{equation*}
 \begin{array}{l}
- \sem{\tau_1 \xrightarrow{\cclrd{s}} \tau_2} = \tau_1 \times (\cclrd{s} \rightarrow \sigma) \rightarrow \tau_2
+ \sem{\tau_1 \xrightarrow{\cclrd{s}} \tau_2} = \tau_1 \times (\cclrd{s} \rightarrow \ident{num}) \rightarrow \tau_2
 \end{array}
 \end{equation*}
 %
-The definition of the semantics is shown in Figure~\ref{fig:applications-flat-implsem}. The
-(\emph{var}) and (\emph{param}) rules are simple -- they project the appropriate variable and
-implicit parameter, respectively.
+The definition of the semantics is shown in Figure~\ref{fig:applications-flat-implsem}. We use a
+notation that emphasizes the fact that the semantics is given over a typing derivation. On the
+left-hand side of $=$, we show the applied typing rule. The right-hand side of $=$ then shows the
+semantic functions assigned to the individual assumptions and the resulting semantics for the
+consequent.
 
-When an expression requires implicit parameters $\cclrd{r}$, the semantics always provides a
-dictionary defined \emph{exactly} on $\cclrd{r}$. To achieve this, the (\emph{sub}) rule restricts
-the function to $\cclrd{r'}$ (which is valid because $\cclrd{r'} \subseteq \cclrd{r}$).
+The (\emph{var}) and (\emph{param}) rules are simple -- they project the appropriate variable and
+implicit parameter, respectively. When an expression requires implicit parameters $\cclrd{r}$, the
+semantics always provides a dictionary defined \emph{exactly} on $\cclrd{r}$. To achieve this, the
+(\emph{sub}) rule restricts the function to $\cclrd{r'}$ (which is valid because $\cclrd{r'} \subseteq \cclrd{r}$).
 
 The most interesting rules are (\emph{abs}) and (\emph{app}). In abstraction, we get two dictionaries
-$f$ and $g$ (from the declaration site and call site, respectively), which are combined and passed
+$g_1$ and $g_2$ (from the declaration site and call site, respectively), which are combined and passed
 to the body of the function. The semantics prefers values from the call site, which is captured by
 the $\uplus$ operation. In application, we first evaluate the expression $e_1$, then $e_2$ and finally
 call the returned function. The three calls use (possibly overlapping) restrictions of the dictionary
@@ -602,13 +620,14 @@ Without providing a proof here, we note that the semantics is sounds with respec
 system -- when evaluating an expression, it provides it with a dictionary that is guaranteed to
 contain values for all implicit parameters that may be accessed. This can be easily checked by
 examining the semantic rules (and noting that the restriction and union always provide the
-expected set of parameters).
+expected set of parameters). This idea is captured more formally by the soundness proof for the
+operational semantics given in Chapter~\ref{ch:semantics}.
 
 \paragraph{Monadic semantics.}
-Implicit parameters are related to the \emph{reader mo\-nad}. The type
-$\tau_1 \times (\cclrd{r} \rightarrow \sigma) \rightarrow \tau_2$ is equivalent to
-$\tau_1 \rightarrow ((\cclrd{r} \rightarrow \sigma) \rightarrow \tau_2)$ through currying. Thus, we can
-express the function as $\tau_1 \rightarrow M\tau_2$ for $M\tau = (\cclrd{r} \rightarrow \sigma) \rightarrow \tau$.
+Implicit parameters are related to the \emph{reader monad}. The type
+$\tau_1 \times (\cclrd{r} \rightarrow \ident{num}) \rightarrow \tau_2$ is equivalent to
+$\tau_1 \rightarrow ((\cclrd{r} \rightarrow \ident{num}) \rightarrow \tau_2)$ through currying. Thus, we can
+express the function as $\tau_1 \rightarrow M\tau_2$ for $M\tau = (\cclrd{r} \rightarrow \ident{num}) \rightarrow \tau$.
 Indeed, the reader monad can be used to model dynamic scoping. However, there is an important distinction
 from implicit parameters. The usual monadic semantics models fully dynamic scoping, while implicit
 parameters combine lexical and dynamic scoping.
@@ -617,12 +636,14 @@ When using the usual monadic semantics based on the reader monad, the semantics 
 rule would be modified as follows:
 %
 \begin{equation*}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{\emptyset}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 } =
-      \lambda ((x_1, \ldots, x_n), \_) \rightarrow\\[-0.25em]
-  \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\cclrd{s}} \vdash e : \tau_2 }~((x_1, \ldots, x_n, y), g)
-\end{array}
+\emdeff
+  {\coctx{\Gamma,y:\tau_1}{\cclrd{r}} \vdash e : \tau_2}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{\emptyset}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}\\[-0.25em]~\end{array}}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda ((x_1, \ldots, x_n), \_) . \lambda (y, g) .\\[-0.25em]
+  \quad f~((x_1, \ldots, x_n, y), g)
+  \end{array}\hspace{-1em}~}
 \end{equation*}
 %
 Note that the declaration site dictionary
@@ -631,7 +652,7 @@ a consequence of the fact that monadic functions are always pure values created 
 \emph{unit}, which turns a function $\tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2}$ into a monadic
 computation with no side-effects $\mtyp{\cclrd{\emptyset}}{\tau_1 \rightarrow \mtyp{\cclrd{r}}{\tau_2}}$.
 
-As we discuss later in Section~\ref{sec:flat-related-monads}, the reader monad can be extended
+As we discuss later in Section~\ref{sec:semantics-related-monads}, the reader monad can be extended
 to model rebinding. However, later examples in this chapter, such as liveness in
 Section~\ref{sec:applications-flat-live} show that other context-aware computations
 cannot be captured by \emph{any} monad.
@@ -661,7 +682,7 @@ with a set of required type classes. The typing of the body of \ident{twoTimes} 
 follows:
 %
 \begin{equation*}
-\coctx{x\!:\!\alpha}{ \{ \ident{Num}_\alpha \} } \vdash x + x : \alpha
+\coctx{x\!:\!\alpha}{ \cclrd{\{ \ident{Num}_\alpha \}} } \vdash x + x : \alpha
 \end{equation*}
 %
 Similarly, the semantics of a language with type class constraints can be defined in a way
@@ -676,7 +697,7 @@ together with the function inputs.
 
 \paragraph{Summary.}
 Implicit parameters are the simplest example of a system where function abstraction does not
-``delay'' all impurities of the body. Here, the term ``delay'' refers to the fact that some
+delay all impurities of the body. Here, the term ``delay'' refers to the fact that some
 implicit parameters may be captured (from the declaration site) at the time when the function is
 defined, but before it is executed. As discussed in Section~\ref{sec:applications-structure-lam},
 this is the defining feature of \emph{coeffect} systems.
@@ -710,8 +731,8 @@ network, containing identifiers that must be rebound to local resources.''}
 
 Rebindable parameters are identifiers that refer to some specific resource. When a function value
 is marshalled and sent to another machine, rebindable resources can be handled in two ways.
-First, if the resource is available on the target machine, the parameter may be \emph{rebound} to
-the resource on the new machine. This is captured by the dynamic scoping rule. Second, if the
+If the resource is available on the target machine, the parameter may be \emph{rebound} to
+the resource on the new machine. This is captured by the dynamic scoping rule. If the
 resource is not available on the target machine, the resource is either marshalled or a \emph{remote
 reference} is created. This is captured by the lexical scoping rule.
 
@@ -732,6 +753,8 @@ When \ident{recentNews} is created on the server and sent to the client, a remot
 the database (available only on the server) must be captured. If the client device supports a
 clock, then \ident{Clock} can be locally \emph{rebound}, \eg, to accommodate time-zone changes.
 Otherwise, the date and time needs to be obtained from the server too.
+
+~
 
 The type system and semantics for rebindable resources are essentially the same as those for
 implicit parameters. Primitive requirements are introduced by the $\kvd{access}$ keyword.
@@ -807,7 +830,7 @@ of the same platform.
 
 \begin{figure}[t]
 
-{\small a.) Set-based type system for cross-compilation, inspired by Links \cite{app-distributed-links}}
+a.) Set-based type system for cross-compilation, inspired by Links \cite{app-distributed-links}
 
 \begin{equation*}
 \tyrule{sub}
@@ -827,7 +850,7 @@ of the same platform.
 \end{equation*}
 \vspace{0.5em}
 
-{\small b.) Version-based type system, inspired by Android API level \cite{app-android-multitarget}}
+b.) Version-based type system, inspired by Android API level \cite{app-android-multitarget}
 
 \begin{equation*}
 \tyrule{sub}
@@ -855,18 +878,18 @@ of the same platform.
 
 \paragraph{Type systems.}
 
-Cross-compilation may seem similar to resource tracking (and thus to the tracking of implicit
-parameters), but it actually demonstrates a couple of new ideas that are important for flat coeffect
-systems. Unlike with implicit parameters, we will not present a specific existing system in this
-section -- instead we briefly look at two examples that let us explore the range of possibilities.
+Cross-compilation is similar to resource tracking (and thus to the tracking of implicit
+parameters), but it demonstrates a couple of new ideas that are important for flat coeffect
+systems. Unlike with implicit parameters, we will not give a full type system in this
+section, but we briefly look at two examples that explore the range of possibilities.
 
 In the first system, shown in Figure~\ref{fig:applications-flat-cross} (a), the coeffect annotations
 are sets of execution environments, \ie~$\cclrd{r}, \cclrd{s}, \cclrd{t} \subseteq \{ \ident{client},
-\ident{server}, \ident{database} \}$. Sub-coeffecting (\emph{sub}) lets us ignore some of the supported
+\ident{server}, \ident{database} \}$. Subcoeffecting (\emph{sub}) lets us ignore some of the supported
 execution environments; application (\emph{app}) can be only executed in the \emph{intersection} of the
 environments required by the two expressions and the function value.
 
-Sub-coeffecting and application are trivially dual to the rules for implicit parameters. We just track
+Subcoeffecting and application are trivially dual to the rules for implicit parameters. We just track
 supported environments using intersection as opposed to tracking required parameters using union.
 However, this symmetry does not hold for lambda abstraction (\emph{abs}), which still uses \emph{union}.
 This models the case when there are two ways of executing the function:
@@ -890,7 +913,7 @@ level requirements in Android. Coeffect annotations are simply numbers represent
 ($\cclrd{r}, \cclrd{s}, \cclrd{t} \in \mathbb{N}$). Levels are ordered increasingly, so we can
 always require higher level (\emph{sub}). The requirement on function application (\emph{app}) is
 the highest level of the levels required by the sub-expressions and the function. The system uses
-yet another variant of lambda abstraction (\emph{abs}) -- the requirements of the body are duplicated
+yet another variant of lambda abstraction (\emph{abs}). The requirements of the body are duplicated
 and placed on \emph{both} the declaration site and the call site.
 
 The ML5 language \cite{app-distributed-ml5} mentioned above served as an inspiration for our example.
@@ -898,7 +921,7 @@ It tracks execution environments using modalities of modal S4 to represent the e
 approach is similar to coeffects, both from the practical perspective, but also through deeper
 theoretical links. However, it is based on the \emph{meta-language} style of embedding modalities
 rather than on the \emph{language-semantics} style (see~Section~\ref{sec:path-sem-langs}). We
-return to this topic in Section~\ref{sec:unified-meta}.
+return to this topic in Section~\ref{sec:further-meta}.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -908,6 +931,8 @@ Our next example shows the idea of coeffects from a different perspective. Rathe
 keeping additional information independent of the variable context, we track properties about how
 variables are used. Nevertheless, we still look at the left-hand side of $\vdash$ and the structure
 of the typing rules and semantics will be very similar.
+
+~
 
 \emph{Live variable analysis} (LVA) \cite{app-modern-compiler} is a standard technique in compiler
 theory. It detects whether a free variable of an expression may be used by a program during its
@@ -937,7 +962,7 @@ Similarly, no variables from the declaration site are used and so they are also 
 In contrast, the body of the second function accesses a variable \ident{value} and so the body
 of the function is marked as \emph{live}. In the flat system, we do not track \emph{which}
 variable was used and so we have to mark both the call site and the declaration site as live (this will
-be refined in a structural version of the system).
+be refined in a structural version).
 
 \paragraph{Forward vs. backward \& may vs. must.}
 Static analyses can be classified as either \emph{forward} or \emph{backward} (depending on how they
@@ -948,7 +973,7 @@ at an example with conditionals:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~\ident{defaultArg}~= \lambda \ident{cond} \rightarrow \lambda \ident{input} \rightarrow\\
+\kvd{let}~\ident{defaultArg}~= \lambda \ident{cond} \rightarrow \lambda \ident{input} \rightarrow\\[-0.25em]
 \quad\kvd{if}~\ident{cond}~\kvd{then}~42~\kvd{else}~\ident{input}
 \end{array}
 \end{equation*}
@@ -964,109 +989,27 @@ interaction between contextual properties and certain language constructs such a
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}
-{\small a.) The operations of a two-point lattice $\mathcal{L} = \{\ident{L}, \ident{D}\}$
-where $\ident{D} \sqsubseteq \ident{L}$ are defined as:}
-%
-\begin{equation*}
-\begin{array}{rcl}
-\ident{L} \sqcup \ident{L} &=& \ident{L}\\
-\ident{D} \sqcup \ident{L} &=& \ident{D}\\
-\end{array}
-\qquad
-\begin{array}{rcl}
-\ident{L} \sqcup \ident{D} &=& \ident{D}\\
-\ident{D} \sqcup \ident{D} &=& \ident{D}
-\end{array}
-\qquad
-\begin{array}{rcl}
-\ident{L} \sqcap \ident{L} &=& \ident{L}\\
-\ident{D} \sqcap \ident{L} &=& \ident{L}\\
-\end{array}
-\qquad
-\begin{array}{rcl}
-\ident{L} \sqcap \ident{D} &=& \ident{L}\\
-\ident{D} \sqcap \ident{D} &=& \ident{D}
-\end{array}
-\end{equation*}
-
-{\small b.) Sequential composition of (semantic) functions composes annotations using $\sqcup$:}
-\begin{equation*}
-\begin{array}{llll}
-f : \tau_1 \xrightarrow{\cclrd{r}} \tau_2 \qquad\qquad&
-g : \tau_2 \xrightarrow{\cclrd{s}} \tau_3 \qquad\qquad&
-g \circ f : \tau_1 \xrightarrow{\cclrd{r} \sqcup \cclrd{s}} \tau_3 \qquad\qquad& ~
-\\[0.75em]
-f : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2 &
-g : \tau_2 \xrightarrow{\cclrd{\ident{L}}} \tau_3 &
-g \circ f : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_3 & (1)
-\\[-0.10em]
-f : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2 &
-g : \tau_2 \xrightarrow{\cclrd{\ident{L}}} \tau_3 &
-g \circ f : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_3 & (2)
-\\[-0.10em]
-f : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2 &
-g : \tau_2 \xrightarrow{\cclrd{\ident{D}}} \tau_3 &
-g \circ f : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_3 & (3)
-\\[-0.10em]
-f : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2 &
-g : \tau_2 \xrightarrow{\cclrd{\ident{D}}} \tau_3 &
-g \circ f : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_3 & (4)
-\end{array}
-\end{equation*}
-
-{\small c.) Pointwise composition of (semantic) functions composes annotations using $\sqcap$:}
-\begin{equation*}
-\begin{array}{llll}
-f : \tau_1 \xrightarrow{\cclrd{r}} \tau_2 \qquad\qquad&
-h : \tau_1 \xrightarrow{\cclrd{s}} \tau_3 \qquad\qquad&
-\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{r} \sqcap \cclrd{s}} \tau_2 \times \tau_3 \qquad&~
-\\[0.75em]
-f : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_2 &
-h : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_3 &
-\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_2 \times \tau_3 & (1)
-\\[-0.10em]
-f : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_2 &
-h : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_3 &
-\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_2 \times \tau_3 & (2)
-\\[-0.10em]
-f : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_2 &
-h : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_3 &
-\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_2 \times \tau_3 & (3)
-\\[-0.10em]
-f : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_2 &
-h : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_3 &
-\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_2 \times \tau_3 & (4)
-\end{array}
-\end{equation*}
-
-\figcaption{Liveness annotations with sequential and pointwise composition}
-\label{fig:applications-flat-livealg}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
-
 \begin{figure}[t]
 \begin{equation*}
 \tyrule{var}
   {x : \tau \in \Gamma}
-  {\coctx{\Gamma}{\cclrd{\ident{L} }} \vdash x : \tau }
+  {\coctx{\Gamma}{\cclrd{\cclrd{\ident{L}} }} \vdash x : \tau }
 \end{equation*}
 \begin{equation*}
-\tyrule{const}
-  {c : \tau \in \Delta}
-  {\coctx{\Gamma}{ \cclrd{\ident{D}} } \vdash c : \tau }
+\tyrule{num}
+  {~}
+  {\coctx{\Gamma}{ \cclrd{\cclrd{\ident{D}}} } \vdash n : \ident{num} }
 \end{equation*}
 \begin{equation*}
 \tyrule{sub}
   {\coctx{\Gamma}{\cclrd{r'}} \vdash e : \tau }
-  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau }\quad\quad(\cclrd{r'} \sqsubseteq \cclrd{r})
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau }\quad\quad(\cclrd{r'} \,\cclrd{\sqsubseteq}\, \cclrd{r})
 \end{equation*}
 \begin{equation*}
 \tyrule{app}
   {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 &
    \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }
-  {\coctx{\Gamma}{\cclrd{r} \sqcup (\cclrd{s} \sqcap \cclrd{t})} \vdash e_1~e_2 : \tau_2}
+  {\coctx{\Gamma}{\cclrd{r} \,\cclrd{\sqcup}\, (\cclrd{s} \,\cclrd{\sqcap}\, \cclrd{t})} \vdash e_1~e_2 : \tau_2}
 \end{equation*}
 \begin{equation*}
 \tyrule{let}
@@ -1090,26 +1033,26 @@ h : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_3 &
 
 \paragraph{Type system.}
 A type system that captures whole-context liveness annotates the context with value of a
-two-point lattice $\mathcal{L} = \{ \ident{L}, \ident{D} \}$. The annotation \ident{L} marks
-the context as \emph{live} and \ident{D} stands for a \emph{dead} context.
-Figure~\ref{fig:applications-flat-livealg} (a) defines the ordering $\sqsubseteq$, meet $\sqcup$ and join
-operations $\sqcap$ of the lattice.
+two-point lattice $\mathcal{L} = \{ \cclrd{\ident{L}}, \cclrd{\ident{D}} \}$. The annotation \cclrd{\ident{L}} marks
+the context as \emph{live} and \cclrd{\ident{D}} stands for a \emph{dead} context.
+Figure~\ref{fig:applications-flat-livealg} (a) defines the ordering $\cclrd{\sqsubseteq}$, meet $\cclrd{\sqcup}$ and join
+operations $\cclrd{\sqcap}$ of the lattice.
 
 The typing rules for tracking whole-context liveness are shown in Figure~\ref{fig:applications-flat-liveness}.
-The language now includes constants $c:\tau \in \Delta$. Accessing a constant (\emph{const}) annotates
-the context as dead using \ident{D}. This contrasts with variable access (\emph{var}), which marks the
-context as live using \ident{L}. A dead context (definitely not needed) can be treated as live context
+The language now includes numerical constants $n$. Accessing a constant (\emph{num}) annotates
+the context as dead using \cclrd{\ident{D}}. This contrasts with variable access (\emph{var}), which marks the
+context as live using \cclrd{\ident{L}}. A dead context (definitely not needed) can be treated as live context
 using the (\emph{sub}) rule. This captures the \emph{may} nature of the analysis.
 
 The (\emph{app}) rule is best understood by discussing its semantics. The semantics uses
 \emph{sequential composition} to compose the semantics of $e_2$ with the function obtained
 as the result of $e_1$. However, we need more than just sequential composition. The same input
-context is passed to the expression $e_1$ (in order to get the function value) and to the
-sequentially composed function (to evaluate $e_2$ followed by the function call). This is captured
-by \emph{pointwise composition}.
+context is passed to the expression $e_1$ (in order to get the function value) and to a function
+obtained by sequential composition (first evaluate the argument $e_2$ and pass the result to the
+function value). This is captured by \emph{pointwise composition}.
 
 Consider first \emph{sequential composition} of (semantic) functions $f, g$ annotated with
-$\cclrd{r}, \cclrd{s}$. The composed function $g \circ f$ is annotated with $\cclrd{r} \sqcup \cclrd{s}$
+$\cclrd{r}, \cclrd{s}$. The composed function $g \circ f$ is annotated with $\cclrd{r} \cclrd{\sqcup} \cclrd{s}$
 as shown in Figure~\ref{fig:applications-flat-livealg} (b).
 The argument of the function $g \circ f$ is live only when the arguments of both $f$ and $g$ are
 live ($1$). When the argument of $f$ is dead, but $g$ requires $\tau_2$ ($2$), we can evaluate
@@ -1119,7 +1062,7 @@ its argument ($3, 4$), we can just evaluate $g$, without evaluating $f$. Here, t
 
 Secondly, a \emph{pointwise composition} passes the same argument to $f$ and $h$. The parameter
 is live if either the parameter of $f$ or $h$ is live. The pointwise composition is written as
-$\langle f, h \rangle$ and it combines annotations using $\sqcap$ as shown in Figure~\ref{fig:applications-flat-livealg} (c).
+$\langle f, h \rangle$ and it combines annotations using $\cclrd{\sqcap}$ as shown in Figure~\ref{fig:applications-flat-livealg} (c).
 Here, the argument is not needed only when both $f$ and $h$ do not need it ($1$). In all other cases,
 the parameter is needed and is then used either once ($2,3$) or twice ($4$). The rule for function
 application (\emph{app}) combines the two operations. The context $\Gamma$ is live if it is needed by
@@ -1132,9 +1075,93 @@ requires both the argument and the variables from declaration site. When it does
 it marks both as dead. Finally, the (\emph{let}) rule annotates the composed expression with the
 liveness of the expression $e_2$ -- if the context of $e_2$ is live, then it also requires variables
 from $\Gamma$; if it is dead, then it does not require $\Gamma$ or $x$.
-As further discussed later in Section~?, the (\emph{let}) rule is again just a syntactic sugar for
+The (\emph{let}) rule is again just a syntactic sugar for
 $(\lambda x.e_2)~e_1$. This follows from the simple observation that
-$\cclrd{r} \sqcup (\cclrd{s} \sqcap \cclrd{r}) = \cclrd{r}$.
+$\cclrd{r} \;\cclrd{\sqcup}\; (\cclrd{s} \;\cclrd{\sqcap}\; \cclrd{r}) = \cclrd{r}$.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}
+a.) The operations of a two-point lattice $\mathcal{L} = \{\cclrd{\ident{L}}, \cclrd{\ident{D}}\}$
+where $\cclrd{\ident{D}} \,\cclrd{\sqsubseteq}\, \cclrd{\ident{L}}$ are:
+%
+\begin{equation*}
+\begin{array}{rcl}
+\cclrd{\ident{L}} \,\cclrd{\sqcup}\, \cclrd{\ident{L}} &=& \cclrd{\ident{L}}\\
+\cclrd{\ident{D}} \,\cclrd{\sqcup}\, \cclrd{\ident{L}} &=& \cclrd{\ident{D}}\\
+\end{array}
+\qquad
+\begin{array}{rcl}
+\cclrd{\ident{L}} \,\cclrd{\sqcup}\, \cclrd{\ident{D}} &=& \cclrd{\ident{D}}\\
+\cclrd{\ident{D}} \,\cclrd{\sqcup}\, \cclrd{\ident{D}} &=& \cclrd{\ident{D}}
+\end{array}
+\qquad
+\begin{array}{rcl}
+\cclrd{\ident{L}} \,\cclrd{\sqcap}\, \cclrd{\ident{L}} &=& \cclrd{\ident{L}}\\
+\cclrd{\ident{D}} \,\cclrd{\sqcap}\, \cclrd{\ident{L}} &=& \cclrd{\ident{L}}\\
+\end{array}
+\qquad
+\begin{array}{rcl}
+\cclrd{\ident{L}} \,\cclrd{\sqcap}\, \cclrd{\ident{D}} &=& \cclrd{\ident{L}}\\
+\cclrd{\ident{D}} \,\cclrd{\sqcap}\, \cclrd{\ident{D}} &=& \cclrd{\ident{D}}
+\end{array}
+\end{equation*}
+
+\vspace{0.5em}
+b.) Sequential composition composes annotations using $\cclrd{\sqcup}$:
+\begin{equation*}
+\begin{array}{llll}
+f : \tau_1 \xrightarrow{\cclrd{r}} \tau_2 \qquad\qquad&
+g : \tau_2 \xrightarrow{\cclrd{s}} \tau_3 \qquad\qquad&
+g \circ f : \tau_1 \xrightarrow{\cclrd{r} \cclrd{\sqcup} \cclrd{s}} \tau_3 \qquad\qquad& ~
+\\[0.75em]
+f : \tau_1 \xrightarrow{\cclrd{\cclrd{\ident{L}}}} \tau_2 &
+g : \tau_2 \xrightarrow{\cclrd{\cclrd{\ident{L}}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_3 & (1)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau_2 &
+g : \tau_2 \xrightarrow{\cclrd{\cclrd{\ident{L}}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_3 & (2)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\cclrd{\cclrd{\ident{L}}}} \tau_2 &
+g : \tau_2 \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_3 & (3)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau_2 &
+g : \tau_2 \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau_3 &
+g \circ f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_3 & (4)
+\end{array}
+\end{equation*}
+
+\vspace{0.5em}
+c.) Pointwise composition composes annotations using $\cclrd{\sqcap}$:
+\begin{equation*}
+\begin{array}{llll}
+f : \tau_1 \xrightarrow{\cclrd{r}} \tau_2 \qquad\qquad&
+h : \tau_1 \xrightarrow{\cclrd{s}} \tau_3 \qquad\qquad&
+\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{r} \cclrd{\sqcap} \cclrd{s}} \tau_2 \times \tau_3 \qquad&~
+\\[0.75em]
+f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_2 &
+h : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_2 \times \tau_3 & (1)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_2 &
+h : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_2 \times \tau_3 & (2)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_2 &
+h : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{D}} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_2 \times \tau_3 & (3)
+\\[-0.10em]
+f : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_2 &
+h : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_3 &
+\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{ \cclrd{\ident{L}} }} \tau_2 \times \tau_3 & (4)
+\end{array}
+\end{equation*}
+
+\figcaption{Liveness annotations with sequential and pointwise composition}
+\label{fig:applications-flat-livealg}
+\end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1150,7 +1177,7 @@ key aspects of the system. Full typing derivations are shown in Appendix~\ref{se
 \end{array}
 \end{equation*}
 %
-In the first case, the context is dead. In ($1$), the function's parameter is dead and so the
+In the first case ($1$), the context is dead. The function's parameter is dead and so the
 overall context is dead, even though the argument uses a variable $y$ -- the semantics evaluates
 the function without passing it an actual argument. In the second case ($2$), the function is
 a variable that needs to be obtained and so the context is live. In the last case ($3$), the
@@ -1178,14 +1205,14 @@ when the context is dead, it will be called with the right value (containing no 
 
 However, ordinary option type is not sufficient. We need to capture the fact that the
 representation depends on the annotation -- in other words, the type is \emph{indexed} by
-the coeffect annotation. The indexing is discussed in details in Section~\ref{sec:flat-semantics-idx}.
+the coeffect annotation. The indexing is discussed in details in Section~\ref{sec:semantics-flat-idx}.
 For now, it suffices to define the semantics using two separate rules:
 %
 \begin{equation*}
 \begin{array}{rlrcl}
-\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{\ident{L}} } \vdash e : \tau}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{\cclrd{\ident{L}}} } \vdash e : \tau}
   &:& (\tau_1 \times \ldots \times \tau_n) &\narrow{\rightarrow}& \tau\\
-\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{\ident{D}} } \vdash e : \tau}
+\sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \cclrd{\cclrd{\ident{D}}} } \vdash e : \tau}
   &:& 1 &\narrow{\rightarrow}& \tau
 \end{array}
 \end{equation*}
@@ -1195,8 +1222,8 @@ takes the input value; when the argument is dead, the semantic function takes a 
 %
 \begin{equation*}
 \begin{array}{l}
-\sem{\tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2} = \tau_1 \rightarrow \tau_2\\
-\sem{\tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2} = 1 \rightarrow \tau_2
+\sem{\tau_1 \xrightarrow{\cclrd{\cclrd{\ident{L}}}} \tau_2} = \tau_1 \rightarrow \tau_2\\
+\sem{\tau_1 \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau_2} = 1 \rightarrow \tau_2
 \end{array}
 \end{equation*}
 %
@@ -1209,7 +1236,7 @@ the argument is not live.
 In Figure~\ref{fig:applications-flat-livsem}, we define the semantics directly. We write $()$ for
 the only value of type $1$. This appears, for example, in (\emph{const}) which takes $()$ as the
 input and returns a constant using a global dictionary $\delta$. In (\emph{var}), the context is live
-and so the semantics performs a projection. Sub-coeffecting is captured by two rules. A dead context
+and so the semantics performs a projection. Subcoeffecting is captured by two rules. A dead context
 can be treated as live using (\emph{abs-1}); in other cases, the annotation is not changed (\emph{abs-2}).
 
 Lambda abstraction can be annotated in just two ways. When the body requires context (\emph{abs-1}),
@@ -1219,99 +1246,88 @@ When the body does not require context (\emph{abs-2}), it is called with $()$ as
 For application, there are 8 possible combinations of annotations. The semantics of some of them
 is the same, so we only need to show 3 cases. The rules should be read as ML-style pattern matching,
 where the last rule handles all cases not covered by the first two. In (\emph{app-1}), we handle the
-case when the function $g$ does not require its argument -- $e_2$ is not used and instead, the function
+case when the function $f_2$ does not require its argument -- $x$ is not used and instead, the function
 is called with $()$ as the argument. The case (\emph{app-2}) covers the case when the expression
 $e_1$ does not require a context, but $e_1$ does. Finally, in (\emph{app-3}), the same input
 (which may be either tuple of variables or unit) is propagated uniformly to both $e_1$ and $e_2$.
 
 % --------------------------------------------------------------------------------------------------
 
-\begin{figure}
-\begin{equation}
-\tag{\emph{var}}
-\sem{\coctx{\Gamma}{\cclrd{ \ident{L} }} \vdash x_i : \tau_i} = \lambda (x_1, \ldots, x_n) \rightarrow x_i
-\end{equation}
-\vspace{-1.75em}
-\begin{equation}
-\tag{\emph{const}}
-\sem{\coctx{\Gamma}{\cclrd{ \ident{D} }} \vdash c_i : \tau_i} = \lambda () \rightarrow \delta(c_i)
-\end{equation}
-%
-%
-\vspace{-0.5em}
-%
-%
-\begin{equation}
-\tag{\emph{sub-1}}
-\sem{\coctx{\Gamma}{\cclrd{\ident{L} }} \vdash e : \tau} = \lambda x \rightarrow
-  \sem{\coctx{\Gamma}{\cclrd{\ident{D} }} \vdash e : \tau}~()
-\end{equation}
-\vspace{-1.75em}
-\begin{equation}
-\tag{\emph{sub-2}}
-\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau} = \lambda x \rightarrow
-  \sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}~x
-\end{equation}
-%
-%
-\vspace{-0.5em}
-%
-%
-\begin{equation}
-\tag{\emph{abs-1}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2 } = \lambda (x_1, \ldots, x_n) \rightarrow\\[-0.25em]
-  \qquad\lambda y \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\cclrd{\ident{L}}} \vdash e : \tau_2 }~(x_1, \ldots, x_n, y)
-\end{array}
-\end{equation}
-\vspace{-1.0em}
-\begin{equation}
-\tag{\emph{abs-2}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{\ident{D}}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2 } = \lambda () \rightarrow\\[-0.25em]
-  \qquad\lambda () \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\cclrd{\ident{D}}} \vdash e : \tau_2 }~()
-\end{array}
-\end{equation}
-%
-%
-\vspace{0.0em}
-%
-%
-%
+\begin{figure}[t]
 \begin{equation*}
-\tag{\emph{app-1}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{r}} \vdash e_1~e_2 : \tau_2 } = \lambda x \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{ \ident{D} }} \tau_2 }~x
-    ~\kvd{in}~g~()
-\end{array}
-\end{equation*}
-\vspace{-1.0em}
-\begin{equation*}
-\tag{\emph{app-2}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash e_1~e_2 : \tau_2 } = \lambda x \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\cclrd{ \ident{L} }} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{ \ident{L} }} \tau_2 }~x
-    ~\kvd{in}~g~(\sem{ \coctx{\Gamma}{\cclrd{ \ident{D} }} \vdash e_2 : \tau_1 }~())
-\end{array}
-\end{equation*}
-\vspace{-1.0em}
-\begin{equation*}
-\tag{\emph{app-3}}
-\hspace{-0.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{r} \sqcup (\cclrd{s} \sqcap \cclrd{t}) } \vdash e_1~e_2 : \tau_2 } = \lambda x \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }~x
-    ~\kvd{in}~g~(\sem{ \coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1 }~x)
+\hspace{0em}
+\begin{array}{ll}
+\hspace{3.5em}\semdef
+  {\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash x_i : \tau_i}
+  {\lambda (x_1, \ldots, x_n) . x_i}
+& (\emph{var})
+\\[-0.75em]
+\hspace{2.75em}\semdef
+  {\coctx{\Gamma}{\cclrd{\ident{D}}} \vdash n : \ident{num}}
+  {\lambda () . n}
+& (\emph{num})
+\\[2em]
+\hspace{4.25em}\semdeff
+  {\coctx{\Gamma}{\cclrd{\ident{D}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash e : \tau}
+  {f}
+  {\lambda x . f~()}
+& (\emph{sub-1})
+\\[1em]
+\hspace{4.5em}\semdeff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}
+  {f}
+  {\lambda x . f~x}
+& (\emph{sub-2})
+\\[2.5em]
+\hspace{-0.55em}\emdeff
+  {\coctx{\Gamma,y:\tau_1}{\cclrd{\ident{L}}} \vdash e : \tau_2}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2}\\[-0.25em]~\end{array}\hspace{-0.5em}~}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}\lambda (x_1, \ldots, x_n) . \lambda y .\\[-0.25em]
+    \quad f~(x_1, \ldots, x_n, y)\end{array}~~}
+& (\emph{abs-1})
+\\[1em]
+\hspace{-0.5em}\semdeff
+  {\coctx{\Gamma,y:\tau_1}{\cclrd{\ident{D}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\cclrd{\ident{D}}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2}
+  {f}
+  {\lambda () . \lambda () . f~()}
+& (\emph{abs-2})
+\\[2.5em]
+\hspace{0.75em}\semdefff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1~e_2 : \tau_2}
+  {f}
+  {\_}
+  {\lambda x . (f~x)~()}
+& (\emph{app-1})
+\\[2em]
+\hspace{0.75em}\semdefff
+  {\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2}
+  {\coctx{\Gamma}{\cclrd{\ident{D}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma}{\cclrd{\ident{L}}} \vdash e_1~e_2 : \tau_2}
+  {f_1}
+  {f_2}
+  {\lambda x . (f_1~x)~(f_2~())}
+& (\emph{app-2})
+\\[2em]
+\hspace{-1.6em}\semdefff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma}{\cclrd{r} \;\cclrd{\sqcup}\; (\cclrd{s} \,\cclrd{\sqcap}\, \cclrd{t})} \vdash e_1~e_2 : \tau_2}
+  {f_1}
+  {f_2}
+  {\lambda x . (f_1~x)~(f_2~x)}
+& (\emph{app-3})
 \end{array}
 \end{equation*}
 
 \figcaption{Semantics that implements dead code elimination for $\lambda$-calculus}
 \label{fig:applications-flat-livsem}
+\vspace{0.5em}
 \end{figure}
 
 % --------------------------------------------------------------------------------------------------
@@ -1378,7 +1394,7 @@ Formally, the constructs are defined as follows (writing $x_n$ for $n$-th elemen
 \[
 (\kvd{prev}~x)_n = \left\{
   \begin{array}{ll}
-    nil     & \; \text{if $n=0$}\\
+    \ident{nil}     & \; \text{if $n=0$}\\
     x_{n-1} & \; \text{if $n>0$}
   \end{array} \right.
 \quad
@@ -1430,13 +1446,13 @@ rather than using \eg~on-demand computed lazy streams.
 \tyrule{app}
   {\coctx{\Gamma}{\cclrd{m}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{p}} \tau_2 &
    \coctx{\Gamma}{\cclrd{n}} \vdash e_2 : \tau_1 }
-  {\coctx{\Gamma}{\textnormal{max}(\cclrd{m}, \cclrd{n} + \cclrd{p})} \vdash e_1~e_2 : \tau_2}
+  {\coctx{\Gamma}{\cclrd{\textnormal{max}}(\cclrd{m}, \cclrd{n+p})} \vdash e_1~e_2 : \tau_2}
 \end{equation*}
 \begin{equation*}
 \tyrule{let}
   { \coctx{\Gamma}{\cclrd{m}} \vdash e_1 : \tau_1 &
     \coctx{\Gamma, x:\tau_1}{\cclrd{n}} \vdash e_2 : \tau_2}
-  {\coctx{\Gamma}{\cclrd{n}+\cclrd{m}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+  {\coctx{\Gamma}{\cclrd{n+m}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
 \end{equation*}
 \begin{equation*}
 \tyrule{abs}
@@ -1456,7 +1472,7 @@ the context is annotated with a single integer. The current value is always pres
 that no past values are needed, but the current value is still available. The typing rules of
 the system are shown in Figure~\ref{fig:applications-flat-dataflow}.
 
-Variable access (\emph{var}) annotates the context with $0$; sub-coeffecting (\emph{sub}) allows
+Variable access (\emph{var}) annotates the context with $0$; subcoeffecting (\emph{sub}) allows
 us to require more values than is actually needed. Primitive context-requirements are introduced
 in (\emph{prev}), which increments the number of past values by one. Thus, for example,
 $\kvd{prev}~(\kvd{prev}~x)$ requires 2 past values.
@@ -1469,11 +1485,11 @@ combine annotations using $+$ and \emph{max} operations:
 \begin{array}{lll}
 f : \tau_1 \xrightarrow{\cclrd{m}} \tau_2 \qquad\qquad&
 g : \tau_2 \xrightarrow{\cclrd{n}} \tau_3 \qquad\qquad&
-g \circ f : \tau_1 \xrightarrow{\cclrd{m} + \cclrd{n}} \tau_3 \qquad\qquad
+g \circ f : \tau_1 \xrightarrow{\cclrd{m+n}} \tau_3 \qquad\qquad
 \\
 f : \tau_1 \xrightarrow{\cclrd{m}} \tau_2 \qquad\qquad&
 h : \tau_1 \xrightarrow{\cclrd{n}} \tau_3 \qquad\qquad&
-\langle f, h \rangle : \tau_1 \xrightarrow{\textnormal{max}(\cclrd{m}, \cclrd{s})} \tau_2 \times \tau_3 \qquad
+\langle f, h \rangle : \tau_1 \xrightarrow{\cclrd{\textnormal{max}}(\cclrd{m}, \cclrd{s})} (\tau_2 \times \tau_3) \qquad
 \end{array}
 \end{equation*}
 %
@@ -1481,7 +1497,7 @@ Sequential composition adds the annotations. The function $f$ needs $\cclrd{m}$ 
 produce a single $\tau_2$ value. To produce two $\tau_2$ values, we thus need $\cclrd{m}+1$ past
 values of $\tau_1$; to produce three $\tau_2$ values, we need $\cclrd{m}+2$ past values of $\tau_1$,
 and so on. To produce $\ident{n}$ past values that are required as the input of $g$, we need
-$\cclrd{m}+\cclrd{n}$ past values of type $\tau_1$. The pointwise composition is simpler. It uses
+$\cclrd{m+n}$ past values of type $\tau_1$. The pointwise composition is simpler. It uses
 the same stream to evaluate functions requiring $\cclrd{m}$ and $\cclrd{n}$ past values, and so it
 needs maximum of the two at most.
 
@@ -1508,7 +1524,7 @@ The full typing derivation is shown in Appendix~\ref{sec:appendixa-dataflow}:
 \begin{array}{l}
 (\,   \kvd{if}~~(\kvd{prev}~\ident{tick})=0\\[-0.25em]
 \,\,\, \kvd{then}~(\lambda x \rightarrow \kvd{prev}~x)\\[-0.25em]
-\,\,\, \kvd{else}~(\lambda x \rightarrow x) \,)\qquad(\kvd{prev}~\ident{counter})
+\,\,\, \kvd{else}~(\lambda x \rightarrow x) \,)\quad(\kvd{prev}~\ident{counter})
 \end{array}
 \end{equation*}
 %
@@ -1532,65 +1548,9 @@ $\mathit{max}(1, 1+1) = 2$. This should match the intuition about the code -- wh
 is applied to the argument, the computation will first access $\kvd{prev}~\ident{tick}$ (using one
 past value) and then $\kvd{prev}~(\kvd{prev}~\ident{counter}))$ (using two past values).
 
-%---------------------------------------------------------------------------------------------------
-
-\begin{figure}
-\begin{equation}
-\tag{\emph{var}}
-\hspace{-1em}
-\sem{\coctx{\Gamma}{\cclrd{0}} \vdash x_i : \tau_i} = \lambda \langle(x_0, \ldots, x_n)\rangle \rightarrow x_i
-\end{equation}
-\vspace{-1.0em}
-\begin{equation}
-\tag{\emph{prev}}
-\hspace{-1.5em}
-\begin{array}{l}
-\sem{\coctx{\Gamma}{\cclrd{n}+1} \vdash \kvd{prev}~e : \tau} = \lambda \langle \mathbf{v}_0, \ldots, \mathbf{v}_{\cclrd{n}+1} \rangle \rightarrow\\[-0.1em]
-  \qquad\sem{ \coctx{\Gamma}{ \cclrd{n} } \vdash e : \tau }~\langle \mathbf{v}_1, \ldots, \mathbf{v}_{ \cclrd{n}+1 }\rangle
-\end{array}
-\end{equation}
-\vspace{-0.5em}
-\begin{equation}
-\tag{\emph{sub}}
-\hspace{-1.5em}
-\begin{array}{l}
-\sem{\coctx{\Gamma}{\cclrd{n}} \vdash e : \tau} = \lambda \langle \mathbf{v}_0, \ldots, \mathbf{v}_{\cclrd{n}} \rangle \rightarrow\\[-0.1em]
-  \qquad\sem{ \coctx{\Gamma}{ \cclrd{n'} } \vdash e : \tau }~\langle \mathbf{v}_0, \ldots, \mathbf{v}_{ \cclrd{n'} }\rangle
-\end{array}
-\end{equation}
-\vspace{-0.5em}
-\begin{equation}
-\tag{\emph{abs}}
-\hspace{-1.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\cclrd{n}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{n}} \tau_2 } =
-    \lambda \langle \mathbf{v}_0, \ldots \mathbf{v}_{\cclrd{n}} \rangle \rightarrow\\[-0.1em]
-  \qquad\lambda (y, g) \rightarrow \sem{ \coctx{\Gamma,y:\tau_1}{\cclrd{n}} \vdash e : \tau_2
-    }~\langle (\mathbf{v}_0, y_0), \ldots, (\mathbf{v}_{ \cclrd{n}  }, y_{ \cclrd{n} } ) \rangle
-\end{array}
-\end{equation}
-\vspace{-0.5em}
-\begin{equation*}
-\tag{\emph{app}}
-\hspace{-1.5em}
-\begin{array}{l}
-  \sem{\coctx{\Gamma}{\textnormal{max}(\cclrd{m}, \cclrd{n}+\cclrd{p})} \vdash e_1~e_2 : \tau_2 } =
-    \lambda (\mathbf{v}_0, \ldots, \mathbf{v}_{ \textnormal{max}(\cclrd{m}, \cclrd{n}+\cclrd{p}) } ) \rightarrow \\[-0.1em]
-  \qquad\kvd{let}~g=\sem{ \coctx{\Gamma}{\cclrd{m}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{p}} \tau_2
-    }~(\mathbf{v}_0, \ldots, \mathbf{v}_{ \cclrd{m} })\\[-0.1em]
-  \qquad\kvd{in}~g~(~\sem{ \coctx{\Gamma}{\cclrd{n}} \vdash e_2 : \tau_1 }~(\mathbf{v}_0, \ldots, \mathbf{v}_{ \cclrd{n} }),\ldots, \\[-0.1em]
-  \qquad\qquad\;~\sem{ \coctx{\Gamma}{\cclrd{n}} \vdash e_2 : \tau_1 }~(\mathbf{v}_{ \cclrd{p} }, \ldots, \mathbf{v}_{ \cclrd{n}+\cclrd{p} })~)
-\end{array}
-\end{equation*}
-
-\figcaption{Semantics showing how past values are accessed in a data-flow language}
-\label{fig:applications-flat-dfsem}
-\end{figure}
-
-%---------------------------------------------------------------------------------------------------
 
 \paragraph{Semantics.}
-The sample language discussed in this section is a \emph{causal} data-flow language. This means that
+The language discussed in this section is a \emph{causal} data-flow language. This means that
 a computation can access \emph{past} values of the stream (but not future values). In the semantics,
 we again need richer structure over the input.
 
@@ -1601,8 +1561,8 @@ efficiently, as it creates unbounded lists of past elements.
 
 The coeffect system tracks maximal number of past values and so we can define the semantics using
 a list of fixed length. As with liveness, this is a data structure \emph{indexed} by the coeffect
-annotation. We write $\tau^{\cclrd{n}}$ for a list containing $\cclrd{n}$ elements (which can be
-also viewed as an $\cclrd{n}$-element product $\tau \times \ldots \times \tau$).
+annotation. We write $\tau^{\cclrd{n}}$ for a list containing $\cclrd{n}$ elements, which can be
+also viewed as an $\cclrd{n}$-element product $\tau \times \ldots \times \tau$.
 
 As with the previous examples, our semantics interprets a judgement using a (semantic) function;
 functions in the language are modelled as functions taking a list of inputs:
@@ -1618,6 +1578,67 @@ functions in the language are modelled as functions taking a list of inputs:
 Note that the semantics requires one more value than is the number of past values. This is because
 the first value is the current value and has to be always available, even when the annotation is
 zero as in (\emph{var}).
+
+
+%---------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+
+\begin{equation*}
+\begin{array}{ll}
+\hspace{3em}\semdef
+  {\coctx{\Gamma}{\cclrd{0}} \vdash x_i : \tau_i}
+  {\lambda \langle(x_1, \ldots, x_n)\rangle . x_i}
+& (\emph{var})
+\\[1.5em]
+\hspace{-0.75em}\emdeff
+  {\coctx{\Gamma}{\cclrd{n}} \vdash e : \tau}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{n}+1} \vdash \kvd{prev}~e : \tau}\\[-0.25em]~\end{array}\hspace{-0.5em}~}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}\lambda \langle \mathbf{v}_0, \ldots, \mathbf{v}_{\cclrd{n}+1} \rangle .\\[-0.25em]
+    \qquad f~\langle \mathbf{v}_1, \ldots, \mathbf{v}_{ \cclrd{n}+1 }\rangle\end{array}\hspace{-1em}~}
+& (\emph{prev})
+\\[1.5em]
+\hspace{3.25em}\emdeff
+  {\coctx{\Gamma}{\cclrd{n'}} \vdash e : \tau}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{n}} \vdash e : \tau}\\[-0.25em]~\end{array}\hspace{-0.5em}~}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}\lambda \langle \mathbf{v}_0, \ldots, \mathbf{v}_{\cclrd{n}} \rangle .\\[-0.25em]
+    \qquad f~\langle \mathbf{v}_0, \ldots, \mathbf{v}_{ \cclrd{n'} }\rangle\end{array}\hspace{-1em}~}
+& (\emph{sub})
+\\[1.5em]
+\hspace{-1.5em}\emdeff
+  {\coctx{\Gamma,y:\tau_1}{\cclrd{n}} \vdash e : \tau_2}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\cclrd{n}} \vdash \lambda y. e : \tau_1 \xrightarrow{\cclrd{n}} \tau_2}\\[-0.25em]~\end{array}\hspace{-0.5em}~}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda \langle \mathbf{v}_0, \ldots \mathbf{v}_{\cclrd{n}} \rangle . \lambda \langle y_0, \ldots, y_{\cclrd{n}}\rangle .\\[-0.25em]
+  \quad f~\langle (\mathbf{v}_0, y_0), \ldots, (\mathbf{v}_{ \cclrd{n}  }, y_{ \cclrd{n} } ) \rangle
+  \end{array}\hspace{-1em}~}
+& (\emph{abs})
+\\[1.5em]
+\hspace{0.25em}\emdefff
+  {\coctx{\Gamma}{\cclrd{r}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
+  {\coctx{\Gamma}{\cclrd{s}} \vdash e_2 : \tau_1}
+  {\begin{array}{l}\coctx{\Gamma}{\cclrd{\textnormal{max}}(\cclrd{m}, \cclrd{n+p})} \\[-0.25em]\qquad \vdash e_1~e_2 : \tau_2\\[-0.25em]~\\[-0.25em]~\end{array}}
+  {f_1}
+  {f_2}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda \langle\mathbf{v}_0, \ldots, \mathbf{v}_{ \textnormal{max}(\cclrd{m}, \cclrd{n}+\cclrd{p})} \rangle . \\[-0.1em]
+  \quad (f_1~\langle\mathbf{v}_0, \ldots, \mathbf{v}_{ \cclrd{m} }\rangle)\\[-0.1em]
+  ~~\qquad\langle\; f_2~\langle\mathbf{v}_0, \ldots, \mathbf{v}_{ \cclrd{n} }\rangle,\ldots,\\[-0.25em]
+  ~~\qquad~\;\, f_2~\langle\mathbf{v}_{ \cclrd{p} }, \ldots, \mathbf{v}_{ \cclrd{n}+\cclrd{p} }\rangle~\rangle
+  \end{array}\hspace{-0.5em}~}
+& (\emph{app})
+\\[1.5em]
+\end{array}
+\end{equation*}
+
+\figcaption{Semantics showing how past values are accessed in a data-flow language}
+\label{fig:applications-flat-dfsem}
+\end{figure}
+
+%---------------------------------------------------------------------------------------------------
 
 The rules defining the semantics are shown in Figure~\ref{fig:applications-flat-dfsem}. The
 semantics of the context is a \emph{list of products}. To make the rules easier to follow, we write
@@ -1660,7 +1681,7 @@ more example and then explore the \emph{structural} class of systems.
 In the implicit parameters and data-flow examples, the context provides additional resources or
 values that may be accessed at runtime. However, coeffects can also track \emph{permissions} or
 \emph{capabilities} to perform some operation. We can invert the intuition behind liveness and
-use it as a trivial example -- when the context is live, it contains a \emph{permission} to access
+use it as a trivial example. When the context is live, it contains a \emph{permission} to access
 variables. In this section, we briefly consider a system for safe locking of Flanagan and
 Abadi~\cite{app-safe-locking} as one, more advanced example. Calculus of capabilities of
 Cray et al.~\cite{app-capabilities} is discussed later in Section~\ref{sec:applications-active-ccc}.
@@ -1690,13 +1711,17 @@ uses a coeffect-style judgements of a form $\Gamma; p \vdash e : \tau$ where $p$
 accessible regions (protected by an acquired lock). Using our notation, the rule for \kvd{sync}
 looks as follows:
 
+\noindent
+\vspace{-0.5em}
 \begin{equation*}
 \tyrule{sync}
   { \coctx{\Gamma}{\cclrd{p}} \vdash e_1 : m&
     \coctx{\Gamma}{\cclrd{p} \cup \{m\} } \vdash e_2 : \tau }
   { \coctx{\Gamma}{\cclrd{p}} \vdash \kvd{sync}~e_1~e_2 : \tau }
 \end{equation*}
-%
+\vspace{-0.5em}
+
+\noindent
 The rule requires that $e_1$ yields a value of a singleton type $m$. The type is added as an
 indicator of the locked region to the context $\cclrd{p}\cup \{m\}$ which is then used to evaluate
 the expression $e_2$.
@@ -1772,35 +1797,108 @@ whether the accessed variable is the \emph{bound} variable or some of the \emph{
 As discussed earlier, we can resolve this by attaching a \emph{vector} of liveness annotations to
 a \emph{vector} of variables. In the first example, the available variables are $y$ and $x$, so
 the variable context $\Gamma$ is a vector $\langle y\!:\!\tau, x\!:\!\tau \rangle$. Only the variable $y$
-is used and so the annotated context is: $\coctx{y\!:\!\tau, x\!:\!\tau}{ \alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}} }$.
+is used and so the annotated context is: $\coctx{y\!:\!\tau, x\!:\!\tau}{ \alift{\cclrd{\cclrd{\ident{L}}}, \cclrd{\cclrd{\ident{D}}}} }$.
 When writing the contexts, we omit angle brackets around variables, but it should still be viewed
 as a vector. There are two important points:
 
 \begin{itemize}
 \item The fact that variables are now a vector means that we cannot freely re-order them. This
-  guarantees that $\coctx{x\!:\!\tau, y\!:\!\tau}{\alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}}}$
-  can not be confused with $\coctx{y\!:\!\tau, x\!:\!\tau}{\alift{\cclrd{\ident{L}}, \cclrd{\ident{D}}}}$.
+  guarantees that $\coctx{x\!:\!\tau, y\!:\!\tau}{\alift{\cclrd{\cclrd{\ident{L}}}, \cclrd{\cclrd{\ident{D}}}}}$
+  can not be confused with $\coctx{y\!:\!\tau, x\!:\!\tau}{\alift{\cclrd{\cclrd{\ident{L}}}, \cclrd{\cclrd{\ident{D}}}}}$.
   We need to define the type system in a way that is similar to substructural systems
   (discussed in Section~\ref{sec:path-logic}) and add explicit rules for manipulating
   the context.
 
 \item We choose to attach a vector of annotations to a vector of variables, rather than attaching
   individual annotations to individual variables. This lets us unify and combine flat and
-  structural systems as discussed in Section~\ref{sec:unified-unified}, but the alternative is briefly
-  explored in Section~\ref{sec:unified-meta}.
+  structural systems as discussed in Section~\ref{sec:further-unified}, but the alternative is briefly
+  explored in Section~\ref{sec:further-meta}.
 \end{itemize}
 
 \paragraph{Type system.}
 The structural system for liveness uses the same two-point lattice of annotations
-$\mathcal{L}=\{ \cclrd{\ident{L}}, \cclrd{\ident{D}} \}$ that was used by the flat system. We also use the
-$\sqcup, \sqcap$ and $\sqsubseteq$ operators that are defined in Figure~\ref{fig:applications-flat-livealg}.
+$\mathcal{L}=\{ \cclrd{\cclrd{\ident{L}}}, \cclrd{\cclrd{\ident{D}}} \}$ that was used by the flat system. We also use the
+$\cclrd{\sqcup}, \cclrd{\sqcap}$ and $\cclrd{\sqsubseteq}$ operators that are defined in Figure~\ref{fig:applications-flat-livealg}.
 
 The rules of the system are split into two groups. Figure~\ref{fig:applications-struct-live} (a) shows
-the standard syntax-driven rules plus sub-coeffecting. In (\emph{var}), the context contains just the
+the standard syntax-driven rules plus subcoeffecting. In (\emph{var}), the context contains just the
 single accessed variable, which is annotated as live. Unused variables can be introduced using weakening.
 A constant (\emph{const}) is accessed in an empty context, which also carries no annotations. The
-sub-coeffecting rule (\emph{sub}) uses a pointwise extension of the $\sqsubseteq$ relation over two
+subcoeffecting rule (\emph{sub}) uses a pointwise extension of the $\cclrd{\sqsubseteq}$ relation over two
 vectors as defined in Section~\ref{sec:applications-strucutre-vec}.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+a.) Ordinary, syntax-driven rules along with subcoeffecting
+
+\begin{equation*}
+\tyrule{var}{}
+  {\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau}
+\end{equation*}
+\begin{equation*}
+\tyrule{const}
+  {c:\tau \in \Delta}
+  {\coctx{()}{\alift{}} \vdash c : \tau}
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \;\cclrd{\sqcup}\; \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \;\cclrd{\sqcup}\; \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \;\cclrd{\sqsubseteq}\; \aclrd{\textbf{r'}}
+\end{equation*}
+\vspace{1em}
+
+b.) Structural rules for context manipulation
+
+\begin{equation*}
+\tyrule{weak}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
+  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{\cclrd{\ident{D}}} }} \vdash e : \sigma}
+\end{equation*}
+\begin{equation*}
+\tyrule{exch}
+  {\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+\quad
+\begin{array}{l}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
+\begin{equation*}
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}\cclrd{\sqcap}\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
+~
+\begin{array}{l}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
+
+\figcaption{Structural coeffect liveness analysis}
+\label{fig:applications-struct-live}
+\vspace{-1em}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
 
 In the (\emph{abs}) rule, the variable context of the body $\Gamma, x\!:\!\tau_1$ is annotated with
 a vector $\mathbf{\aclrd{r}}\cons\alift{\cclrd{s}}$, where the vector $\mathbf{\aclrd{r}}$ corresponds
@@ -1825,90 +1923,19 @@ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\aclrd{\mathbf{s}}} \sigma
 \qquad
 f : \sigma \xrightarrow{\cclrd{t}} \tau
 \qquad
-f \circ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\cclrd{t} \,\sqcup\, \aclrd{\mathbf{s}}} \tau
+f \circ g : \tau_1 \times \ldots \times \tau_n \xrightarrow{\cclrd{t} \,\cclrd{\sqcup}\, \aclrd{\mathbf{s}}} \tau
 \end{equation*}
 %
 This definition is only for illustration and is revised in Chapter~\ref{ch:structural}. The function
 $g$ takes a product of multiple variables (and is annotated with a vector). The function $f$ takes
 just a single value and is annotated with the scalar. As in the flat system, sequential composition
-is modelled using $\sqcup$ -- but here, we use a scalar-vector extension of the operation. Finally,
+is modelled using $\cclrd{\sqcup}$, but here we use a scalar-vector extension of the operation. Finally,
 the (\emph{let}) rule follows similar reasoning (and also corresponds to the typing of $(\lambda x.e_2)~e_1$).
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-{\small a.) Ordinary, syntax-driven rules along with sub-coeffecting}
-\begin{equation*}
-\tyrule{var}{}
-  {\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau}
-\end{equation*}
-\begin{equation*}
-\tyrule{const}
-  {c:\tau \in \Delta}
-  {\coctx{()}{\alift{}} \vdash c : \tau}
-\end{equation*}
-\begin{equation*}
-\tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad
-    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{let}
-  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad
-    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \sqcup \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \sqsubseteq \aclrd{\textbf{r'}}
-\end{equation*}
-\vspace{0.5em}
-
-{\small b.) Structural rules for context manipulation}
-\begin{equation*}
-\tyrule{weak}
-  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
-  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{\ident{D}} }} \vdash e : \sigma}
-\end{equation*}
-\begin{equation*}
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-  {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-\quad
-\begin{array}{l}
-\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
-\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
-\end{array}
-\end{equation*}
-\begin{equation*}
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}\sqcap\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
-~
-\begin{array}{l}
-\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
-\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
-\end{array}
-\end{equation*}
-
-\figcaption{Structural coeffect liveness analysis}
-\label{fig:applications-struct-live}
-\vspace{-1em}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
 
 \paragraph{Structural typing rules.}
 The structural typing rules are shown in Figure~\ref{fig:applications-struct-live} (b). They mirror
 the rules know from substructural type systems (Section~\ref{sec:path-logic}). Weakening (\emph{weak})
-extends the context with a single unused variable $x$ and adds the $\ident{D}$ annotation to the
+extends the context with a single unused variable $x$ and adds the $\cclrd{\ident{D}}$ annotation to the
 vector of coeffects.
 
 The variable is always added to the end as in the (\emph{abs}) rule. However, the exchange rule
@@ -1919,11 +1946,11 @@ remaining, unchanged, parts of the vectors match.
 Finally, contraction (\emph{contr}) makes it possible to use a single variable multiple times.
 Given a judgement that contains variables $y$ and $z$, we can derive a judgement for an expression
 where both $z$ and $y$ are replaced by a single variable $x$. Their annotations $\cclrd{s}, \cclrd{t}$
-are combined into $\cclrd{s} \sqcap \cclrd{t}$, which means that $x$ is live if either $z$ or $y$
+are combined into $\cclrd{s} \;\cclrd{\sqcap}\; \cclrd{t}$, which means that $x$ is live if either $z$ or $y$
 were live in the original expression.
 
 \paragraph{Example.} To demonstrate how the system works, we consider the expression
-$(\lambda x \rightarrow v)~y$. This is similar to an example where flat liveness mistakenly marks
+$(\lambda x . v)~y$. This is similar to an example where flat liveness mistakenly marks
 the entire context as live. Despite the fact that the variable $y$ is accessed (syntactically), it
 is not live -- because the function that takes it as an argument always returns $v$.
 
@@ -1934,10 +1961,10 @@ to add the unused variable $x$ to the context:
 \tyrule{weak}
 { \tyruler{var}
     {}
-    { \coctx{v\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash v : \tau } }
+    { \coctx{v\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}} }} \vdash v : \tau } }
 { \tyruler{abs}
-    { \coctx{v\!:\!\tau, x\!:\!\tau}{\alift{ \cclrd{\ident{L}},\cclrd{\ident{D}} }} \vdash v : \tau }
-    { \coctx{v\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash (\lambda x \rightarrow v) : \tau \xrightarrow{\cclrd{\ident{D}}} \tau }}
+    { \coctx{v\!:\!\tau, x\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}},\cclrd{\cclrd{\ident{D}}} }} \vdash v : \tau }
+    { \coctx{v\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}} }} \vdash (\lambda x . v) : \tau \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau }}
 \end{equation*}
 %
 The interesting part is the use of the (\emph{app}) rule in the next step. Although the variable $y$ is live in the expression $y$,
@@ -1949,23 +1976,23 @@ it is marked as dead in the overall expression, because the function is annotate
   {
     \begin{array}{l}
     \vspace{-1.2em}
-    \coctx{v\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash (\lambda x \rightarrow v) : \tau \xrightarrow{\cclrd{\ident{D}}} \tau
+    \coctx{v\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}} }} \vdash (\lambda x . v) : \tau \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau
     \end{array} &
-    \tyruler{var}{}{\coctx{y\!:\!\tau}{\alift{ \cclrd{\ident{L}} }} \vdash y : \tau}
+    \tyruler{var}{}{\coctx{y\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}} }} \vdash y : \tau}
   }
   {
   \inference
-  	{ \coctx{v\!:\!\tau, y\!:\!\tau}{\alift{ \cclrd{\ident{L}} } \cons\, ({ \cclrd{\ident{D}} \sqcup \alift{\cclrd{\ident{L}}} })}
-  	     \vdash (\lambda x \rightarrow v)~y : \tau }
-  	{ \coctx{v\!:\!\tau, y\!:\!\tau}{\alift{ \cclrd{\ident{L}}, \cclrd{\ident{D}} }} \vdash (\lambda x \rightarrow v)~y : \tau }
+  	{ \coctx{v\!:\!\tau, y\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}} } \cons\, ({ \cclrd{\cclrd{\ident{D}}} \,\cclrd{\sqcup}\, \alift{\cclrd{\cclrd{\ident{L}}}} })}
+  	     \vdash (\lambda x . v)~y : \tau }
+  	{ \coctx{v\!:\!\tau, y\!:\!\tau}{\alift{ \cclrd{\cclrd{\ident{L}}}, \cclrd{\cclrd{\ident{D}}} }} \vdash (\lambda x . v)~y : \tau }
   }
 \end{equation*}
 %
 The application is written in two steps -- the first one directly applies the (\emph{app}) rule
 and the second one simplifies the coeffect annotation. The key part is the use of the scalar-vector
-operator $\cclrd{\ident{D}} \sqcup \alift{\cclrd{\ident{L}}}$. Using the definition of the scalar-vector
-extension, this equals $\alift{\cclrd{\ident{D}} \sqcup \cclrd{\ident{L}}}$ which is
-$\alift{\cclrd{\ident{D}}}$.
+operator $\cclrd{\cclrd{\ident{D}}} \;\cclrd{\sqcup}\; \alift{\cclrd{\cclrd{\ident{L}}}}$. Using the definition of the scalar-vector
+extension, this equals $\alift{\cclrd{\cclrd{\ident{D}}} \;\cclrd{\sqcup}\; \cclrd{\cclrd{\ident{L}}}}$ which is
+$\alift{\cclrd{\cclrd{\ident{D}}}}$.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1976,28 +2003,34 @@ expressions, the type constructor was applied to the entire context, \ie~$1+(\ta
 In the structural version, the semantics applies the option type constructor to individual elements
 of the free-variable context pair: $(1+\tau_1) \times \ldots \times (1+ \tau_n)$. For each variable,
 the type is indexed by the corresponding annotation:
-%
+
 \begin{equation*}
 \begin{array}{r}
+\\[-0.5em]
 \sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau}
   ~:~ (\tau'_1 \times \ldots \times \tau'_n) \rightarrow \tau\\[0.5em]
 \textnormal{where}~\tau'_i = \begin{cases}
-\tau_i & (\cclrd{r_i} = \cclrd{\ident{L}})\\
-1      & (\cclrd{r_i} = \cclrd{\ident{D}})
+\tau_i & (\cclrd{r_i} = \cclrd{\cclrd{\ident{L}}})\\
+1      & (\cclrd{r_i} = \cclrd{\cclrd{\ident{D}}})
 \end{cases}
 \end{array}
 \end{equation*}
-%
+\vspace{0.5em}
+
+\noindent
 Note that the product of the free variables is not an ordinary tuple of our language, but a special
 construction (we return to this topic in Section~\ref{sec:struct-semantics}). This follows from the
 asymmetry of $\lambda$-calculus, as discussed in Section~\ref{sec:applications-strucutre-vec}. Functions
 take just a single input and so they are interpreted in the same way as in flat calculus:
-%
+
+\vspace{-0.5em}
 \begin{equation*}
-\sem{\tau_1 \xrightarrow{\aclrd{\ident{L}}} \tau_2} = \tau_1 \rightarrow \tau_2 \qquad\qquad
-\sem{\tau_1 \xrightarrow{\aclrd{\ident{D}}} \tau_2} = 1 \rightarrow \tau_2
+\sem{\tau_1 \xrightarrow{\aclrd{\cclrd{\ident{L}}}} \tau_2} = \tau_1 \rightarrow \tau_2 \qquad\qquad
+\sem{\tau_1 \xrightarrow{\aclrd{\cclrd{\ident{D}}}} \tau_2} = 1 \rightarrow \tau_2
 \end{equation*}
-%
+\vspace{-0.5em}
+
+\noindent
 The rules that define the semantics are shown in Figure~\ref{fig:applications-struct-livesem}.
 To make the definition simpler, we are somewhat vague when working with products. We write
 variables of product type such as $\mathbf{v}$ in bold-face and individual values like $x$ in
@@ -2010,104 +2043,101 @@ In (\emph{var}), the context contains just a single variable and so we do not ev
 projection; (\emph{cosnt}) receives no variables and uses global constant lookup function $\delta$.
 In (\emph{abs}), we obtain two parts of the context and combine them into $(\mathbf{v}, x)$. This
 works the same way regardless of whether the variables are live or dead. For simplicity, we omit
-sub-coeffecting, which just turns some of the available values $v_i$ to unit values $()$.
+subcoeffecting, which just turns some of the available values $v_i$ to unit values $()$.
 
 As dictated by the semantics, the application again needs to ``implement'' dead code elimination
-(otherwise the type system would be unsound). When the input parameter of the function $g$ is live
-(\emph{app-1}), we first evaluate $e_2$ and then pass the result to $g$. When the parameter is
+(otherwise the type system would be unsound). When the input parameter of the function $f_1$ is live
+(\emph{app-1}), we first evaluate $e_2$ and then pass the result to $f_1$. When the parameter is
 dead (\emph{app-2}), we do not need to evaluate $e_2$ and so all values in $\mathbf{v_2}$ can be
 dead, \ie~$()$.
 
 In the structural rules, (\emph{weak}) receives context containing a dead variable as the last one.
 It drops the $()$ value and evaluates the expression in a context $\mathbf{v}$. Exchange (\emph{exch})
-simply swaps two variables. In contraction, we either duplicate a dead value (\emph{contr-1}),
-or a live value (\emph{contr-2}). In the latter, one of the duplicates may be dead and
-so we need to consider three separate cases.
+simply swaps two variables. In contraction, we duplicate the value (no matter whether it is dead
+or live) and we use an auxiliary definition $\restr{x}{\cclrd{r}}$ to replace a live value with
+$()$ when only one of the contracted variables is live.
 
 % --------------------------------------------------------------------------------------------------
 
 \begin{figure}[t]
-{\small a.) Semantics of ordinary expressions}
+a.) Semantics of ordinary expressions
 \begin{equation*}
-\tag{\emph{var}}
-\sem{\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau} = \lambda(x) \rightarrow x
-\end{equation*}
-\vspace{-1.5em}
-\begin{equation*}
-\tag{\emph{const}}
-\sem{\coctx{()}{\alift{}} \vdash c : \tau} = \lambda () \rightarrow \delta(c)
-\end{equation*}
-\vspace{-1.5em}
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{abs}}
-\begin{array}{l}
-\sem{\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda y . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2} = \lambda \textbf{v} \rightarrow\\[-0.25em]
-\qquad\lambda y \rightarrow \sem{\coctx{\Gamma, y \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}~(\textbf{v}, y)
+\hspace{-1em}
+\begin{array}{ll}
+\\[-2.5em]
+\hspace{4.75em}\semdef
+  {\coctx{x \!:\! \tau}{\alift{\cclrd{\ident L}}} \vdash x : \tau}
+  {\lambda (x). x}
+& (\emph{var})
+\\[-0.5em]
+\hspace{4.5em}\semdef
+  {\coctx{()}{\alift{}} \vdash n : \ident{num}}
+  {\lambda (). n}
+& (\emph{num})
+\\[1.5em]
+\hspace{1.75em}\semdeff
+  {\coctx{\Gamma, y \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda y . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
+  {f}
+  {\lambda \textbf{v} . \lambda y . f~(\textbf{v}, y)}
+& (\emph{abs})
+\\[1.5em]
+\hspace{-0.75em}\semdefff
+  {\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\cclrd{\ident{L}}}} \tau_2}
+  {\coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{\cclrd{\ident{L}}} \,\cclrd{\sqcup}\, \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
+  {f_1}
+  {f_2}
+  {\lambda (\mathbf{v_1}, \mathbf{v_2}) . (f_1\;\mathbf{v_1})~(f_2\;\mathbf{v_2})}
+& (\emph{app-1})
+\\[2.5em]
+\hspace{-0.75em}\semdefff
+  {\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\cclrd{\ident{D}}}} \tau_2}
+  {\coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{\cclrd{\ident{D}}} \,\cclrd{\sqcup}\, \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
+  {f_1}
+  {\_}
+  {\lambda (\mathbf{v_1}, \mathbf{v_2}) . (f_1~\mathbf{v_1})~()}
+& (\emph{app-2})
 \end{array}
 \end{equation*}
-\vspace{-1.0em}
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{app-1}}
-\begin{array}{l}
-\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{\ident{L}} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} =
-  \lambda (\mathbf{v_1}, \mathbf{v_2}) \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\ident{L}}} \tau_2 }~\mathbf{v_1}\\[-0.25em]
-  \qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1 }~\mathbf{v_2})
-\end{array}
-\end{equation*}
-\vspace{-1.0em}
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{app-2}}
-\begin{array}{l}
-\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{\ident{D}} \sqcup \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} =
-  \lambda (\mathbf{v_1}, \mathbf{v_2}) \rightarrow \\[-0.25em]
-  \qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{\ident{D}}} \tau_2 }~\mathbf{v_1}~
-  \kvd{in}~g~()
-\end{array}
-\end{equation*}
-\vspace{0.5em}
+\vspace{1em}
 
-{\small b.) Semantics of structural context manipulation}
+b.) Semantics of structural context manipulation\\
+Using the auxiliary definition $\restr{x}{\cclrd{\ident{L}}} = x$ and $\restr{x}{\cclrd{\ident{D}}} = ()$:
+
 \begin{equation*}
-\tag{\emph{weak}}
-\sem{\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{\ident{D}} }} \vdash e : \sigma} =
-  \lambda(\textbf{v}, ()) \rightarrow
-    \sem{\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}~\textbf{v}
-\end{equation*}
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{exch}}
-\begin{array}{l}
-\sem{\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma} =
-  \lambda(\mathbf{v_1}, y, x, \mathbf{v_2}) \rightarrow\\[-0.25em]
-\qquad
-  \sem{\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~
-  (\mathbf{v_1}, x, y, \mathbf{v_2})
+\begin{array}{ll}
+\hspace{2em}\semdeff
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
+  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{\cclrd{\ident{D}}} }} \vdash e : \sigma}
+  {f}
+  {\lambda(\textbf{v}, ()) . f~\textbf{v} }
+& (\emph{weak})
+\\[1.5em]
+\hspace{0em}\mdeff
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,x\!:\!\tau_1,y\!:\!\tau_2,\Gamma_2\\[-0.25em]\qquad}
+     {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,y\!:\!\tau_2,x\!:\!\tau_1,\Gamma_2\\[-0.25em]\qquad}{\aclrd{\textbf{r}}
+          \atimes \alift{\cclrd{t},\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}~\\[-0.25em]\hspace{-0.5em}f\end{array}}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda(\mathbf{v_1}, y, x, \mathbf{v_2}) .\\[-0.25em]
+    \quad f~(\mathbf{v_1}, x, y, \mathbf{v_2})\end{array} }
+& (\emph{exch})
+\\[1.5em]
+\hspace{-0.5em}\mdeff
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2\\[-0.25em]\qquad}
+      {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}}
+          \atimes \alift{\cclrd{s} \,\cpar\, \cclrd{t}} \atimes \aclrd{\textbf{q}}} \\[-0.25em] \qquad\vdash \subst{e}{z,y}{x} : \tau}\end{array}}
+  {\begin{array}{l}~\\[-0.25em]\hspace{-0.5em}f\end{array}}
+  {\hspace{-0.5em}\begin{array}{l}\lambda(\mathbf{v_1}, x, \mathbf{v_2}) .\\[-0.25em]
+  \quad f~(\mathbf{v_1}, \restr{x}{\cclrd{s}}, \restr{x}{\cclrd{t}}, \mathbf{v_2})\end{array}\hspace{-0.5em}~}
+& (\emph{contr})
 \end{array}
 \end{equation*}
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{contr-1}}
-\begin{array}{l}
-\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{D}}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} = \lambda(\mathbf{v_1}, (), \mathbf{v_2}) \rightarrow \\[-0.25em]
-\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{D}},\cclrd{\ident{D}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma} ~(\mathbf{v_1}, (), (), \mathbf{v_2})
-\end{array}
-\end{equation*}
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{contr-2}}
-\begin{array}{l}
-\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{L}}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} = \lambda(\mathbf{v_1}, x, \mathbf{v_2}) \rightarrow \\[-0.25em]
-\quad\begin{cases}
-~~\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{L}},\cclrd{\ident{L}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~(\mathbf{v_1}, x, x, \mathbf{v_2})\\[-0.25em]
-~~\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{D}},\cclrd{\ident{L}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~(\mathbf{v_1}, (), x, \mathbf{v_2})\\[-0.25em]
-~~\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\ident{L}},\cclrd{\ident{D}}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}~(\mathbf{v_1}, x, (), \mathbf{v_2})
-\end{cases}
-\end{array}
-\end{equation*}
+
 \vspace{-0.5em}
 \figcaption{Semantics of structural liveness}
 \label{fig:applications-struct-livesem}
@@ -2130,11 +2160,11 @@ to the context. When we read the \emph{semantic rule}, weakening drops a variabl
 context! This duality is caused by the fact that coeffects talk about context -- they describe
 how to build the context required by the sub-expressions and so the semantics implements
 transformation from the context in the (typing) conclusion to the (typing) assumption. How
-should coeffects be understood, in general, is discussed further in Section~\ref{sec:flat-calculus-undestanding}.
+should coeffects be understood, in general, is discussed further in Section~\ref{sec:flat-calculus-understanding}.
 
 The structural systems discussed in the upcoming sections are remarkably similar to the one
-shown here. We discuss two more examples to explore the design space, but we shall
-omit details that are the shared with the system in this section.
+shown here. We discuss two more examples to explore the design space, but omit details shared with
+the system in this section.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -2146,6 +2176,70 @@ further and track how many times is the variable accessed. Girard et al. \cite{l
 this idea as \emph{bounded linear logic} and use it to restrict well-typed programs to
 polynomial-time algorithms. We first introduce the system in our, coeffect, style and then
 relate it with the original formulation.
+
+% --------------------------------------------------------------------------------------------------
+
+\begin{figure}[t]
+a.) Ordinary, syntax-driven rules along with subcoeffecting
+\begin{equation*}
+\tyrule{var}{}
+  {\coctx{x \!:\! \tau}{\alift{\cclrd{1}}} \vdash x : \tau}
+\end{equation*}
+\begin{equation*}
+\tyrule{abs}
+  {\coctx{\Gamma, x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{app}
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad
+    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+\end{equation*}
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
+\end{equation*}
+\vspace{0.5em}
+
+b.) Structural rules for context manipulation
+\begin{equation*}
+\tyrule{weak}
+  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
+  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{0} }} \vdash e : \sigma}
+\end{equation*}
+\begin{equation*}
+\tyrule{exch}
+  {\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+\quad
+\begin{array}{l}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
+\begin{equation*}
+\tyrule{contr}
+  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
+~
+\begin{array}{l}
+\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
+\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
+\end{array}
+\end{equation*}
+
+\figcaption{Structural coeffect bounded reuse analysis}
+\label{fig:applications-struct-bll}
+\vspace{-1em}
+\end{figure}
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2188,75 +2282,9 @@ call-by-name) multiplies the uses, meaning that the total number of uses is $(\c
 (where $\ast$ is a point-wise multiplication of a vector by a scalar). This models the fact that
 for each use of the function parameter, we replicate the variable uses in $e_2$.
 
-Finally, the sub-coeffecting rule (\emph{sub}) safely overapproximates the number of accesses using
+Finally, the subcoeffecting rule (\emph{sub}) safely overapproximates the number of accesses using
 the pointwise $\leq$ relation. We can view any variable as being used a greater
 number of times than it actually is.
-
-% --------------------------------------------------------------------------------------------------
-
-\begin{figure}[t]
-{\small a.) Ordinary, syntax-driven rules along with sub-coeffecting}
-\begin{equation*}
-\tyrule{var}{}
-  {\coctx{x \!:\! \tau}{\alift{\cclrd{1}}} \vdash x : \tau}
-\end{equation*}
-\begin{equation*}
-\tyrule{abs}
-  {\coctx{\Gamma, x \!:\! \tau_1}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}}} \vdash e : \tau_2}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x . e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{app}
-  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad
-    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{let}
-  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad
-    \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
-\end{equation*}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau}
-  {\coctx{\Gamma}{\aclrd{\textbf{r'}}} \vdash e : \tau}~\aclrd{\textbf{r}} \leq \aclrd{\textbf{r'}}
-\end{equation*}
-\vspace{0.5em}
-
-{\small b.) Structural rules for context manipulation}
-\begin{equation*}
-\tyrule{weak}
-  {\coctx{\Gamma}{ \aclrd{\textbf{r}} } \vdash e : \sigma}
-  {\coctx{\Gamma,x \!:\! \tau}{\aclrd{\textbf{r}} \cons \alift{ \cclrd{0} }} \vdash e : \sigma}
-\end{equation*}
-\begin{equation*}
-\tyrule{exch}
-  {\coctx{\Gamma_1,x\!:\!\tau',y\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-  {\coctx{\Gamma_1,y\!:\!\tau,x\!:\!\tau',\Gamma_2}{\aclrd{\textbf{r}} \cons\alift{\cclrd{t},\cclrd{s}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-\quad
-\begin{array}{l}
-\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
-\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
-\end{array}
-\end{equation*}
-\begin{equation*}
-\tyrule{contr}
-  {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
-~
-\begin{array}{l}
-\slen{\Gamma_1} = \slen{\aclrd{\textbf{r}}}\\[-0.25em]
-\slen{\Gamma_2} = \slen{\aclrd{\textbf{s}}}
-\end{array}
-\end{equation*}
-
-\figcaption{Structural coeffect bounded reuse analysis}
-\label{fig:applications-struct-bll}
-\vspace{-1em}
-\end{figure}
-
-% --------------------------------------------------------------------------------------------------
 
 \paragraph{Example.} To type check the expression $(\lambda v.x+v+v)~(x+y)$ discussed earlier, we need
 to use abstraction, application, but also the contraction rule. Assuming the type judgement for the body,
@@ -2309,54 +2337,63 @@ a product containing $\cclrd{r}$ copies of $\tau$, that is $\tau^{\cclrd{r}}$:
 The functions are interpreted similarly. A function $\tau_1 \xrightarrow{\cclrd{t}} \tau_2$ is modelled
 as a function taking $\cclrd{t}$-element product of $\tau_1$ values: $\tau_1^{\cclrd{t}} \rightarrow \tau_2$.
 
-The rules that define the semantics of bounded calculus are mostly the same as (or easy to adapt
-from) the semantic rules of liveness in Figure~\ref{fig:applications-struct-livesem}. The ones that
-differ are those that use sequential composition (application and let binding) and the contraction
-rule, which represents pointwise composition.
+The rules that define the semantics of bounded calculus are easy to adapt from the semantic rules
+of liveness in Figure~\ref{fig:applications-struct-livesem}. The ones that differ are those that use
+sequential composition (application and let binding) and the contraction rule, which represents
+pointwise composition.
 
 In the following, we use vector names $\mathbf{v}_i$ for contexts containing multiple variables
 \ie~have a type $\tau_1^{\cclrd{r_1}}\times\ldots\times\tau_m^{\cclrd{r_m}}$. Each vector contains
 multiple copies of each variable, to model the fact that variables are used in an affine way (at most
 once). We do not explicitly write the sizes of these vectors (number of variables in a context; number
 of instances of a variable) as these are clear from the coeffect annotations. We assume that $\Gamma_2$
-contains $n$ variables and that $\aclrd{s}=\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}$:
+contains $n$ variables and that $\aclrd{s}=\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}$. First, consider
+the (\emph{contr}) rule:
 %
 \begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{contr}}
+\hspace{-1em}
 \begin{array}{l}
-\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s}+\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} =\\[-0.25em]
-\qquad  \lambda(\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}+\cclrd{t}}), \mathbf{v_2}) \rightarrow \\[-0.25em]
-\qquad\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}\\[-0.25em]
-\qquad\qquad\qquad (\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}}), (x_{\cclrd{s}+1}, \ldots, x_{\cclrd{s}+\cclrd{t}} ), \mathbf{v_2})
+\mdeff
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2\\[-0.25em]\qquad}
+      {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}}
+          \atimes \alift{\cclrd{s} + \cclrd{t}} \atimes \aclrd{\textbf{q}}} \\[-0.25em] \qquad\vdash \subst{e}{z,y}{x} : \tau}\end{array}}
+  {\begin{array}{l}~\\[-0.25em]\hspace{-0.5em}f\end{array}}
+  {\hspace{-0.5em}\begin{array}{l}\lambda(\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}+\cclrd{t}}), \mathbf{v_2}) .\\[-0.25em]
+  \quad f~(\mathbf{v_1}, (x_1, \ldots, x_{\cclrd{s}}), (x_{\cclrd{s}+1}, \ldots, x_{\cclrd{s}+\cclrd{t}} ), \mathbf{v_2})\end{array}\hspace{-0.5em}~}
 \end{array}
 \end{equation*}
 %
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{app}}
-\begin{array}{l}
-\sem{ \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2} = \\[-0.25em]
-  \qquad\lambda (\mathbf{v_1}, ((x_{1,1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_1}), \ldots, (x_{n,1}, \ldots, x_{n,\cclrd{t}\ast\cclrd{s}_n}) ) \rightarrow \\[-0.25em]
-  \qquad\qquad\kvd{let}~g = \sem{ \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 }~\mathbf{v_1}\\[-0.25em]
-  \qquad\qquad\kvd{let}~\mathbf{y}_1 = ((x_{1,1}, \ldots, x_{1,\cclrd{s}_1}), \ldots, (x_{n,1}, \ldots, x_{1,\cclrd{s}_n})  )\\[-0.25em]
-  \qquad\qquad\kvd{let}~\ldots \\[-0.25em]
-  \qquad\qquad\kvd{let}~\mathbf{y}_{ \cclrd{t} } = ((x_{1,(\cclrd{t}-1)\ast\cclrd{s}_1 + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_1}), \ldots, \\[-0.25em]
-  \hspace{8.2em}                                         (x_{n,(\cclrd{t}-1)\ast\cclrd{s}_n + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_n})  )\\[-0.25em]
-  \qquad\qquad\kvd{in}~g~(\sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}~\mathbf{y}_1, \ldots,
-    \sem{ \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}~\mathbf{y}_{\cclrd{t}})
-\\[1em]
-\end{array}
-\end{equation*}
-%
-In the (\emph{contr}) rule, the semantic function is called with $\cclrd{s}+\cclrd{t}$ copies of
+The semantic function is called with $\cclrd{s}+\cclrd{t}$ copies of
 a value for the $x$ variable. The values are split between $\cclrd{s}$ and $\cclrd{t}$ separate
-copies of variables $y$ and $z$, respectively.
+copies of variables $y$ and $z$, respectively. The (\emph{app}) rule is similar in that it needs to
+split the input variable context. However, it needs to split values of multiple variabless:
+%
+\begin{equation*}
+\hspace{-1em}
+\begin{array}{l}
+\emdefff
+  {\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2}
+  {\coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \ast \aclrd{\textbf{s}})}\\[-0.25em]
+    \qquad\vdash e_1 \, e_2 : \tau_2}\\[-0.25em]~\\[-0.25em]~\\[-0.25em]~\\[-0.25em]~\end{array}\hspace{-0.5em}~}
+  {f_1}
+  {f_2}
+  {\hspace{-0.5em}\begin{array}{l}
+  \lambda (\mathbf{v_1}, ((x_{1,1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_1}), \ldots, (x_{n,1}, \ldots, x_{n,\cclrd{t}\ast\cclrd{s}_n}) ) .\\[-0.25em]
+  \quad(f_1~\textbf{v}_1)\\[-0.25em]
+  \qquad (~f_2~((x_{1,1}, \ldots, x_{1,\cclrd{s}_1}), \ldots, \\[-0.25em]
+  \hspace{4.0em}                                         ~(x_{n,1}, \ldots, x_{1,\cclrd{s}_n}) ~),\ldots,\\[-0.25em]
+  \qquad \;~f_2~((x_{1,(\cclrd{t}-1)\ast\cclrd{s}_1 + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_1}), ~\ldots~, \\[-0.25em]
+  \hspace{4.0em}                                         ~(x_{n,(\cclrd{t}-1)\ast\cclrd{s}_n + 1}, \ldots, x_{1,\cclrd{t}\ast\cclrd{s}_n})  ~)~)\\[-0.25em]
+  \end{array}}}
+\end{array}
+\end{equation*}
+\vspace{0.5em}
 
-The (\emph{app}) rule is similar in that it needs to split the input variable context. However,
-it needs to split values of multiple variables -- in $x_{i,j}$, the index $i$ stands for an
-index of the variable while $j$ is an index of one of multiple copies of the value. In the
-semantic function, the second
+\noindent
+In $x_{i,j}$, the index $i$ stands for an index of the variable while $j$ is an index of one of
+multiple copies of the value. In the semantic function, the second
 part of the context consists of $n$ variables where the multiplicity of each value is specified
 by the annotation $\cclrd{s}_i$ multiplied by $\cclrd{t}$. The rule needs to evaluate the argument
 $e_2$ $\cclrd{t}$-times and each call requires $\cclrd{s}_i$ copies of the $i^\textnormal{th}$
@@ -2388,7 +2425,7 @@ as a whole. The requirements are attached to individual variables and so our con
 $\coctx{\tau_1, ..., \tau_n}{\langle \cclrd{k_1}, ..., \cclrd{k_n}\rangle}$ corresponds
 to a BLL assumption $!_{k_1} A_1, ..., !_{k_n} A_n$. Using the formulation of bounded logic
 (and omitting the terms), the weakening and contraction rules are written as follows:
-%
+
 \[
 \tyrule{weak}
   {\Gamma \vdash B}
@@ -2403,7 +2440,7 @@ The system captures the same idea as the structural coeffect system presented ab
 Variable access in bounded linear logic is simply an operation that produces a value
 $!_n A$ and so the system further introduces \emph{dereliction} rule which lets us
 treat $!_1 A$ as a value $A$. We further explore difference between \emph{language
-semantics} and \emph{meta-language} in Section~\ref{sec:unified-meta}.
+semantics} and \emph{meta-language} in Section~\ref{sec:further-meta}.
 
 \paragraph{Summary.}
 Comparing the structural coeffect calculus for tracking liveness and for bounded variable reuse
@@ -2411,13 +2448,13 @@ reveals which parts of the systems differ and which parts are shared. In particu
 use the same vector operations ($\times$, $\alift{\cclrd{\textnormal{--}}}$) and also share the
 lambda abstraction rule (\emph{abs}). They differ in the primitive values used to annotate used
 and unused variables (\cclrd{L}, \cclrd{D} and $1$, $0$, respectively) and in the operators used
-for sequential composition and contraction ($\sqcup$, $\sqcap$ and $\ast$, $+$, respectively).
+for sequential composition and contraction ($\cclrd{\sqcup}$, $\cclrd{\sqcap}$ and $\ast$, $+$, respectively).
 The algebraic structure capturing these operators is developed in Chapter~\ref{ch:structural}.
 
 The brief overview of bounded linear logic shows an alternative approach to tracking properties
 related to individual variables -- we could attach annotations to the variables themselves
-rather than attaching a \emph{vector} of annotations to the entire context. The main benefit
-of our approach is that it lets us unify flat and structural systems (Chapter~\ref{ch:unified}).
+rather than attaching a \emph{vector} of annotations to the entire context. One benefit
+of our approach is that it lets us unify flat and structural systems (Chapter~\ref{ch:further-unified}).
 
 % --------------------------------------------------------------------------------------------------
 
@@ -2430,7 +2467,7 @@ a \emph{flat} property, which gives us a system that keeps the same number of pa
 all variables. However, data-flow can also be adapted to a structural system which keeps the number
 of required past values individually for each variable. Consider the
 following example:
-
+%
 \begin{equation*}
 \kvd{let}~\ident{offsetAdd} = \ident{left} + \kvd{prev}~\ident{right}
 \end{equation*}
@@ -2461,7 +2498,7 @@ precise, but still practically useful (simplicity may outweigh precision).
 \tyrule{app}
   { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2 \quad
     \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} + \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
+  { \coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \cons (\cclrd{t} \,\cclrd{+}\, \aclrd{\textbf{s}})} \vdash e_1 \, e_2 : \tau_2}
 \end{equation*}
 \begin{equation*}
 \tyrule{weak}
@@ -2471,7 +2508,7 @@ precise, but still practically useful (simplicity may outweigh precision).
 \begin{equation*}
 \tyrule{contr}
   {\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}
-  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\textnormal{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
+  {\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{\textnormal{max}}(\cclrd{s},\cclrd{t})} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma}
 \end{equation*}
 
 \figcaption{Structural coeffect bounded reuse analysis}
@@ -2489,14 +2526,14 @@ same for all structural coeffect systems (exchange, lambda abstraction).
 
 In data-flow, we annotate both used variables (\emph{var}) and unused variables (\emph{weak}) with
 $0$, meaning that no past values are required. This is the same as in flat data-flow, but different
-from bounded reuse and liveness (where difference between using and not using a variable matters).
-Primitive requirements are introduced by the (\emph{prev}) rule, which increments the annotation of
-all variables in the context.
+from bounded reuse and liveness (where unused variables have a different coeffect). Primitive
+requirements are introduced by the (\emph{prev}) rule, which increments the annotations of
+all variables.
 
 In flat data-flow, we identified sequential composition and pointwise composition as two primitive
 operations that were used in the (flat) application. In the structural system, these are used in
-(\emph{app}) and (\emph{contr}), respectively. Thus application combines coeffect annotations using
-$+$ and contraction using \emph{max}. This contrasts with bounded reuse, which uses $\ast$ and $+$,
+(\emph{app}) and (\emph{contr}). Thus application combines coeffect annotations using $+$ and
+contraction using \emph{max}. This contrasts with bounded reuse, which uses $\ast$ and $+$,
 respectively.
 
 \paragraph{Example.} As an example, consider a function $\lambda x.\kvd{prev}~(y+x)$ applied to an argument
@@ -2553,38 +2590,42 @@ value, followed by $\cclrd{r}$ past values:
 Despite the similarity with the semantics for bounded reuse, the values here \emph{represent}
 different things. Rather than providing multiple copies of a value (out of which each can be
 used just once), the pair provides past values (that can be reused and freely accessed).
-To illustrate the behaviour we consider the semantics of the \kvd{prev} construct and of the
-structural contraction rule:
+To illustrate the behaviour consider first the semantics of the \kvd{prev} expression:
 %
 \begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{prev}}
+\hspace{-1em}
 \begin{array}{l}
-\sem{\coctx{\Gamma}{\alift{(\cclrd{s}_1 + 1), \ldots, (\cclrd{s}_n + 1)}} \vdash \kvd{prev}~e : \tau} = \\[-0.25em]
-  \qquad\lambda ((x_{1,0}, \ldots, x_{1,{\cclrd{s}_1 + 1}}), \ldots, (x_{n,0}, \ldots, x_{n,{\cclrd{s}_n + 1}})) \rightarrow \\[-0.25em]
-\qquad\qquad\sem{\coctx{\Gamma}{\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}} \vdash e : \tau}\\[-0.25em]
-\qquad\qquad\qquad ((x_{1,0}, \ldots, x_{1,\cclrd{s}_1}), \ldots, (x_{n,0}, \ldots, x_{n,\cclrd{s}_n}))
+\emdeff
+  {\coctx{\Gamma}{\alift{\cclrd{s}_1, \ldots, \cclrd{s}_n}} \vdash e : \tau}
+  {\begin{array}{l}\sem{\coctx{\Gamma}{\alift{(\cclrd{s}_1 \hspace{-0.2em}+\hspace{-0.2em} 1), \ldots, (\cclrd{s}_n \hspace{-0.2em}+\hspace{-0.2em} 1)}}\\[-0.25em]
+    \qquad\vdash \kvd{prev}~e : \tau}\end{array}\hspace{-0.5em}~}
+  {f}
+  {\hspace{-0.5em}\begin{array}{l}\lambda((x_{1,0}, \ldots, x_{1,{\cclrd{s}_1 + 1}}), \ldots, (x_{n,0}, \ldots, x_{n,{\cclrd{s}_n + 1}})).\\[-0.25em]
+  \quad f~((x_{1,0}, \ldots, x_{1,\cclrd{s}_1}), \ldots, (x_{n,0}, \ldots, x_{n,\cclrd{s}_n}))\end{array}\hspace{-0.5em}~}
 \end{array}
 \end{equation*}
 %
-\begin{equation*}
-\hspace{-0.5em}
-\tag{\emph{contr}}
-\begin{array}{l}
-\sem{\coctx{\Gamma_1,x\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\textnormal{max}(\cclrd{s},\cclrd{t})} \cons \aclrd{\textbf{q}}} \vdash \subst{\subst{e}{z}{x}}{y}{x} : \sigma} =\\[-0.25em]
-\qquad  \lambda(\mathbf{v_1}, (x_0, x_1, \ldots, x_{ \textnormal{max}(\cclrd{s},\cclrd{t}) }), \mathbf{v_2}) \rightarrow \\[-0.25em]
-\qquad\qquad\sem{\coctx{\Gamma_1,y\!:\!\tau,z\!:\!\tau,\Gamma_2}{\aclrd{\textbf{r}} \cons \alift{\cclrd{s},\cclrd{t}} \cons \aclrd{\textbf{q}}} \vdash e : \sigma}\\[-0.25em]
-\qquad\qquad\qquad (\mathbf{v_1}, (x_0, \ldots, x_{\cclrd{s}}), (x_0, \ldots, x_{\cclrd{t}} ), \mathbf{v_2})
-\end{array}
-\end{equation*}
-%
-In (\emph{prev}), the semantic function is called with an argument that stores values of $n$
+Here, the semantic function is called with an argument that stores values of $n$
 variables, such that a variable $x_i$ has values ranging from $x_{i,0}$ to $x_{i,\cclrd{s}_i + 1}$.
 Thus, there is one current value, followed by $\cclrd{s_i} + 1$ past values. The expression $e$
-nested under $\kvd{prev}$ requires only $\cclrd{s_i}$ past values and so the semantics simply
-drops the last value.
-
-In the (\emph{contr}) rule, the semantic function receives $\emph{max}(\cclrd{s}, \cclrd{t})$ values
+nested under $\kvd{prev}$ requires only $\cclrd{s_i}$ past values and so the semantics
+drops the last value. The following shows the semantics of contraction:
+%
+\begin{equation*}
+\hspace{-1em}
+\begin{array}{l}
+\mdeff
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,y\!:\!\tau_1,z\!:\!\tau_1,\Gamma_2\\[-0.25em]\qquad}
+      {\aclrd{\textbf{r}} \atimes \alift{\cclrd{s},\cclrd{t}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}\end{array}}
+  {\begin{array}{l}\sem{\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}}
+          \atimes \alift{\cclrd{\textnormal{max}}(\cclrd{s}, \cclrd{t})} \atimes \aclrd{\textbf{q}}} \\[-0.25em] \qquad\vdash \subst{e}{z,y}{x} : \tau}\end{array}}
+  {\begin{array}{l}~\\[-0.25em]\hspace{-0.5em}f\end{array}}
+  {\hspace{-0.5em}\begin{array}{l}\lambda(\mathbf{v_1}, (x_0, x_1, \ldots, x_{ \textnormal{max}(\cclrd{s},\cclrd{t}) }), \mathbf{v_2}) .\\[-0.25em]
+  \quad f~((\mathbf{v_1}, (x_0, \ldots, x_{\cclrd{s}}), (x_0, \ldots, x_{\cclrd{t}} ), \mathbf{v_2}))\end{array}\hspace{-0.5em}~}
+\end{array}
+\end{equation*}
+%
+The semantic function receives $\emph{max}(\cclrd{s}, \cclrd{t})$ values
 of a specific variable $x$. It needs to produce values for two separate variables, $y$ and $z$ that
 require $\cclrd{s}$ and $\cclrd{t}$ past values. Both of these numbers are certainly smaller than
 (or equal to) the number of values available. Thus we simply take the first values. Unlike in the
@@ -2612,8 +2653,8 @@ values are annotated with more detailed information about their source.
 
 Static typed systems based on tainting have been use to prevent cross-site scripting attacks
 \cite{app-tainting-xss} and SQL injection attacks \cite{app-tainting-sql,app-tainting-wasp}.
-In the latter case, we want to check that SQL commands cannot be directly constructed from,
-potentially dangerous, inputs provided by the user. Consider the type checking of the following
+In the latter case, we want to check that SQL commands cannot be directly constructed from
+unchecked inputs provided by the user. Consider the type checking of the following
 expression in a context containing variables \ident{id} and \ident{msg}:
 %
 \begin{equation*}
@@ -2646,8 +2687,8 @@ Swamy et al. \cite{monad-secure-flow,monads-lightweight-ml} show that such prope
 using a monadic library.
 
 Systems for secure information flow typically define a lattice of security classes $(\mathcal{S}, \leq)$
-where $\mathcal{S}$ is a finite set of classes and an ordering. For example a set $\{\ident{L}, \ident{H}\}$
-represents low and high secrecy, respectively with $\ident{L} \leq \ident{H}$ meaning that low security
+where $\mathcal{S}$ is a finite set of classes and an ordering. For example a set $\{\cclrd{\ident{L}}, \ident{H}\}$
+represents low and high secrecy, respectively with $\cclrd{\ident{L}} \leq \ident{H}$ meaning that low security
 values can be treated as high security (but not the other way round).
 
 \paragraph{Implicit flows.}
@@ -2689,6 +2730,7 @@ as in arguments of \ident{query} -- does introduce a taint on all the variables 
 the expression. This is captured using the standard application rule (\emph{app}):
 %
 \begin{equation*}
+\hspace{-2em}
 \tyrule{app}
   { \coctx{\Gamma}{\aclrd{r}} \vdash \ident{query} : \ident{string} \xrightarrow{\cclrd{\ident{T}}} \ident{Table} \qquad
     \coctx{\ident{id}:\ident{string}}{ \alift{\cclrd{\ident{U}}}} \vdash \ident{id} : \ident{string} }
@@ -2737,7 +2779,7 @@ lexically scoped \emph{memory regions} to provide an efficient and controlled me
 In the work of Tofte and Talpin, the context is \emph{passive}. They extend a simple functional language
 with the \kvd{letrgn} construct that defines a new memory region, evaluates an expression (possibly)
 using memory in that region and then deallocates the memory of the region:
-%
+
 \begin{equation*}
 \begin{array}{l}
 \kvd{let}~\ident{calculate} = \lambda \ident{input} \rightarrow\\[-0.25em]
@@ -2804,6 +2846,8 @@ However, capturing active contexts is an interesting future work.
 
 % --------------------------------------------------------------------------------------------------
 
+~
+
 \paragraph{Software updating.}
 Another example of a system that uses contextual information actively is dynamic software updating
 (DSU) \cite{app-dsu-programs,app-dsu}. The DSU systems have the ability to update programs at
@@ -2826,6 +2870,17 @@ example, calling a function that may update certain types makes it impossible to
 concretely following the function call. This means that DSU uses the context \emph{actively}
 and not just \emph{passively}.
 
+
+%===================================================================================================
+%
+%     #####
+%    #     # #    # #    # #    #   ##   #####  #   #
+%    #       #    # ##  ## ##  ##  #  #  #    #  # #
+%     #####  #    # # ## # # ## # #    # #    #   #
+%          # #    # #    # #    # ###### #####    #
+%    #     # #    # #    # #    # #    # #   #    #
+%     #####   ####  #    # #    # #    # #    #   #
+%
 %===================================================================================================
 
 \section{Summary}
@@ -2850,4 +2905,4 @@ properties. Both of the variants are useful and important -- for example, implic
 only be expressed as \emph{flat} system, but liveness analysis is only useful as \emph{structural}.
 For this reason, we explore both of these variants in this thesis (Chapter~\ref{ch:flat} and
 Chapter~\ref{ch:structural}, respectively). We can, however, unify the two variants into a single
-system discussed in Chapter~\ref{ch:unified}.
+system discussed in Section~\ref{ch:further-unified}.

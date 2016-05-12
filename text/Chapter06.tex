@@ -167,7 +167,7 @@ of coeffects is provided by the definition of \emph{structural coeffect algebra}
 The \emph{structural coeffect scalar} structure is similar to \emph{flat coeffect algebra} with the
 exception that it drops the $\czip$ operation. It only provides a monoid $(\C, \cseq, \cunit)$
 modelling sequential composition of computations and a monoid $(\C, \cpar, \czero)$ representing
-pointwise composition, as well as a relation $\cleq$ that defines sub-coeffecting.
+pointwise composition, as well as a relation $\cleq$ that defines subcoeffecting.
 
 \begin{definition}
 \label{def:structural-scalar}
@@ -1681,7 +1681,7 @@ required coeffect annotations, this may copy (duplicate) the value, or it may pr
 
 Finally, \ident{counit} extracts a value which is always present as guaranteed by the type
 $\ctyp{\langle \ident{L} \rangle}{\alpha} \rightarrow \alpha$. The lifting operation models
-sub-coeffecting which can turn a context with a value into a dead context (second case); otherwise
+subcoeffecting which can turn a context with a value into a dead context (second case); otherwise
 it behaves as identity.
 
 \paragraph{Properties.}
@@ -2292,7 +2292,7 @@ Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value,
 % ==================================================================================================
 
 
-\section{Conclusions}
+\section{Summary}
 
 This chapter completes the key development of this thesis -- the presentation of the coeffect
 framework, consisting of two calculi capturing properties of context-aware computations introduced

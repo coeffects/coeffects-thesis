@@ -65,7 +65,7 @@ implicit weakening and the fact that $\cunit$ is a unit of $\cseq$:
  {\coctx{\Gamma_1, \Gamma, \Gamma_2}{\cunit\,\cseq\,\cclrd{S}} \vdash \subst{y}{x}{e_s} : \tau } 
 \]
 \item If $y\neq x$ then $\subst{y}{x}{e_s} = y$. Using the fact that $\cunit$ is the bottom element
-and sub-coeffecting:
+and subcoeffecting:
 \[
 \inference
   {\coctx{\Gamma_1, y:\tau, \Gamma_2}{\cunit} \vdash y : \tau }
@@ -432,8 +432,8 @@ Using the distributivity law of structural coeffect algebra, we obtain the requi
 $(\cclrd{s}\,\cpar\,\cclrd{t})\;\cseq\;\cclrd{T_i}$.
 
 \paragraph{(sub)} As in the (\emph{contr}) case, in the (\emph{sub}) case we distinguish two situations.
-If the sub-coeffecting is applied to variable that is \emph{not} being substituted for, then the case is
-easy (sub-coeffecting does not interact with substitution), so we only consider the case when $x$ is one
+If the subcoeffecting is applied to variable that is \emph{not} being substituted for, then the case is
+easy (subcoeffecting does not interact with substitution), so we only consider the case when $x$ is one
 of the variables being substituted for:
 \[
 \inference
@@ -513,7 +513,7 @@ structural coeffect algebra:
    \vdash e~[\,\ldots\,] : \tau
    \end{array} }}  }
 \]
-The derivation first applies the standard (\emph{weak}) rule and then uses sub-coeffecting
+The derivation first applies the standard (\emph{weak}) rule and then uses subcoeffecting
 rule and the property $\czero\;\cleq\;(\czero\,\cseq\,\cclrd{r})$ to obtain conclusion of the required form.
 
 \paragraph{(exch)} In the (\emph{exch}) case, the property follows directly from the 

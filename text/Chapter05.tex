@@ -535,9 +535,9 @@ the \emph{least upper-bound}\footnote{The $\czip$ and $\cpar$ operations are the
 bounds in the liveness and data-flow examples, but not for implicit parameters. However, they remain useful
 as an informal analogy.}.
 
-\paragraph{Semantics of sub-coeffecting.}
-Although we do not include sub-coeffecting in the core flat coeffect calculus, it is an interesting
-extension to consider. Semantically, sub-coeffecting drops some of the available contextual
+\paragraph{Semantics of subcoeffecting.}
+Although we do not include subcoeffecting in the core flat coeffect calculus, it is an interesting
+extension to consider. Semantically, subcoeffecting drops some of the available contextual
 capabilities (drops some of the implicit parameters or some of the past values). This can be
 modelled by adding a (family of) lifting operation(s):
 %
@@ -550,7 +550,7 @@ The axioms of flat coeffect algebra do not, in general, require that
 $\cclrd{r} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$ and $\cclrd{s} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$,
 but the property holds for the three sample coeffect systems we consier. For systems with
 the above property, the \ident{split} operation can be expressed in terms of lifting
-(sub-coeffecting) as follows:
+(subcoeffecting) as follows:
 %
 \begin{equation*}
 \begin{array}{rcl}
@@ -570,7 +570,7 @@ to throw away additional parts of the context and then transform the values in t
 context.
 
 This alternative definition is valid for our examples, but we do not use it for three reasons. First,
-it requires making sub-coeffecting a part of the core definition. Second, this would be the only
+it requires making subcoeffecting a part of the core definition. Second, this would be the only
 place where our semantics uses a variable \emph{twice} (in this case $c$). Note therefore that
 our use of an explicit \ident{split} means that the structure required by our semantics does not
 need to provide variable duplication and our model could be embedded in linear or affine category.
@@ -621,7 +621,7 @@ Without the indexing, the \ident{merge} operations implements \emph{zip} on Mayb
 returning a value only when both values are present. The behaviour of the \ident{split}
 operation is partly determined by the indices. When the input is \emph{dead}, both values have
 to be dead (this is also the only solution of $\cclrd{\ident{D}} =\cclrd{r}\sqcap\cclrd{s}$), but when
-the input is \emph{live}, the operation can perform implicit sub-coeffecting and drop one of
+the input is \emph{live}, the operation can perform implicit subcoeffecting and drop one of
 the values.
 
 \begin{example}[Indexed product]
@@ -2388,7 +2388,7 @@ functions has been used in the semantics of effectful computations by Tate~\cite
 %
 % ==================================================================================================
 
-\section{Conclusions}
+\section{Summary}
 
 In the previous chapter, we defined a \emph{type system} for flat coeffect calculi that uniformly
 captures the shared structure of context-aware computations. In this chapter, we completed

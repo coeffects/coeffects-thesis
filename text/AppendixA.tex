@@ -93,12 +93,12 @@ Given a condition that requires $\cclrd{m}$ past and two (alternative) bodies th
 $\cclrd{n}$ past values, the composed expression requires at most the maximum of the two, \ie~the
 same context is passed to both the condition and the body using point-wise composition. As we will
 see, the fact that both branches require the same number of past values means that we need to use
-the sub-coeffecting rule.
+the subcoeffecting rule.
 
 Assuming $\Gamma_0 = \ident{tick}:\ident{int}, \ident{counter}:\ident{int}$, the 
 Figure~\ref{fig:appendixa-dfl} shows the typing derivation for the example. In the first part,
 we derive the types for the sub-expressions of the application and the conditional. Note that 
-to obtain compatible function types, we use sub-coeffecting \emph{before} abstraction in the
+to obtain compatible function types, we use subcoeffecting \emph{before} abstraction in the
 typing of $(\lambda x.x)$ -- the type $\ident{int} \xrightarrow{\cclrd{1}} \ident{int}$ is  a
 valid overapproximation. Finally, the typing of the application yields the requirement of two 
 past values, calculated as $\textnormal{max}(\cclrd{1}, \cclrd{1}+\cclrd{1})$.
