@@ -1,4 +1,4 @@
-\chapter{Related and future work}
+\chapter{Further work}
 \label{ch:further}
 
 %===================================================================================================
@@ -1288,6 +1288,106 @@ the operations of an indexed comonad.
 \figcaption{Embedding flat coeffect calculus in coeffect meta-language }
 \label{fig:conclusions-embed}
 \end{figure}
+
+
+% =================================================================================================
+%
+% 	 #####                 #     #                                                #
+% 	 #                     #     #                                                #
+% 	 #      #   #  # ##   ####   # ##    ###   # ##          #   #   ###   # ##   #   #
+% 	 ####   #   #  ##  #   #     ##  #  #   #  ##  #         #   #  #   #  ##  #  #  #
+% 	 #      #   #  #       #     #   #  #####  #             # # #  #   #  #      ###
+% 	 #      #  ##  #       #  #  #   #  #      #             # # #  #   #  #      #  #
+% 	 #       ## #  #        ##   #   #   ###   #              # #    ###   #      #   #
+%
+% =================================================================================================
+
+\section{Further work}
+\label{sec:conc-further}
+
+Most of the further work has been discussed throughout the thesis, so this section
+serves mainly as an overview. We follow the same structure as when discussing pathways to
+coeffects (Chapter~\ref{ch:pathways}). We consider further work related to syntactic approach
+to coeffect systems, categorical semantics of coeffects, and connections with substructural type
+systems and bunched logics.
+
+% -------------------------------------------------------------------------------------------------
+
+\paragraph{Syntactic coeffect systems.}
+The coeffect calculi presented in this thesis are based on a simple $\lambda$-calculus, comprising
+variables, lambda abstraction, application and let-binding. This lets us focus on fundamental
+properties of coeffect systems (and explain how coeffect system differ from better-known effect
+systems), but it is hardly sufficient for a realistic programming language.
+
+Further work is to extend the coeffect systems presented here to a full programming language. A
+useful reference is the work of Nielson and Nielson~\cite{effects-nielson} who consider a
+similar development for effect systems, adding conditionals, recursion and polymorphism.
+
+Coeffect annotations in context-aware programming languages can contain significant amount
+of information. Thus, the programming language also needs a form of type inference that can propagate
+such information. This has been done for effect systems \cite{effects-polymorphic}. For
+\emph{flat coeffects}, type inference is complicated by the non-determinism in the typing rule
+for lambda abstraction, but the problem is simpler for \emph{structural coeffects}. In addition
+to the \emph{algebra providers} (discussed in Section~\ref{sec:unified-impl-types}), it would also
+be worth developing a bidirectional type system \cite{types-bidirectional} for coeffects, where
+\emph{some} annotations are required, but most types and coeffects are reconstructed automatically.
+
+% -------------------------------------------------------------------------------------------------
+
+\paragraph{Language semantics.}
+
+As discussed in Section~\ref{sec:path-sem}, comonads can be used to define the semantics of a
+programming language in two ways. The first, ``language semantics'', approach is to use a
+single comonad to describe the semantics of a specific context-aware property. The second,
+``meta-language'' approach is to extend the language with explicit constructs representing the
+operations of the underlying comonad.
+
+The categorical semantics in this thesis used the ``language semantics'' style, but mainly as a
+guide for the development of the type systems. Further work includes more precise treatment of
+the categorical structure of indexed comonads. This has partly been done for flat coeffects by
+Orchard~\cite{comonads-dom-thesis}. A joint work with Orchard~\cite{coeffects-icfp14} shows the
+first steps for structural systems. As discussed in Section~\ref{sec:unified-semantics}, further
+work is to develop a similar categorical model for the unified coeffect calculus, possibly using
+the categorical notion of containers \cite{types-containers}.
+
+We briefly outlined a calculus based on the ``meta-language'' approach in Section~\ref{sec:unified-meta}.
+Developing this technique further could unify coeffect systems with the work on Contextual Modal
+Type-Theory (CMTT) \cite{logic-cmtt} and allow other interesting applications of coeffects such
+as meta-programming \cite{logic-cmtt} and distributed computing with explicit modalities \cite{app-distributed-ml5}.
+
+% -------------------------------------------------------------------------------------------------
+
+\paragraph{Substructural and bunched logics.}
+
+In the \emph{flat} and \emph{structural} coeffect calculi, we attach annotations to the \emph{entire
+context} and to \emph{individual variables}, respectively. We later unified the two systems
+in Section~\ref{sec:unified-unified}.
+
+An intriguing question is whether coeffects can generalize \emph{bunched typing} \cite{substruct-bunched},
+which uses a tree-like structure of variable contexts (also discussed in Section~\ref{sec:path-logic}).
+The definition of the \emph{unified coeffect calculus} is likely not expressive enough -- bunched
+typing requires tree-like variable context, while we use a vector. Furthermore, bunched typing
+annotates internal nodes of the tree (sub-contexts are combined using ``;'' or using ``,'') rather
+than just variables. Finding a simple coeffect system that is capable of capturing bunched typing
+is thus an interesting further work. Indeed, this could lead to numerous uses of coeffects as
+bunched typing is the basis for widely-used separation logic \cite{substruct-separation-logic}.
+
+% -------------------------------------------------------------------------------------------------
+
+\paragraph{Applications.}
+The last direction for further development is developing practical programming languages or
+libraries based on the theory presented in this thesis. We believe that the most useful approach
+is to extend programming languages with a reusable coeffect system and allow library developers
+define their own coeffect algebras. This option has been discussed in Section~\ref{sec:unified-impl}.
+For languages like Haskell, this can be done through a light-weight syntactic sugar akin to the
+``do'' notation.
+
+Another option is to use coeffects just as the underlying theory of a single-purpose programming
+language feature. When discussing why context-aware programming matters (Section~\ref{sec:intro-whymatters}),
+we covered a number of concrete problems that developers are facing today. Each of those would
+presents an important further work. The most important practical challenges are cross-compilation
+(often solved using complex $\prepk{\#if}$ pre-processor rules) and tracking of provenance
+and security properties.
 
 
 % ==================================================================================================

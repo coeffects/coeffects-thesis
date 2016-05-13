@@ -1,4 +1,4 @@
-\chapter{Conclusions and further work}
+\chapter{Conclusions}
 \label{ch:conclusions}
 
 Some of the most fundamental academic work is not the one solving hard research problems, but the
@@ -16,34 +16,34 @@ This thesis aims to change our understanding of \emph{context} so that the above
 viewed uniformly through a single programming language abstraction, which we call \emph{coeffects},
 rather than as disjoint cases.
 
-In this chapter, we give a brief summary of the technical development completed in this thesis
+In this chapter, we give a brief overview of the technical contributions of this thesis
 (Section~\ref{sec:conc-summary}). The thesis looks at two kinds of context-dependence, identifies
-common patterns and captures those using three \emph{coeffect calculi}. Next, we give an overview
-of further work (Section~\ref{sec:conc-further}), often referring to longer discussion in earlier
-chapters. Finally, Section~\ref{sec:conc-conclusions} concludes the thesis.
+common patterns and captures those using two \emph{coeffect calculi}. It gives formal semantics
+using categorical foundations and uses it as a basis for prototype implementation. Finally,
+Section~\ref{sec:conc-conclusions} concludes the thesis.
 
 
 % ==================================================================================================
 %
-%       ###
-%      #   #
-%      #      #   #  ## #   ## #    ###   # ##   #   #
-%       ###   #   #  # # #  # # #      #  ##  #  #   #
-%          #  #   #  # # #  # # #   ####  #      #  ##
-%      #   #  #  ##  # # #  # # #  #   #  #       ## #
-%       ###    ## #  #   #  #   #   ####  #          #
-%                                                #   #
-%                                                 ###
+%    #######
+%    #     # #    # ###### #####  #    # # ###### #    #
+%    #     # #    # #      #    # #    # # #      #    #
+%    #     # #    # #####  #    # #    # # #####  #    #
+%    #     # #    # #      #####  #    # # #      # ## #
+%    #     #  #  #  #      #   #   #  #  # #      ##  ##
+%    #######   ##   ###### #    #   ##   # ###### #    #
+%
 % =================================================================================================
 
-\section{Summary}
+\section{Overview of contributions}
 \label{sec:conc-summary}
 
-Modern computer programs run in rich and diverse environments or \emph{contexts}. The richness means
-that environments provides additional resources and capabilities that may be accessed by the program.
-The diversity means that programs often need to run in multiple different environments, such as mobile
-phones, servers, web browsers or even on the GPU. In this thesis, we present the foundations for
-building programming languages that simplify writing software for such rich and diverse environments.
+As observed in Chapter~\ref{ch:intro}, modern computer programs run in rich and diverse environments
+or \emph{contexts}. The richness means that environments provides additional resources and
+capabilities that may be accessed by the program. The diversity means that programs often need to
+run in multiple different environments, such as mobile phones, servers, web browsers or even on the
+GPU. In this thesis, we present the foundations for building programming languages that simplify
+writing software for such rich and diverse environments.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -65,6 +65,7 @@ developments leading to coeffects, including the work on effect systems, comonad
 linear logics.
 
 % --------------------------------------------------------------------------------------------------
+~
 
 \paragraph{Flat coeffect calculus.}
 
@@ -79,15 +80,12 @@ algebra} that captures the algebraic properties of contextual information. Concr
 instances of flat coeffects include Haskell's implicit parameters, whole-context liveness and
 whole-context dataflow.
 
-Our focus is on the syntactic properties of the calculus -- we give a type system
-(Section~\ref{sec:flat-calculus}) and discuss equational theory of the calculus (Section~\ref{sec:flat-syntax}).
-In the flat coeffect calculus, $\beta$-reduction and $\eta$-expansion do not generally preserve
-the type of an expression, but we identify two conditions when this is the case -- this gives us
-a basis for operational semantics of our calculi for liveness and implicit parameters.
-
-The design of the type system is further validated by categorical semantics
-(Section~\ref{sec:flat-semantics}) which models flat coeffect calculus in terms of
-\emph{flat indexed comonad} -- a structure based on a categorical dual of monads.
+We define a type system for the calculus (Section~\ref{sec:flat-calculus}),
+discuss how to resolve the ambiguity inherent in context-aware programming for sample
+languages we consider (Section~\ref{sec:flat-unique}) and study equational properties of the
+calculus (Section~\ref{sec:flat-syntax}). In the flat coeffect calculus, $\beta$-reduction and
+$\eta$-expansion do not generally preserve the type of an expression, but we identify two
+conditions when this is the case.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -112,127 +110,67 @@ including explicit structural rules (weakening, exchange and contraction).
 
 % --------------------------------------------------------------------------------------------------
 
-\paragraph{Unified calculus.}
+\paragraph{Semantics and safety.}
 
-The Chapters~\ref{ch:flat} and \ref{ch:structural} present the main novel technical contributions of this
-thesis. In Chapter~\ref{ch:further}, we discuss the similarities and differences between the two.
-Although the calculi are worth considering separately (as they have different equational properties),
-they can be presented in a uniform way. In Section~\ref{sec:further-unified}, we present the
-\emph{unified coeffect calculus}, which can be instantiate to track both per-variable and
-whole-context properties. The key trick is to parameterize the calculus by the \emph{shape} of
-a context, which can be a vector (corresponding to the vector of free variables) or a singleton
-container (attaching one annotation to the whole context).
+Both of the coeffect calculi are parameterized and can be instantiated to obtain a language with
+a type system that tracks concrete notion of context dependence. The coeffect calculus can be seen
+as a framework for building concrete domain-specific context-aware programming languages. In
+addition to the type system, the framework also provides a way for defining the semantics of
+concrete domain-specific context-aware languages, guides their implementation and simplifies
+safety proofs.
 
-% =================================================================================================
-%
-% 	 #####                 #     #                                                #
-% 	 #                     #     #                                                #
-% 	 #      #   #  # ##   ####   # ##    ###   # ##          #   #   ###   # ##   #   #
-% 	 ####   #   #  ##  #   #     ##  #  #   #  ##  #         #   #  #   #  ##  #  #  #
-% 	 #      #   #  #       #     #   #  #####  #             # # #  #   #  #      ###
-% 	 #      #  ##  #       #  #  #   #  #      #             # # #  #   #  #      #  #
-% 	 #       ## #  #        ##   #   #   ###   #              # #    ###   #      #   #
-%
-% =================================================================================================
+This is done using a \emph{comonadically-inspired} semantics. We generalize the category-theoretical
+dual of monad to \emph{indexed comonad} and use it to define the semantics of context-aware
+programs for both the flat coeffect calculus (Chapter~\ref{ch:semantics}) and the structural coeffect
+calculus (Section~\ref{sec:struct-semantics}). Due to the ambiguity inherent in contextual properties,
+we define the semantics over a typing derivation, but we also give a domain-specific algorithm for
+choosing a unique typing derivation for each of our sample languages (Section~\ref{sec:flat-unique}
+and Section~\ref{sec:struct-unique}).
 
-\section{Further work}
-\label{sec:conc-further}
+We use comonads in a syntactic way, following the example of Haskell's use of monads and treat
+it as a \emph{translation} from source context-aware programming language to a simple target
+functional language. The target language includes uninterpreted comonadically-inspired primitives
+whose concrete reduction rules need to be provided for each concrete context-aware deomain-specific
+language. We give concrete definitions and prove type safety for three sample context-aware
+languages (Section~\ref{sec:semantics-proofs} and Section~\ref{sec:struct-transl}). Together with
+well-typedness of our translation, these guarantee that ``well-typed context-aware programs do
+not go wrong''.
 
-Most of the further work has been discussed throughout the thesis, so this section
-serves mainly as an overview. We follow the same structure as when discussing pathways to
-coeffects (Chapter~\ref{ch:pathways}). We consider further work related to syntactic approach
-to coeffect systems, categorical semantics of coeffects, and connections with substructural type
-systems and bunched logics.
+% --------------------------------------------------------------------------------------------------
 
-% -------------------------------------------------------------------------------------------------
+\paragraph{Interactive essay.}
 
-\paragraph{Syntactic coeffect systems.}
-The coeffect calculi presented in this thesis are based on a simple $\lambda$-calculus, comprising
-variables, lambda abstraction, application and let-binding. This lets us focus on fundamental
-properties of coeffect systems (and explain how coeffect system differ from better-known effect
-systems), but it is hardly sufficient for a realistic programming language.
+A part of the thesis is an interactive web-based essay (\url{http://tomasp.net/coeffects}),
+which implements three simple context-aware languages. In addition to more traditional prototype
+language implementations, the essay provides a number of novel features. As usual, it lets users
+write and evaluate sample programs, but it also lets them explore the details of the coeffect
+theory -- this includes an interactive way of exploring typing derivations and program semantics.
+The essay also provides a number of case studies that highlight interesting aspects of the theory.
 
-Further work is to extend the coeffect systems presented here to a full programming language. A
-useful reference is the work of Nielson and Nielson~\cite{effects-nielson} who consider a
-similar development for effect systems, adding conditionals, recursion and polymorphism.
+The implementation (Chapter~\ref{ch:impl}) serves two purposes. First, it links together all parts
+of the theory developed in this thesis (Section~\ref{sec:impl-case}). It uses the two coeffect calculi
+to build a language framework that is then instantiated to implement three concrete context-aware
+languages. The  framework provides the type system and translation (based on the
+comonadically-inspired semantics) that is used for program execution. This shows the practical
+benefits of using the theory of coeffects as a basis of real-world programming languages.
 
-Coeffect annotations in context-aware programming languages can contain significant amount
-of information. Thus, the programming language also needs a form of type inference that can propagate
-such information. This has been done for effect systems \cite{effects-polymorphic}. For
-\emph{flat coeffects}, type inference is complicated by the non-determinism in the typing rule
-for lambda abstraction, but the problem is simpler for \emph{structural coeffects}. In addition
-to the \emph{algebra providers} (discussed in Section~\ref{sec:unified-impl-types}), it would also
-be worth developing a bidirectional type system \cite{types-bidirectional} for coeffects, where
-\emph{some} annotations are required, but most types and coeffects are reconstructed automatically.
-
-% -------------------------------------------------------------------------------------------------
-
-\paragraph{Language semantics.}
-
-As discussed in Section~\ref{sec:path-sem}, comonads can be used to define the semantics of a
-programming language in two ways. The first, ``language semantics'', approach is to use a
-single comonad to describe the semantics of a specific context-aware property. The second,
-``meta-language'' approach is to extend the language with explicit constructs representing the
-operations of the underlying comonad.
-
-The categorical semantics in this thesis used the ``language semantics'' style, but mainly as a
-guide for the development of the type systems. Further work includes more precise treatment of
-the categorical structure of indexed comonads. This has partly been done for flat coeffects by
-Orchard~\cite{comonads-dom-thesis}. A joint work with Orchard~\cite{coeffects-icfp14} shows the
-first steps for structural systems. As discussed in Section~\ref{sec:unified-semantics}, further
-work is to develop a similar categorical model for the unified coeffect calculus, possibly using
-the categorical notion of containers \cite{types-containers}.
-
-We briefly outlined a calculus based on the ``meta-language'' approach in Section~\ref{sec:unified-meta}.
-Developing this technique further could unify coeffect systems with the work on Contextual Modal
-Type-Theory (CMTT) \cite{logic-cmtt} and allow other interesting applications of coeffects such
-as meta-programming \cite{logic-cmtt} and distributed computing with explicit modalities \cite{app-distributed-ml5}.
-
-% -------------------------------------------------------------------------------------------------
-
-\paragraph{Substructural and bunched logics.}
-
-In the \emph{flat} and \emph{structural} coeffect calculi, we attach annotations to the \emph{entire
-context} and to \emph{individual variables}, respectively. We later unified the two systems
-in Section~\ref{sec:unified-unified}.
-
-An intriguing question is whether coeffects can generalize \emph{bunched typing} \cite{substruct-bunched},
-which uses a tree-like structure of variable contexts (also discussed in Section~\ref{sec:path-logic}).
-The definition of the \emph{unified coeffect calculus} is likely not expressive enough -- bunched
-typing requires tree-like variable context, while we use a vector. Furthermore, bunched typing
-annotates internal nodes of the tree (sub-contexts are combined using ``;'' or using ``,'') rather
-than just variables. Finding a simple coeffect system that is capable of capturing bunched typing
-is thus an interesting further work. Indeed, this could lead to numerous uses of coeffects as
-bunched typing is the basis for widely-used separation logic \cite{substruct-separation-logic}.
-
-% -------------------------------------------------------------------------------------------------
-
-\paragraph{Applications.}
-The last direction for further development is developing practical programming languages or
-libraries based on the theory presented in this thesis. We believe that the most useful approach
-is to extend programming languages with a reusable coeffect system and allow library developers
-define their own coeffect algebras. This option has been discussed in Section~\ref{sec:unified-impl}.
-For languages like Haskell, this can be done through a light-weight syntactic sugar akin to the
-``do'' notation.
-
-Another option is to use coeffects just as the underlying theory of a single-purpose programming
-language feature. When discussing why context-aware programming matters (Section~\ref{sec:intro-whymatters}),
-we covered a number of concrete problems that developers are facing today. Each of those would
-presents an important further work. The most important practical challenges are cross-compilation
-(often solved using complex $\prepk{\#if}$ pre-processor rules) and tracking of provenance
-and security properties.
-
-
+Second, the implementation uses novel kind of medium (Section~\ref{sec:impl-essay}) to make our work
+\emph{accessible} and \emph{explorable}. Building a production-ready programming language is outside
+the scope of the  thesis, so instead, our goal is to explain the theory and inspire authors of
+real-world programming languages to include support for context-aware programming, ideally using
+coeffects as a sound foundation. For this reason, we make the implementation accessible over web
+without requiring installation of specialized software and we make it explorable to encourage
+active reading.
 
 % =================================================================================================
 %
-% 	  ###                         ##                    #
-% 	 #   #                         #
-% 	 #       ###   # ##    ###     #    #   #   ###    ##     ###   # ##    ###
-% 	 #      #   #  ##  #  #   #    #    #   #  #        #    #   #  ##  #  #
-% 	 #      #   #  #   #  #        #    #   #   ###     #    #   #  #   #   ###
-% 	 #   #  #   #  #   #  #   #    #    #  ##      #    #    #   #  #   #      #
-% 	  ###    ###   #   #   ###    ###    ## #  ####    ###    ###   #   #  ####
+%     #####
+%    #     # #    # #    # #    #   ##   #####  #   #
+%    #       #    # ##  ## ##  ##  #  #  #    #  # #
+%     #####  #    # # ## # # ## # #    # #    #   #
+%          # #    # #    # #    # ###### #####    #
+%    #     # #    # #    # #    # #    # #   #    #
+%     #####   ####  #    # #    # #    # #    #   #
 %
 % =================================================================================================
 
