@@ -6,7 +6,7 @@
 The \emph{flat coeffect calculus} introduced in the previous chapter uniformly captures a number
 of context-aware systems outlined in Chapter~\ref{ch:applications}. The coeffect calculus
 can be seen as a \emph{language framework} that simplifies the construction of concrete
-\emph{domain-specific} coeffect lnguages. In the previous chapter, we discussed how it provides a
+\emph{domain-specific} coeffect languages. In the previous chapter, we discussed how it provides a
 type system that tracks the required context. In this chapter, we show that the language framework
 also provides a way for defining the semantics of concrete domain-specific coeffect languages,
 guides their implementation and simplifies safety proofs.
@@ -66,7 +66,7 @@ other concrete context-aware languages.
 \label{sec:semantics-intro}
 
 This chapter links together a number of different technical developments presented in this thesis.
-We take the flat coeffect calculus introduced in Chatper~\ref{ch:flat}, define its \emph{abstract
+We take the flat coeffect calculus introduced in Chapter~\ref{ch:flat}, define its \emph{abstract
 comonadic semantics} and use it to define a translation that gives a \emph{concrete operational
 semantics} to a number of concrete context-aware languages. The type system is used to guarantee
 that the resulting programs are correct. Finally, the development in this chapter is closely
@@ -200,7 +200,7 @@ For a well-defined semantics, we need to ensure that a well-typed term is assign
 meaning. This can be achieved in a number of ways. First, we can prove the \emph{coherence}
 \cite{semantics-bltres} and show the morhphisms assigned to multiple typing derivations are equivalent.
 Second, the typing judgement can have a unique typing derivation. We follow the latter approach,
-using the uniqye typing derivation specified in Section~\ref{sec:flat-unique}.
+using the unique typing derivation specified in Section~\ref{sec:flat-unique}.
 
 As a best known example, Moggi \cite{monad-notions} showed that the semantics of various effectful
 computations can be captured uniformly using (\emph{strong}) \emph{monads}. In that
@@ -217,7 +217,7 @@ Following a similar approach to Moggi, Uustalu and Vene \cite{comonads-notions} 
 computations~\cite{comonads-notions}. For example, dataflow computations over non-empty lists
 are modelled using the non-empty list comonad $\ident{NEList}\,\alpha = \alpha + (\alpha \times \ident{NEList}\,\alpha)$.
 
-The monadic and comonadic model outlined aboe represents at most a binary analysis of effects or
+The monadic and comonadic model outlined above represents at most a binary analysis of effects or
 context-dependence. A function $\tau_1 \rightarrow \tau_2$ performs \emph{no} effects (requires no
 context) whereas $\tau_1 \rightarrow \mtyp{}{\tau_2}$ performs \emph{some} effects and
 $\ctyp{}{\tau_1} \rightarrow \tau_2$ requires \emph{some} context\footnote{This is an
@@ -548,7 +548,7 @@ modelled by adding a (family of) lifting operation(s):
 %
 The axioms of flat coeffect algebra do not, in general, require that
 $\cclrd{r} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$ and $\cclrd{s} \;\cleq\; \cclrd{r}\,\cpar\,\cclrd{s}$,
-but the property holds for the three sample coeffect systems we consier. For systems with
+but the property holds for the three sample coeffect systems we consider. For systems with
 the above property, the \ident{split} operation can be expressed in terms of lifting
 (subcoeffecting) as follows:
 %
@@ -1057,7 +1057,7 @@ Case (\emph{fn}): $e = (\lambda x.e_0)~v$, from Lemma~\ref{thm:semantics-fp-pres
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{prj}): $e = \pi_i(v_1, \ldots, v_n)$ and so the last applied typing rule must have been
   (\emph{tup}) and $\Gamma \vdash (v_1, \ldots, v_n) : \tau_1 \times\ldots\times \tau_n$ and
-  $\tau = \tau_i$. After applyng (\emph{prj}) reduction, $e' = v_i$ and so $\Gamma \vdash e' : \tau_i$.
+  $\tau = \tau_i$. After applying (\emph{prj}) reduction, $e' = v_i$ and so $\Gamma \vdash e' : \tau_i$.
 
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{ctx}): By induction hypothesis, the type of the reduced sub-expression does not change
@@ -1281,7 +1281,7 @@ The rules shown in Figure~\ref{fig:semantics-translation} define how expressions
 language are translated into the target language. The rules are very similar to those shown earlier
 in Figure~\ref{fig:semantics-flat}. The consequent is now written as source code in the
 target programming language rather than as composition of morphisms in a category. However,
-thanks to the relationship between $\lambda$-calculus and cartesian closed categories, both
+thanks to the relationship between $\lambda$-calculus and Cartesian closed categories, both
 interpretations are equivalent.
 
 One change from Figure~\ref{fig:semantics-flat} is that we are now more explicit about the tuple
@@ -1305,7 +1305,7 @@ means that we are also proving safety of well-typed programs in the source conte
 \begin{theorem}[Well-typedness of the translation]
 \label{thm:semantics-welltyped}
 Given a typing derivation for a well-typed closed expression $\coctx{}{\cclrd{r}} \vdash e : \tau$
-written in a context-aware programming langugae that is translated to the target language as
+written in a context-aware programming language that is translated to the target language as
 (we write $\ldots$ for the omitted part of the translation tree):
 %
 \begin{equation*}
@@ -1393,7 +1393,7 @@ user code. In a programming language, it could be seen as an \emph{abstract data
 operations are the comonadically-inspired ones defined earlier, together with an additional
 \emph{domain-specific} operation that models the \kvd{prev} construct.
 
-The Figure~\ref{fig:semantics-ext-df} extensionds the target language with syntax, typing rules,
+The Figure~\ref{fig:semantics-ext-df} extends the target language with syntax, typing rules,
 additional translation rule and reductions for modelling dataflow computations. We introduce a
 new kind of values written as $\ident{Df}\langle v_0, \ldots, v_n\rangle$
 and a matching kind of expressions. We specify how the \kvd{prev} keyword is translated into a
@@ -1485,7 +1485,7 @@ K &=& \ldots \sep \ident{prev}_{\cclrd{n}}~\_ \sep \ident{Df}\langle v_0, \ldots
 \paragraph{Properties.}
 Now consider a target language consisting of the core (ML-subset) defined by the syntax,
 reduction rules and typing rules given in Figure~\ref{fig:semantics-target} and comonadically-inspired
-primtives defined in Figure~\ref{fig:semantics-ext} and also concrete notion of comonadically-inspired
+primitives defined in Figure~\ref{fig:semantics-ext} and also concrete notion of comonadically-inspired
 value and reduction rules for dataflow as defined in Figure~\ref{fig:semantics-ext-df}.
 
 In order to prove type safety, we first extend the \emph{canonical forms lemma}
@@ -2186,7 +2186,7 @@ an indexed comonad. Briefly, to define $\ident{cobind}_{\cclrd{r},\cclrd{s}}$ of
 we use $\ident{cobind}_{\cclrd{r}\cseq\cclrd{s}}$ from the family, together with two lifting operations:
 $\iota_{\cclrd{r}\cseq\cclrd{s}, \cclrd{r}}$ and $\iota_{\cclrd{r}\cseq\cclrd{s}, \cclrd{s}}$.
 
-\paragraph{Parameteric effect monads.}
+\paragraph{Parametric effect monads.}
 Parametric effect monads introduced by Katsumata \cite{monads-parametric} (independently to our
 indexed comonads) are closely related to our definition.  Although presented in a more general
 categorical framework (and using monads), the model (i) defines the \ident{unit} operation only on the
@@ -2202,7 +2202,7 @@ Coeffect systems differ from effect systems in three important ways:
 \item Semantically, coeffects capture different notions of computation. As demonstrated in
   Chapter~\ref{ch:pathways}, coeffects track additional contextual properties required by a
   computation, many of which cannot be captured by a monad (\eg~liveness or dataflow).
-  In terms of program analysis \cite{other-optcomp}, monas capture forward dataflow analyses and
+  In terms of program analysis \cite{other-optcomp}, monads capture forward dataflow analyses and
   comonads correspond to backward dataflow analyses.
 
 \item Syntactically, coeffect calculi use a richer algebraic structure with pointwise composition,
@@ -2218,7 +2218,7 @@ Coeffect systems differ from effect systems in three important ways:
 \end{itemize}
 
 \noindent
-Despite the differences, our implicit paremeters resemble, in many ways, the \emph{reader} monad.
+Despite the differences, our implicit parameters resemble, in many ways, the \emph{reader} monad.
 As discussed in Section~\ref{sec:semantics-related-monads}, the \emph{reader} monad is semantically
 equivalent to the \emph{product} comonad when we consider just sequential composition. For a
 language with lambda abstraction, we need a slight extension to the usual treatment of monads in
@@ -2276,7 +2276,7 @@ dataflow computations or liveness do not have a corresponding monadic structure.
 This equivalence holds for monads and comonads (as well as \emph{indexed} monads
 and comonads), but it does not extend to \emph{flat} indexed comonads which also provide
 the $\ident{merge}_{\cclrd{r}, \cclrd{s}}$ operation to model context merging. This can be
-supported in monadic computations by adding an aditional operation discussed next.
+supported in monadic computations by adding an additional operation discussed next.
 
 \paragraph{Delaying effects in monads.}
 In the syntax of the language, the above difference is manifested by the (\emph{abs}) rules for

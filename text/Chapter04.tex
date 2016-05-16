@@ -162,7 +162,7 @@ e &::=& x \sep n \sep \lambda x:\tau.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{
 \end{array}
 \end{equation*}
 %
-Note that the lambda abstrction in the syntax is written in the Church-style and requires a type
+Note that the lambda abstraction in the syntax is written in the Church-style and requires a type
 annotation. This will be used in Section~\ref{sec:flat-unique} where we discuss how to find a
 unique typing derivation for context-aware computations. Using Church-style lambda abstraction,
 we can directly focus on the more interesting problem of finding unique \emph{coeffect annotations}
@@ -349,7 +349,7 @@ To guide understanding of the system, we also show non-syntax-directed (\emph{su
 subcoeffecting. The rule states that an expression with context demands $\cclrd{r'}$ can be
 treated as an expression with greater context demands $\cclrd{r}$. We return to subcoeffecting,
 subtyping and additional constructs such as pairs in Section~\ref{sec:flat-exts}. When
-discussing procedure for choocing unique typing in Section~\ref{sec:flat-unique}, we consider
+discussing procedure for choosing unique typing in Section~\ref{sec:flat-unique}, we consider
 only the syntax-directed part of the system.
 
 %---------------------------------------------------------------------------------------------------
@@ -662,10 +662,10 @@ bound implicit parameter \ident{?p} to the static scope in the sub-expression $e
 
 \paragraph{Properties.}
 If a program written in a coeffect language with implicit parameters is well-typed in a type
-system presented in Figure~\ref{fig:flat-resolve-impl} then this identifies the unique prefered
+system presented in Figure~\ref{fig:flat-resolve-impl} then this identifies the unique preferred
 derivation for the program. We use this unique typing derivation to give the semantics of coeffect
 language with implicit parameters in Chapter~\ref{ch:semantics} and we also implement this algorithm
-as discussed in Chatper~\ref{ch:impl}.
+as discussed in Chapter~\ref{ch:impl}.
 
 The type system is more restrictive than the fully general one and it reject certain programs that
 could be typed using the more general system. This is expected -- we are restricting the fully
@@ -805,7 +805,7 @@ If a program written in a coeffect language for liveness or dataflow is well-typ
 the type system presented in Figure~\ref{fig:flat-types} with the (\emph{abs}) rule replaced by
 (\emph{idabs}), then the type system gives a unique derivation. As for implicit parameters, this
 defines the semantics of coeffect program (Chapter~\ref{ch:semantics}) and it is used in the
-implementation (Chatper~\ref{ch:impl}).
+implementation (Chapter~\ref{ch:impl}).
 
 We note that the unique typing derivation is admissible in the original coeffect type system.
 For dataflow and liveness, this follows directly from the fact that (\emph{idabs}) is a special
@@ -1118,7 +1118,7 @@ type system, but it can be captured using the structural system discussed in Cha
 
 \paragraph{Implicit parameters.} In dataflow, substituting $\kvd{prev}~x$ for a variable $y$ in
 an expression $\lambda z.y$ changes the context demands attached to the type of the function.
-This is the case not just for the preferred unique typeing derivation, but for all possible typings
+This is the case not just for the preferred unique typing derivation, but for all possible typings
 that can be obtained using the (\emph{abs}) rule. However, this is not the case for all
 systems. Consider a substitution $\subst{\lambda x.y}{y}{\ident{?p}}$ that substitutes
 an implicit parameter access $\ident{?p}$ for a free variable $y$ under a lambda:
@@ -1458,7 +1458,7 @@ algebras.
 \end{table}
 
 It is perhaps somewhat unexpected that the annotation can be simplified in different ways for
-different examples. However, for all our systems, the simplfied annotation (right column in
+different examples. However, for all our systems, the simplified annotation (right column in
 Table~\ref{tab:flat-simplelet}) is more precise than the original (left column). Recall that
 $\cclrd{s} = \cclrd{s_1}\,\czip\,\cclrd{s_2}$. The following inequalities hold:
 %
@@ -1703,5 +1703,5 @@ can be based on standard call-by-name reduction.
 In the next section, we move from abstract treatment of the flat coeffect calculus to a more
 concrete discussion. We explain its category-theoretical motivation, we use it to define
 translational semantics (akin to Haskell's ``do'' notation) and we prove a soundness result that
-well-typed programs in flat coeffect calcului for implicit parameters and dataflow do not get
+well-typed programs in flat coeffect calculi for implicit parameters and dataflow do not get
 stuck in the translated version.

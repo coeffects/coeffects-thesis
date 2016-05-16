@@ -19,7 +19,7 @@ although technical details are often postponed until later. Secondly it recasts 
 a way that naturally leads to the coeffect systems developed later in the thesis. For this reason,
 we are not always faithful to the referenced work -- sometimes we focus on aspects that the
 authors consider unimportant or present the work differently than originally intended. The reason
-is to fulfil the second goal of the chapter. When we do so, this is explicitly said in the text.
+is to fulfill the second goal of the chapter. When we do so, this is explicitly said in the text.
 
 
 
@@ -93,7 +93,7 @@ which the function is defined (declaration-site). In dynamic binding, the requir
 In static and dynamic scoping, all variable requirements are always placed on one site. However,
 those are not the only two options. It is conceivable that a language would use a mechanism that
 splits variable requirements differently and combines aspects of dynamic and static binding. For
-example, the language could use statis binding by default, but resort to dynamic binding if a
+example, the language could use static binding by default, but resort to dynamic binding if a
 variable is not available in the lexical scope. One such system is discussed in the next section.
 
 Languages with static scoping generally check that all variable requirements are satisfied.
@@ -138,7 +138,7 @@ dynamic binding when needed}''. If an implicit parameter is available in scope, 
 is statically bound and the context requirement is satisfied using the declaration-site context.
 Otherwise, the context requirement is delayed and has to be satisfied at the call site.
 In the example on the left, \ident{?x} is bound to $10$ the function \ident{f} has no
-delayed context requirements and the expression evalautes to $10$. In the example on the right,
+delayed context requirements and the expression evaluates to $10$. In the example on the right,
 the context requirement \ident{?x} is delayed and is satisfied via dynamic binding when calling
 the function. The expression evaluates to $5$.
 

@@ -62,7 +62,7 @@ disconnected at first!}.
 When introducing coeffect systems in Section~\ref{sec:path-effects-coeff}, we related coeffect systems
 with effect systems. Effect systems track how a program affects the environment, or, in other words
 capture some \emph{output impurity}. In contrast, coeffect systems track what a program requires from
-the execution envionment, or \emph{input impurity}.
+the execution environment, or \emph{input impurity}.
 
 Effect systems generally use judgements of the form $\Gamma \vdash e : \tau \;\&\; \cclrd{\sigma}$,
 associating effects $\sigma$ with the output type. We write coeffect
@@ -2040,7 +2040,7 @@ together with one additional variable $x$ at the end. We shall be more precise i
 Chapter~\ref{ch:structural}.
 
 In (\emph{var}), the context contains just a single variable and so we do not even need to apply
-projection; (\emph{cosnt}) receives no variables and uses global constant lookup function $\delta$.
+projection; (\emph{const}) receives no variables and uses global constant lookup function $\delta$.
 In (\emph{abs}), we obtain two parts of the context and combine them into $(\mathbf{v}, x)$. This
 works the same way regardless of whether the variables are live or dead. For simplicity, we omit
 subcoeffecting, which just turns some of the available values $v_i$ to unit values $()$.
@@ -2367,7 +2367,7 @@ the (\emph{contr}) rule:
 The semantic function is called with $\cclrd{s}+\cclrd{t}$ copies of
 a value for the $x$ variable. The values are split between $\cclrd{s}$ and $\cclrd{t}$ separate
 copies of variables $y$ and $z$, respectively. The (\emph{app}) rule is similar in that it needs to
-split the input variable context. However, it needs to split values of multiple variabless:
+split the input variable context. However, it needs to split values of multiple variables:
 %
 \begin{equation*}
 \hspace{-1em}

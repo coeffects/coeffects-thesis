@@ -23,7 +23,7 @@ Thus our typing derivation starts with:
 The typing for the sub-expression $(+)~\ident{?a}$ is shown in Figure~\ref{fig:appendixa-impl} (a).
 Note that the resulting function does not require any implicit parameters, so there is no non-determinism so far.
 It is worth noting that this would change if we used $\eta$-expansion and wrote $(\lambda y.(+)~\ident{?a})$.
-We refer to the above as $\Delta$. The rest of the expresion is shown in Figure~\ref{fig:appendixa-impl} (b).
+We refer to the above as $\Delta$. The rest of the expression is shown in Figure~\ref{fig:appendixa-impl} (b).
 
 Here, the last rule applies (\emph{app}) and so we non-deterministically split the set of required resources.
 This means that we need $\cclrd{r_1}, \cclrd{r_2}$ such that $\cclrd{r_1}\,\cup\,\cclrd{r_2}=\{\ident{?a}:\ident{int}, \ident{?b}:\ident{int} \}$.

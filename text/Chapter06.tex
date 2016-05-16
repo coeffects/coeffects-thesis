@@ -42,7 +42,7 @@ language, showing that ``well-typed context-aware programs do not get stuck''.
 
 \item We give a \emph{translational semantics} (Section~\ref{sec:struct-transl}) that translates
   programs from the structural coeffect calculus into a simple functional language with
-  uninterpreted comonadically-inspired primitivies. We give concrete operational semantics for the
+  uninterpreted comonadically-inspired primitives. We give concrete operational semantics for the
   target language for one of our sample languages and show that well-typed programs, produced by
   translation from the coeffect calculus do not get stuck.
 \end{itemize}
@@ -398,7 +398,7 @@ is the only place in the structural coeffect system where context requirements a
 (semantically, this is where the available context is shared).
 
 \paragraph{Subcoeffecting.}
-Finbally, Figure~\ref{fig:struct-types} (c) shows the subcoeffecting rule (\emph{sub}).
+Finally, Figure~\ref{fig:struct-types} (c) shows the subcoeffecting rule (\emph{sub}).
 As with the flat coeffect calculus, we include it mainly to guide the understanding of the
 system, but we treat it as an additional rule and do not discuss it in the subsequent theory.
 The rule would be needed in languages with conditionals and other language features. It is
@@ -641,7 +641,7 @@ The two interesting rules are lambda abstraction and application.
 
 \paragraph{Lambda abstraction.}
 In lambda abstraction (\emph{abs}) in Figure~\ref{fig:struct-types}, we assume that the bound
-varible is the last variable of the context. In the syntax-directed system, we do not make the
+variable is the last variable of the context. In the syntax-directed system, we do not make the
 same assumption. Instead, we use an auxiliary relation $\ident{findvar}_x$ that takes a typing
 context $\coctx{\Gamma}{\aclrd{\textbf{t}}}$ and returns a context with the variable $x$ removed
 together with its type and coeffect.
@@ -657,7 +657,7 @@ corresponding coeffect annotation and returns it as the result.
 \paragraph{Function application.} In the (\emph{app}) rule in Figure~\ref{fig:struct-types}, we
 assume that the variable contexts of the two sub-expressions can be merged. This requires that they
 contain disjoint variables, which can be always obtained by exchange and contraction. In the
-syntax-driven systenm, we merge coeffects of shared variables explicitly. This is done in the
+syntax-driven system, we merge coeffects of shared variables explicitly. This is done in the
 \ident{mergevars} function.
 
 The \ident{mergevars} function returns context consisting of three parts. Parts $\Gamma_1$
@@ -739,7 +739,7 @@ Case (\emph{abs}): $e = \lambda x\!:\!\tau_1.e_1$. Then $\tau = \tau_1 \xrightar
 Cases (\emph{var}), (\emph{const}) are direct consequence of Lemma~\ref{thm:struct-invert}.
 
 \vspace{0.5em}\noindent\hangindent=0.7cm
-Casea (\emph{app}) similarly to (\emph{abs}).
+Case (\emph{app}) similarly to (\emph{abs}).
 \end{proof}
 
 \noindent
@@ -751,10 +751,10 @@ The following remark provides the details.
 \begin{remark}[Admisibility of unique typing for implicit parameters]
 \label{thm:flat-impl-admis}
   If $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ (using the rules in
-  Figure~\ref{fig:struct-syntax-types}) then there is a uniqye typing derivation
+  Figure~\ref{fig:struct-syntax-types}) then there is a unique typing derivation
   using the typing rules from Figure~\ref{fig:struct-types} with a conclusion
   $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ obtained by induction over
-  the original typing derivation as folows:
+  the original typing derivation as follows:
 
 \vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{var}), (\emph{const}): The resulting typing derivation uses the corresponding
@@ -1414,7 +1414,7 @@ of the variable context is another reason for using $-\xtimes-$ when interpretin
 \paragraph{Expressions.}
 A semantics of structural coeffect calculi is shown in Figure~\ref{fig:struct-semantics}. The
 semantics is written as composition of morphisms using a number of auxiliary definitions. Due to
-the eqivalence between Cartesian Closed Categories and the $\lambda$-calculus, we will treat it
+the equivalence between Cartesian Closed Categories and the $\lambda$-calculus, we will treat it
 as specifying translation to a target functional language in Section~\ref{sec:struct-transl}.
 
 The following summarizes how the standard syntax-driven rules work, highlighting the differences
@@ -1685,7 +1685,7 @@ subcoeffecting which can turn a context with a value into a dead context (second
 it behaves as identity.
 
 \paragraph{Properties.}
-The concrete categortical semantics presented in this section is a generalization of the concrete
+The concrete categorical semantics presented in this section is a generalization of the concrete
 semantics given when introducing context-aware programming languages in Chapter~\ref{ch:applications}.
 
 \begin{theorem}[Generalization]
@@ -1907,7 +1907,7 @@ Assuming the following auxiliary definition:
 \end{array}
 \end{equation*}
 
-\figcaption{Trnaslation from a structural coeffect calculus}
+\figcaption{Translation from a structural coeffect calculus}
 \label{fig:struct-translation}
 \end{figure*}
 
@@ -1950,7 +1950,7 @@ Section~\ref{sec:struct-transl-safety}.
 \begin{theorem}[Well-typedness of the translation]
 \label{thm:struct-welltyped}
 Given a typing derivation for a well-typed closed expression $\coctx{}{\alift{}} \vdash e : \tau$
-written in a structural context-aware programming langugae that is translated to the target language as
+written in a structural context-aware programming language that is translated to the target language as
 (we write $\ldots$ for the omitted part of the translation tree):
 %
 \begin{equation*}
@@ -2129,7 +2129,7 @@ right and from current-most value to the last past value. This is specified by t
 
 When type-checking expressions that create the \ident{Df} values, we use an auxiliary judgement
 $\Gamma \vdash_{\ident{vec}} e : \tau, \cclrd{n}$. The judgement checks that a vector of expressions
-$\textbf{e}$ contains exactly $\cclrd{n}$ expressions of type $\tau$. This is caputred by the
+$\textbf{e}$ contains exactly $\cclrd{n}$ expressions of type $\tau$. This is captured by the
 (\emph{vec}) rule, which is then used to check individual elements of the context in the
 (\emph{df}) rule.
 

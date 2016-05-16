@@ -12,7 +12,7 @@ support this claim, this chapter presents a prototype implementation of the coef
 uses it to build three concrete languages -- language with implicit parameters and both flat and
 structural versions of a dataflow language.
 
-The implementation directly follows the thoery presented in Chapters~\ref{ch:flat}, \ref{ch:semantics}
+The implementation directly follows the theory presented in Chapters~\ref{ch:flat}, \ref{ch:semantics}
 and \ref{ch:structural}. It consists of a common framework that provides type checking and
 translation to a simple functional target language with comonadically-inspired primitives. Each
 concrete context-aware language then adds a domain-specific rule for choosing a unique typing
@@ -22,7 +22,7 @@ definition of the comonadically-inspired primitives that define the runtime sema
 
 The main goal of the implementation is to show that the theory is practically useful and to present it
 in a more practical way. However, we do not intend to build a complete real-world programming language.
-For this reason, the implementation is available primarilly as an interactive essay\footnote{The
+For this reason, the implementation is available primarily as an interactive essay\footnote{The
 \emph{interactive essay} format is based on Bret Victor's work on \emph{explorable explanations} \cite{essay-explorable}
 and is further explained in Section~\ref{sec:impl-essay-features}} online at \url{http://tomasp.net/coeffects}.
 
@@ -31,7 +31,7 @@ and is further explained in Section~\ref{sec:impl-essay-features}} online at \ur
 \begin{itemize}
 \item We discuss how the implementation follows the theory (Section~\ref{sec:impl-theory}) presented earlier.
   This applies to the implementation of the \emph{type checker} and the implementation of the \emph{translation}
-  to a simple target language that is then iterpereted. We also discuss how the common framework makes it
+  to a simple target language that is then interpreted. We also discuss how the common framework makes it
   easy to implement additional context-aware languages (Section~\ref{sec:impl-theory-ext}).
 
 \item We consider a number of case studies (Section~\ref{sec:impl-case}) that illustrate interesting
@@ -65,7 +65,7 @@ The theory discussed so far provides the two key components of the implementatio
 Chapter~\ref{ch:flat}, we discussed the type checking of context-aware programs and
 Chapter~\ref{ch:semantics} models the execution of context-aware programs (in terms of
 translation and operational semantics). For structural coeffects, the same components are discussed
-in Chapter~\ref{ch:structural}. In this section, we discuss how teose provide foundation for the
+in Chapter~\ref{ch:structural}. In this section, we discuss how these provide foundation for the
 implementation.
 
 % --------------------------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ are required:
 \begin{enumerate}
 \item A domain-specific function abstraction rule that resolves the ambiguity in the general
   (\emph{abs}) rule of the flat coeffect calculus. For liveness, the handling would be the same
-  as for atafloww, but for other flat coeffect systems, another resolution mechanism might be used
+  as for dataflow, but for other flat coeffect systems, another resolution mechanism might be used
   instead.
 
 \item A domain-specific instance of the coeffect algebra needs to be provided. This consists of
@@ -271,7 +271,7 @@ but we briefly review them in this section.
 
 We first consider two case studies of how coeffect type checking works. The first one exposes the
 ambiguity resolution algorithm for the typing of implicit parameters and the second one exposes the
-difference between flat and structural system forataflowow.
+difference between flat and structural system for dataflow.
 
 \vspace{-0.5em}
 \paragraph{Abstraction for implicit parameters.}
@@ -507,7 +507,7 @@ in the society \cite{essay-segregation}). To our best knowledge, the format has 
 been used in the area of programming language theory and so we briefly outline some of the
 interesting features that our essay provides in order to encourage active reading.
 
-\paragraph{Interactive program excution.}
+\paragraph{Interactive program execution.}
 
 After providing the practical motivation for coeffects (based on Chapter~\ref{ch:intro}), the
 interactive essay shows the reader the two sample context-aware programming languages. Readers can
@@ -538,7 +538,7 @@ inferred type when using flat and structural type systems.
 
 \paragraph{Reactive dataflow.}
 
-The interactive program execution lets the reader run sample programs, but not in a particuarly realistic
+The interactive program execution lets the reader run sample programs, but not in a particularly realistic
 context. To show a more real-world scenario, the essay includes a widget shown in Figure~\ref{fig:essay-df}.
 This lets the user write a function taking a stream of X and Y coordinates and calculate value
 based on the current and past values of the mouse pointer. The X and Y values, together with the
@@ -580,7 +580,7 @@ complex for two reasons.
 First, it merges all variables into a single (comonadic) value representing
 the context. Second, there is a flat and structural variation of the system. For these two reasons,
 understanding the translation based just on the rules is harder than for monads. The essay lets
-readers see translation for carefuly chosen case studies that illustrate the key aspects of the
+readers see translation for carefully chosen case studies that illustrate the key aspects of the
 translation (some discussed in Section~\ref{sec:impl-case-transl}), but also for their own
 programs encouraging \emph{active reading}. Sample input and output are shown in
 Figure~\ref{fig:essay-transl}.
@@ -619,7 +619,7 @@ building the user interface. The full source code can be obtained from
 \item Type-checked programs in context-aware languages are translated to simple target
   functional subset of the language in \strf{translation.fs}; \strf{evaluation.fs} then interprets
   programs in the target language. The interpretation does not handle the source
-  language and so programs containing context-aware contstructs cannot be interpreted directly.
+  language and so programs containing context-aware constructs cannot be interpreted directly.
 
 \item The user interface of the interactive essay (Section~\ref{sec:impl-essay-features})
   is implemented partly in F\# and partly in JavaScript. The two most important components include
