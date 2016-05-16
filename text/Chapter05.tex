@@ -168,7 +168,7 @@ Section~\ref{sec:semantics-translation}.
 
 The development in this chapter closely follows the example of effectful computations.
 Effect systems provide a type system for tracking effects and monadic translation can be used as
-a basis for implementing effectful domain-specific languages (e.g.~through the do-notation in
+a basis for implementing effectful domain-specific languages (e.g.~through the ``do'' notation in
 Haskell).
 
 The correspondence between effect system and monads has been pointed out by Wadler and Thiemann
@@ -818,7 +818,7 @@ Finally, numbers (\emph{num}) become constant functions that ignore the context.
 \paragraph{Properties.}
 The categorical semantics  in Section~\ref{sec:semantics-translation} defines a translation
 that embeds context-dependent computations in a functional programming language, similarly to how
-monads and the do notation provide a way of embedding effectful computations in Haskell.
+monads and the ``do'' notation provide a way of embedding effectful computations in Haskell.
 
 An important property of the translation is that it respects the coeffect annotations provided
 by the type system. The annotations of the semantic functions match the annotations in the typing
@@ -950,7 +950,7 @@ Although the notion of indexed comonads presented in the previous section is nov
 in its own, the main reason for introducing it is that we can view it as a translation that provides
 embedding of context-aware domain-specific languages in a simple target functional language.
 In this section, we follow the example of effects and monads and we use the semantics to define a
-translation akin to the do notation in Haskell.
+translation akin to the ``do'' notation in Haskell.
 
 A context-aware \emph{source} program written using a concrete context-aware domain-specific
 language (capturing dataflow, implicit parameters or other kinds of context awareness) with
@@ -2406,7 +2406,7 @@ indexed comonads.
 
 We then used the comonadic semantics to define a \emph{comonadically-inspired translation}
 that turns programs written in a domain-specific coeffect language into a functional target
-language. This is akin to the Haskell do-notation for monads. Finally, we extended the target
+language. This is akin to the Haskell ``do'' notation for monads. Finally, we extended the target
 language with concrete implementations of comonadic operations for dataflow and implicit parameters
 and we presented a syntactic safety proof. In summary, the proof states that well-typed
 context-aware programs written in a coeffect language \emph{do not go wrong} (when translated
