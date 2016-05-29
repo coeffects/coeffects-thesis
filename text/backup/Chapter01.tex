@@ -89,7 +89,7 @@ will use the current client's data -- for example, to accommodate for time-zone 
 
 This example demonstrates how lambda abstraction behaves for context-dependent computations. The 
 context requirement of the function body is a set of resources $\{\ident{Clock}, \ident{News}\}$.
-The context requirements are split between the \emph{declaration site} and \emph{call site}.
+The context demands are split between the \emph{declaration site} and \emph{call site}.
 However, there are multiple possible splittings. The splitting $\{\ident{News}\} \cup \{\ident{Clock}\}$
 models the case when the database is accessed from the server, but time is taken from the client,
 while the splitting $\{\ident{Clock}, \ident{News}\} \cup \{\}$ corresponds to the case when both
@@ -131,10 +131,10 @@ maximum of the requirements of the individual variables:
 %
 This version of the calculus removes the non-determinism of the lambda abstraction from the previous
 version. As we associate information with individual variables, lambda abstraction creates a function
-that requires the context requirements associated with the variable that is being abstracted over.
+that requires the context demands associated with the variable that is being abstracted over.
 
 For example, if we wrapped the earlier example above in a function taking \ident{a} (and using 
-\ident{b} from the declaration site) then the function would have context requirements $5$ -- that
+\ident{b} from the declaration site) then the function would have context demands $5$ -- that
 is the number associated with the variable \ident{a}.
 
 %---------------------------------------------------------------------------------------------------

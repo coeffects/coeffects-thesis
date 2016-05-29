@@ -60,8 +60,8 @@ differences is the key to reconciling the two systems:
   the variable context is a finite partial function (from names to types) and is annotated with
   a single (scalar) coeffect.
 
-\item In the flat coeffect calculus, we distinguish between \emph{splitting} context requirements
-  and \emph{merging} of context requirements ($\cpar$ and $\czip$, respectively). In the structural
+\item In the flat coeffect calculus, we distinguish between \emph{splitting} context demands
+  and \emph{merging} of context demands ($\cpar$ and $\czip$, respectively). In the structural
   coeffect calculus, the operations (which model appending and splitting vectors) are invertible
   and so the structural coeffect algebra uses the same tensor product $\atimes$. However, the
   $\cpar$ operation is still needed in the contraction rule.
@@ -74,7 +74,7 @@ calculi, the structural rules do not change coeffects and can thus be applied fr
 the structure of coeffect annotations using the notion of a ``container'' which can be specialized
 to obtain a single annotation or a vector of annotations. This could potentially be used to capture
 other structures such as trees in bunched typing \cite{substruct-bunched}. Finally, we distinguish
-between splitting and merging of context requirements (using the notation $\apar$ and $\azip$,
+between splitting and merging of context demands (using the notation $\apar$ and $\azip$,
 respectively). For structural coeffect calculi, the two operators coincide, but for flat
 coeffect calculi, they differ and provide the needed flexibility.
 
@@ -181,7 +181,7 @@ As previously, the monoid $(\C,\cseq,\cunit)$ models sequential composition; the
 an underlying category structure; $\cunit$ and $\czero$ represent an accessed and unused variable,
 respectively.
 
-The $\cpar$ operation models combining of context requirements arising from multiple parts of a
+The $\cpar$ operation models combining of context demands arising from multiple parts of a
 program. The meaning depends on the coeffect container. The operation can either combine requirements
 of individual variables (structural coeffects) or requirements attached to the whole context of
 multiple sub-exp\-ressions (flat coeffects).
@@ -322,9 +322,9 @@ can be defined independently, letting $\azip=\czip$ and $\apar=\cpar$.
 The difference between $\azip$ and $\apar$ is clarified by the semantics (Sec\-tion~\ref{sec:further-semantics}),
 where $\aclrd{\textbf{r}}\,\azip\,\aclrd{\textbf{s}}$ is an annotation of the \emph{codomain} of
 a morphism that merges the capabilities provided by two contexts (in the syntactic
-reading, splits the context requirements), while $\aclrd{\textbf{r}}\,\apar\,\aclrd{\textbf{s}}$
+reading, splits the context demands), while $\aclrd{\textbf{r}}\,\apar\,\aclrd{\textbf{s}}$
 is an annotation of the \emph{domain} of a morphism that splits the capabilities of a single
-context into two parts (in the syntactic reading, merges their context requirements).
+context into two parts (in the syntactic reading, merges their context demands).
 Syntactically, this means that we always use $\azip$ in the rule \emph{assumptions} and
 $\apar$ in \emph{conclusions}.
 
@@ -435,8 +435,8 @@ variables with a scalar $\cunit$ and constants with a scalar $\czero$.
 
 In the (\emph{app}), (\emph{abs}) and (\emph{let}) rules, the only change from the structural
 system is that the vector concatenation $\atimes$ is now replaced with context splitting/merging
-of the unified coeffect algebra. As already mentioned, we use splitting of context requirements $\azip$
-in rule \emph{assumptions} and merging of context requirements $\apar$ in rule \emph{conclusions}.
+of the unified coeffect algebra. As already mentioned, we use splitting of context demands $\azip$
+in rule \emph{assumptions} and merging of context demands $\apar$ in rule \emph{conclusions}.
 
 Note that we use the terms \emph{merging} and \emph{splitting} in the syntactic (top-down) sense. As
 discussed in Section~\ref{sec:flat-calculus-understanding}, we can also read
@@ -549,7 +549,7 @@ the unified coeffect algebra modelling a flat coeffect systems consists of:
 \noindent
 Intuitively, the requirement $(\cclrd{r}\,\czip\,\cclrd{s}) \;\cleq\; (\cclrd{r}\,\cpar\,\cclrd{s})$,
 which could be also written as $(\aclrd{r}\,\azip\,\aclrd{s}) \;\aclrd{\leq}\; (\aclrd{r}\,\apar\,\aclrd{s})$,
-denotes that splitting context requirements and then re-combining them preserves all the requirements
+denotes that splitting context demands and then re-combining them preserves all the requirements
 from the assumptions. The system may be imprecise and conclusions can overapproximate assumptions, but
 it cannot lose requirements. This is fundamental for showing that exchange and contraction are admissible
 in the unified system.
@@ -790,7 +790,7 @@ Two readings of the signatures are possible, but they give quite different meani
   turns a computation requiring context $\cclrd{r}$ into a value $\beta$, the \ident{cobind}
   operation can turn a computation that requires context $\cclrd{r}\,\cseq\,\cclrd{s}$
   into a computation that requires just $\cclrd{s}$ and contains $\beta$ (a part of the
-  context requirements is eliminated by the function).
+  context demands is eliminated by the function).
 \end{itemize}
 
 \noindent
@@ -1020,7 +1020,7 @@ and a similar approach would be worth exploring for coeffects.
 
 \paragraph{Coeffect annotations as types}
 
-The other aspect of practical implementation of coeffects is that of tracking the context requirements
+The other aspect of practical implementation of coeffects is that of tracking the context demands
 (coeffect annotations) in the type system. To achieve this (without resorting to a single-purpose
 language feature) the type system needs to be able to capture various kinds of coeffect algebras.
 The structures required in this thesis include sets (with union or intersection), natural numbers (with

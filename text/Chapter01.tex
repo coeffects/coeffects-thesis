@@ -388,7 +388,7 @@ user-interface. For Windows, we would also need \ident{fetchLocalNews}, but this
 a number of \prepk{\#if} blocks to delimit the platform-specific parts.
 
 To support cross-compilation, the language needs to be context-aware. Each of the function has a
-number of context requirements. The \ident{fetchNews} function needs to have access to a database;
+number of context demands. The \ident{fetchNews} function needs to have access to a database;
 \ident{fetchLocalNews} needs access to a GPS sensor and to a network (to perform the remote call).
 However, it does not need a specific platform -- it can work on both iPhone and Windows. The last
 two platform-specific functions inherit the requirements of \ident{fetchLocalNews} and additionally
@@ -430,9 +430,9 @@ also require a specific platform.
 
 \subsection{Understanding context with types}
 
-The approach advocated in this thesis is to track information about context requirements using
+The approach advocated in this thesis is to track information about context demands using
 the type system. To make this practical, the system should also provide at least a partial support for
-automatic type inference, as the information about context requirements makes the types more complex.
+automatic type inference, as the information about context demands makes the types more complex.
 An inspiring example might be the F\# support for units of measure \cite{app-units} -- the user has
 to explicitly annotate constants, but the rest of the information is inferred automatically.
 
@@ -457,7 +457,7 @@ pointer over an identifier. For \ident{fetchLocalNews}, the tip could appear as 
 \noindent
 Here, we use the notation $\tau_1 \,\ident{\hspace{-1em}\footnotesize{@}}\, c \rightarrow \tau_2$ to denote
 a function that takes an input of type $\tau_1$, produces a result of type $\tau_2$ and has additional
-context requirements specified by $c$. In the above example, the annotation $c$ is simply a set of
+context demands specified by $c$. In the above example, the annotation $c$ is simply a set of
 required resources or capabilities. However, a more complex structure could be used as well, for example,
 including the Android API level as an integer.
 
@@ -588,9 +588,9 @@ Effect systems are an established idea, but they are suitable only for tracking 
 certain kind. They can be used for properties that describe how programs \emph{affect} the environment.
 For context-aware languages, we instead need to track what programs \emph{require} from the environment.
 
-\paragraph{Tracking context requirements.}
+\paragraph{Tracking context demands.}
 
-The systems for tracking of context requirements developed in this thesis are inspired by the idea
+The systems for tracking of context demands developed in this thesis are inspired by the idea
 of effect systems. To demonstrate our approach, consider the following call from the sample program
 shown earlier -- first using standard ML-like type system:
 %

@@ -86,7 +86,7 @@ The program can be evaluated in two ways, depending on the variable binding mech
 \noindent
 When we view variable access as a context requirement, we can see that the body of the function
 ($\ident{x}+\ident{y}$) requires a context that provides values for variables \ident{x} and
-\ident{y}. In static binding, the context requirements of the body can be placed on the scope in
+\ident{y}. In static binding, the context demands of the body can be placed on the scope in
 which the function is defined (declaration-site). In dynamic binding, the requirements are
 \emph{delayed} and are placed on the scope in which the function is called (call site).
 
@@ -138,7 +138,7 @@ dynamic binding when needed}''. If an implicit parameter is available in scope, 
 is statically bound and the context requirement is satisfied using the declaration-site context.
 Otherwise, the context requirement is delayed and has to be satisfied at the call site.
 In the example on the left, \ident{?x} is bound to $10$ the function \ident{f} has no
-delayed context requirements and the expression evaluates to $10$. In the example on the right,
+delayed context demands and the expression evaluates to $10$. In the example on the right,
 the context requirement \ident{?x} is delayed and is satisfied via dynamic binding when calling
 the function. The expression evaluates to $5$.
 
@@ -147,22 +147,22 @@ available. The type of the function \ident{f} on the left is $\kvd{int}\rightarr
 the type of the \ident{f} function on the right is $\{\ident{?x}:\kvd{int}\}\Rightarrow\kvd{int}\rightarrow\kvd{int}$.
 The part before $\Rightarrow$ specifies the required implicit parameters that need to be available
 in the environment when calling the function. It is worth noting that the syntax is similar to the
-one used by type-class constraints. Those can be viewed as context requirements too
+one used by type-class constraints. Those can be viewed as context demands too
 (Section~\ref{sec:applications-flat-impl}).
 
 \paragraph{Thesis perspective.}
 The three different binding mechanisms discussed so far can be seen as different ways of splitting
-context requirements of a particular kind. Dynamic and static binding represent the opposite ends
+context demands of a particular kind. Dynamic and static binding represent the opposite ends
 of the design space and Haskell's implicit parameters are an interesting point inside the wider space.
 
 In this thesis, we consider different notions of context, using implicit parameters as just one
 of several motivating examples. However, implicit parameters are a valuable example, because they
-clearly illustrate the ambiguity inherent in context-aware programs -- the context requirements of
+clearly illustrate the ambiguity inherent in context-aware programs -- the context demands of
 a function can be satisfied using the context available at declaration-site or using the context
 available at the call site.
 
 We also aim to find a description of context-aware languages that does not make ad-hoc decisions
-about how context requirements are split between the declaration-site and the call site. While
+about how context demands are split between the declaration-site and the call site. While
 Haskell's solution for implicit parameters might be the most reasonable one, different notions
 of context might require different domain-specific choices and the general framework of
 context-aware programming should make that possible.
@@ -237,7 +237,7 @@ explicitly define algorithm that chooses the preferred unique derivation.
 
 This approach decouples two important aspects of context-aware programming and lets us study them
 independently -- the semantics of context-aware programs and the domain-specific way of resolving
-how context requirements are satisfied. In our treatment of implicit parameters, we consider
+how context demands are satisfied. In our treatment of implicit parameters, we consider
 multiple typing derivations (representing a range with static and dynamic scoping at opposite ends),
 but we uniquely choose one preferred typing (in case of implicit parameters, mimicking the
 behaviour of Haskell).
@@ -339,7 +339,7 @@ The more interesting difference is how the lambda abstraction rule looks.
 The language in Figure~\ref{fig:path-coeff} extends simple lambda calculus with resources and
 with a construct $\kvd{access}~e$ that obtains the resource specified by the expression $e$.
 Most of the typing rules correspond to those of effect systems. Variable access (\emph{var})
-has no context requirements, application (\emph{app}) combines context requirements of the two
+has no context demands, application (\emph{app}) combines context demands of the two
 sub-expressions and latent context-requirements of the function.
 The (\emph{abs}) rule is different than the corresponding rule for effect systems -- the
 resource requirements of the body $\cclrd{r} \cup \cclrd{s}$ are split between the \emph{immediate
@@ -780,7 +780,7 @@ As mentioned earlier, we are interested in designing context-dependent languages
 use comonads for \emph{language semantics}. Uustalu and Vene present a semantics of
 context-dependent computations in terms of comonads. We provide the rest of the story known
 from the marriage of monads and effects. We develop coeffect calculus with an type system that
-tracks the context requirements more precisely (by annotating the types) and we add indexing
+tracks the context demands more precisely (by annotating the types) and we add indexing
 to comonads and link the two by giving a formal semantics. The indexing allows us to capture
 applications that do not fit into the model provided by plain comonads.
 

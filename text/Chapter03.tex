@@ -67,7 +67,7 @@ the execution environment, or \emph{input impurity}.
 Effect systems generally use judgements of the form $\Gamma \vdash e : \tau \;\&\; \cclrd{\sigma}$,
 associating effects $\sigma$ with the output type. We write coeffect
 systems using judgements of the form $\coctx{\Gamma}{\cclrd{\sigma}} \vdash e : \tau$, associating
-the context requirements with $\Gamma$. Thus, we extend the traditional notion of free-variable
+the context demands with $\Gamma$. Thus, we extend the traditional notion of free-variable
 context $\Gamma$ with richer notions of context. This notation emphasizes the right intuition,
 but there are more important differences between effects and coeffects.
 
@@ -151,7 +151,7 @@ the call site. The flat and structural coeffects capture two different ways of d
 
 In Section~\ref{sec:intro-context-example}, we used \emph{resources} in a distributed system as an
 example of flat coeffects. These could be, for example, a database, GPS sensor or access to the current
-time. We also outlined that such context requirements can be tracked as part of the typing assumption,
+time. We also outlined that such context demands can be tracked as part of the typing assumption,
 for example, say we have an expression $e$ that requires GPS coordinates and the current time.
 The variable context of such expression will be annotated with a set of required resources,
 \ie~$\coctx{\Gamma}{ \cclrd{\ident{\{ gps, time \}}} }$.
@@ -175,7 +175,7 @@ The important point here is that in flat coeffect systems, contextual requiremen
 \emph{split} between the call site and declaration site. Furthermore, there is no syntactic
 structure that determines how the requirements are split. As mentioned in Section~\ref{sec:path-binding-amb},
 we decouple the definition of semantics from the domain-specific choice that determines how
-context requirements are satisfied. We capture the choice in the type and give semantics over a
+context demands are satisfied. We capture the choice in the type and give semantics over a
 \emph{typing derivation}. A domain-specific algorithm then chooses the desirable typing -- for
 example, by preferring resources available on the client over resources available on the server.
 
@@ -247,12 +247,12 @@ same shape with positions $\{ 1, \ldots, n \}$ and a relation $\varpropto\, \sub
 $\aclrd{\textbf{r}} \varpropto \aclrd{\textbf{s}} \Leftrightarrow (\cclrd{r_1} \varpropto \cclrd{s_1}) \wedge \ldots \wedge (\cclrd{r_n} \varpropto \cclrd{s_n}) $
 Finally, we often concatenate vectors, for example, when joining two variable contexts.
 Given vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$ with (possibly different) shapes $\{ 1, \ldots, n \}$ and
-$\{ 1, \ldots, m \}$, the associative operation for concatenation $\times$ is defined as
-$\aclrd{\textbf{r}}\times\aclrd{\textbf{s}} = \alift{\cclrd{r_1},\ldots,\cclrd{r_n},\cclrd{s_1},\ldots,\cclrd{s_m}}$.
+$\{ 1, \ldots, m \}$, the associative operation for concatenation $\vtimes$ is defined as
+$\aclrd{\textbf{r}}\vtimes\aclrd{\textbf{s}} = \alift{\cclrd{r_1},\ldots,\cclrd{r_n},\cclrd{s_1},\ldots,\cclrd{s_m}}$.
 
 We note that an environment $\Gamma$ containing $n$ uniquely named, typed variables is also a vector,
 but we continue to write `$,$' for the product, so $\Gamma_1, x\!:\!\tau, \Gamma_2$ should
-be seen as $\Gamma_1 \times \langle x\!:\!\tau\rangle \times \Gamma_2$.
+be seen as $\Gamma_1 \vtimes \langle x\!:\!\tau\rangle \vtimes \Gamma_2$.
 
 
 
@@ -442,12 +442,12 @@ annotated with the set of implicit parameters that must be available on the call
 $\tau_1 \xrightarrow{\cclrd{s}} \tau_2$.
 
 Accessing an ordinary variable (\emph{var}) does not require any implicit parameters. The rule that
-introduces primitive context requirements is (\emph{param}). Accessing a parameter \ident{?param}
+introduces primitive context demands is (\emph{param}). Accessing a parameter \ident{?param}
 requires it to be available in the context. The context may provide more (unused)
 implicit parameters thanks to the subcoeffecting rule (\emph{sub}).
 
 When we read the rules from the top to the bottom, application (\emph{app}) and let binding
-(\emph{let}) simply union the context requirements of the sub-expressions. However, lambda abstraction
+(\emph{let}) simply union the context demands of the sub-expressions. However, lambda abstraction
 (\emph{abs}) is where the example differs from effect systems. The implicit parameters required by
 the body $\cclrd{r} \cup \cclrd{s}$ can be freely split between the declaration site ($\coctx{\Gamma}{\cclrd{r}}$)
 and the call site ($\tau_1 \xrightarrow{\cclrd{s}} \tau_2$) and thus an expression may have multiple
@@ -690,7 +690,7 @@ similar to implicit parameters. The interpretation of the body is a function tha
 together with a hidden dictionary of operations: $\alpha \times \ident{Num}_\alpha \rightarrow \alpha$.
 
 Type classes and implicit parameters show two important points about flat coeffect systems.
-First, the context requirements are associated with some \emph{scope}, such as the body
+First, the context demands are associated with some \emph{scope}, such as the body
 of a function. Second, they are associated with the input. To call a function that takes an
 implicit parameter or has a type-class constraint, the caller needs to pass a (hidden) parameter
 together with the function inputs.
@@ -1334,7 +1334,7 @@ $e_1$ does not require a context, but $e_1$ does. Finally, in (\emph{app-3}), th
 
 \paragraph{Summary.}
 Unlike with implicit parameters, lambda abstraction for liveness analysis does not introduce
-non-determinism. It simply duplicates the context requirements. However, this still matches the
+non-determinism. It simply duplicates the context demands. However, this still matches the
 property of coeffects that impurities cannot be delayed or thunked and attached just to the
 function arrow -- we place requirements on both call site and declaration site.
 
@@ -2198,9 +2198,9 @@ a.) Ordinary, syntax-driven rules along with subcoeffecting
 \end{equation*}
 \begin{equation*}
 \tyrule{let}
-  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \times \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad
+  { \coctx{\Gamma_1, x \!:\! \tau_1}{\aclrd{\textbf{r}} \atimes \langle{\cclrd{t}}\rangle} \vdash e_1 : \tau_2 \quad
     \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash e_2 : \tau_1}
-  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \times (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
+  {\coctx{\Gamma_1, \Gamma_2}{\aclrd{\textbf{r}} \atimes (\cclrd{t} \ast \aclrd{\textbf{s}})} \vdash \kvd{let}~x=e_2~\kvd{in}~e_1 : \tau_2}
 \end{equation*}
 \begin{equation*}
 \tyrule{sub}
@@ -2445,7 +2445,7 @@ semantics} and \emph{meta-language} in Section~\ref{sec:further-meta}.
 \paragraph{Summary.}
 Comparing the structural coeffect calculus for tracking liveness and for bounded variable reuse
 reveals which parts of the systems differ and which parts are shared. In particular, both systems
-use the same vector operations ($\times$, $\alift{\cclrd{\textnormal{--}}}$) and also share the
+use the same vector operations ($\atimes$, $\alift{\cclrd{\textnormal{--}}}$) and also share the
 lambda abstraction rule (\emph{abs}). They differ in the primitive values used to annotate used
 and unused variables (\cclrd{L}, \cclrd{D} and $1$, $0$, respectively) and in the operators used
 for sequential composition and contraction ($\cclrd{\sqcup}$, $\cclrd{\sqcap}$ and $\ast$, $+$, respectively).

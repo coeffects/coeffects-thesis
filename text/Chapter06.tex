@@ -6,24 +6,24 @@ languages that capture whole-context properties were generalized by the \emph{fl
 calculus} in Chapters~\ref{ch:flat} and \ref{ch:semantics}. Here, we consider per-variable
 contextual properties and we introduce the \emph{structural coeffect calculus}.
 
-The flat coeffect system captures a number of interesting use-cases (implicit parameters, liveness
-and dataflow), but provides relatively imprecise approximation and weak syntactical properties.
-Some of those examples can be also seen as per-variable properties. For those, structural coeffect
-systems give a more precise information about the context. However, we also look at other applications
-that arise from the work on substructural logics, a pathway to coeffects discussed in
-Section~\ref{sec:path-logic}.
+The flat coeffect system captures a number of interesting use-cases. For some of those (liveness
+and dataflow), flat coeffects provide only imprecise approximation (for example, marking the whole
+context as live rather than marking individual variables). Dataflow and liveness (but not implicit
+parameters) can be also seen as per-variable properties. For those, structural coeffect systems
+capture more precise information about the context. However, we also look at other applications
+that arise from the work on substructural logics discussed in Section~\ref{sec:path-logic}.
 
 We mirror the development for flat coeffect calculus and develop a small calculus with a type system
 that captures per-variable contextual properties. We outline its categorical semantics and use it as
 a basis for a translation that turns well-typed programs in context-aware languages into well-typed
 programs in a simple target functional language. We prove syntactic safety for a sample target
-language, showing that ``well-typed context-aware programs do not get stuck''.
+language, showing that ``well-typed context-aware programs do not go wrong''.
 
 \paragraph{Chapter structure and contributions}
 \begin{itemize}
 \item We present a \emph{structural coeffect calculus} as a type system that is parameterized
-  by a \emph{structural coeffect algebra} (Section~\ref{sec:struct-calculus}. We show how the
-  system captures fine-grained liveness and dataflow information, as well as a calculus for bounded
+  by a \emph{structural coeffect algebra} (Section~\ref{sec:struct-calculus}). We show how the
+  system captures pre-variable liveness and dataflow information, as well as a calculus for bounded
   reuse (checking how many times is a variable accessed).
 
 \item We present a syntax-directed version of the calculus that is used to obtain unique typing
@@ -31,11 +31,13 @@ language, showing that ``well-typed context-aware programs do not get stuck''.
   Unlike in flat systems, the procedure for choosing a unique typing derivation is common to all
   structural systems.
 
-\item We discuss the equational theory of the calculus. For structural coeffects, the substitution
-  lemma holds for all instances of the calculus. Thus, we prove the type-preservation property
-  for all structural calculi for both call-by-name and call-by-value (Section~\ref{sec:struct-syntax}).
+\item We discuss the equational theory of the calculus. We show that type-preservation
+  holds for all examples of the structural calculus we consider, for both call-by-name and call-by-value
+  reductions (Section~\ref{sec:struct-syntax}) and we
+  explore a number of extensions to the minimal calculus based on $\lambda$-calculus,
+  including subcoeffecting and let binding (Section~\ref{sec:structural-exts}).
 
-\item We extend indexed comonads introduced in the previous chapter to \emph{structural indexed
+\item We extend the indexed comonads introduced in the previous chapter to \emph{structural indexed
   comonads} and use them to provide the semantics of structural coeffect calculus
   (Section~\ref{sec:struct-semantics}). As with the flat version, the theory serves as a motivation
   for syntactic translational semantics.
@@ -44,7 +46,7 @@ language, showing that ``well-typed context-aware programs do not get stuck''.
   programs from the structural coeffect calculus into a simple functional language with
   uninterpreted comonadically-inspired primitives. We give concrete operational semantics for the
   target language for one of our sample languages and show that well-typed programs, produced by
-  translation from the coeffect calculus do not get stuck.
+  translation from the coeffect calculus do not go wrong.
 \end{itemize}
 
 
@@ -63,10 +65,10 @@ language, showing that ``well-typed context-aware programs do not get stuck''.
 \section{Introduction}
 \label{sec:structural-intro}
 
-Compared to Chapter~\ref{ch:flat}, structural coeffect calculi we consider are more homogeneous and
-so finding the common pattern is easier. However, the systems are more complicated as they need to
-keep annotations attached to individual variables and thus require explicit structural rules. Before
-looking at the system, we briefly consider the most important related work.
+Compared to Chapter~\ref{ch:flat}, the structural coeffect calculi we consider are more homogeneous
+and so finding the common pattern is easier. However, the systems are more complicated as they need
+to keep annotations attached to individual variables and thus require explicit structural rules.
+Before looking at the system, we briefly consider the most important related work.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -75,19 +77,20 @@ looking at the system, we briefly consider the most important related work.
 In the previous chapter, we discussed the correspondence between coeffects and effects (and
 between comonads and monads). As noted in Section~\ref{sec:applications-strucutre-vec}, the
 $\lambda$-calculus is asymmetric in that an expression has multiple inputs (variables in the
-context), but just a single result (the resulting value) and so monads and effects have no notion
-directly corresponding to structural coeffect systems.
+context), but just a single result (the resulting value). So, while there is only one notion of
+monadic effect system, there are two separate notions of coeffect system - one that keeps coeffect
+annotations per-environment and one that keeps coeffect annotations per-variable.
 
-The work in this chapter is more closely related to substructural type systems \cite{substruct-attpl-intro}.
+The work in this chapter is related to substructural type systems \cite{substruct-attpl-intro}.
 Substructural systems remove some or all of \emph{weakening}, \emph{contraction} and
 \emph{exchange} rules. In contrast, our systems keep all three structural rules, but use them to
 manipulate the coeffect annotations in a way that matches the variable manipulations.
 
-Our work follows the ``language semantics'' style in that we provide a structural semantics to
-the terms of ordinary $\lambda$-calculus. By contrast the most closely related work has been done in
-the meta-language style, which extends the terms and types of a language with constructs for explicitly
-manipulating the context. This includes Contextual Modal Type Theory (CMTT) \cite{logic-cmtt}, where variables
-may be of a type $A[\Psi]$ denoting a value of type $A$ that requires context $\Psi$. In CMTT,
+Our work follows the ``language semantics'' style in that we provide semantics to the terms of
+ordinary $\lambda$-calculus. By contrast the closely related work on Contextual Modal
+Type Theory (CMTT) \cite{logic-cmtt} follows the meta-language style. CMTT extends the terms and
+types of a language with constructs for explicitly manipulating the context. Variables
+of type $A[\Psi]$ denote a value of type $A$ that requires context $\Psi$. In CMTT,
 $A[\Psi]$ is a first-class type, while structural coeffect systems do not expose coeffect
 annotations as stand-alone types (indexed comonads only appear in the semantics).
 
@@ -114,60 +117,35 @@ the two systems.
 \section{Structural coeffect calculus}
 \label{sec:struct-calculus}
 
-In the structural coeffect calculus, a vector of variables forming the free-variable context is
-annotated with a vector of primitive (scalar) coeffect annotations. These annotations differ
-for different coeffect calculi and their properties are captured by the definition of \emph{structural
-coeffect scalar} below. The scalar annotations can be \eg~integers (how many past values we
-need) or values of a two-point lattice specifying whether a variable is live or not.
-
-Scalar annotations are written as $\cclrd{r}, \cclrd{s}, \cclrd{t}$ (following the style used in
-the previous chapter). Functions always have exactly one input variable and so they are annotated
-with a single coeffect scalar. Thus the expressions and types of structural coeffect calculi are the
-same as in the previous chapter. The only difference is that $\cclrd{r}, \cclrd{s}, \cclrd{t}$ now
-range over values of a \emph{structural coeffect scalar} rather than over values of a \emph{flat
-coeffect algebra} (the definitions are related, but not the same).
+In the structural coeffect calculus, functions are annotated with a primitive (scalar) coeffect
+annotations. A vector of variables forming the free-variable context is annotated with a vector of
+coeffect annotations. These annotations differ for various coeffect calculi; their properties are
+captured by the definition of \emph{structural coeffect scalar} below. The scalar annotations can
+be \eg~integers (how many past values we need) or values of a two-point lattice specifying whether
+a variable is live or not. The expressions and types of the structural coeffect calculus are defined
+as follows:
 %
 \begin{equation*}
 \begin{array}{rcl}
-e &::=& x n \sep \sep \lambda x:\tau.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{in}~e_2\\
+e &::=& x \sep n \sep \lambda x:\tau.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{in}~e_2\\
 \tau &::=& \ident{num} \sep \tau_1 \xrightarrow{\cclrd{r}} \tau_2
 \end{array}
 \end{equation*}
 %
-In the previous chapter, the free variable context $\Gamma$ was treated as a set. In the
-structural coeffect calculus, the order of variables matters. Thus we treat a free variable
-context as a vector with a uniqueness condition. We also write $\xlen{-}$ for the length
-of the vector:
-%
-\begin{equation*}
-\begin{array}{rcl}
- \Gamma &\narrow{=}& \langle x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n \rangle \qquad \textnormal{such that}~~\forall i, j ~.~ i \neq j \implies x_i \neq x_j\\
- \xlen{\Gamma} &\narrow{=}& n
-\end{array}
-\end{equation*}
-%
-For readability, we use the usual notation $x_1\!:\!\tau_1, \ldots, x_1\!:\!\tau_1 \vdash e : \tau$ for
-typing judgements, but the free variable context should be understood as a vector.
-Furthermore, the notation $\Gamma_1, \Gamma_2$ is here seen as the tensor product.
-Given $\Gamma_1 = \langle x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n \rangle $ and
-$\Gamma_2 = \langle x_{n+1}\!:\!\tau_{n+1}, \ldots, x_m\!:\!\tau_m \rangle $ then
-$\Gamma_1, \Gamma_2 = \Gamma_1 \times \Gamma_2 = \langle x_1\!:\!\tau_1, \ldots, x_m\!:\!\tau_m \rangle$.
-
-Free variable contexts are annotated with vectors of structural coeffect scalars. We write vectors
-of coeffects as $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}$. Meta-variables ranging over vectors are
-written as $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$ (using bold face
-and colour to distinguish them from scalar meta-variables) and the length of a coeffect vector
-is written as $\alen{\aclrd{\textbf{r}}}$. The structure for working with vectors
-of coeffects is provided by the definition of \emph{structural coeffect algebra} discussed next.
+The expressions and types of structural coeffect calculus are similar to those of the flat coeffect
+calculus with two differences. First, we omit the \kvd{let} construct in the core language. In
+structural coeffects, let binding can be defined as a derived rule using abstraction and application
+(Section~\ref{sec:structural-exts-let}). Second, the coeffect annotations $\cclrd{r}, \cclrd{s}, \cclrd{t}$
+on function type now range over values of a \emph{structural coeffect scalar}.
 
 % -------------------------------------------------------------------------------------------------
 
 \subsection{Structural coeffect algebra}
 
-The \emph{structural coeffect scalar} structure is similar to \emph{flat coeffect algebra} with the
-exception that it drops the $\czip$ operation. It only provides a monoid $(\C, \cseq, \cunit)$
+The \emph{structural coeffect scalar} structure is similar to that of \emph{flat coeffect algebra}
+with the exception that it drops the $\czip$ operation. It only provides a monoid $(\C, \cseq, \cunit)$
 modelling sequential composition of computations and a monoid $(\C, \cpar, \czero)$ representing
-pointwise composition, as well as a relation $\cleq$ that defines subcoeffecting.
+pointwise composition, as well as the $\cleq$ relation.
 
 \begin{definition}
 \label{def:structural-scalar}
@@ -193,68 +171,56 @@ t\; \cleq\; t &
 \end{array}
 \end{equation*}
 %
-The following distributivity axioms hold:
+In addition, the following distributivity axioms hold:
 \begin{align*}
 \quad (\cclrd{r}\, \cpar\, \cclrd{s}) \;\cseq\; \cclrd{t} & = (\cclrd{r} \,\cseq\, \cclrd{t}) \;\cpar\; (\cclrd{s}\, \cseq\, \cclrd{t}) \\
 \quad \cclrd{t} \;\cseq\; (\cclrd{r}\, \cpar\, \cclrd{s}) & = (\cclrd{t} \,\cseq\, \cclrd{r}) \;\cpar\; (\cclrd{t}\, \cseq\, \cclrd{s})
 \end{align*}
-%
-In addition, we require the following two properties of $\czero, \cpar$ and $\cleq$:
-\begin{equation*}
-\begin{array}{l}
- \quad \cclrd{r}\,\cleq\,\cclrd{r'} \; \Rightarrow \; \forall\cclrd{s}.\;(\cclrd{r}\,\cseq\,\cclrd{s})\;\cleq\;(\cclrd{r'}\,\cseq\,\cclrd{s}) \\
- \quad \czero\;\cleq\;(\czero\,\cseq\,\cclrd{r})
-\end{array}
-\end{equation*}
 \end{definition}
 
+
 \noindent
-The structural coeffect scalar structure resembles flat coeffect algebra, but it differs in a
-number of important ways:
+The structural coeffect scalar structure resembles flat coeffect algebra, but it differs in two important ways:
 %
 \begin{itemize}
 \item The $\cpar$ operation of structural coeffect scalar is not required to be idempotent. In structural
   systems, we can track individual variable accesses and not requiring idempotence allows interesting
-  systems such as the one for bounded reuse (Section~\ref{sec:struct-semantics-examples}).
+  systems such as that for bounded reuse (Section~\ref{sec:struct-semantics-examples}).
 
 \item In the flat coeffect calculus, we used the $\czip$ operation to merge the annotations of contexts
   available from the declaration site and the call site or, in the syntactic reading, to split the
-  context requirements. In structural systems, this is handled directly by vectors and so $\czip$
-  is no longer needed.
-
-\item We now require two properties that relate the ordering $\cleq$ with coeffects composed
-  via $\cpar$ and with $\czero$. These were previously required for bottom-pointed substitution lemma
-  (Lemma~\ref{thm:cbn-substitution-bot}). Here, we require them for all structural coeffects as it holds
-  for all our examples; it is needed for the structural version of the substitution lemma
-  (Lemma~\ref{thm:structural-substitution}).
+  context demands. Structural systems \emph{append vectors} of annotations instead of
+  \emph{merging annotations} and so $\czip$ is no longer needed.
 \end{itemize}
 
 \noindent
 In the structural coeffect calculus, the scalar coeffect structure is supplemented by a vector
-structure. Combining and splitting of coeffects becomes just vector concatenation or splitting,
-respectively; these are provided by the tensor product. The operations on vectors are indexed by
-integers representing the lengths of the vectors. The additional structure required by the type
-system for structural coeffect calculi is given by the following definition.
+structure. The vector structure is used to manipulate vectors of coeffect scalars attached to a
+variable context. The required structure is captured by the following definition.
 
 \begin{definition}
 A \emph{\aclrd{structural coeffect algebra}} is formed by a structural coeffect scalar
 $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ equipped with the following additional structures:
 
 \begin{itemize}
+\vspace{-0.3em}
 \item Coeffect vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$, ranging over
   structural coeffect scalars indexed by vector lengths $\sclrd{m}, \sclrd{n} \in \sclrd{\mathbb{N}}$.
 
-\item An operation that constructs a vector from scalars indexed by the vector length
+\vspace{-0.3em}
+\item A family of operations (indexed by the vector length) that construct a vector from scalars
   $\alift{-}_{\sclrd{n}} : \C \times \ldots \times \C \rightarrow \C^{\sclrd{n}}$
   and an operation that returns the vector length such that
   $\alen{\aclrd{\textbf{r}}} = \sclrd{n}$ for $\aclrd{\textbf{r}} : \C^{\sclrd{n}}$
 
+\vspace{-0.3em}
 \item A pointwise extension of the $\cseq$ operator written as $\cclrd{t} \,\aseq\, \aclrd{\textbf{s}}$
   such that\\ $\cclrd{t} \,\aseq\, \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} =
     \alift{\cclrd{t} \,\cseq\,\cclrd{r_1}, \ldots, \cclrd{t} \,\cseq\,\cclrd{r_n}}$.
 
+\vspace{-0.3em}
 \item An indexed tensor product $\atimes_{\sclrd{n},\sclrd{m}} : \C^{\sclrd{n}} \times \C^{\sclrd{m}} \rightarrow \C^{\sclrd{n}+\sclrd{m}}$
-  that is used in both directions -- for vector concatenation and for splitting --
+  that is bijective and is used in both directions -- for vector concatenation and for splitting --
   which is defined as $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}
      \atimes_{\sclrd{n}, \sclrd{m}} \alift{\cclrd{s_1}, \ldots, \cclrd{s_m}}
    = \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}, \cclrd{s_1}, \ldots, \cclrd{s_m}}$
@@ -263,14 +229,36 @@ $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ equipped with the following addition
 
 \noindent
 The fact that the tensor product $\atimes_{\sclrd{n},\sclrd{m}}$ is indexed by the lengths
-of the two vectors means that we can use it unambiguously for both concatenation of vectors
-and for splitting of vectors, provided that the lengths of the resulting vectors are known.
+of the two vectors means that we can use it unambiguously for concatenating two vectors and
+splitting of a vector, provided that the lengths of the resulting vectors are known.
 In the following text, we usually omit the indices and write just
 $\aclrd{\textbf{r}} \atimes \aclrd{\textbf{s}}$, because the lengths of the coeffect vectors
 can be determined from the lengths of the matching free variable context vectors.
-More generally, we could see the the coeffect annotations as \emph{containers}
+More generally, we could see the coeffect annotations as \emph{containers}
 \cite{types-containers}. This approach is used in Section~\ref{sec:further-unified} to unify flat
 and structural systems.
+
+%---------------------------------------------------------------------------------------------------
+
+\subsection{Structural coeffect types}
+\label{sec:struct-calculus-types}
+
+The type system for the structural coeffect calculus is shown in Figure~\ref{fig:struct-types}.
+It is similar to substructural type systems
+\cite{substruct-attpl-intro} in how it handles free variable contexts. In the type system for
+flat coeffects (Section~\ref{sec:flat-calculus-types}), the (\emph{var}) rule implicitly allows
+\emph{weakening} and \emph{exchange} by ignoring other variables in the context and
+(\emph{app}) implicitly allows \emph{contraction} by passing the same context to both sub-expressions.
+
+In the structural system, this is made explicit by adding \emph{structural rules}.
+While substructural type systems usually remove some of the rules, we keep all three and
+use them to track how variables are used. This is done by manipulating the coeffect annotations
+in parallel with manipulating the variable contexts. As in substructural type systems, (\emph{app})
+checks the types of sub-expressions in disjoint parts of the free variable contexts and
+(\emph{var}) requires the context to contain exactly one variable. The typing rule for let binding in
+structural coeffects is a derived rule and we discuss it later in Section~\ref{sec:structural-exts-let}.
+
+~
 
 %---------------------------------------------------------------------------------------------------
 
@@ -296,12 +284,6 @@ and structural systems.
 \tyrule{abs}
   {\coctx{\Gamma, x\!:\!\tau_1}{\aclrd{\textbf{r}}\,\atimes\,\alift{\cclrd{s}}} \vdash e : \tau_2}
   {\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash \lambda x:\tau_1.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
-\end{equation*}
-\begin{equation*}
-\tyrule{let}
-  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 &
-    \coctx{\Gamma_2, x\!:\!\tau_1}{\aclrd{\textbf{s}}\;\atimes\;\alift{\cclrd{t}}} \vdash e_2 : \tau_2}
-  {\coctx{\Gamma_1, \Gamma_2}{(\cclrd{t} \,\aseq\, \aclrd{\textbf{r}}) \;\atimes\; \aclrd{\textbf{s}}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
 \end{equation*}
 
 \vspace{1em}
@@ -333,36 +315,42 @@ and structural systems.
 \end{array}
 \end{equation*}
 
-\vspace{1em}
-{\small c.) Non-syntax-directed subcoeffecting rule:}
-\begin{equation*}
-\tyrule{sub}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s'}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}
-  {\coctx{\Gamma_1,x\!:\!\tau_1,\Gamma_2}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}
-\quad
-(\cclrd{s'} \cleq \cclrd{s})
-\end{equation*}
-
 \figcaption{Type system for the structural coeffect calculus}
 \label{fig:struct-types}
 \end{figure}
 
 %---------------------------------------------------------------------------------------------------
 
-\subsection{Structural coeffect types}
-\label{sec:struct-calculus-types}
+\paragraph{Variable contexts.}
+In Chapter~\ref{ch:flat}, the free variable context $\Gamma$ was treated as a set. In the type
+system for the structural coeffect calculus, the variable context is treated as a vector, with
+an additional condition that a cannot appear multiple times. We also write $\xlen{-}$ for the
+length of the vector:
+%
+\begin{equation*}
+\begin{array}{l}
+ \Gamma = \langle x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n \rangle \qquad \textnormal{such that}~~\forall i, j ~.~ i \neq j \implies x_i \neq x_j\\
+ \xlen{\langle x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n \rangle} = n
+\end{array}
+\end{equation*}
+%
+We use the usual notation $x_1\!:\!\tau_1, \ldots, x_1\!:\!\tau_1 \vdash e : \tau$ for
+typing judgements, but the free variable context should be understood as a vector.
+The notation $\Gamma_1, \Gamma_2$ is used for concatenation of vectors of variables. That is,
+given a context $\Gamma_1 = \langle x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n \rangle $ and a context
+$\Gamma_2 = \langle x_{n+1}\!:\!\tau_{n+1}, \ldots, x_m\!:\!\tau_m \rangle $ then
+$\Gamma_1, \Gamma_2 = \langle x_1\!:\!\tau_1, \ldots, x_m\!:\!\tau_m \rangle$.
 
-The type system for the structural coeffect calculus is similar to substructural type systems
-in how it handles free variable contexts. The \emph{syntax-driven} rules do not implicitly allow
-weakening, exchange or contraction -- this is done by checking the types of sub-expressions
-in disjoint parts of the free variable context. Unlike in substructural logics, our system
-does allow weakening, exchange and contraction, but via explicit \emph{structural} rules that
-perform corresponding transformation on the coeffect annotation.
+In the typing rules, free variable contexts are annotated with vectors of structural coeffect scalars,
+written as $\coctx{x_1\!:\tau_1,\ldtos,x_n\!:\!\tau_n}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}}$.
+Meta-variables ranging over coeffect vectors are written as $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{t}}$
+(using bold face and colour to distinguish them from scalar meta-variables) and the length of a
+coeffect vector is written as $\alen{\aclrd{\textbf{r}}}$.
 
 \paragraph{Syntax-driven rules.}
 The syntax-driven rules of the type system are shown in Figure~\ref{fig:struct-types} (a).
 The variable access rule (\emph{var}) annotates the corresponding variable as being accessed
-using $\cunit$. Note that, as in substructural systems, the free variable context contains
+using $\cunit$. As in substructural systems, the free variable context contains
 \emph{only} the accessed variable. Other variables can be introduced using explicit weakening.
 Constants (\emph{const}) are type checked in an empty variable context, which is annotated with
 an empty vector of coeffect annotations.
@@ -370,8 +358,8 @@ an empty vector of coeffect annotations.
 The (\emph{abs}) rule assumes that the free variable context of the body can be split into
 a potentially empty \emph{declaration site} and a singleton context containing the bound
 variable. The corresponding splitting is performed on the coeffect vector, uniquely associating
-the annotation $\cclrd{s}$ with the bound variable $x$. This means that the typing rule removes
-non-determinism of the type inference present in flat coeffect systems.
+the annotation $\cclrd{s}$ with the bound variable $x$. This form of typing rule obviates the
+ambiguity in splitting of context demands present in the flat coeffect systems.
 
 In (\emph{app}), the sub-expressions $e_1$ and $e_2$ use free variable contexts $\Gamma_1, \Gamma_2$
 with coeffect vectors $\aclrd{\textbf{r}}, \aclrd{\textbf{s}}$, respectively. The function
@@ -383,9 +371,9 @@ variables in $\Gamma_2$ are used to obtain the argument value, which is then seq
 composed with the function, resulting in $\cclrd{t}\,\aseq\,\aclrd{\textbf{s}}$.
 
 \paragraph{Structural rules.}
-The rules shown in Figure~\ref{fig:struct-types} (b) are not syntax-directed and
-allow different transformation of the free variable context. They correspond to the
-transformations known as \emph{weakening}, \emph{exchange} and \emph{contraction}
+These are shown in Figure~\ref{fig:struct-types} (b). The three structural rules are not
+syntax-directed and allow different transformation of the free variable context. They correspond
+to the transformations known as \emph{weakening}, \emph{exchange} and \emph{contraction}
 from substructural systems.
 
 Rule (\emph{weak}) allows adding a variable to the context, extending the coeffect
@@ -394,16 +382,8 @@ in the context, performing the same reordering on the coeffect vector. Finally r
 variables in the free variable context are required to be \emph{unique}. The (\emph{contr}) rule
 allows re-using a variable. We can type check sub-expressions using two separate variables and
 then unify them using substitution. The resulting variable is annotated with $\cpar$ and it
-is the only place in the structural coeffect system where context requirements are combined
+is the only place in the structural coeffect system where context demands are combined
 (semantically, this is where the available context is shared).
-
-\paragraph{Subcoeffecting.}
-Finally, Figure~\ref{fig:struct-types} (c) shows the subcoeffecting rule (\emph{sub}).
-As with the flat coeffect calculus, we include it mainly to guide the understanding of the
-system, but we treat it as an additional rule and do not discuss it in the subsequent theory.
-The rule would be needed in languages with conditionals and other language features. It is
-worth noting that allowing subcoeffecting on coeffect scalars belonging to individual variables
-is sufficient for structural systems.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -412,12 +392,13 @@ is sufficient for structural systems.
 The type system for structural coeffects appears more complicated when compared to the flat
 version, but it is in many ways simpler -- it removes the ambiguity arising from the use
 of $\czip$ in lambda abstraction and, as discussed in Section~\ref{sec:struct-syntax}, has
-a cleaner equational theory.
+a more desirable equational theory. By contrast, the flat system allows certain interesting
+use cases that \emph{rely} on the flexibility of $\czip$ in lambda abstraction (such as implicit
+parameters), that cannot be expressed in the structural system.
 
-\paragraph{Flat and structural context.} In flat systems, lambda abstraction splits context
-requirements using $\czip$ and application combines them using $\cpar$. In the structural
-version, both of these are replaced with $\atimes$. The $\czip$ operation is not needed, but
-$\cpar$ is still used in the (\emph{contr}) rule.
+In flat systems, lambda abstraction splits context demands using $\czip$ and application
+combines them using $\cpar$. In the structural version, both of these are replaced with $\atimes$.
+The $\czip$ operation is not needed, but note the use of $\cpar$ in the (\emph{contr}) rule.
 
 This suggests that $\czip$ and $\cpar$ serve two roles in flat coeffects. First, they are used
 as over-approximations and under-approximations of $\atimes$. This is demonstrated by the
@@ -429,42 +410,9 @@ potentially duplicating parts of it (over-approxi\-mation)\footnote{Because of t
 version of coeffect systems \cite{coeffects-icalp13} used $\wedge$ and $\vee$.}.
 
 Secondly, the operator $\cpar$ is used when the semantics passes a given context to multiple
-sub-expressions. In flat systems, the context is shared in (\emph{app}) and (\emph{pair}), because
-the sub-expressions may share variables. In structural systems, the sharing is isolated into an
-explicit contraction rule.
-
-\paragraph{Let binding.}
-The other aspect that makes structural systems simpler is that they remove the need for
-separate let binding. As discussed in Section~\ref{sec:flat-exts-let}, flat calculi include
-let binding that gives a \emph{more precise} typing than combination of abstraction and
-application. Structural coeffect systems avoid this issue.
-
-\begin{remark}[Let binding]
-\label{thm:structural-letbinding}
-In a structural coeffect calculus, the typing of $\kvd{let}~x=e_1~\kvd{in}~e_2$ can be
-seen as a derived rule, \ie~its typing is equivalent to the typing of the expression
-$(\lambda x.e_2)~e_1$.
-
-\end{remark}
-\begin{proof}
-Consider the following typing derivation for $(\lambda x.e_2)~e_1$. Note that
-in the last step, we apply (\emph{exch}) repeatedly to swap $\Gamma_1$ and $\Gamma_2$.
-%
-\begin{equation*}
-\inference
-  { \begin{array}{l}\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1\vspace{-1.6em}\end{array} &
-    \inference
-      { \coctx{\Gamma_2, x\!:\!\tau_1}{\aclrd{\textbf{s}}\;\atimes\;\alift{\cclrd{t}}} \vdash e_2 : \tau_2 }
-      { \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash \lambda x.e_2 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2} \vspace{0.2em} }
-  { \inference
-      { \coctx{\Gamma_2, \Gamma_1}{\aclrd{\textbf{s}} \;\atimes\; (\cclrd{t} \,\aseq\, \aclrd{\textbf{r}})} \vdash (\lambda x.e_2)~e_1 : \tau_2 }
-      { \coctx{\Gamma_1, \Gamma_2}{(\cclrd{t} \,\aseq\, \aclrd{\textbf{r}}) \;\atimes\;  \aclrd{\textbf{s}} } \vdash (\lambda x.e_2)~e_1 : \tau_2 } }
-\end{equation*}
-
-\noindent
-The assumptions and conclusions match those of the (\emph{let}) rule.
-\end{proof}
-
+sub-expressions. In flat systems, the context is shared in (\emph{app}) and the additional
+(\emph{pair}) rule for constructing tuple values, because the sub-expressions may share variables.
+In structural systems, the sharing is isolated into an explicit contraction rule.
 
 %---------------------------------------------------------------------------------------------------
 
@@ -474,13 +422,13 @@ The structural coeffect calculus above can be instantiated to obtain the 3 struc
 presented in Section~\ref{sec:applications-structural}. Two of them -- structural dataflow and
 structural liveness provide a more precise tracking of properties that can be tracked using
 flat systems. Formally, any flat coeffect algebra can be turned into a structural coeffect scalar
-(by dropping the $\czip$ operator), but this does not always give us a meaningful system -- for
-example, implicit parameters could be attached to individual variables, but, to our knowledge, this
-has not been used in any practical system.
+(by dropping the $\czip$ operator). This is useful for liveness and dataflow, but it does not yield
+a practically useful system for the flat algebra coeffect for implicit parameters.
 
 On the other hand, some of the structural systems do not have a flat equivalent, typically
 because there is no appropriate $\czip$ operator that could be added to form the flat coeffect
-scalar. This is the case, for example, for the bounded variable use.
+scalar. This is the case, for example, for the system tracking bounded variable use
+(Example~\ref{ex:structural-ex-bll}).
 
 \begin{example}[Structural liveness]
 The structural coeffect scalar for liveness is formed by
@@ -495,14 +443,14 @@ by $(\mathbb{N}, +, \mathit{max}, 0, 0, \leq)$.
 \end{example}
 
 \noindent
-For the two examples that have both flat and structural version, obtaining the structural coeffect
-algebra is easy. As shown by the examples above, we simply omit the $\czip$ operation. The laws
-required by a structural coeffect algebra are the same as those required by the flat version
+These two examples have both flat and structural versions. For them, obtaining the structural
+coeffect algebra is easy. As shown by the examples above, we simply omit the $\czip$ operation. The
+laws required by a structural coeffect algebra are the same as those required by the flat version
 and so the above definitions are both valid. Similar construction can be used for the
 \emph{optimized dataflow} example from Section~\ref{sec:flat-calculus-examples}.
 
-It is important to note that this gives us a systems with \emph{different} properties. The
-information are now tracked per-variable rather than for entire contexts. For dataflow,
+It is important to note that this gives us a systems with \emph{different} properties.
+Information is now tracked per-variable rather than for entire contexts. For dataflow,
 we also need to adapt the typing rule for the \kvd{prev} construct. Here, we write $\aclrd{+}$
 for a pointwise extension of the $+$ operator, such that
 $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} \aclrd{+} k = \alift{\cclrd{r_1} + k, \ldots, \cclrd{r_n} + k}$.
@@ -515,21 +463,23 @@ $\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} \aclrd{+} k = \alift{\cclrd{r_1} + k, 
 %
 The rule appears similar to the flat one, but there is an important difference. Because of the
 structural nature of the type system, it only increments the required number of values for
-variables that are used in the expression $e$. Annotations of other variables can be left
-unchanged.
+variables that are actually used in the expression $e$, whereas in the flat coeffect system the rule
+incremented the annotation for the whole context. Thanks to the structural nature of the system,
+annotations of variables that do not appear in the expression $e$ can be left unchanged.
 
-Before looking at the semantics and equational properties of structural coeffect systems,
-we consider bounded variable use, which is an example of structural system that does not
-have a flat counterpart.
+Before looking at properties of structural coeffect systems,
+we consider a system for tracking bounded variable use, which is an example of structural system
+that does not have a flat counterpart.
 
 \begin{example}[Bounded variable reuse]
+\label{ex:structural-ex-bll}
 The structural coeffect algebra for tracking bounded variable use is given by
 $(\mathbb{N}, \ast, +, 1, 0, \leq)$
 \end{example}
 
 \noindent
 Similarly to the structural calculus for dataflow, the calculus for bounded variable reuse
-annotates each variable with an integer. However, the integer denotes how many times is the variable
+annotates each variable with an integer. However, the integer now denotes how many times is the variable
 \emph{accessed} rather than how many \emph{past values} are needed. The resulting type system is
 the one shown in Figure~\ref{fig:applications-struct-live} in Chapter~\ref{ch:applications}.
 
@@ -570,18 +520,18 @@ the one shown in Figure~\ref{fig:applications-struct-live} in Chapter~\ref{ch:ap
 \tyrule{abs}
   {\coctx{\Gamma_1}{\aclrd{\textbf{t}}} \vdash e : \tau_2}
   {\coctx{\Gamma_2}{\aclrd{\textbf{r}}} \vdash \lambda x:\tau_1.e : \tau_1 \xrightarrow{\cclrd{s}} \tau_2 }
-\quad (\coctx{\Gamma_2}{\aclrd{\textbf{r}}}), \tau_1, \cclrd{s} = \ident{findvar}_x(\coctx{\Gamma_1}{\aclrd{\textbf{t}}})
+\quad (\coctx{\Gamma_2}{\aclrd{\textbf{r}}}), \cclrd{s} = \ident{findvar}_{x,\tau_1}(\coctx{\Gamma_1}{\aclrd{\textbf{t}}})
 \end{equation*}
 
 \vspace{1em}
 \begin{equation*}
 \begin{array}{l}
-\ident{exch}_x(\coctx{\Gamma}{\aclrd{\textbf{t}}})~=~(\coctx{\Gamma_1,\Gamma_2}{\aclrd{\textbf{t}_1} \atimes \aclrd{\textbf{t}_2}}), \tau, \cclrd{s} \quad \textnormal{where} \\
+\ident{findvar}_{x,\tau}(\coctx{\Gamma}{\aclrd{\textbf{t}}})~=~(\coctx{\Gamma_1,\Gamma_2}{\aclrd{\textbf{t}_1} \atimes \aclrd{\textbf{t}_2}}), \cclrd{s} \quad \textnormal{where} \\
 \qquad \xlen{\Gamma_1} = \alen{\aclrd{\textbf{t}_1}}~\textnormal{and}~\xlen{\Gamma_2} = \alen{\aclrd{\textbf{t}_2}} \\[-0.25em]
 \qquad x\!:\!\tau \in \Gamma~\textnormal{and}~
   \coctx{\Gamma}{\aclrd{\textbf{t}}} = \coctx{\Gamma_1, x\!:\!\tau, \Gamma_2}{\aclrd{\textbf{t}_1} \atimes \alift{\cclrd{s}} \atimes \aclrd{\textbf{t}_2}}
 \\[0.5em]
-\ident{findvar}_x(\coctx{\Gamma}{\aclrd{\textbf{t}}})~=~ (\coctx{\Gamma}{\aclrd{\textbf{t}}}), \tau, \czero \qquad (\textnormal{otherwise})
+\ident{findvar}_{x,\tau}(\coctx{\Gamma}{\aclrd{\textbf{t}}})~=~ (\coctx{\Gamma}{\aclrd{\textbf{t}}}), \czero \qquad (\textnormal{otherwise})
 \\[1em]
 \ident{mergevars}(\cclrd{t}, \coctx{\Gamma_1}{\aclrd{\textbf{r}}}, \coctx{\Gamma_2}{\aclrd{\textbf{s}}})~=~
   \coctx{\Gamma'_1, \Gamma'_2, \Gamma}{\aclrd{\textbf{r}'}\atimes(\cclrd{t} \,\aseq\, \aclrd{\textbf{s}'}) \atimes \aclrd{\textbf{c}} } \quad \textnormal{where}\\
@@ -613,54 +563,54 @@ the one shown in Figure~\ref{fig:applications-struct-live} in Chapter~\ref{ch:ap
 
 In the structural coeffect calculus, the lambda abstraction rule does not introduce ambiguity
 in the typing. This is in contrast with flat coeffect systems (most importantly, the one for
-implicit parameters), where lambda abstraction allowed arbitrary splitting of context requirements.
-In structural coeffect systems, the context requirements placed on the call site (attached to
+implicit parameters), where lambda abstraction allowed arbitrary splitting of context demands.
+In structural coeffect systems, the context demands placed on the call site (attached to
 the function type) are those of the bound variable.
 
 However, the type system for structural coeffect calculus in Figure~\ref{fig:struct-types}
-introduces another kind of ambiguity due to the fact that non syntax-directed structural rules
+introduces another kind of ambiguity due to the fact that non-syntax-directed structural rules
 can be applied repeatedly and in arbitrary order. As with the semantics for flat coeffect calculus
-in Chapter~\ref{ch:semantics}, we define the semantics of the structural coeffect calculus over
+in Chapter~\ref{ch:semantics}, we define the semantics of the structural coeffect calculus relative to
 a \emph{typing derivation} and so the meaning of a program depends on the typing derivation chosen.
-In this section, we specify how to choose the desired \emph{unique} typing derivation.
+In this section, we specify how to choose the desired \emph{unique} typing derivation, following
+the example of flat coeffect calculi as discussed in Section~\ref{sec:flat-unique}.
 
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Syntax-directed type system}
 
 In order to choose a unique typing derivation, we follow the example of substructural type systems
-\cite{substruct-attpl-intro} and introduce a syntax-directed version of the type system (also called
-\emph{algorithmic}). This replaces the non-syntax-directed rules for weakening, exchange and
-contraction with additional logic in places where contexts are combined. Given a typing derivation
-in the syntax-directed type system, we can then produce a matching typing derivation in the original
-type system.
+\cite{substruct-attpl-intro} and introduce a syntax-directed version of the type system.
+This replaces the non-syntax-directed rules for weakening, exchange and contraction with
+more complexity in the rules where contexts are combined  (\emph{app}) and variables removed (\emph{abs}).
+
+Given a typing derivation in the deterministic syntax-directed type system, we then choose a
+typing derivation in the original type system that uniquely specifies how to apply weakening,
+contraction and exchange. The algorithm given in Proposition~\ref{thm:struct-unique-transl}
+inserts only the necessary structural rules to rearrange variable context into the shape
+required by the assumptions.
 
 The syntax-directed version of the type system is shown in Figure~\ref{fig:struct-syntax-types}.
 The typing rules for variables (\emph{var}) and constants (\emph{const}) are the same as before.
 The two interesting rules are lambda abstraction and application.
 
 \paragraph{Lambda abstraction.}
-In lambda abstraction (\emph{abs}) in Figure~\ref{fig:struct-types}, we assume that the bound
+In the lambda abstraction (\emph{abs}) rule in Figure~\ref{fig:struct-types}, we assume that the bound
 variable is the last variable of the context. In the syntax-directed system, we do not make the
-same assumption. Instead, we use an auxiliary relation $\ident{findvar}_x$ that takes a typing
+same assumption. Instead, we use an auxiliary function $\ident{findvar}_{x,\tau}$ that takes a typing
 context $\coctx{\Gamma}{\aclrd{\textbf{t}}}$ and returns a context with the variable $x$ removed
-together with its type and coeffect.
+together with the coeffect originally attached to the variable. The $\ident{findvar}_x$ function is
+defined by two disjoint cases. The case when the variable $x$ is not present in the context
+corresponds to the (\emph{weak}) structural rule.
 
-The $\ident{findvar}_x$ relation is defined by two disjoint cases. If the variable $x$ is not
-present in the context, the context is returned as is and the returned coeffect is $\czero$.
-This case corresponds to the (\emph{weak}) structural rule. If the variable is not found in the
-context, the relation does not place any restrictions on the type of the variable and so $\tau$
-can be any type (this is the only reason why $\ident{findvar}$ is a relation rather than a function).
-If the variable $x$ appears in the context then $\ident{findvar}_x$ removes it together with its
-corresponding coeffect annotation and returns it as the result.
-
-\paragraph{Function application.} In the (\emph{app}) rule in Figure~\ref{fig:struct-types}, we
-assume that the variable contexts of the two sub-expressions can be merged. This requires that they
+\paragraph{Function application.} The (\emph{app}) rule in Figure~\ref{fig:struct-types}
+assumes that the variable contexts of the two sub-expressions can be merged. This requires that they
 contain disjoint variables, which can be always obtained by exchange and contraction. In the
 syntax-driven system, we merge coeffects of shared variables explicitly. This is done in the
 \ident{mergevars} function.
 
-The \ident{mergevars} function returns context consisting of three parts. Parts $\Gamma_1$
+As with $\ident{findvar}_{x,\tau}$, the \ident{mergevars} function is fully deterministic.
+It returns context consisting of three parts. Parts $\Gamma_1$
 and $\Gamma_2$ represent variables that appear only in the first or the second context; part
 $\Gamma$ contains common variables. The coeffect annotations corresponding to $\Gamma_1$ are
 the original annotations from $\aclrd{\textbf{r}}$; the coeffects corresponding to $\Gamma_2$
@@ -668,7 +618,7 @@ are composed with the coeffect of the function value $\cclrd{t} \,\aseq\, \aclrd
 as in the original (\emph{app}) rule. Finally, for shared variables, the coeffect is
 obtained by point-wise composition (as in contraction) of the coeffect for the two contexts
 $\cclrd{r_i} \;\cpar\; (\cclrd{t} \,\cseq\, \cclrd{s_j})$. The first coeffect corresponds to the
-context requirements in the sub-expression $e_1$ and the second coeffect corresponds to the
+context demands in the sub-expression $e_1$ and the second coeffect corresponds to the
 function argument $e_2$ sequentially composed with the coeffect $\cclrd{t}$ of the function
 (as in ordinary application rule).
 
@@ -678,16 +628,16 @@ function argument $e_2$ sequentially composed with the coeffect $\cclrd{t}$ of t
 \subsection{Properties}
 
 The syntax-directed type checking presented in the previous section gives a unique typing derivation
-that can be automatically turned into a valid typing derivation of the original type system
+that can be automatically turned into one of the valid typing derivations of the original type system
 presented in Figure~\ref{fig:struct-types}. This gives us a unique typing derivation for the
 structural coeffect calculus. As with the unique typing derivation for the flat coeffect system,
-this is used to give semantics of terms of the structural coeffect calculus. We also note that
-a well-typed program in the original type system has a typing derivation in the syntax-driven
-version.
+the chosen typing derivation is used to give semantics of terms of the structural coeffect calculus.
+We also note that a well-typed program in the original type system has a typing derivation in the
+syntax-driven version.
 
 As when discussing uniqueness of typing for flat coeffect systems (Section~\ref{sec:flat-unique}),
-we first give the inversion lemma (Lemma~\ref{thm:struct-invert}) and then prove the
-uniqueness of typing theorem (Theorem~\ref{thm:struct-unique}).
+we first give an inversion lemma (Lemma~\ref{thm:struct-invert}) and then prove
+uniqueness of typing (Theorem~\ref{thm:struct-unique}).
 
 \begin{lemma}[Inversion lemma for syntax-directed structural coeffects]
 \label{thm:struct-invert}
@@ -743,13 +693,16 @@ Case (\emph{app}) similarly to (\emph{abs}).
 \end{proof}
 
 \noindent
-As noted earlier, unique typing derivations obtained using the type system given in
-Figure~\ref{fig:struct-syntax-types} can be automatically turned into typing derivations
+As noted earlier, unique typing derivations obtained using the syntax-directed type system
+given in Figure~\ref{fig:struct-syntax-types} can be automatically turned into typing derivations
 of the original (non-syntax-directed) structural coeffect type system in Figure~\ref{fig:struct-types}.
-The following remark provides the details.
+Unlike in the flat coeffect system, this does not determine how context demands are split
+(as this is done deterministically to match the variable bindings), but it specifies how are
+the structural rules (weakening, exchange and contraction) applied.
+The following proposition provides the details.
 
-\begin{remark}[Admisibility of unique typing for implicit parameters]
-\label{thm:flat-impl-admis}
+\begin{proposition}[Choosing a unique typing derivation]
+\label{thm:struct-unique-transl}
   If $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$ (using the rules in
   Figure~\ref{fig:struct-syntax-types}) then there is a unique typing derivation
   using the typing rules from Figure~\ref{fig:struct-types} with a conclusion
@@ -780,7 +733,116 @@ Case (\emph{app}): Take the typing derivations for the sub-expressions $e_1$ and
   (\emph{contr}), renaming both $x'$ and $x''$ to the original name $x$. Repeat this step for
   all variables that were renamed. The resulting variable context is $\Gamma$ and the resulting
   coeffect annotation is the same as in the original typing derivation.
-\end{remark}
+\end{proposition}
+
+
+
+% ==================================================================================================
+%
+%    #######
+%    #       #    # ##### ###### #    #  ####  #  ####  #    #  ####
+%    #        #  #    #   #      ##   # #      # #    # ##   # #
+%    #####     ##     #   #####  # #  #  ####  # #    # # #  #  ####
+%    #         ##     #   #      #  # #      # # #    # #  # #      #
+%    #        #  #    #   #      #   ## #    # # #    # #   ## #    #
+%    ####### #    #   #   ###### #    #  ####  #  ####  #    #  ####
+%
+% ==================================================================================================
+
+\section{Syntactic properties and extensions}
+\label{sec:structural-exts}
+
+When discussing the structural coeffect calculus in Section~\ref{sec:struct-calculus}, we
+considered a language with variables, constants, application and abstraction. This lets us focus
+on the key properties of the coeffects, but it neglects a number of practical concerns.
+In this section, we extend the language with let binding and subcoeffecting. This is useful
+in practice, but it also shows other interesting aspects of the theory. Additional extensions that
+make the coeffect language practically useful are given by the implementation in Chapter~\ref{ch:impl}.
+
+\subsection{Let binding}
+\label{sec:structural-exts-let}
+
+In the flat coeffect calculus, we included a special typing rule for let binding. As discussed in
+Section~\ref{sec:flat-exts-let}, this provides a more precise typing than the rule derived from
+abstraction and application, because it removes the ambiguity introduced by abstraction. For the
+structural coeffect system, the typing rule for let binding can be treated as a derived rule.
+The following shows the structural typing for \kvd{let}:
+
+\begin{equation*}
+\tyrule{let}
+  { \coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1 &
+    \coctx{\Gamma_2, x\!:\!\tau_1}{\aclrd{\textbf{s}}\;\atimes\;\alift{\cclrd{t}}} \vdash e_2 : \tau_2}
+  {\coctx{\Gamma_1, \Gamma_2}{(\cclrd{t} \,\aseq\, \aclrd{\textbf{r}}) \;\atimes\; \aclrd{\textbf{s}}} \vdash \kvd{let}~x=e_1~\kvd{in}~e_2 : \tau_2 }
+\end{equation*}
+%
+Thanks to the structural nature of the calculus, the coeffect $\cclrd{t}$ that is associated with
+the variable $x$ is uniquely determined (as in function abstraction). It is then sequentially
+composed with the coeffects attached to the variables that actually appear in the sub-expression
+$e_1$.
+
+\begin{proposition}[Let binding]
+\label{thm:structural-letbinding}
+In a structural coeffect calculus, the typing of $\kvd{let}~x=e_1~\kvd{in}~e_2$ can be
+seen as a derived rule, \ie~its typing is equivalent to the typing of the expression
+$(\lambda x.e_2)~e_1$.
+\end{proposition}
+\begin{proof}
+Consider the following typing derivation for $(\lambda x.e_2)~e_1$. Note that
+in the last step, we apply (\emph{exch}) repeatedly to swap $\Gamma_1$ and $\Gamma_2$.
+%
+\begin{equation*}
+\inference
+  { \begin{array}{l}\coctx{\Gamma_1}{\aclrd{\textbf{r}}} \vdash e_1 : \tau_1\vspace{-1.6em}\end{array} &
+    \inference
+      { \coctx{\Gamma_2, x\!:\!\tau_1}{\aclrd{\textbf{s}}\;\atimes\;\alift{\cclrd{t}}} \vdash e_2 : \tau_2 }
+      { \coctx{\Gamma_2}{\aclrd{\textbf{s}}} \vdash \lambda x.e_2 : \tau_1 \xrightarrow{\cclrd{t}} \tau_2} \vspace{0.2em} }
+  { \inference
+      { \coctx{\Gamma_2, \Gamma_1}{\aclrd{\textbf{s}} \;\atimes\; (\cclrd{t} \,\aseq\, \aclrd{\textbf{r}})} \vdash (\lambda x.e_2)~e_1 : \tau_2 }
+      { \coctx{\Gamma_1, \Gamma_2}{(\cclrd{t} \,\aseq\, \aclrd{\textbf{r}}) \;\atimes\;  \aclrd{\textbf{s}} } \vdash (\lambda x.e_2)~e_1 : \tau_2 } }
+\end{equation*}
+
+\noindent
+The assumptions and conclusions match those of the (\emph{let}) rule.
+\end{proof}
+
+
+\subsection{Subcoeffecting}
+\label{sec:structural-exts-sub}
+
+When discussing the flat coeffect calculus in Section~\ref{sec:flat-calculus-algebra}, we noted
+that the $\cleq$ operation for \emph{flat coeffect algebra} can be defined in terms of $\cpar$
+as follows:
+%
+\begin{equation*}
+\cclrd{r} \;\cleq\; \cclrd{s} \;\Longleftrightarrow\; \cclrd{r} \;\cpar\; \cclrd{s} \;=\; \cclrd{s}
+\end{equation*}
+%
+This is not the case for the \emph{structural coeffect scalar} structure. For example, in the
+calculus for tracking bounded reuse, the $\cpar$ operator is defined as $+$ (on integers) and
+$\cleq$ is just $\leq$ and so the above equivalence does not hold. For this reason, we included
+$\cleq$ as an explicit part of both of the structures.
+
+The subcoeffecting rule is not syntax directed and we did not include it in the core calculus
+in order to keep the discussion about choosing unique derivation in Section~\ref{sec:struct-unique}
+focused on the key problem -- structural rules. The subcoeffecting rule for structural coeffect
+calculus looks as follows:
+%
+\begin{equation*}
+\tyrule{sub}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s'}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}
+  {\coctx{\Gamma}{\aclrd{\textbf{r}} \atimes \alift{\cclrd{s}} \atimes \aclrd{\textbf{q}}} \vdash e : \tau}
+\quad
+(\cclrd{s'} \cleq \cclrd{s})
+\end{equation*}
+%
+The sub-coeffecting is applied on individual variables rather than on the whole context, but it
+could be easily extended to a relation on vectors $\aclrd{\leq}$. Subtyping on functions can be
+defined in exactly the same way as for the flat coeffect calculus (Section~\ref{sec:flat-exts-sub}),
+because functions are annotated with a (single) coeffect scalar. It is worth noting that
+subcoeffecting is needed in Lemma~\ref{thm:structural-substitution} (discussed in the next
+section) when performing a substitution for a variable in an expression that does not contain the
+substituted variable.
+
 
 
 % ==================================================================================================
@@ -798,28 +860,28 @@ Case (\emph{app}): Take the typing derivations for the sub-expressions $e_1$ and
 \section{Syntactic equational theory}
 \label{sec:struct-syntax}
 
-The properties of the structural coeffect algebra guarantee that certain equational properties
-hold in all instances of the structural coeffect calculus. In this section, we look at these common
-properties that we get ``for free'' from the structural coeffect calculus. We start the discussion
-by briefly considering the key aspects that make the equational theory of flat and structural
-coeffects different.
+The properties of the structural coeffect algebra, together with two additional weak conditions,
+guarantee that certain equational properties on terms hold in all instances of the structural
+coeffect calculus that we consider in this thesis. In this section, we look at these common
+properties. In Section~\ref{sec:struct-syntax-intro}, we first briefly compare equational theory
+for flat coeffects (Section~\ref{sec:flat-syntax}) and structural coeffects (Section~\ref{sec:struct-syntactic-thms}).
 
 \subsection{From flat coeffects to structural coeffects}
 \label{sec:struct-syntax-intro}
 
-When discussing syntactic reductions for the flat calculus in Section~\ref{sec:flat-syntax},
+When discussing syntactic reductions for the flat calculus,
 we noted that call-by-name reduction does not, in general, preserve typing  for all
 flat coeffect calculi. In the structural coeffect calculus, $\beta$-reduction and also $\eta$-expansion
 preserve typing for all instances of the calculus. Using the terminology of Pfenning and Davies
 \cite{logic-modal-reconstruction}, the structural coeffect calculus satisfies both the \emph{local
 soundness} and the \emph{local completeness} properties.
 
-\paragraph{Substitution for flat coeffects.}
+\paragraph{Substitution for flat coeffects (recap).}
 The less obvious (\emph{top-pointed}) variant of the substitution lemma for flat coeffects
 (Lemma~\ref{thm:cbn-substitution-bot}) required all operations of the flat coeffect algebra
 to coincide. This enables substitution to preserve the type of expressions, because all
-additional requirements arising as the result of the substitution can be associated with the
-declaration context. For example, consider the following example where implicit parameter
+additional demands arising as the result of the substitution can be associated with the
+declaration context. For example, consider the following example where Haskell-style implicit parameter
 $\ident{?offset}$ is substituted for the variable $y$:
 %
 \begin{equation*}
@@ -841,7 +903,7 @@ Here, the flat coeffect calculus gives us typing with limited \emph{precision}, 
 enough \emph{flexibility} to prove the substitution lemma.
 
 \paragraph{Substitution for structural coeffects.}
-In contrast, the substitution lemma (Lemma~\ref{thm:structural-substitution}, shown later on
+By contrast, the substitution lemma (Lemma~\ref{thm:structural-substitution},
 page~\pageref{thm:structural-substitution}) for structural coeffects can be proven because
 structural coeffect systems provide enough \emph{precision} to identify exactly with which
 variable should a context requirement be associated.
@@ -854,13 +916,13 @@ expression $e$) and we substitute $w+z$ for $y$:
 \begin{array}{rclcll}
  \coctx{y\!:\!\ident{int}}{ \alift{\cclrd{2}} }
   &\narrow{\vdash}& \lambda x.\kvd{prev}~(x + \kvd{prev}~y) &\narrow{:}&
-   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & \quad(\textit{before}) \\
-\coctx{w\!:\!\ident{int}, z\!:\!\ident{int}}{\cclrd{2}\cclrd{\ast}\alift{\cclrd{1},\cclrd{1}}}
+   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & (\textit{before}) \\
+\coctx{w\!:\!\ident{int}, z\!:\!\ident{int}}{\cclrd{2}\aclrd{\ast}\alift{\cclrd{1},\cclrd{1}}}
   &\narrow{\vdash}& \lambda x.\kvd{prev}~(x + \kvd{prev}~(w+z))) &\narrow{:}&
-   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & \quad(\textit{after}) \\
+   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & (\textit{after}) \\
 \coctx{w\!:\!\ident{int}, z\!:\!\ident{int}}{\alift{\cclrd{2},\cclrd{2}}}
   &\narrow{\vdash}& \lambda x.\kvd{prev}~(x + \kvd{prev}~(w+z))) &\narrow{:}&
-   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & \quad(\textit{final})
+   \ident{int} \xrightarrow{\cclrd{ 1 }} \ident{int} & (\textit{equivalently})
 \end{array}
 \end{equation*}
 %
@@ -872,9 +934,10 @@ The other aspect demonstrated in the example is how the coeffect of the substitu
 variable affects the free-variable context of the substituted expression. Here, the
 original variable $y$ is annotated with $\cclrd{2}$ and we substitute it for an
 expression $w+z$ with free variables $w,z$ annotated with $\alift{\cclrd{1}, \cclrd{1}}$.
-The substitution applies the operation $\aseq$ (modelling sequential composition) to
-the annotation of the new context -- in the above example
-$\cclrd{2}\cclrd{\ast}\alift{\cclrd{1}, \cclrd{1}}=\alift{\cclrd{2}, \cclrd{2}}$.
+The substitution applies the operation $\aclrd{\ast}$ (which stands for the sequential
+composition $\aseq$ from the structural coeffect algebra) to the annotation of the new context --
+in the above example the coeffect $\cclrd{2}\cclrd{\ast}\alift{\cclrd{1}, \cclrd{1}}$ (\emph{after}) is
+equivalent to the coeffect $\alift{\cclrd{2}, \cclrd{2}}$ (\emph{equivalently}).
 
 \subsection{Holes and substitution lemma}
 \label{sec:struct-syntactic-subst}
@@ -889,16 +952,16 @@ contracting $x_1$ and $x_2$ and then applying lambda abstraction. During the red
 $(\lambda x.x+x)~(y+z)$ we need to substitute $y_1+z_1$ for $x_1$ and $y_2+z_2$ for $x_2$.
 This is similar to substitution lemma in other structural variants of $\lambda$-calculus,
 such as the bunched typing system \cite{substruct-bunched}. To express the substitution
-lemma later in this section, we first define the notion of a \emph{context with holes}:
+lemma later in this section, we follow the example of bunched type system and define the
+notion of a \emph{context with holes}. A context with holes is a context such as
+$\coctx{x_1\!:\!\tau_1, \ldots, x_k\!:\!\tau_k}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_k}}}$,
+where some of the variable typings $x_i\!:\!\tau_i$ and corresponding coeffects $\cclrd{r_i}$
+are replaced by \emph{holes} written as $\coctx{-}{-}$.
 
 \begin{definition}[Context with holes]
-A \emph{context with holes} is a context such as $\coctx{x_1\!:\!\tau_1, \ldots, x_k\!:\!\tau_k}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_k}}}$,
-where some of the variable typings $x_i\!:\!\tau_i$ and corresponding coeffects $\cclrd{r_i}$
-are replaced by \emph{holes} written as $-$.
-
-\begin{equation*}
-~\Delta[\,\coctx{-}{-}\,]_n = \Delta[\,\underbrace{\coctx{-}{-} \,|\, \ldots \,|\, \coctx{-}{-}}_{ n-\textit{times} } \,]
-\end{equation*}
+We write $\Delta[\,\coctx{-}{-}\,]_n$ for a \emph{context with $n$ holes} (in addition to some
+number of variables). A context with holes is defined inductively over the number of holes:
+%
 \begin{equation*}
 \begin{array}{lcl}
  \Delta[\,\coctx{-}{-}\,]_n &\narrow{:=}&
@@ -923,7 +986,7 @@ obtain an ordinary coeffect-annotated context.
 \begin{definition}[Hole filling] Given a context with $n$ holes $\coctx{\Delta}{\textbf{s}} \in
 \Delta[\,\coctx{-}{-}\,]_n$, the hole filling operation written as
 $\coctx{\Delta}{\textbf{s}}[\,\coctx{\Gamma_1}{\aclrd{\mathbf{r_1}}} \,|\, \ldots \,|\, \coctx{\Gamma_n}{\aclrd{\mathbf{r_n}}} \,]$,
-which replaces the holes by the specified variables and corresponding coeffect annotations, is defined as:
+replaces holes by the specified variables and corresponding coeffect annotations and is defined as:
 %
 \begin{equation*}
 \begin{array}{rcl}
@@ -952,21 +1015,12 @@ substitution does not require all coeffect algebra operations to coincide and so
 is more interesting than in the bottom-pointed substitution for flat coeffects, where it used
 the only available operator (Lemma~\ref{thm:cbn-substitution-bot}).
 
-Substitution can be seen as a form of sequencing, \ie~the term $\subst{e_1}{x}{e_2}$ should have
-the same type as the term $\kvd{let}~x=e_2~\kvd{in}~e_1$. In other words, we first need to obtain the
-value of the expression (requiring $\aclrd{\textbf{t}}$) and then use it in context with
-requirements $\cclrd{s}$. Thus the free variables of the expression \emph{after} substitution
-are annotated with $\cclrd{s} \,\aseq\, \aclrd{\textbf{t}}$, using the (scalar-vector extension)
-of the sequential composition operator $\cseq$.
-
-An operational reading of the resulting coeffect annotation is that, to evaluate each of the variables
-annotated with coeffects in the vector $\aclrd{\textbf{t}}$, we first need to evaluate the substituted
-expression with coeffects $\cclrd{s}$, followed by the rest of the expression with coeffects specified
-by $\aclrd{\textbf{t}}$.
-
 \begin{lemma}[Multi-nary substitution]
 \label{thm:structural-substitution}
-Given an expression with multiple holes filled by variables $x_i\!:\!\tau_i$ with coeffects $\cclrd{s_k}$:
+In a structural coeffect calculus with a \emph{structural coeffect scalar} such that
+$\cclrd{r}\,\cleq\,\cclrd{r'} \, \Rightarrow \, \forall\cclrd{s}.\;(\cclrd{r}\,\cseq\,\cclrd{s})\;\cleq\;(\cclrd{r'}\,\cseq\,\cclrd{s})$
+and also $\czero \;\cleq\; (\czero\,\cseq\,\cclrd{r})$,
+given an expression with multiple holes that are filled by variables $x_1\!:\!\tau_1,\ldots,x_n\!:\!\tau_n$ with coeffects $\cclrd{s_1},\ldots,\cclrd{s_n}$:
 %
 \begin{equation*}
 \coctx{\Gamma}{\aclrd{\textbf{r}}}~[\,\coctx{x_1\!:\!\tau_1}{\alift{\cclrd{s_1}}} \,|\, \ldots \,|\,
@@ -981,7 +1035,7 @@ and a expressions $e_i$ with free-variable contexts $\Gamma_i$ annotated with $\
 \coctx{\Gamma_k}{\aclrd{\textbf{t}_k}} \vdash e_k : \tau_k
 \end{equation*}
 %
-then substituting the expressions $e_i$ for variables $x_i$ results in an expression with a context
+substituting the expressions $e_i$ for variables $x_i$ results in an expression with a context
 where the original holes are filled by contexts $\Gamma_i$ with coeffects $\cclrd{s_i} \aseq \aclrd{\mathbf{t_i}}$:
 %
 \begin{equation*}
@@ -994,13 +1048,24 @@ By induction over $\vdash$, using the multi-nary aspect of the substitution
 in the proof of the contraction case (see Appendix~\ref{sec:appendix-struct-cbn}).
 \end{proof}
 
+The Lemma~\ref{thm:structural-substitution} has two additional requirements on the structural coeffect
+scalar that are similar to those of the substitution lemma for bottom-pointed flat coeffect systems
+(Lemma~\ref{thm:cbn-substitution-bot}). Those two conditions are satisfied for all our examples
+(it would be reasonable to require them for \emph{all} structural coeffect scalars, but we prefer
+to keep the original definition more general). The two requirements are needed in the proof
+for substitution for subcoeffecting rule (discussed in Section~\ref{sec:structural-exts-sub}) and
+for weakening, respectively.
+
+% --------------------------------------------------------------------------------------------------
+
 \subsection{Reduction and expansion}
+\label{sec:struct-syntactic-thms}
 
 In the Chapter~\ref{ch:flat}, we discussed call-by-value separately from call-by-name, because the
 proof of call-by-value substitution has fewer prerequisites. In this section, we consider full
 $\beta$-reduction, which encompasses both call-by-value and call-by-name. We also show that
 $\eta$-expansion preserves the types. Both of the properties hold for a system with any
-structural coeffect algebra.
+structural coeffect algebra that satisfies the additional weak requirements given in Lemma~\ref{thm:structural-substitution}.
 
 \paragraph{Reduction theorem.} In a full $\beta$-reduction,
 written as $\rightarrow_\beta$, we can replace the redex $(\lambda x.e_2)~e_1$ by the
@@ -1008,16 +1073,16 @@ expression $\subst{e_r}{x}{e_s}$ anywhere inside a term. The subject reduction t
 guarantees that this does not change the type of the term.
 
 \begin{theorem}[Type preservation]
-In a structural coeffect system with a structural coeffect algebra formed by
-$(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and operations $\alift{-}$ and $\aseq$,
-if $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$
+In a structural coeffect system with subcoeffecting (Section~\ref{sec:structural-exts-sub})
+and a structural coeffect algebra formed by
+$(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and operations $\alift{-}$ and $\aseq$ that
+satisfies the requirements of Lemma~\ref{thm:structural-substitution},
+it holds that if $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$
 and $e \rightarrow_{\beta} e'$ using the full $\beta$-reduction then
 $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e' : \tau$.
 \end{theorem}
 \begin{proof}
-Consider the typing derivation for the redex $(\lambda x.e_r)\,e_s$ before the reduction
-(note that this is similar to the typing of let binding discussed in Remark~\ref{thm:structural-letbinding},
-but we do not swap the two parts of the free-variable context):
+Consider the typing derivation for the redex $(\lambda x.e_r)\,e_s$:
 %
 \begin{equation*}
 \inference
@@ -1048,11 +1113,11 @@ the type of the term.
 \end{proof}
 
 \noindent
-Because of the vector (free monoid) structure of coeffect annotations $\aclrd{\textbf{r}}$,
+Because of the vector structure of coeffect annotations $\aclrd{\textbf{r}}$,
 $\aclrd{\textbf{s}}$, and $\alift{\cclrd{t}}$, these are uniquely associated with $\Gamma_r$,
 $\Gamma_s$, and $x$ respectively. Therefore, substituting $e_s$ (which has coeffects
-$\aclrd{\textbf{s}}$) for $x$ introduces the context requirements specified by $\aclrd{\textbf{s}}$
-which are composed with the requirements $\cclrd{t}$ associated with $x$, \ie~the variable being
+$\aclrd{\textbf{s}}$) for $x$ introduces the context demands specified by $\aclrd{\textbf{s}}$
+which are composed with the demands $\cclrd{t}$ associated with $x$, \ie~the variable being
 substituted.
 
 \paragraph{Expansion theorem.}
@@ -1093,9 +1158,9 @@ between coeffects and effects. The $\eta$-equality property does not hold for ma
 of effect. For example, in a language with output effects, $e = (\textsf{print \texttt{"hi"}}; (\lambda x . x))$
 has different effects to its $\eta$-converted form $\lambda x . e\,x$ because the immediate
 effects of $e$ are hidden by the purity of $\lambda$-abstraction. In the coeffect calculus,
-the (\emph{abs}) rule allows immediate contextual requirements of $e$ to ``float outside''
+the (\emph{abs}) rule allows immediate contextual demands of $e$ to ``float outside''
 of the enclosing $\lambda$. Furthermore, the free monoid nature of $\atimes$ in structural
-coeffect systems allows the exact immediate requirements of $\lambda x . e x$ to match
+coeffect systems allows the exact immediate demands of $\lambda x . e x$ to match
 those of $e$.
 
 
@@ -2291,6 +2356,7 @@ Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value,
 %
 % ==================================================================================================
 
+~
 
 \section{Summary}
 

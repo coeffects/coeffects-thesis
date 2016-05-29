@@ -134,7 +134,7 @@ $\cclrd{s}$ to $\cclrd{t}\cclrd{\setminus \Delta}$.
 
 \begin{example}[Flat dataflow]
 In a context-aware language for dataflow (and in language with liveness tracking), the inherent
-ambiguity of the (\emph{abs}) rule is resolved by placing the context requirements of the body on
+ambiguity of the (\emph{abs}) rule is resolved by placing the context demands of the body on
 both the declaration site and the call site. In Section~\ref{sec:flat-unique}, this was defined by
 replacing the standard coeffect (\emph{abs}) rule with a rule (\emph{idabs}) that uses an
 annotation $\cclrd{r}$ for the body of the function, declaration site coeffect and call site coeffect.
@@ -298,8 +298,8 @@ function \ident{both} is: {\tt num -\{?snd:num\}-> num}.
 
 \vspace{-0.5em}
 \paragraph{Flat and structural dataflow.}
-In flat dataflow, the context requirements of the body is required from both the declaration site
-and from the call site. In structural dataflow, the context requirements are tracked separately
+In flat dataflow, the context demands of the body is required from both the declaration site
+and from the call site. In structural dataflow, the context demands are tracked separately
 for each variable, which provides a more precise type. Consider the following two examples (the
 \kvd{let} keyword is used to define a curried function of two arguments):
 %

@@ -630,6 +630,7 @@ coeffects to otherwise well-typed programs.
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Implicit parameters}
+\label{sec:flat-unique-impl}
 
 For implicit parameters we choose to follow the behaviour implemented by Haskell~\cite{app-implicit-parameters}
 where function abstraction captures all parameters that are statically available at the declaration-site
@@ -929,8 +930,9 @@ rules and then we focus on call-by-value (Section~\ref{sec:flat-syntax-cbv}) and
 (Section~\ref{sec:flat-syntax-cbn}) in more details.
 
 The focus of this chapter is on the general coeffect system and so we do not discuss the
-domain-specific reduction rules for individual context-aware language. Some work on operational
-semantics of general coeffect systems has been done by Brunel et al. \cite{coeffects-quantitative}.
+domain-specific reduction rules for individual context-aware language. Some work on both operational
+and denotational semantics of general coeffect systems has been done by Brunel et al.
+\cite{coeffects-quantitative} and Breuvart and Pagani \cite{coeffects-modelling}.
 We give formal semantics of implicit parameters and dataflow in Chapter~\ref{ch:semantics} by
 translation to a simple functional programming language instead.)
 
@@ -1205,7 +1207,7 @@ It allows the following substitution lemma:
 \begin{lemma}[Bottom-pointed substitution]
 \label{thm:cbn-substitution-bot}
 In a bottom-pointed flat coeffect calculus with an algebra $(\C, \cseq, \cpar, \czip, \cunit, \czero, \cleq)$
-where $\czip = \cseq = \cpar$ is an idempotent and commutative operation`  ' and
+where $\czip = \cseq = \cpar$ is an idempotent and commutative operation and
 $\cclrd{r}\,\cleq\,\cclrd{r'} \Rightarrow \forall\cclrd{s}.\cclrd{r}\,\cseq\,\cclrd{s}\;\cleq\;\cclrd{r'}\,\cseq\,\cclrd{s}$ then:
 %
 \begin{equation*}
