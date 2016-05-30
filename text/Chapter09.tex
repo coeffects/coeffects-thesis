@@ -1,15 +1,15 @@
 \chapter{Conclusions}
 \label{ch:conclusions}
 
-Some of the most fundamental academic work is not the one solving hard research problems, but the
-one that changes how we understand the world. Some philosophers argue that \emph{language} is the
+Some of the most fundamental academic work is not that which solves hard research problems, but
+that which changes how we understand the world. Some philosophers argue that \emph{language} is the
 key for understanding how we think, while in science the dominant thinking is determined by
 \emph{paradigms} \cite{philosophy-kuhn} or \emph{research programmes} \cite{philosophy-lakatos}.
-In a way, programming languages play a similar role for computer science and software development.
+Programming languages play a similar role for computer science and software development.
 
 This thesis aims to change how developers and programming language designers think about
-\emph{context} or \emph{execution environments} of programs. Such context or execution environment
-has numerous forms -- mobile applications access network, GPS location or user's personal data;
+\emph{contexts} or \emph{execution environments} of programs. Such contexts or execution environments
+have numerous forms -- mobile applications access network, GPS location or user's personal data;
 journalists obtain information published on the web or through open government data initiatives;
 in dataflow programming, we have access to past values of expressions.
 This thesis aims to change our understanding of \emph{context} so that the above examples are
@@ -18,8 +18,8 @@ rather than as disjoint cases.
 
 In this chapter, we give a brief overview of the technical contributions of this thesis
 (Section~\ref{sec:conc-summary}). The thesis looks at two kinds of context-dependence, identifies
-common patterns and captures those using two \emph{coeffect calculi}. It gives formal semantics
-using categorical foundations and uses it as a basis for prototype implementation. Finally,
+common patterns and captures those using two \emph{coeffect calculi}. It gives a formal semantics
+using categorical insights and uses it as a basis for prototype implementation. Finally,
 Section~\ref{sec:conc-conclusions} concludes the thesis.
 
 
@@ -55,9 +55,9 @@ execution environment. In Chapter~\ref{ch:applications}, we revisit many of such
 including resource tracking in distributed computing, cross-platform development, dataflow
 programming and liveness analysis, but also Haskell's implicit parameters.
 
-The main contribution of the chapter is that it presents the disjoint language features in a
-unified way. We show type systems and semantics for many of the languages, illuminating
-the fact that they are closely related.
+The main contribution of Chapter~\ref{ch:applications} is that it presents the disjoint language
+features in a unified way. We show type systems and semantics for many of the languages,
+illuminating the fact that they are closely related.
 
 Considering applications is one way of approaching the theory of coeffects introduced in this thesis.
 Other pathways to coeffects are discussed in Chapter~\ref{ch:pathways}, which looks at theoretical
@@ -85,7 +85,7 @@ discuss how to resolve the ambiguity inherent in context-aware programming for s
 languages we consider (Section~\ref{sec:flat-unique}) and study equational properties of the
 calculus (Section~\ref{sec:flat-syntax}). In the flat coeffect calculus, $\beta$-reduction and
 $\eta$-expansion do not generally preserve the type of an expression, but we identify two
-conditions when this is the case.
+conditions satisfied by two of our instances when this is the case.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -95,7 +95,7 @@ conditions when this is the case.
 captures \emph{per-variable} contextual properties. The systems discussed here resemble substructural
 logics, but rather than \emph{restricting} variable use, they \emph{track} how the variables are used.
 
-We unify systems with \emph{per-variable} contextual properties in Chapter~\ref{ch:structural},
+We characterise systems with \emph{per-variable} contextual properties in Chapter~\ref{ch:structural},
 which describes our \emph{structural coeffect calculus} (Section~\ref{sec:struct-calculus}).
 Similarly to the flat variant, the calculus is parameterized by a \emph{structural coeffect algebra}.
 Concrete instances of the calculus track bounded variable use (\ie~how many times is a variable
@@ -104,15 +104,15 @@ be accessed).
 
 The structural coeffect calculus has desirable equational properties (Section~\ref{sec:struct-syntax}).
 In particular, type preservation for $\beta$-reduction and $\eta$-expansion holds for all instances of the
-structural coeffect calculus. This follows from the fact that structural coeffect
-associates contextual requirements with individual variables and preserves the connection by
+structural coeffect calculus. This follows from the fact that structural coeffects
+associate contextual requirements with individual variables and preserves the connection by
 including explicit structural rules (weakening, exchange and contraction).
 
 % --------------------------------------------------------------------------------------------------
 
 \paragraph{Semantics and safety.}
 
-Both of the coeffect calculi are parameterized and can be instantiated to obtain a language with
+Both forms of coeffect calculi are parameterized and can be instantiated to obtain a language with
 a type system that tracks concrete notion of context dependence. The coeffect calculus can be seen
 as a framework for building concrete domain-specific context-aware programming languages. In
 addition to the type system, the framework also provides a way for defining the semantics of
@@ -140,27 +140,27 @@ not go wrong''.
 
 \paragraph{Interactive essay.}
 
-A part of the thesis is an interactive web-based essay (\url{http://tomasp.net/coeffects}),
-which implements three simple context-aware languages. In addition to more traditional prototype
-language implementations, the essay provides a number of novel features. As usual, it lets users
+Associated with this essay is an interactive web-based essay, which implements three simple
+context-aware languages (Chapter~\ref{ch:impl}). In addition to traditional prototype language
+implementations, the essay provides a number of novel features. As usual, it lets users
 write and evaluate sample programs, but it also lets them explore the details of the coeffect
 theory -- this includes an interactive way of exploring typing derivations and program semantics.
 The essay also provides a number of case studies that highlight interesting aspects of the theory.
 
-The implementation (Chapter~\ref{ch:impl}) serves two purposes. First, it links together all parts
-of the theory developed in this thesis (Section~\ref{sec:impl-case}). It uses the two coeffect calculi
-to build a language framework that is then instantiated to implement three concrete context-aware
-languages. The  framework provides the type system and translation (based on the
+The implementation (Section~\ref{ch:impl-theory}) serves two purposes. First, it links together all parts
+of the theory developed in this thesis (Section~\ref{sec:impl-case}). It uses the flat and structural
+coeffect calculi to build a language framework that is then instantiated to implement three concrete
+context-aware languages. The  framework provides the type system and translation (based on the
 comonadically-inspired semantics) that is used for program execution. This shows the practical
 benefits of using the theory of coeffects as a basis of real-world programming languages.
 
-Second, the implementation uses novel kind of medium (Section~\ref{sec:impl-essay}) to make our work
-\emph{accessible} and \emph{explorable}. Building a production-ready programming language is outside
-the scope of the  thesis, so instead, our goal is to explain the theory and inspire authors of
-real-world programming languages to include support for context-aware programming, ideally using
-coeffects as a sound foundation. For this reason, we make the implementation accessible over web
-without requiring installation of specialized software and we make it explorable to encourage
-active reading.
+Second, web-based essay (\url{http://tomasp.net/coeffects}) discussed in Section~\ref{sec:impl-essay}
+is novel from the pedagogical perspective. It makes our work \emph{accessible} and \emph{explorable}.
+Building a production-ready programming language is outside the scope of the  thesis, so instead,
+our goal is to explain the theory and inspire authors of real-world programming languages to
+include support for context-aware programming, ideally using coeffects as a sound foundation.
+For this reason, we make the implementation accessible over web without requiring installation
+of specialized software and we make it explorable to encourage \emph{active reading}.
 
 % =================================================================================================
 %

@@ -11,16 +11,16 @@ important directions.
 We start (Section~\ref{sec:path-binding}) by discussing how coeffects arise from the most common
 notion of context-dependence -- variable binding. Next, we look at coeffects as the dual of effect
 systems (Section~\ref{sec:path-eff}) and we extend the duality to category theory, looking at
-\emph{comonads} (Section~\ref{sec:path-sem}). Finally we consider logically inspired type systems
-that are closely related to our structural coeffects (Section~\ref{sec:path-logic}).
+\emph{comonads} (Section~\ref{sec:path-sem}). We also consider type systems inspired by linear
+and bunched logic, which are closely related to our structural coeffects (Section~\ref{sec:path-logic}).
+Finally, we also consider practical motivations for context-aware programming (Section~\ref{sec:path-cop}).
 
 This chapter serves two purposes. Firstly, it provides a high-level overview of the  related work,
 although technical details are often postponed until later. Secondly it recasts existing ideas in
 a way that naturally leads to the coeffect systems developed later in the thesis. For this reason,
-we are not always faithful to the referenced work -- sometimes we focus on aspects that the
-authors consider unimportant or present the work differently than originally intended. The reason
-is to fulfill the second goal of the chapter. When we do so, this is explicitly said in the text.
-
+we are not always faithful to the referenced work. We present the work through the coeffect view
+and so we sometimes focus on aspects that authors consider unimportant or we present the work
+differently than originally intended. When we do so, this is explicitly stated in the text.
 
 
 %===================================================================================================
@@ -35,7 +35,7 @@ is to fulfill the second goal of the chapter. When we do so, this is explicitly 
 %
 %===================================================================================================
 
-\section{Through static and dynamic binding}
+\section{Coeffects via static and dynamic binding}
 \label{sec:path-binding}
 
 Accessing a variable is arguably the simplest form of context-dependence, to the extent that we
@@ -45,9 +45,14 @@ be executed in an environment where the variable is available.
 
 In this section, we look at variable binding through the perspective of context-requirements.
 We discuss ordinary variable binding and Haskell's implicit parameters \cite{app-implicit-parameters},
-which provides an interesting point in the design space. We then discuss ambiguity that is inherent
-in variable binding and, more generally, context-aware programming languages, and a way of
+which provide an interesting point in the design space. Implicit parameters give an example of
+an ambiguity that arises more generally in context-aware programming, as well as one way of
 resolving it through \emph{type-directed semantics}.
+
+For a more general context-aware programming example, consider a program
+running on a laptop that accesses an implicit parameter representing a printer. When printing, the
+text may appear on my home printer (corresponding to static binding), or it may appear on the
+nearest printer based on my physical location (corresponding to dynamic binding).
 
 %---------------------------------------------------------------------------------------------------
 
@@ -56,9 +61,9 @@ resolving it through \emph{type-directed semantics}.
 
 Variable access represents a form of context-dependence. For example, an expression $x+y$ can be
 only evaluated if the environment provides values for variables $x$ and $y$. A variable
-\emph{requirements} can be satisfied in two standard ways that are captured by \emph{dynamic} and
-\emph{static} (or lexical) variable binding. Consider the following simple program:
-
+\emph{requirements} can be satisfied in two standard ways that are characterized as \emph{dynamic}
+and \emph{static} (or lexical) variable binding. Consider the following simple program:
+%
 \begin{equation*}
 \begin{array}{l}
 \kvd{let}~\ident{f}=\\[-0.25em]
@@ -94,15 +99,15 @@ In static and dynamic scoping, all variable requirements are always placed on on
 those are not the only two options. It is conceivable that a language would use a mechanism that
 splits variable requirements differently and combines aspects of dynamic and static binding. For
 example, the language could use static binding by default, but resort to dynamic binding if a
-variable is not available in the lexical scope. One such system is discussed in the next section.
+variable is not available in the lexical scope. One such system is Haskell's implicit parameters
+discussed in the next section.
 
-Languages with static scoping generally check that all variable requirements are satisfied.
-Attempt to access a variable that is not available in scope will give a compile error. In contrast,
+Languages with static scoping resolve variable bindings at compile-time. In contrast,
 languages with dynamic variable binding typically do not perform compile-time checks -- if a
 program attempts to access a variable that is not available in the environment, a runtime error
-occurs. This is possibly artifact of their implementation -- implementing static binding
-\emph{without} checking would be cumbersome and implementing checking for dynamic binding is
-requires a more sophisticated type system (Section~\ref{sec:path-effects-coeff}).
+occurs. This is possibly an artifact of their implementation -- implementing static binding
+\emph{without} checking would be cumbersome and implementing static checking for dynamic binding is
+requires a more sophisticated type system than traditional (Section~\ref{sec:path-effects-coeff}).
 
 %---------------------------------------------------------------------------------------------------
 
@@ -113,10 +118,10 @@ Haskell uses static binding for ordinary variables, but it additionally provides
 \emph{implicit parameters} \cite{app-implicit-parameters} that adds a special kind of variables,
 written as \ident{?param}, which use a particular combination of static and dynamic binding.
 
-The following two examples are variations on the one discussed in the Section~\ref{sec:path-binding-var}.
-We replace a variable \ident{x} with an implicit parameter \ident{?x}. On the left, the
-implicit parameter is defined both at declaration-site and at the call site. On the right, the
-implicit parameter is available only at the call site:
+The following two examples are variations on the one discussed in Section~\ref{sec:path-binding-var},
+obtained by replacing a variable \ident{x} with an implicit parameter \ident{?x}. On the left, the
+implicit parameter is declared both in the static scope and in the dynamic scope. On the right, the
+implicit parameter is available only in the dynamic scope:
 
 \begin{equation*}
 \begin{array}{l}
@@ -133,18 +138,19 @@ implicit parameter is available only at the call site:
 \end{array}
 \end{equation*}
 %
-The binding rules for implicit parameters can be summarized as ``\emph{static binding when possible,
-dynamic binding when needed}''. If an implicit parameter is available in scope, then the value
+The binding rules for Haskell's implicit parameters can be summarized as ``\emph{static binding when possible,
+dynamic binding when needed}''. If an implicit parameter is available in static scope, then the value
 is statically bound and the context requirement is satisfied using the declaration-site context.
 Otherwise, the context requirement is delayed and has to be satisfied at the call site.
-In the example on the left, \ident{?x} is bound to $10$ the function \ident{f} has no
-delayed context demands and the expression evaluates to $10$. In the example on the right,
-the context requirement \ident{?x} is delayed and is satisfied via dynamic binding when calling
+In the example on the left, \ident{?x} is bound to $10$ and so the function \ident{f} has no
+delayed context demands and thus the expression evaluates to $10$. On the right,
+the context demand for \ident{?x} is \emph{delayed} and is satisfied via dynamic binding when calling
 the function. The expression evaluates to $5$.
 
 In Haskell, the type system checks that bindings for all required implicit parameters are
-available. The type of the function \ident{f} on the left is $\kvd{int}\rightarrow\kvd{int}$, while
-the type of the \ident{f} function on the right is $\{\ident{?x}:\kvd{int}\}\Rightarrow\kvd{int}\rightarrow\kvd{int}$.
+available and so no runtime errors can occur. The type of the function \ident{f} on the left is
+$\kvd{int}\rightarrow\kvd{int}$, while the type of the \ident{f} function on the right is
+$\{\ident{?x}:\kvd{int}\}\Rightarrow\kvd{int}\rightarrow\kvd{int}$.
 The part before $\Rightarrow$ specifies the required implicit parameters that need to be available
 in the environment when calling the function. It is worth noting that the syntax is similar to the
 one used by type-class constraints. Those can be viewed as context demands too
@@ -152,35 +158,37 @@ one used by type-class constraints. Those can be viewed as context demands too
 
 \paragraph{Thesis perspective.}
 The three different binding mechanisms discussed so far can be seen as different ways of splitting
-context demands of a particular kind. Dynamic and static binding represent the opposite ends
-of the design space and Haskell's implicit parameters are an interesting point inside the wider space.
+context demands of a particular kind into static and dynamic parts. Dynamic and static binding
+represent the opposite ends of the design spectrum and Haskell's implicit parameters are an
+interesting point inside the wider spectrum.
 
-In this thesis, we consider different notions of context, using implicit parameters as just one
-of several motivating examples. However, implicit parameters are a valuable example, because they
+In this thesis, we consider various notions of context, using implicit parameters as one
+of several motivating examples. Implicit parameters are a particularly valuable example, because they
 clearly illustrate the ambiguity inherent in context-aware programs -- the context demands of
 a function can be satisfied using the context available at declaration-site or using the context
-available at the call site.
+available at the call site. Recall our earlier printer example -- a language that
+provides access to resources in the context needs to provide enough flexibility in handling such
+ambiguities, be it implicit parameter values available in scope or printers available in the
+physical environment.
 
-We also aim to find a description of context-aware languages that does not make ad-hoc decisions
+We aim to find a description of context-aware languages that does not make ad-hoc decisions
 about how context demands are split between the declaration-site and the call site. While
-Haskell's solution for implicit parameters might be the most reasonable one, different notions
-of context might require different domain-specific choices and the general framework of
-context-aware programming should make that possible.
+Haskell's solution for implicit parameters might be the most reasonable one for that particular
+case, this thesis argues that other notions of context require different domain-specific choices
+and the general framework of context-aware programming should make that possible.
 
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Resolving ambiguity}
 \label{sec:path-binding-amb}
 
-In many practical programming languages, the value and semantics of an expression depends on the
-type derivation. Typically, the choice is hidden behind a mechanism that selects one preferred type
-derivation.
+In many practical programming languages, the value and semantics of an expression depends on its
+type derivation. In order to assign unique semantics to an expression, the choice is typically
+hidden behind a mechanism that selects one preferred type derivation.
 
 This mechanism serves as an inspiration for our approach to resolving ambiguity inherent in
-context-aware programs. This section shows a brief example using the F\# language \cite{app-fsharp},
+context-aware programs. This section discusses a brief example using the F\# language \cite{app-fsharp},
 before revisiting the implicit parameters example.
-
-~
 
 Consider an F\# lambda expression $(\lambda\ident{x}\rightarrow\ident{x.Length})$, which takes
 an object $\ident{x}$ and returns the value of its \ident{Length} property. F\# is a nominally-typed
@@ -205,23 +213,30 @@ an appropriate typing derivation. For example:
 The $|\hspace{-0.25em}>$ operator passes the value on the left to the function on the right. In
 the first case, the compiler infers that the type of the input is a list of strings and so the
 type of the lambda function becomes $\ident{string}\rightarrow\ident{int}$. In the second case,
-the list contains two arrays (empty array and array containing one hundred 0 values) and so
+the list contains two arrays (an empty array and an array containing one hundred zero values) and so
 the type of the lambda function is $\ident{int}\lbrack\,\rbrack\rightarrow\ident{int}$.
 The important points about the example are:
 %
-\begin{itemize}
+\begin{enumerate}
 \item The semantics of the function $(\lambda\ident{x}\rightarrow\ident{x.Length})$
   depends on its type. For arrays, it is compiled using a special IL instruction, while for
   strings, it calls a property getter.
 
 \item The compiler chooses an appropriate typing derivation. In the above case, this is done
   based on the context in which the expression appears, but other options are possible
-  (in some cases, there is a \emph{default} resolution; in some cases, the compiler requires
+  (in some cases, there is a \emph{default} resolution; often, the compiler requires an
   explicit typing annotation).
-\end{itemize}
+
+\item An expression without a type derivation does not have semantics. For example, given
+  $\ident{List.map}~(\lambda\ident{s}\rightarrow\ident{s.Length})$, the F\# compiler fails to
+  infer a type; the expression is not well-typed and does not have a semantics.\footnote{Alternatively,
+  the compiler could choose default typing among multiple options. The F\# compiler does this
+  for the $+$ operator, which can be used on \ident{float} and \ident{int} types, but the compiler
+  chooses \ident{int} as the default.}
+\end{enumerate}
 %
 The function $\lambda\ident{y}\rightarrow\ident{?x}+\ident{y}$ in Haskell also has multiple
-possible typing derivations and its semantics varies depending on the type. If the lexical
+possible typing derivations and its semantics varies depending on its type. If the lexical
 scope contains a binding for $\ident{?x}$, the function type is $\kvd{int}\rightarrow\kvd{int}$
 and it captures the value from the lexical scope. Otherwise, the type of the function is
 $\{\ident{?x}:\kvd{int}\}\Rightarrow\kvd{int}\rightarrow\kvd{int}$ and it reads the parameter
@@ -231,13 +246,14 @@ value from a hidden dictionary that is passed together with the input from the c
 Just like the F\# function in the above example, certain expressions in context-aware languages
 developed in this thesis have multiple valid typing derivations and their semantics depends on the
 type. In F\#, the compiler determines a unique typing derivation based on other parts of the program
-(or fails, if type is not uniquely determined). In our languages, we also determine a unique typing
-derivation. However, rather than relying on type information from other parts of the program, we
-explicitly define algorithm that chooses the preferred unique derivation.
+(if type is not uniquely determined, it either chooses a default or fails). In our languages, we
+also determine a unique typing derivation. However, rather than relying on type information from
+other parts of the program, we explicitly define an algorithm that chooses the preferred unique
+derivation (Section~Section~\ref{sec:flat-unique} and Section~\ref{sec:struct-unique}).
 
 This approach decouples two important aspects of context-aware programming and lets us study them
 independently -- the semantics of context-aware programs and the domain-specific way of resolving
-how context demands are satisfied. In our treatment of implicit parameters, we consider
+ambiguities in how context demands are satisfied. In our treatment of implicit parameters, we consider
 multiple typing derivations (representing a range with static and dynamic scoping at opposite ends),
 but we uniquely choose one preferred typing (in case of implicit parameters, mimicking the
 behaviour of Haskell).
@@ -256,7 +272,7 @@ behaviour of Haskell).
 %
 %===================================================================================================
 
-\section{Through type and effect systems}
+\section{Coeffects via type and effect systems}
 \label{sec:path-eff}
 
 Introduced by Gifford and Lucassen \cite{effects-gifford,effects-polymorphic}, type and effect
@@ -306,7 +322,7 @@ to \emph{prescriptive} effect systems that implement computational effects in a 
 %---------------------------------------------------------------------------------------------------
 
 \subsection{Simple effect system.}
-The structure of a simple effect system\footnote{Most work on effect systems uses $\sigma$ for
+The structure of a simple effect system\footnote{Most work on effect systems uses $\sigma$ or $F$ for
 effect annotations. We use letters $\cclrd{r}, \cclrd{s}, \cclrd{t}$ and also distinguish effect
 or coeffect annotations by colour.} is demonstrated in Figure~\ref{fig:path-eff}. The example
 shows typing rules for a simply typed lambda calculus with an additional (effectful) operation
@@ -401,7 +417,7 @@ system in detail in Section~\ref{sec:applications-flat-impl}.
 %
 %===================================================================================================
 
-\section{Through language semantics}
+\section{Coeffects via language semantics}
 \label{sec:path-sem}
 
 Another pathway to coeffects leads through the semantics of effectful and context-dependent
@@ -412,6 +428,8 @@ notion of \emph{monad}.
 When using monads, we distinguish effect-free values $\tau$ from programs, or
 computations $\mtyp{}{\tau}$. The \emph{monad} $\mtyp{}{}$ abstracts the \emph{notion of
 computation} and provides a way of constructing and composing effectful computations:
+
+~
 
 \begin{definition}
 A \emph{monad} over a category $\catc$ is a triple $(M, \ident{unit}, \ident{bind})$ where:
@@ -474,7 +492,7 @@ effectful primitives (such as the assignment operator $x \leftarrow e$ or other)
 of the form $x\!:\!\tau_1 \vdash e : \tau_2$ is interpreted as a morphism $\tau_1 \rightarrow \mtyp{}{\tau_2}$,
 meaning that any expression is interpreted as an effectful computation. The semantics of variable
 access and the application of a primitive function $f$ is interpreted as follows:
-
+%
 \begin{equation*}
 \begin{array}{rcl}
  \sem{x\!:\!\tau_1 \vdash x : \tau_1} &=& \ident{unit}_\mtyp{}{}\\
@@ -501,10 +519,10 @@ primitives:
 \end{align*}
 %
 The types consist of the primitive type, function type and a type constructor that
-represents monadic computations. This means that the expressions in the language can create both
+represents monadic computations. Thus the expressions in the language can create both
 effect-free values, such as $\tau$ and computations $\mtyp{}{\tau}$. The additional expression
-$\kvd{return}_\mtyp{}{}$ is used to create a monadic computation (with no actual effects) from a
-value and $\kvd{let}_\mtyp{}{}$ is used to sequence effectful computations. In the semantics,
+$\kvd{return}_\mtyp{}{}$ is used to create a monadic computation (with no effects) from a
+value and $\kvd{let}_\mtyp{}{}$ is sequences effectful computations. In the semantics,
 monads are not needed to interpret variable access and application, they are only used in the
 semantics of additional (monadic) constructs:
 %
@@ -591,6 +609,8 @@ of Moggi), Nanevski, Pfenning and Davies use comonads as part of meta-language, 
 of $\square$ modality, to reason about context-dependent computations (the second style of
 Moggi). Before looking at the details, we use the following definition of comonad:
 
+~
+
 \begin{definition}
 A \emph{comonad} over a category $\catc$ is a triple $(C, \ident{counit}, \ident{cobind})$ where:
 \begin{compactitem}
@@ -668,7 +688,7 @@ value of the computation $e$. We omit the typing rules, but they are simple -- a
 has a type $\tau$, the expression $\kvd{prev}~e$ has also type $\tau$. The fact that
 the language models dataflow and values are lists (of past values) is a matter of semantics,
 which is defined as follows:
-%
+
 \begin{equation*}
 \begin{array}{rcl}
 \sem{x\!:\!\tau \vdash x : \tau} &=& \ident{counit}_\ctyp{}{}\\
@@ -807,7 +827,7 @@ CMTT provides a useful hint for adding indexing to the work of Uustalu and Vene.
 %
 %===================================================================================================
 
-\section{Through substructural and bunched logics}
+\section{Coeffects via substructural and bunched logics}
 \label{sec:path-logic}
 
 In the coeffect system for tracking resource usage outlined earlier, we associated additional
@@ -834,6 +854,30 @@ but it is also interesting on its own.
 
 %---------------------------------------------------------------------------------------------------
 
+
+\begin{figure}
+\begin{equation*}
+\tyrule{exchange}
+  {\Gamma, x\!:\!\tau_1, y\!:\!\tau_2 \vdash e : \gamma}
+  {\Gamma, y\!:\!\tau_2, x\!:\!\tau_1 \vdash e : \gamma}
+\end{equation*}
+\begin{equation*}
+\tyrule{weakening}
+  {\Gamma, \Delta \vdash e : \gamma}
+  {\Gamma, x\!:\!\tau, \Delta \vdash e : \gamma}
+\end{equation*}
+\begin{equation*}
+\tyrule{contraction}
+  {\Gamma, x\!:\!\tau_1, y\!:\!\tau_1, \Delta \vdash e : \tau_2}
+  {\Gamma, x\!:\!\tau_1, \Delta \vdash \subst{e}{y}{x} : \tau_2}
+\end{equation*}
+
+\figcaption{Exchange, weakening and contraction typing rules}
+\label{fig:substructural-rules}
+\end{figure}
+
+%---------------------------------------------------------------------------------------------------
+
 \subsection{Substructural type systems.}
 
 Traditionally, $\Gamma$ is viewed as a set of assumptions and typing rules admit (or explicitly
@@ -856,27 +900,6 @@ be more explicit in how variables are used. Substructural type systems provide a
 Even if we allow all three operations, we can use a variation on the three rules (exchange,
 weakening and contraction) to track which variables are used and how (and to track additional
 contextual information about variables).
-
-\begin{figure}
-\begin{equation*}
-\tyrule{exchange}
-  {\Gamma, x\!:\!\tau_1, y\!:\!\tau_2 \vdash e : \gamma}
-  {\Gamma, y\!:\!\tau_2, x\!:\!\tau_1 \vdash e : \gamma}
-\end{equation*}
-\begin{equation*}
-\tyrule{weakening}
-  {\Gamma, \Delta \vdash e : \gamma}
-  {\Gamma, x\!:\!\tau, \Delta \vdash e : \gamma}
-\end{equation*}
-\begin{equation*}
-\tyrule{contraction}
-  {\Gamma, x\!:\!\tau_1, y\!:\!\tau_1, \Delta \vdash e : \tau_2}
-  {\Gamma, x\!:\!\tau_1, \Delta \vdash \subst{e}{y}{x} : \tau_2}
-\end{equation*}
-
-\figcaption{Exchange, weakening and contraction typing rules}
-\label{fig:substructural-rules}
-\end{figure}
 
 %---------------------------------------------------------------------------------------------------
 
@@ -977,6 +1000,7 @@ use some of the proof techniques from the work on bunched logics.
 %===================================================================================================
 
 \section{Context oriented programming}
+\label{sec:path-cop}
 
 The importance of context-aware computations is perhaps most obvious when considering mobile
 application, client/server web applications or even the internet of things. A pioneering work

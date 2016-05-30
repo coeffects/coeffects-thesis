@@ -316,7 +316,7 @@ but when using the structural system, the type becomes {\tt num -\{0\}-> num -\{
 This illustrates the difference between the two -- the flat system keeps only one annotation
 for the whole body (which requires 1 past value). In lambda abstraction (or function declaration
 written using \kvd{let}), this requirement is duplicated. The structural system keeps information
-per-variable and so the resulting type reflects the fact that only the variable \idnet{y} appears
+per-variable and so the resulting type reflects the fact that only the variable \ident{y} appears
 inside \kvd{prev}.
 
 % --------------------------------------------------------------------------------------------------
@@ -653,7 +653,7 @@ available libraries \cite{other-fparsec}.
 audience, it can be executed in a web browser. This is achieved by automatically translating the
 implementation from F\# to JavaScript. We use an F\# library called FunScript \cite{other-funscript}
 (which is a more recent incarnation of the idea developed by the author \cite{app-fsharp-webtools}).
-We choose F\#, but similar tools exist for other functional languages such as OCaml \cite{other-js-ocaml}.
+We choose F\#, but similar tools exist for other functional languages such as OCaml \cite{app-ocaml-js}.
 It is worth noting that FunScript is implemented as a \emph{library} rather than as a compiler
 extension. This is done using the meta-programming capabilities of F\# \cite{app-fsharp-metaprog}.
 
