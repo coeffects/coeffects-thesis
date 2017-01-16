@@ -9,8 +9,8 @@ even \emph{see} the flaws of our approach.
 
 Before exploring the motivations for to this thesis, we briefly consider two recent practical
 concerns that have led to the development of new programming languages. This helps to explain why
-context-aware programming is important. The examples are by no means representative, but they
-illustrate various kinds of motivations well.
+context-aware programming is important. The examples are by no means exhaustive, but they
+are representative of the various kinds of motivations.
 
 \paragraph{Parallel programming.}
 
@@ -28,10 +28,9 @@ was apparent.
 
 \paragraph{Data access.}
 
-Accessing ``big data'' sources is an example of a more subtle challenge. Initiatives like open
-government data\footnote{In the UK, the open government data portal is available at: \url{http://data.gov.uk/}}
-certainly make more data available. However, to access the data, one has to parse CSV and Excel files,
-issue SQL or SPARQL queries (to query database and the semantic web, respectively).
+Accessing ``big data'' is an example of a more subtle challenge. Initiatives like open
+government data make more data available, but to access the data, one has to parse CSV and 
+Excel files, issue SQL or SPARQL queries (to query database and the semantic web, respectively).
 
 Technologies like LINQ \cite{app-linq} make querying data significantly easier. But perhaps
 because accessing data became important more gradually, it was not easy to see that SQL queries,
@@ -48,8 +47,6 @@ providers change the data-scientist's workflow\footnote{This is difficult to exp
 and so the reader is encouraged to watch a video showing type providers for the WorldBank and CSV
 data sources \cite{app-fsharp-world}.}.
 
-~\\
-
 \paragraph{Context-aware programming.}
 
 In this thesis, we argue that the next important practical challenge for programming language
@@ -59,8 +56,20 @@ designers is designing languages that are better at working with (and understand
 This challenge is of the kind that is not easy to see, perhaps because we are so used to
 doing things in certain ways that we cannot see their flaws. In this chapter, we aim to
 expose such flaws. We look at a number of basic programs that rely on contextual
-information, we explain why the currently dominant solutions are inappropriate and then
-briefly outline how this thesis solves the problems.
+information, we explain why the currently dominant solutions are inappropriate.
+
+\paragraph{The thesis.}
+The key claim of this thesis is that the theory of \emph{coeffects} that we develop provides
+a unified way of capturing how programs rely on the context, or execution environment, 
+in which they execute. Perhaps most importantly, coeffects provide a single conceptual framework 
+that can capture a wide range of previously disconnected notions of context-awareness. 
+
+Thanks to coeffects, programming languages for rich and diverse execution environments will
+be able to offer a simple, safe and unified programming model for interacting with the 
+environment. In this thesis, we develop the theoretical foundations for such languages and
+we develop a prototype implementation that illustrates the benefits of coeffects, but also 
+serves as a rich guide for future langauge implementers.
+
 
 
 % ==================================================================================================
@@ -72,7 +81,7 @@ briefly outline how this thesis solves the problems.
 %    #      #   #  #   #   #     #####    #     #             ####  # # #   ####  #      #####
 %    #   #  #   #  #   #   #  #  #       # #    #  #         #   #  # # #  #   #  #      #
 %     ###    ###   #   #    ##    ###   #   #    ##           ####   # #    ####  #       ###
-%                                                                                                                                                                       % ==================================================================================================
+%                                                                                                                                                                       
 % ==================================================================================================
 
 
@@ -125,7 +134,7 @@ significantly easier to solve. As the number of distinct contexts and their dive
 these problems will become even more commonplace.
 
 The following sub-sections explore 4 examples in more detail. The examples are chosen to
-demonstrate two distinct forms of contexts that are studied in this thesis -- first two are
+demonstrate two distinct forms of contexts that are studied in this thesis -- the first two are
 related to the program environment and the latter two are associated with individual variables of
 the program.
 
@@ -200,7 +209,7 @@ such as LINQ \cite{app-linq,app-linq-essence} or F\# quotations \cite{app-fsharp
 translate code written in a subset of a host language to some other target language, such as SQL,
 OpenCL or JavaScript. For database access, this is a recently developed technique replacing embedded
 SQL discussed in the introduction, but it is a more broadly applicable technique for programming
-in heterogeneous environments. It lets developers targets multiple runtimes that have limited
+in heterogeneous environments. It lets developers target multiple runtimes that have limited
 execution capabilities.
 
 For example, the following LINQ query written in C\# queries a database and
@@ -225,7 +234,9 @@ not supported for type \texttt{System.String}.}
 %
 The problem is that LINQ can only translate a \emph{subset} of normal C\# code. The above snippet
 uses the \ident{First} method to iterate over characters of a string, which is not supported. This is
-not a technical limitation of LINQ, but a fundamental problem of the approach.
+not a technical limitation of LINQ, but a fundamental problem of an approach where code written 
+using libraries for one execution environment is translated and run in another, more limited, 
+execution environment.
 
 When cross-compiling to a limited environment, we cannot always support the full source language.
 The example with LINQ and SQL demonstrates the importance of this problem. As of March 2014,
@@ -260,10 +271,10 @@ The code compiles without error, but it contains a major security flaw called \e
 building SQL commands by string concatenation, but there are still many systems that do so.
 
 Again, this example demonstrates a more general property. Sometimes, it is desirable to track additional
-metadata about variables that are in some ways special. Such metadata can determine how the variables
-can be used. Here, \ident{name} comes from the user input. This information about the value should
-be propagated to \ident{query}. The \ident{SqlCommand} object should then require arguments that can
-not directly contain user input (in an unchecked form).
+metadata about values that are in some ways special. Such metadata can determine how the values
+can be used. Here, the value stored in \ident{name} comes from the user input. This information about 
+the value should be propagated to \ident{query}. The \ident{SqlCommand} object should then require 
+arguments that can not directly contain user input.
 
 Similarly, if we had \ident{password} or \ident{creditCard} variables in a client/server web application,
 these should be annotated as sensitive and it should not be possible to send their values over an
@@ -285,7 +296,7 @@ The final example leaves the topic of cross-platform and distributed computing. 
 checking how arrays are accessed. This is a simpler version of the dataflow programming
 examples used later in the thesis.
 
-Consider a simple programming language with arrays where $n^{\mathit{th}}$ element of an
+Consider a simple programming language with arrays where the $n^{\textit{th}}$ element of an
 array \ident{arr} is accessed using $\ident{arr}[n]$. We focus on writing stencil computations
 (such as image blurring, Conway's game of life or convolution) where all arrays are of
 the same size and the system provides a \emph{cursor} pointing to a current location in the
@@ -370,12 +381,12 @@ context-aware language, based on the theory of coeffects, can provide.
 \label{sec:intro-context-example}
 
 As an example, consider a news reader app consisting of a server-side component (which stores the
-news in an SQL database) and a number of clients applications for popular platforms (Android, Windows
+news in an SQL database) and a number of clients applications for popular platforms (iPhone, Windows
 Phone, etc.). A simplified code excerpt that might appear somewhere in the implementation is shown in
 Figure~\ref{fig:introduction-sample}.
 
 We assume that the language supports cross-compilation and splits the single program into three
-components: one for the server-side and two for the client-side, for iPhone and Windows platforms,
+components: one for the server-side and two for the client-side, for iPhone and Windows Phone,
 respectively. The cross-compilation could be done in a way similar to Links \cite{app-distributed-links},
 but we do not require explicit annotations specifying the target platform.
 
@@ -437,8 +448,8 @@ An inspiring example might be the F\# support for units of measure \cite{app-uni
 to explicitly annotate constants, but the rest of the information is inferred automatically.
 
 Furthermore, integrating contextual information into the type system can provide information for
-modern developer tools. For example, many editors for F\# display inferred types when placing mouse
-pointer over an identifier. For \ident{fetchLocalNews}, the tip could appear as follows:
+modern developer tools. For example, many editors for F\# display inferred types when placing the 
+mouse pointer over an identifier. For \ident{fetchLocalNews}, the tip could appear as follows:
 %
 \definecolor{tooltipy}{rgb}{0.98,0.97,0.76}
 \definecolor{tooltipb}{rgb}{0.7,0.7,0.7}
@@ -482,10 +493,10 @@ The example combines two separate notions of context. The variable \ident{passwo
 with a single (per-variable) annotation specifying tainting while
 functions are annotated with a set of resource requirements.
 
-The concrete syntax used here is just for illustration. Furthermore,
+The concrete syntax is just for illustration and
 some information could even be mapped to other visual representations -- for example, differently
 coloured backgrounds for platform-specific functions. The key point is that the type provides a
-number of useful information:
+number of pieces of useful information:
 
 \begin{itemize}
 \item The \ident{password} variable is available in the context (we assume it has been declared
@@ -496,11 +507,11 @@ number of useful information:
 \item The \ident{fetchNews} function requires database access and so it can only run on the server-side
   (or on a thick client with a local copy of the database, such as a desktop computer with an offline mode).
 
-\item The \ident{gpsLocation} function accesses the GPS sensor and since we call it in
+\item The \ident{gpsLocation} function accesses the GPS sensor and since we call it 
   from \texttt{fetchLocalNews}, this function also requires GPS (the requirement is propagated
   automatically).
 
-\item We can compile the program for two client-side platforms - the entry points are \ident{iPhoneMain}
+\item We can compile the program for two client-side platforms -- the entry points are \ident{iPhoneMain}
   and \ident{windowsMain} and require iOS and Windows user-interface libraries, together with
   GPS and the ability to perform remote calls over the network.
 \end{itemize}
@@ -549,9 +560,9 @@ the following is a valid typing judgement in F\# \cite{app-fsharp}:
 x\!:\!\ident{int},~y\!:\!\ident{int} \vdash x+y : \ident{int}
 \end{equation*}
 %
-This judgement assumes that the type of both $x$ and $y$ is \ident{int} and so the result must also
-be \ident{int}. In F\#, the expression would also be typeable in a context $x\!:\!\ident{string},~y\!:\!\ident{string}$,
-but not, for example, in a context where $x$ has a type \ident{int} and $y$ has a type \ident{string}.
+This judgement assumes that the type of $x$ and $y$ is \ident{int} and so the result must also
+be \ident{int}. The expression might also be typeable in a context $x\!:\!\ident{string},~y\!:\!\ident{string}$,
+but not in a context where types of $x$ and $y$ do not match.
 
 \paragraph{Tracking evaluation effects.}
 Type systems can be extended in numerous ways. The types can be more precise, for example, by specifying
@@ -586,7 +597,8 @@ expression $\ident{send}(\ident{read}())$ are $\{ \ident{console}, \ident{networ
 
 Effect systems are an established idea, but they are suitable only for tracking properties of a
 certain kind. They can be used for properties that describe how programs \emph{affect} the environment.
-For context-aware languages, we instead need to track what programs \emph{require} from the environment.
+For context-aware languages, we instead need to track what programs \emph{require} from the 
+environment. This intuitive distinction is made more precise in Section~\ref{sec:semantics-related}. 
 
 \paragraph{Tracking context demands.}
 
@@ -596,40 +608,63 @@ shown earlier -- first using standard ML-like type system:
 %
 \begin{equation*}
 \ident{password}\!:\!\ident{string},~\ident{cmd}\!:\!\ident{string}
-  \vdash \ident{query}(\ident{cmd}, \ident{password}) : \ident{news list}
+  \vdash \ident{query}(\ident{cmd}, \ident{password}, \kvd{time}) : \ident{news list}
 \end{equation*}
 %
-The expression queries a database and gets back a list of news values as the result. Recall from the
-earlier discussion that there are two contextual information that are desirable to track for this
-expression. First, the call to the \ident{query} primitive requires \emph{database access}. Second,
+The expression queries a database and gets back a list of news based on the spefieid \kvd{time}. 
+There are three pieces of contextual information that are desirable to track for this expression. 
+First, the call to the \ident{query} primitive requires \emph{database access}. Second, 
 the \ident{password} argument needs to be marked as \emph{sensitive value} to avoid sending it over
-an unsecure network connection. The \emph{coeffect systems} developed in this thesis capture this
-information in the following way (we slightly refine the notation later):
+an unsecure network connection. Third, the expression uses a special construct \kvd{time}, which
+requires access to \emph{system clock}. The \emph{coeffect systems} developed in this thesis 
+capture this information in the following way (we slightly refine the notation later):
 %
 \begin{equation*}
 \begin{array}{l}
  \coctx{( \ident{password}\!:\!\coctx{\ident{string}}{\hspace{-0.75em}\ident{\cclrd{\footnotesize sensitive}}},
-   \ident{cmd}\!:\!\ident{string})}{ \aclrd{\{ \ident{database} \}}}  \\[-0.1em]
- \hspace{3em} \vdash\ident{query}(\ident{cmd}, \ident{password}) : \ident{news list}
+   \ident{cmd}\!:\!\ident{string})}{ \aclrd{\{ \ident{database}, \ident{clock} \}}}  \\[-0.1em]
+ \hspace{3em} \vdash\ident{query}(\ident{cmd}, \ident{password}, \kvd{time}) : \ident{news list}
 \end{array}
 \end{equation*}
 %
-Rather than attaching the annotation to the \emph{resulting type}, we attach them to the variable
-context $\Gamma$. In other words, coeffect systems do not keep track just of the variables available
-in the context -- they also capture detailed information about the execution environment.
+The typing judgement includes an additional annotation that now captures 
+contextual requirements of the expression. The annotation is attched to the variable context 
+$\Gamma$. As discussed later (Section~\ref{sec:flat-calculus-understanding}), this better reflects
+how contextual information are used in the type system, but it also matches the semantics 
+(Section~\ref{sec:semantics-theory}). Rather than attaching additional information to the
+\emph{resulting type}, we attach them to the variable context $\Gamma$. 
+
+In other words, the context in coeffect systems consists of the available variables, but also
+tracks detailed information about the execution environment.
 In the above example, the system tracks metadata about the variables and annotates \ident{password}
-as sensitive. Furthermore, it tracks requirements about the execution environment, for example,
-that the execution requires an access to database.
+as sensitive and it tracks requirements about the execution environment, for example,
+that the execution requires clock.
 
 The example demonstrates the two kinds of coeffect systems outlined earlier. The tracking of
 \emph{whole-context} information (such as environment requirements) is captured by the \emph{flat
 coeffect calculus} developed in Chapter~\ref{ch:flat}, while the tracking of \emph{per-variable}
 information is captured by the \emph{structural coeffect calculus} developed in Chapter~\ref{ch:structural}.
 
-It is well-known fact that \emph{effects} correspond to \emph{monads} and languages such as Haskell
+\paragraph{Context demands and lambda abstraction.}
+The difference between effects and coeffects becomes apparent when we consider lambda abstraction.
+Given an effectful expression such as $\ident{print}~\str{hi}$, the function $\lambda x.\ident{print}~\str{hi}$
+is an effect free value that delays all effects. The message is printed when we run the function,
+but not when the function is declared.
+
+Contextual properties do not follow this pattern. As discussed in 
+Section~\ref{sec:applications-structure-lam}, context demands cannot always be delayed. For 
+example, consider a context-aware expression $\kvd{time}$ that requires access to system clock.
+If we create this function on a server in a distributed system, send it to a client and then
+run it, the function body can access the clock in two ways. It can use the clock of the server (when the
+function was created), or it can use the clock of the client (when the function was executed).
+We return to this example in Section~\ref{sec:applications-flat-distr}.
+
+Another important difference between effects and coeffects becomes apparent when we consider their
+semantics. It is well-known fact that \emph{effects} correspond to \emph{monads} and languages such as Haskell
 use monads to provide a limited form of effect system. An interesting observation made in this thesis
 is that \emph{coeffects}, or systems for tracking contextual information, correspond to the category
 theoretical dual of monads called \emph{comonads}. The details are explained throughout the thesis.
+
 
 % ==================================================================================================
 %
@@ -645,10 +680,9 @@ theoretical dual of monads called \emph{comonads}. The details are explained thr
 
 \section{Thesis outline}
 
-The key claim of this thesis is that programming languages need to provide better ways of capturing
-how programs rely on the context, or execution environment, in which they execute. This chapter
-shows why this is an important problem. We looked at a number of properties related to context that
-are currently handled in ad-hoc and error-prone ways. Next, we considered the properties in a
+This chapter shows why capturing how programs rely on the context, or execution environment, in 
+which they execute is an important problem. We looked at a number of properties related to context 
+that are currently handled in ad-hoc and error-prone ways. Next, we considered the properties in a
 simplified, but realistic example of a client/server application for displaying local news.
 
 Tracking of contextual properties may not be initially perceived as a major problem -- perhaps
@@ -682,11 +716,11 @@ better solution. Finding the foundations of such better solution is the goal of 
   is repeated for structural coeffects in Chapter~\ref{ch:structural}.
 
 \item In Chapter~\ref{ch:impl}, we use the translation as a basis for a prototype
-  implementation of three simple context-aware programming languages. Our implementation serves as
-  an empirical evidence showing how coeffects simplify programming with context and provide
-  additional safety guarantees. We present the implementation in the format of an \emph{interactive
-  essay} (\url{http://tomasp.net/coeffects}) that encourages active reading and exploration of
-  various aspects of the theory.
+  implementation of three simple context-aware programming languages. We use a format of web-based
+  \emph{interactive essay} (available at \url{http://tomasp.net/coeffects}), which shows how 
+  coeffects simplify programming with context by allowing the reader to write and run simple 
+  context-aware programs, but also explore the theory behind the implementation including the 
+  typing derivation and the translation.
 
 \item Related work is presented in Chapter~\ref{ch:pathways} and, together with further work,
   throughout the thesis. Two important directions deserve further exploration. In Chapter~\ref{ch:further},
@@ -698,7 +732,7 @@ better solution. Finding the foundations of such better solution is the goal of 
 \noindent
 If there is a one thing that the reader should remember from this thesis, it is the fact that
 there is a unified notion of \emph{context}, capturing many common scenarios in programming,
-and that programming language designers need to provide ways for working with this context (using
-\emph{coeffects} or not). This greatly reduces the number of distinct concepts that software
+and that programming language designers need to provide ways for working with this context.
+This greatly reduces the number of distinct concepts that software
 developers need to keep in mind of when building applications for the rich and diverse
 execution environments of the future.

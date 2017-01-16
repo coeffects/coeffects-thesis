@@ -16,25 +16,32 @@ open System.Diagnostics
 // --------------------------------------------------------------------------------------
 
 Target "run" (fun _ ->
-  let watch path = 
-    let fsw = new FileSystemWatcher(path,"*.tex")
-    fsw.Changed.Add(fun _ ->
-      fsw.EnableRaisingEvents <- false
-      let ps =
-        ProcessStartInfo
-          ( FileName = @"C:\Programs\Publishing\MiKTeX 2.9\miktex\bin\pdflatex.exe",
-            Arguments = "-interaction=nonstopmode main.tex",
-            WorkingDirectory = __SOURCE_DIRECTORY__,
-            UseShellExecute = false,
-            CreateNoWindow = true )
-      let p = Process.Start(ps)
-      p.WaitForExit()
-      printfn "Updated"
-      fsw.EnableRaisingEvents <- true )
+  let path = __SOURCE_DIRECTORY__ + "/text"
+  let fsw = new FileSystemWatcher(path,"*.tex")
+  fsw.Changed.Add(fun e ->
+    printfn "Files changed: %s" e.FullPath
+    fsw.EnableRaisingEvents <- false
+    let ps =
+      ProcessStartInfo
+        ( FileName = @"C:\Programs\Publishing\MiKTeX 2.9\miktex\bin\x64\pdflatex.exe",
+          Arguments = "-interaction=nonstopmode main.tex",
+          WorkingDirectory = __SOURCE_DIRECTORY__,
+          UseShellExecute = false,
+          CreateNoWindow = true )
+    let p = Process.Start(ps)
+    p.WaitForExit()
+    printfn "Updated. Exit code: %d" p.ExitCode
+    fsw.EnableRaisingEvents <- true )
 
-    fsw.EnableRaisingEvents <- true
-  watch __SOURCE_DIRECTORY__
-  watch (__SOURCE_DIRECTORY__ @@ "text")
+  fsw.EnableRaisingEvents <- true
+
+  let ps =
+    ProcessStartInfo
+      ( FileName = @"C:\Programs\Publishing\SumatraPDF\SumatraPDF.exe",
+        Arguments = "\"" + __SOURCE_DIRECTORY__ + "\\main.pdf\"",
+        WorkingDirectory = path )
+  let p = Process.Start(ps)
+  
   System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite)
 )
 
