@@ -91,7 +91,7 @@ The program can be evaluated in two ways, depending on the variable binding mech
 When we view variable access as a context requirement, we can see that the body of the function
 ($\ident{x}+\ident{y}$) requires a context that provides values for variables \ident{x} and
 \ident{y}. In static binding, the context demands of the body can be placed on the scope in
-which the function is defined (declaration-site). In dynamic binding, the requirements are
+which the function is defined (declaration site). In dynamic binding, the requirements are
 \emph{delayed} and are placed on the scope in which the function is called (call site).
 
 In static and dynamic scoping, all variable requirements are always placed on one site. However,
@@ -140,7 +140,7 @@ implicit parameter is available only in the dynamic scope:
 %
 The binding rules for Haskell's implicit parameters can be summarized as ``\emph{static binding when possible,
 dynamic binding when needed}''. If an implicit parameter is available in static scope, then the value
-is statically bound and the context requirement is satisfied using the declaration-site context.
+is statically bound and the context requirement is satisfied using the declaration site context.
 Otherwise, the context requirement is delayed and has to be satisfied at the call site.
 In the example on the left, \ident{?x} is bound to $10$ and so the function \ident{f} has no
 delayed context demands and thus the expression evaluates to $10$. On the right,
@@ -165,14 +165,14 @@ interesting point inside the wider spectrum.
 In this thesis, we consider various notions of context, using implicit parameters as one
 of several motivating examples. Implicit parameters are a particularly valuable example, because they
 clearly illustrate the ambiguity inherent in context-aware programs -- the context demands of
-a function can be satisfied using the context available at declaration-site or using the context
+a function can be satisfied using the context available at declaration site or using the context
 available at the call site. Recall our earlier printer example -- a language that
 provides access to resources in the context needs to provide enough flexibility in handling such
 ambiguities, be it implicit parameter values available in scope or printers available in the
 physical environment.
 
 We aim to find a description of context-aware languages that does not make ad-hoc decisions
-about how context demands are split between the declaration-site and the call site. While
+about how context demands are split between the declaration site and the call site. While
 Haskell's solution for implicit parameters might be the most reasonable one for that particular
 case, this thesis argues that other notions of context require different domain-specific choices
 and the general framework of context-aware programming should make that possible.

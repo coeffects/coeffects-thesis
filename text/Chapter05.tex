@@ -796,7 +796,7 @@ The semantics of variable access and abstraction are the same as in the semantic
 Vene \cite{comonads-notions}, modulo the indexing. The semantics of variable access (\emph{var}) uses
 $\ident{counit}_{\cunit}$ to extract a product of free variables, followed by projection
 $\pi_i$ to obtain the variable value. Abstraction (\emph{abs}) is interpreted as a curried
-function that takes the declaration-site context and a function argument, merges them using
+function that takes the declaration site context and a function argument, merges them using
 $\ident{merge}_{\cclrd{r}, \cclrd{s}}$ and passes the result to the semantics of the body $f$.
 Assuming the context $\Gamma$ contains variables of types $\sigma_1, \ldots, \sigma_n$, this gives
 us a value $\ctyp{\cclrd{r}\czip\cclrd{s}}((\sigma_1 \times \ldots \times \sigma_n) \times \tau_1)$.
@@ -1667,7 +1667,7 @@ for (\emph{cobind}) and (\emph{split}) restrict the set of available implicit pa
 to the annotations and (\emph{merge}) combines them, preferring the values from the call site.
 
 For the semantics of implicit parameter programs that we consider, the preference of call site
-bindings over declaration-site bindings in (\emph{merge}) does not matter. The unique typing
+bindings over declaration site bindings in (\emph{merge}) does not matter. The unique typing
 derivations for implicit parameter coeffects obtained in Section~\ref{sec:flat-unique} always
 split implicit parameters into \emph{disjoint sets}, so preferences do not come into play.
 

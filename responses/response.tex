@@ -311,7 +311,7 @@ $\ident{?x}$ has a value 15. Is the result of the expression $10$ or $15$? The c
 run-time semantics needs to be reflected in the type system.
 
 \paragraph{Resolution in Haskell.}
-In Haskell, the implicit parameters from the \emph{declaration-site} are preferred and so the result
+In Haskell, the implicit parameters from the \emph{declaration site} are preferred and so the result
 is 10. Correspondingly, the type system only permits one typing -- with the parameter \ident{?x}
 required on the declaration-side (allowing no rebinding at the call site). However, if the function
 value was defined in a context not containing \ident{?x}, the value from the call site would be used.
@@ -422,7 +422,7 @@ past values in causal dataflow.
 
 An interesting aspect of many context-aware computations is that they require access to some
 context, but do not explicitly specify where the context comes from. In case of implicit parameters,
-the values can be provided either by the call site or by the declaration-site.
+the values can be provided either by the call site or by the declaration site.
 
 In some systems like Haskell's implicit parameters, this aspect is hidden through a mechanism that
 chooses a \emph{default typing} (and a \emph{default semantics}) and thus hides the ambiguity. Our approach is

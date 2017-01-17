@@ -20,9 +20,9 @@ required past values in dataflow languages.
 To capture contextual properties in full generality, the flat coeffect calculus permits multiple
 valid typing derivations for a given term. To resolve the ambiguity arising from such generality,
 each concrete context-aware language is also equipped with an algorithm for choosing a unique
-typing derivation. This allows us to explore the language design landscape, while still follow
+typing derivation. This allows us to explore the language design landscape, while still following
 the usual scoping rules for languages with established approaches (e.g.~implicit parameters in
-Haskell).
+GHC).
 
 In the next chapter, we give operational meaning for concrete coeffect
 languages based on the flat coeffect calculus and we discuss their safety.
@@ -36,8 +36,8 @@ languages based on the flat coeffect calculus and we discuss their safety.
 
 \item The coeffect calculus permits multiple typing derivations due to the ambiguity inherent
   in contextual lambda abstraction. Each concrete context-aware language based on the
-  coeffect calculus must specify how such ambiguities are to be resolved. We give the procedure for
-  choosing unique typing derivation for our three examples (Section~\ref{sec:flat-unique}).
+  coeffect calculus must specify how such ambiguities are to be resolved. We give the procedures for
+  choosing unique typing derivations for our three examples (Section~\ref{sec:flat-unique}).
 
 \item We discuss equational properties of the calculus, covering type-pre\-ser\-vation for call-by-name
   and call-by-value reduction (Section~\ref{sec:flat-syntax}). We also extend the calculus
@@ -73,7 +73,7 @@ declaration site and the call site. Furthermore, the operator that combines cont
 is $\cup$ for both sequential and pointwise composition.
 
 Despite the differences, the systems fit the same framework. This becomes apparent when
-we consider the categorical structure (Section~\ref{sec:flat-semantics}). Rather than starting
+we consider the categorical structure (Chapter~\ref{ch:semantics}). Rather than starting
 from the categorical semantics, we first explain how the systems can be unified syntactically
 (Section~\ref{sec:flat-calculus-lambda}) and then provide the semantics as an additional
 justification.
@@ -82,7 +82,7 @@ The development in this chapter can be seen as a counterpart to the well-known d
 \emph{effect systems} \cite{effects-gifford}. Chapter~\ref{ch:semantics} then links \emph{coeffects}
 with \emph{comonads} in the same way in which effect systems have been linked with monads
 \cite{monad-notions}. The syntax and type system of the flat coeffect calculus follows
-a similar style as effect systems \cite{effects-polymorphic,effects-talpin-et-al}, but differs
+a similar style to that of effect systems \cite{effects-polymorphic,effects-talpin-et-al}, but differs
 in the structure of lambda abstraction as discussed briefly here and in Section~\ref{sec:applications-structure-lam}
 (the relationship with monads is further discussed in Section~\ref{sec:semantics-related}).
 
@@ -162,9 +162,9 @@ e &::=& x \sep n \sep \lambda x:\tau.e \sep e_1~e_2 \sep \kvd{let}~x = e_1~\kvd{
 \end{array}
 \end{equation*}
 %
-Note that the lambda abstraction in the syntax is written in the Church-style and requires a type
+Note that the lambda abstraction in the syntax is written in the Church style and requires a type
 annotation. This will be used in Section~\ref{sec:flat-unique} where we discuss how to find a
-unique typing derivation for context-aware computations. Using Church-style lambda abstraction,
+unique typing derivation for context-aware computations. Using Church style lambda abstraction,
 we can directly focus on the more interesting problem of finding unique \emph{coeffect annotations}
 rather than solving the problem of type reconstruction.
 
@@ -206,14 +206,12 @@ That is, for all $r,s,t\in \C$:
 r \;\cseq\; (s \;\cseq\; t) = (r \;\cseq\; s) \;\cseq\; t &&
 \cunit \;\cseq\; r = r = r \;\cseq\; \cunit
 \\
-r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &
-r\; \cpar\; r = r~~~~&
+r \;\cpar\; (s \;\cpar\; t) = (r \;\cpar\; s) \;\cpar\; t &r\; \cpar\; r = r~~~~&
 \czero \;\cpar\; r = r = r \;\cpar\; \czero
 \\
-r \;\czip\; (s \;\czip\; t) = (r \;\czip\; s) \;\czip\; t &&
-r\; \czip\; r = r \qquad
+r \;\czip\; (s \;\czip\; t) = (r \;\czip\; s) \;\czip\; t &r\; \czip\; r = r~~~~&~
 \\
-\textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t &&
+\textnormal{if}~~r\; \cleq\; s ~~\textnormal{and}~~s\; \cleq\; t~~\textnormal{then}~~r\; \cleq\; t &
 t\; \cleq\; t \\[0.5em]
 \end{array}
 \end{equation*}
@@ -234,7 +232,7 @@ common properties of the three examples, without unnecessarily restricting the s
 \begin{itemize}
 \item The monoid $(\C, \cseq, \cunit)$ represents \emph{sequential} composition of (semantic)
 functions. The monoid axioms are required in order to form a category structure in the
-semantics (Section~\ref{sec:flat-semantics}).
+semantics (Section~\ref{sec:semantics-theory}).
 
 \item The idempotent monoid $(\C, \cpar, \czero)$ represents \emph{pointwise} composition,
 \ie~the case when the same context is passed to multiple (independent) computations. The monoid
@@ -253,11 +251,26 @@ element of the set $\C$.
 \noindent
 It is worth noting that, in some of the systems, the operators $\cpar$ and $\czip$ are the least
 upper bound and the greatest lower bounds of a lattice. For example, in dataflow computations, they
-are \emph{max} and \emph{min} respectively. However, this duality does not hold for implicit parameters
-(we discuss the lattice-based formulation of coeffects in Section~\ref{sec:unified-impl-semilattice}.
+are \emph{max} and \emph{min} respectively. However, this duality does not hold for implicit parameters.
+
+\paragraph{Semiring.}
+The $\cseq$ and $\cpar$ operations of the flat coeffect algebra together with the $\cunit$ and
+$\czero$ values resemble semiring. As required by semiring laws, both of the operations are 
+associative; $\cunit$ and $\czero$ are the units of $\cseq$ and $\cpar$, respectively, and the
+distributivity laws also hold. The two additional laws of semiring that are not required by a 
+flat coeffect algebra are symmetry of $\cseq$ and annihilation:
+%
+\begin{align*}
+\czero \, \cseq \, \cclrd{r} = \czero = \cclrd{r} \, \cseq \, \czero \qquad \cclrd{r}\,\cpar\,\cclrd{s} = \cclrd{s}\,\cpar\,\cclrd{r}
+\end{align*}
+%
+The symmetry of $\cseq$ holds for all our examples, but we do not include it so that we do not
+unnecessarily restrict the system. The annihilation holds for some of the examples (liveness
+and optimized dataflow in Section~\ref{sec:flat-calculus-examples}), but not for all of them.
+In particular, it does not hold for implicit parameters $\cclrd{\emptyset}\,\cclrd{\cup}\,\cclrd{r}\neq\cclrd{\emptyset}$
+and so requiring it would lead to a more restrictive structure than is desirable.
 
 \paragraph{Ordering.}
-
 The flat coeffect algebra includes a pre-order relation $\cleq$. This will be used to introduce
 subcoeffecting and subtyping in Section~\ref{sec:flat-exts-sub}, but we make it a part of the flat
 coeffect algebra, as it will be useful for characterization of different kinds of coeffect calculi.
@@ -345,11 +358,11 @@ derived rule for $(\lambda x.e_2)~e_1$, but it corresponds to \emph{one} possibl
 derivation. As we show in \ref{sec:flat-exts-let}, the typing used in (\emph{let}) is more
 precise than the general rule that can be derived from $(\lambda x.e_2)~e_1$.
 
-To guide understanding of the system, we also show non-syntax-directed (\emph{sub}) rule for
+To guide understanding of the system, we also show a non-syntax-directed (\emph{sub}) rule for
 subcoeffecting. The rule states that an expression with context demands $\cclrd{r'}$ can be
 treated as an expression with greater context demands $\cclrd{r}$. We return to subcoeffecting,
 subtyping and additional constructs such as pairs in Section~\ref{sec:flat-exts}. When
-discussing procedure for choosing unique typing in Section~\ref{sec:flat-unique}, we consider
+discussing the procedure for choosing unique typing in Section~\ref{sec:flat-unique}, we consider
 only the syntax-directed part of the system.
 
 %---------------------------------------------------------------------------------------------------
@@ -361,7 +374,7 @@ Before proceeding, let us clarify how the typing judgements should be understood
 calculus can be understood in two ways discussed in this and the next chapter. As a type system
 (Chapter~\ref{ch:flat}), it provides analysis of context dependence. As a semantics
 (Chapter~\ref{ch:semantics}), it specifies how context is propagated. These two readings provide
-different ways of interpreting the judgements $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and the
+different ways of interpreting the judgement $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ and the
 typing rules used to define it.
 
 \begin{itemize}
@@ -389,7 +402,7 @@ site are \emph{merged} and passed to the body.
 For example, using the syntactic reading, the operators $\czip$ and $\cpar$ represent \emph{merging}
 and \emph{splitting} of context demands -- in the (\emph{abs}) rule, $\czip$ appears in the assumption
 and the combined context demands of the body are split between two positions in the conclusions;
-in the (\emph{app}) rule, $\cpar$ appears in the conclusion and combines two context demands
+in the (\emph{app}) rule, $\cpar$ appears in the conclusion and merges two context demands
 from the assumptions.
 
 The reason for this asymmetry follows from the fact that the context appears in a \emph{negative
@@ -418,7 +431,7 @@ algebra is formed by $(\mathcal{P}(\ident{Id}), \cup, \cup, \cup, \emptyset, \em
 \noindent
 For simplicity, assume that all parameters have the same type $\ident{num}$ and so the annotations only
 track sets of names. The definition uses a set union for all three operations. Both variables and
-constants are are annotated with $\emptyset$ and the ordering is defined by $\subseteq$. The
+constants are annotated with $\emptyset$ and the ordering is defined by $\subseteq$. The
 definition satisfies the flat coeffect algebra axioms because $(S, \cup, \emptyset)$ is an idempotent,
 commutative monoid. The language has additional syntax for defining an implicit parameter and for
 accessing it, together with associated typing rules:
@@ -441,7 +454,7 @@ accessing it, together with associated typing rules:
 The (\emph{param}) rule specifies that the accessed parameter $\ident{?p}$ needs to be in the set of
 required parameters $\cclrd{r}$. As discussed earlier, we use the same type $\ident{num}$ for all
 parameters, but it is also possible to define a coeffect calculus that uses mappings from names to
-types (care is needed to avoid assigning multiple types to a parameter of the same type).
+types.
 
 The (\emph{letpar}) rule is the same as the one discussed in Section~\ref{sec:applications-flat-impl}.
 As both of the rules are specific to implicit parameters, we write the operations on coeffects directly
@@ -461,7 +474,7 @@ and it captures how those annotation propagate through the remaining language co
 
 As in Section~\ref{sec:applications-flat-live}, sequential composition $\cseq$ is modelled by
 the meet operation $\sqcap$ and pointwise composition $\cpar$ is modelled by join $\sqcup$.
-The two-point lattice is a commutative, idempotent monoid. Distributivity
+The two-point lattice induces a commutative, idempotent monoid. Distributivity
 $(r \sqcup s) \sqcap t = (r \sqcap t) \sqcup (s \sqcap t)$ does not hold for \emph{every}
 lattice, but it trivially holds for the two-point lattice used here.
 
@@ -485,11 +498,11 @@ of the body.
 
 As required by the axioms, $(\mathbb{N}, +, 0)$ and $(\mathbb{N}, \mathit{max}, 0)$ form monoids
 and $(\mathbb{N}, \mathit{min})$ forms a band. Note that dataflow is our first example where
-$\cseq$ is not idempotent. The distributivity axioms require the following to be the case:
-$\mathit{max}(r,s) + t = \mathit{max}(r+t, s+t)$, which is easy to see.
+$\cseq$ is not idempotent. The distributivity axioms require addition to distribute over maximum,
+which is easy to see.
 
 A simple dataflow language includes an additional construct $\kvd{prev}$ for accessing the
-previous value in a stream with an additional typing rule that look as follows:
+previous value in a stream with an additional typing rule that looks as follows:
 %
 \begin{equation*}
 \quad~ e ~::=~ \ldots \sep \kvd{next}~e
@@ -505,20 +518,18 @@ and dataflow. In the above dataflow calculus, $0$ denotes that we require the cu
 variable, but no previous values. However, for constants, we do not even need the current value.
 
 \begin{example}[Optimized dataflow]
-In optimized dataflow, context is annotated with natural numbers extended with the $\bot$ element,
-that is $\mathbb{N}_{\bot} = \{\bot, 0, 1, 2, 3, \ldots \}$ such that $\forall n \in \mathbb{N}. \bot \leq n$.
-The flat coeffect algebra is $(\mathbb{N}_{\bot}, +, \mathit{max}, \mathit{min}, 0, \bot, \leq)$
-where $m + n$ is $\bot$ whenever $m=\bot$ or $n=\bot$ and \emph{min}, \emph{max} treat $\bot$ as the
+In optimized dataflow, context is annotated with natural numbers extended with the $-\infty$ element.
+The flat coeffect algebra is $(\mathbb{N} \cup \{-\infty\}, +, \mathit{max}, \mathit{min}, 0, \bot, \leq)$
+where $m + n$ is $-\infty$ whenever $m=-\infty$ or $n=-\infty$ and \emph{min}, \emph{max} treat $-\infty$ as the
 least element.
 \end{example}
 
 \noindent
-Note that $(\mathbb{N}_{\bot}, +, 0)$ is a monoid for the extended definition of $+$; for the
+Note that $(\mathbb{N}\cup\{-\infty\}, +, 0)$ is a monoid for the extended definition of $+$; for the
 bottom element $0 + \bot = \bot$ and for natural numbers $0 + n = n$. The structure
 $(\mathbb{N}, \emph{max}, \bot)$ is also a monoid, because $\bot$ is the least element and so
-$\mathit{max}(n, \bot) = n$. Finally,  $(\mathbb{N}, \emph{min})$ is a band (the extended
-\emph{min} is still idempotent and associative) and the distributivity axioms also hold
-for $\mathbb{N}_{\bot}$.
+$\mathit{max}(n, \bot) = n$. Finally,  $(\mathbb{N}, \emph{min})$ is a band and the distributivity 
+axioms also hold for $\mathbb{N}\cup\{-\infty\}$.
 
 
 % ==================================================================================================
@@ -536,25 +547,26 @@ for $\mathbb{N}_{\bot}$.
 \section{Choosing a unique typing}
 \label{sec:flat-unique}
 
-As discussed in Chapter~\ref{sec:applications}, the lambda abstraction rule for coeffect systems
+As discussed in Chapter~\ref{ch:applications}, the lambda abstraction rule for coeffect systems
 differs from the rule for effect systems in that it does not delay all context demands.
 In case of implicit parameters (Section~\ref{sec:applications-flat-impl}), the demands
-can be satisfied either by the call site or by the declaration-site. In case of dataflow and
+can be satisfied either by the call site or by the declaration site. In case of dataflow and
 liveness, the rule discussed in Section~\ref{sec:flat-calculus} reintroduces similar ambiguity
 because it allows multiple valid typing derivations.
 
-Furthermore, the semantics of context-aware languages in Chapter~\ref{sec:applications} and
-also in Chapter~\ref{ch:semantics} is defined over \emph{typing derivation} and so the meaning
+Furthermore, the semantics of context-aware languages in Chapter~\ref{ch:applications} and
+also in Chapter~\ref{ch:semantics} is defined over \emph{typing derivations} and so the meaning
 of a program depends on the typing derivation chosen. In this section, we specify how to choose
 the desired \emph{unique} typing derivation in each of the coeffect systems we consider.
 
-The most interesting case is that of implicit parameters. For example, consider the following
-program written using the coeffect calculus with implicit parameter extensions:
+The most interesting case is that of implicit parameters. Consider the following
+program written using the extended coeffect calculus:
 %
 \begin{equation*}
 \begin{array}{l}
-\kvd{let}~f~= (\kvd{let}~\ident{?x}=42~\kvd{in}~(\lambda y.~\ident{?x}))~\kvd{in} \\[-0.2em]
-\kvd{let}~\ident{?x}=666~\kvd{in}~f~0 \\[-0.2em]
+\kvd{let}~\ident{?x}=\num{1}\\[-0.2em]
+\kvd{let}~f~= \lambda y.~\ident{?x}~\kvd{in} \\[-0.2em]
+\kvd{let}~\ident{?x}=2~\kvd{in}~f~0 \\[-0.2em]
 \end{array}
 \end{equation*}
 
@@ -564,18 +576,18 @@ that lead to two possible meanings of the program -- evaluating to $1$ and $2$, 
 %
 \begin{itemize}
   \item $f : \ident{num} \xrightarrow{\cclrd{\emptyset}} \ident{num}$ -- in this case, the value
-    of \ident{?x} is captured from the declaration-site and the program produces $1$.
+    of \ident{?x} is captured from the declaration site and the program produces $1$.
   \item $f : \ident{num} \xrightarrow{\cclrd{\{ \ident{?x} \}}} \ident{num}$ -- in this case, the
     parameter \ident{?x} is required from the call site and the program produces $2$.
 \end{itemize}
 %
-The coeffect calculus intentionally allows both of the options, acknowledging the fact that the
+The coeffect calculus intentionally allows both options, acknowledging the fact that the
 choice needs to be made for each individual concrete context-aware programming language. In the
 above case, one typing derivation represents dynamic binding and the other static binding, but
 more subtleties arise when the nested expression uses multiple implicit parameters.
 
 In this section, we discuss the specific choices of typing derivation for implicit parameters,
-dataflow and liveness. We use the fact that the coeffect calculus uses Church-style syntax for
+dataflow and liveness. We use the fact that the coeffect calculus uses Church style syntax for
 lambda abstraction giving a type annotation for the bound variable. This does not affect the
 handling of coeffects (those are not defined by the type annotation), but it lets us prove
 \emph{uniqueness of typing}; a theorem showing that we define a \emph{unique} way of assigning
@@ -632,12 +644,12 @@ coeffects to otherwise well-typed programs.
 \subsection{Implicit parameters}
 \label{sec:flat-unique-impl}
 
-For implicit parameters we choose to follow the behaviour implemented by Haskell~\cite{app-implicit-parameters}
-where function abstraction captures all parameters that are statically available at the declaration-site
+For implicit parameters we choose to follow the behaviour implemented by GHC~\cite{app-implicit-parameters}
+where function abstraction captures all parameters that are statically available at the declaration site
 and places all other demands on the call site. For the example above, this means
-that the body of $f$ captures the value of \ident{?p} available from the declaration-site
+that the body of $f$ captures the value of \ident{?p} available from the declaration site
 and $f$ will be typed as a function requiring no parameters (coeffect $\cclrd{\emptyset}$). The
-program thus evaluates to a numerical value $42$.
+program thus evaluates to a numerical value $1$.
 
 To express this behaviour formally, we extend the coeffect type system to additionally track
 implicit parameters that are currently in static scope. The typing judgement becomes:
@@ -646,7 +658,7 @@ implicit parameters that are currently in static scope. The typing judgement bec
 \coctx{\Gamma;\cclrd{\Delta}}{\cclrd{r}} \vdash e : \tau
 \end{equation*}
 %
-Here, $\cclrd{\Delta}$ is a set of implicit parameters that are in scope at the declaration-site.
+Here, $\cclrd{\Delta}$ is a set of implicit parameters that are in scope at the declaration site.
 The modified typing rules are shown in Figure~\ref{fig:flat-resolve-impl}. The rules (\emph{var}),
 (\emph{const}), (\emph{app}) and (\emph{let}) are modified to use the new typing judgement, but they
 simply propagate the information tracked by $\cclrd{\Delta}$ to all assumptions. The (\emph{param})
@@ -662,13 +674,13 @@ remaining parameters from the call site). Finally, in the (\emph{letpar}) rule, 
 bound implicit parameter \ident{?p} to the static scope in the sub-expression $e_2$.
 
 \paragraph{Properties.}
-If a program written in a coeffect language with implicit parameters is well-typed in a type
+If a program written in a coeffect language with implicit parameters is well-typed in the type
 system presented in Figure~\ref{fig:flat-resolve-impl} then this identifies the unique preferred
-derivation for the program. We use this unique typing derivation to give the semantics of coeffect
+derivation for the program. We use this unique typing derivation to give the semantics of a coeffect
 language with implicit parameters in Chapter~\ref{ch:semantics} and we also implement this algorithm
 as discussed in Chapter~\ref{ch:impl}.
 
-The type system is more restrictive than the fully general one and it reject certain programs that
+The type system is more restrictive than the fully general one and it rejects certain programs that
 could be typed using the more general system. This is expected -- we are restricting the fully
 general coeffect calculus to match the typing and semantics of implicit parameters as known from
 Haskell.
@@ -748,7 +760,7 @@ Cases (\emph{app}), (\emph{let}) and (\emph{letpar})
 
 \noindent
 Finally, we note that unique typing derivations obtained using the type system given in
-Figure~\ref{fig:flat-resolve-impl} are valid typing derivation under the original flat coeffect
+Figure~\ref{fig:flat-resolve-impl} are valid typing derivations under the original flat coeffect
 type system in Figure~\ref{fig:flat-types}.
 
 \begin{theorem}[Admisibility of unique typing for implicit parameters]
@@ -905,11 +917,11 @@ dataflow is more complex.
 \subsection{Syntactic properties}
 \label{sec:flat-syntax-props}
 
-Before discussing the syntactic properties of general coeffect calculus formally, it should be
+Before discussing the syntactic properties of the general coeffect calculus formally, it should be
 clarified what is meant by providing a ``pathway to operational semantics'' in this section. We do
 that by contrasting syntactic properties of coeffect systems with more familiar effect systems.
 Writing $\subst{e_1}{x}{e_2}$ for a standard capture-avoiding syntactic substitution, the following
-equations define four syntactic reductions on the terms:
+equations define three syntactic reductions on the terms:
 %
 \begin{equation*}
 \begin{array}{rllcl}
@@ -921,13 +933,13 @@ e &{\reduce_\eta}& \lambda x.e~x                                    &&(\textit{$
 %
 The rules capture syntactic reductions that can be performed in a general calculus, without any
 knowledge of the specific notion of context. If the reductions preserve the type of the expression
-(type preservation), then operational semantics can be defined as a repeated application of the
+(type preservation), then an operational semantics can be defined as a repeated application of the
 rules, together with additional domain-specific rules for each context-aware language, until
 a specified normal form (\ie~a value) is reached.
 
 In the rest of the section, we briefly outline the interpretation of the three
 rules and then we focus on call-by-value (Section~\ref{sec:flat-syntax-cbv}) and call-by-name
-(Section~\ref{sec:flat-syntax-cbn}) in more details.
+(Section~\ref{sec:flat-syntax-cbn}) in more detail.
 
 The focus of this chapter is on the general coeffect system and so we do not discuss the
 domain-specific reduction rules for individual context-aware language. Some work on both operational
@@ -958,7 +970,7 @@ Similarly to effect systems, substituting a context-dependent computation $e$ fo
 add latent coeffects to the function type. However, this is not the case for \emph{all} flat coeffect
 calculi. For example, call-by-name reduction preserves types and coeffects for the implicit
 parameters system. This means that certain coeffect systems support call-by-name evaluation strategy
-and could be embedded in purely functional language (such as Haskell).
+and could be embedded in a purely functional language (such as Haskell).
 
 \paragraph{Call-by-value.}
 
@@ -1088,7 +1100,7 @@ the reduction preserves type and coeffect annotation.
 When reducing the expression $(\lambda x.e_1)~e_2$ using the call-by-name strategy, the
 sub-expression $e_2$ is substituted for all occurrences of the variable $v$ in an expression $e_1$.
 As discussed in Section~\ref{sec:flat-syntax-props}, the call-by-name strategy does not \emph{in
-general} preserve the type of a terms in coeffect calculi, but it does preserve the typing in two
+general} preserve the type of a term in coeffect calculi, but it does preserve the typing in two
 interesting cases.
 
 Typing is preserved for different reasons in two of our systems, so we briefly review the
@@ -1243,7 +1255,7 @@ and $e \rightarrow_{\ident{cbn}} e'$ then it is also the case that $\coctx{\Gamm
 \begin{proof}
 
 For top-pointed coeffect algebra (using Lemma~\ref{thm:cbn-substitution-top}), the proof is similar
-to the one in Theorem~\ref{thm:cbv-reduction}, using the facts that $\cclrd{s} \,\cleq\, \cunit$
+to that of Theorem~\ref{thm:cbv-reduction}, using the facts that $\cclrd{s} \,\cleq\, \cunit$
 and $r \,\czip\, t \;=\; r \,\cpar\, t$.
 For bottom-pointed coeffect algebra, consider the typing derivation for the term
 $(\lambda x.e_r)\,e_s$ before reduction:
@@ -1312,15 +1324,15 @@ The following derivation shows that $\lambda x.f~x$ has the same type as $f$:
 %
 The derivation starts with the expression $e$ and derives the type for $\lambda x.e~x$. The
 application yields context demands $\cclrd{r}\,\cpar\,\cclrd{s}$. In order to recover the
-original typing, this must be equal to $\cclrd{r}\,\czip\,\cclrd{s}$. Note that the derivation
+original typing, this must be equal to $\cclrd{r}\,\czip\,\cclrd{s}$. The derivation
 shows just one possible typing -- the expression $\lambda x.e~x$ has other types -- but
-this is sufficient for type preservation.
+this suffices.
 \end{proof}
 
 \noindent
 In summary, flat coeffect calculi do not \emph{in general} permit call-by-name evaluation, but
-there are several cases where call-by-name evaluation can be used. Among the examples we discuss,
-these include liveness and implicit parameters. Moreover, for implicit parameters the
+there are several cases where call-by-name evaluation can be used. 
+These include liveness and implicit parameters. Moreover, for implicit parameters the
 $\eta$-expansion holds as well, giving us both local soundness and local completeness as coined
 by Pfenning and Davies \cite{logic-modal-reconstruction}.
 
@@ -1434,16 +1446,16 @@ a special case. We use the idempotence of $\czip$ as follows:
   { \coctx{\Gamma}{\cclrd{s}\;\cpar\;(\cclrd{s}\,\cseq\,\cclrd{r})} \vdash (\lambda x.e_2)~e_1 : \tau_2 }
 \end{equation*}
 %
-This is one possible derivation, but other derivations may be valid for concrete coeffect system.
+This is one possible derivation, but other derivations may be valid for concrete coeffect systems.
 The design decision of using this particular derivation for the typing of \kvd{let} is motivated by
 the fact that the typing obtained using the special rule is more precise for all the examples
-consider in this chapter. To see this, assume an arbitrary splitting
-$\cclrd{s} = \cclrd{s_1}\,\czip\,\cclrd{s_2}$. Table~\ref{tab:flat-simplelet}
+considered in this chapter. To see this, assume an arbitrary splitting
+$\cclrd{s} = \cclrd{s_1}\,\czip\,\cclrd{s_2}$. Figure~\ref{fig:flat-simplelet}
 shows the coeffect annotation derived from $(\lambda x.e_2)~e_1$, the coeffect annotation obtained
 by the (\emph{let}) rule and the simplified coeffect annotation using the particular flat coeffect
 algebras.
 
-\begin{table}
+\begin{figure}
 \begin{center}
 \begin{tabular}{ | l | c | c | c |}
 \hline
@@ -1456,13 +1468,13 @@ algebras.
 
 \vspace{-0.5em}
 \figcaption{Simplified coeffect annotation for let binding in three flat calculi instances}
-\label{tab:flat-simplelet}
-\end{table}
+\label{fig:flat-simplelet}
+\end{figure}
 
 It is perhaps somewhat unexpected that the annotation can be simplified in different ways for
 different examples. However, for all our systems, the simplified annotation (right column in
-Table~\ref{tab:flat-simplelet}) is more precise than the original (left column). Recall that
-$\cclrd{s} = \cclrd{s_1}\,\czip\,\cclrd{s_2}$. The following inequalities hold:
+Table~\ref{fig:flat-simplelet}) is more precise than the original (left column). Recall that
+$\cclrd{s} = \cclrd{s_1}\,\czip\,\cclrd{s_2}$. The following holds:
 %
 \begin{equation*}
 \begin{array}{rclll}
@@ -1548,7 +1560,7 @@ sub-typing and the fact that the algebra is \emph{strictly oriented}:
 \end{proof}
 
 \noindent
-The practical consequence of the Remark~\ref{thm:flat-alt-abs} is that, for strictly
+The practical consequence of Remark~\ref{thm:flat-alt-abs} is that, for strictly
 oriented coeffect calculi (such as our liveness and dataflow computations), the (\emph{idabs})
 rule not only determines a unique typing derivation (as discussed in Section~\ref{sec:flat-unique-ldf}),
 but it gives (together with subtyping and subcoeffecting) an equivalent type system.
@@ -1622,12 +1634,12 @@ Pairs, created using the $(e_1, e_2)$ expression, are annotated with a coeffect 
 the coeffects of the two sub-expressions using the \emph{pointwise} operator $\cpar$. The operator
 models the case when the (same) available context is split and passed to two independent
 sub-expressions. Finally, the (\emph{proj}) rule is uninteresting, because $\pi_i$ can be
-viewed as a pure unary function.
+viewed as a unary function.
 
 \paragraph{Properties.}
-Pairs and the unit value in a lambda calculus typically form a monoid. Assuming $\simeq$ is an
-isomorphism that performs appropriate transformation on values, without affecting other
-properties (here, coeffects) of the expressions. The monoid axioms then correspond to
+Pairs and the unit value in a lambda calculus typically form a monoid up to isomorphism. Assuming 
+$\simeq$ is an isomorphism that performs appropriate transformation on values, without affecting other
+properties (here, coeffects) of the expressions, the monoid axioms then correspond to
 the requirement that $(e_1, (e_2, e_3)) \simeq ((e_1, e_2), e_3)$ (associativity) and the
 demand that $((), e) \simeq e \simeq (e, ())$ (unit).
 
@@ -1684,19 +1696,19 @@ This is the first of the two \emph{coeffect calculi} developed in this thesis.
 The flat coeffect calculus is parameterized by a \emph{flat coeffect algebra} that captures
 the structure of the information tracked by the type system. We instantiated the system to
 capture three specific systems, namely liveness, dataflow and implicit parameters. However,
-the system is more general and an capture various other applications outlined in
+the system is more general and can capture various other applications outlined in
 Section~\ref{sec:applications-flat}.
 
 An inherent property of flat coeffect systems is the ambiguity of the typing for lambda
 abstraction. The body of a function requires certain context, but the context can be often
-provided by either the declaration-site or the call site. Resolving this ambiguity has to be
+provided by either the declaration site or the call site. Resolving this ambiguity has to be
 done differently for each concrete coeffect system, depending on its specific notion of context.
 We discussed this for implicit parameters, dataflow and liveness in Section~\ref{sec:flat-unique}
 and noted that the result for dataflow and liveness generalizes for any coeffect calculus
 with strictly oriented coeffect algebra (Remark~\ref{thm:flat-alt-abs}).
 
 Finally, we introduced the equational theory for flat coeffect calculus. Although each
-concrete instance of flat coeffect calculus models different notion of context, there are
+concrete instance of flat coeffect calculus models a different notion of context, there are
 syntactic properties that hold for all flat coeffect systems satisfying certain additional
 conditions. In particular, two \emph{type preservation} theorems prove that the operational
 semantics for two classes of flat coeffect calculi (including liveness and implicit parameters)
