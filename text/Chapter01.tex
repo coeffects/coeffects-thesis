@@ -59,10 +59,11 @@ expose such flaws. We look at a number of basic programs that rely on contextual
 information, we explain why the currently dominant solutions are inappropriate.
 
 \paragraph{The thesis.}
-The key claim of this thesis is that the theory of \emph{coeffects} that we develop provides
-a unified way of capturing how programs rely on the context, or execution environment, 
-in which they execute. Perhaps most importantly, coeffects provide a single conceptual framework 
-that can capture a wide range of previously disconnected notions of context-awareness. 
+Our key claim is that the theory of \emph{coeffects} that we develop in this thesis provides
+a uniform and less error-prone way of writing programs that rely on the context, or
+execution environment, in which they run. Perhaps most importantly, coeffects provide a single 
+conceptual framework that can capture a wide range of previously disconnected notions of 
+context-awareness and thus make understanding of context easier. 
 
 Thanks to coeffects, programming languages for rich and diverse execution environments will
 be able to offer a simple, safe and unified programming model for interacting with the 
@@ -712,7 +713,7 @@ better solution. Finding the foundations of such better solution is the goal of 
   This provides a unified way of defining the semantics of context-aware languages. We use the
   categorical semantics as a basis for \emph{categorically-inspired translation} that turns
   context-aware programs into programs in a simple functional language. We prove that well-typed
-  context-aware programs are translated to programs that ``do not go wrong''. The development
+  context-aware programs are translated to programs that ``do not get stuck''. The development
   is repeated for structural coeffects in Chapter~\ref{ch:structural}.
 
 \item In Chapter~\ref{ch:impl}, we use the translation as a basis for a prototype
