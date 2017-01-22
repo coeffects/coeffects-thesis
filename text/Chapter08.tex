@@ -1,4 +1,4 @@
-\chapter{Further work}
+\chapter{Unified coeffect systems}
 \label{ch:further}
 
 The prototype implementation discussed in the previous chapter directly follows the two
@@ -28,7 +28,7 @@ inspired by Haskell's ``do'' notation (Section~\ref{sec:further-further}).
   related work arising from modal logics such as CMTT \cite{logic-cmtt}.
 
 \item We consider a way of implementing coeffects based on embedding comonadic computations
-  via a lightweight syntactic extension and a rich type systems akin to Haskell's ``do'' notation
+  via a lightweight syntactic extension and a rich type system akin to Haskell's ``do'' notation
   (Section~\ref{sec:further-impl}).
 
 \item Finally, we discuss extensions needed for real-world source languages with constructs
@@ -96,14 +96,14 @@ provide semantics of context-aware languages.
 Intuitively a container describes data
 types such as lists, trees or streams. A container is formed by shapes (\eg~lengths of
 lists)\footnote{Shapes can be intuitively thought of as sizes, but this is not precise
-as some containers have multiple shapes of the same length, \eg~for perfectly ballanced, left- and right-leaning trees.}.
+as some containers have multiple shapes of the same length, \eg~for perfectly balanced, left- and right-leaning trees.}.
 For every shape, we can obtain a set of positions in the container (\eg~offsets in a list of a
 specified length). More formally:
 
 \begin{definition}
-A \emph{container} consists of a pair $(S,P)$, usually written as $S \triangleleft P$.
+A \emph{container} consists of a pair $(S,P)$, usually written as $S \triangleright P$.
 Here, $S$ is a set of shapes and $P$ is a shape-indexed family of sets such that
-for each shape $s\in S$, $P_s$ (also written as $P(s)$) is a set of positions for shape $s$.
+for each shape $s\in S$, $P_s$, also written as $P(s)$, is a set of positions for shape $s$.
 \end{definition}
 
 \noindent
@@ -112,11 +112,11 @@ trees and the singleton data type (which contains exactly one element). Containe
 to our work are lists and singleton data types:
 
 \begin{itemize}
-\item The container representing lists is given by $S \triangleleft P$ where
+\item The container representing lists is given by $S \triangleright P$ where
   shapes are integers $S = \ident{Nat}$ (lengths of a list). The set of positions for a
   given length $n$ is the set of indices $P(n)= \{ 1 \ldots n \}$.
 
-\item The container representing the singleton data type is given by $S \triangleleft P$ where
+\item The container representing the singleton data type is given by $S \triangleright P$ where
   shapes are given by a singleton set $S = \{ \ast \}$ and the set of positions for the
   shape $\ast$ contains exactly one position. To follow the intuition based on offset or
   index, we write the single position as $0$, that is $P(\ast) = \{ 0 \}$.
@@ -188,7 +188,7 @@ of individual variables (structural coeffects) or requirements attached to the w
 multiple sub-exp\-ressions (flat coeffects).
 
 \paragraph{Coeffect containers.}
-The coeffect container is a container that determines how are scalar coeffects attached to free-variable
+The coeffect container is a container that determines how scalar coeffects are attached to free-variable
 contexts. In addition to a container $\SHP$ formed by shapes and shape-indexed sets of positions,
 the coeffect container provides a mapping that returns the shape corresponding to a free-variable context.
 
@@ -200,7 +200,7 @@ In the coeffect judgment $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$, t
 $\aclrd{\textbf{r}}$ is drawn from the set of coeffect scalars $\C$ indexed by the shape corresponding
 to $\Gamma$. We write $\sclrd{l} = \slen{\Gamma}$ for the shape corresponding to $\Gamma$ and
 $\SP_{\sclrd{l}}$ is the \emph{set} of positions for the given shape. A coeffect $\aclrd{\textbf{r}}$
-can now be seen as a function $\SP_{\sclrd{l}} \rightarrow \C$ that returns a scalar coefect
+can now be seen as a function $\SP_{\sclrd{l}} \rightarrow \C$ that returns a scalar coeffect
 $\cclrd{r}\in\C$ for each of the position defined by the shape $\sclrd{l}$.
 We write the set of positions for a shape $\sclrd{l}$ as $\SP(\sclrd{l})$ and a function that
 returns scalar coeffect as an exponent $\aclrd{\textbf{r}} \in \C^{\SP(\sclrd{l})}$.
@@ -744,7 +744,7 @@ monads explicitly.
 
 In this thesis, we focused on the first approach. In both flat and structural coeffect calculi,
 the term language is that of a simply-typed $\lambda$-calculus, and we used (flat or structural)
-indexed comonads to give the semantics for the language and to derive type system for it.
+indexed comonads to give the semantics for the language and to derive a type system for it.
 
 In this section, we briefly discuss the other technique. That is, we embed indexed comonads into
 a $\lambda$-calculus as additional constructs of the meta-langauge. To do that, we introduce the
@@ -941,7 +941,7 @@ Given a typing judgement $\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau$ in the flat
 we define $\sem{\coctx{\Gamma}{\cclrd{r}} \vdash e : \tau}_v$ as its embedding in the coeffect
 meta-language. The translation (Figure~\ref{fig:conclusions-embed}) is indexed by $v$, which is a name of variable used
 to represent the entire variable context of the source language. The embedding resembles the semantics discussed in
-Section~\ref{sec:flat-semantics}. This is not surprising as the meta-language directly mirrors
+Section~\ref{sec:semantics-translation}. This is not surprising as the meta-language directly mirrors
 the operations of an indexed comonad.
 
 % -------------------------------------------------------------------------------------------------
@@ -980,7 +980,7 @@ the operations of an indexed comonad.
 
 This section summarizes two interesting directions for future work and the related
 work in the area. First, we look at a way of embedding coeffects in existing languages
-such as Haskell that is inspired by the Haskell's ``do'' notation for monads
+such as Haskell that is inspired by Haskell's ``do'' notation for monads
 (Section~\ref{sec:further-impl}). Second, we discuss extensions to the theory of coeffects that
 are needed for real-world programming languages and we consider how the system could be extended
 to generalize languages based on substructural and bunched logics (Section~\ref{sec:further-theory}).
@@ -1001,8 +1001,8 @@ one implemented in Chapter~\ref{ch:impl}. An alternative method is to embed cont
 DSLs into a richer target functional language.
 
 In order to do this, the target programming language needs to provide two features; one that allows
-easiler embedding of context-aware computations themselves in programs akin to the ``do'' notation
-for monadsin Haskell and one that allows tracking of the contextual information in the type system.
+easier embedding of context-aware computations themselves in programs akin to the ``do'' notation
+for monads in Haskell and one that allows tracking of the contextual information in the type system.
 
 % -------------------------------------------------------------------------------------------------
 
@@ -1025,7 +1025,7 @@ on the coeffect annotations, according to the structural rules.
 In ML-like languages, effects (and many coeffects) are built-in into the language semantics,
 but they can still benefit from a special notation for explicitly marking effectful (coeffectful)
 blocks of code. In F\#, this is done using \emph{computation expressions}  \cite{app-computation-zoo}
-that differ from the ``do'' notation in two ways. First, they support wider range of
+that differ from the ``do'' notation in two ways. First, they support a wider range of
 constructs, making it possible to wrap existing F\# code within a block without other changes.
 Second, they support other abstractions including monads, applicative functors and monad
 transformers. It would be interesting to see if computation expressions can be extended to
@@ -1086,7 +1086,7 @@ Further work is to extend the coeffect systems presented here to a full programm
 useful starting point is the work of Nielson and Nielson~\cite{effects-nielson} who consider a
 similar development for effect systems, adding conditionals, recursion and polymorphism.
 
-Coeffect annotations in context-aware programming languages can contain significant amount
+Coeffect annotations in context-aware programming languages can contain a significant amount
 of information. Thus, the programming language also needs a form of type inference that can propagate
 such information. This has been done for effect systems \cite{effects-polymorphic}. For coeffects,
 the prototype implementation discussed in Chapter~\ref{ch:impl} provides basic support for
@@ -1107,7 +1107,7 @@ The categorical semantics in this thesis used the ``language semantics'' style, 
 guide for the development of the type systems. Further work includes more precise treatment of
 the categorical structure of indexed comonads. This has partly been done for flat coeffects by
 Orchard~\cite{comonads-dom-thesis}. A joint work with Orchard~\cite{coeffects-icfp14} shows the
-first steps for structural systems. As discussed in Section~\ref{sec:unified-semantics}, further
+first steps for structural systems. As discussed in Section~\ref{sec:further-unified}, further
 work is to develop a similar categorical model for the unified coeffect calculus, possibly using
 the categorical notion of containers \cite{types-containers}.
 
@@ -1149,12 +1149,12 @@ separation logic \cite{substruct-separation-logic}.
 \section{Summary}
 
 In this chapter, we looked at three alternative directions for further development of coeffects.
-The key technical contribution of this chapter is the \emph{unified coeffect system}
-(Section~\ref{sec:further-unified}), which unifies the flat and structural system presented
+The \emph{unified coeffect system} (Section~\ref{sec:further-unified}) is a novel technical 
+contribution that unifies the flat and structural system presented
 in the previous two chapters. This provides an alternative to the separate treatment of
 per-context and per-variable contextual dependencies at the cost of making the system more
-complex. To unify the two, we introduced \emph{coeffect container}, which determines how are
-coeffect annotations attached to variable contexts. We then discussed two
+complex. To unify the two, we introduced \emph{coeffect container}, which determines how 
+coeffect annotations are attached to variable contexts. We then discussed two
 instances of the structure that capture flat and structural properties.
 
 Next, we discussed how our work relates to meta-language based on comonads (Section~\ref{sec:further-meta}).

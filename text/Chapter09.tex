@@ -11,10 +11,9 @@ This thesis aims to change how developers and programming language designers thi
 \emph{contexts} or \emph{execution environments} of programs. Such contexts or execution environments
 have numerous forms -- mobile applications access network, GPS location or user's personal data;
 journalists obtain information published on the web or through open government data initiatives;
-in dataflow programming, we have access to past values of expressions.
-This thesis aims to change our understanding of \emph{context} so that the above examples are
-viewed uniformly through a single programming language abstraction, which we call \emph{coeffects},
-rather than as disjoint cases.
+in dataflow programming, we have access to past values of expressions. The notion of \emph{coeffect}
+provides a single programming language abstractions that allows us to view the above examples as
+instances of the same notion of context-aware properties, rather than as disjoint cases.
 
 In this chapter, we give a brief overview of the technical contributions of this thesis
 (Section~\ref{sec:conc-summary}). The thesis looks at two kinds of context-dependence, identifies
@@ -147,14 +146,14 @@ write and evaluate sample programs, but it also lets them explore the details of
 theory -- this includes an interactive way of exploring typing derivations and program semantics.
 The essay also provides a number of case studies that highlight interesting aspects of the theory.
 
-The implementation (Section~\ref{ch:impl-theory}) serves two purposes. First, it links together all parts
+The implementation serves two purposes. First, it links together all parts
 of the theory developed in this thesis (Section~\ref{sec:impl-case}). It uses the flat and structural
 coeffect calculi to build a language framework that is then instantiated to implement three concrete
 context-aware languages. The  framework provides the type system and translation (based on the
 comonadically-inspired semantics) that is used for program execution. This shows the practical
 benefits of using the theory of coeffects as a basis of real-world programming languages.
 
-Second, web-based essay (\url{http://tomasp.net/coeffects}) discussed in Section~\ref{sec:impl-essay}
+Second, the web-based essay (\url{http://tomasp.net/coeffects}) discussed in Section~\ref{sec:impl-essay}
 is novel from the pedagogical perspective. It makes our work \emph{accessible} and \emph{explorable}.
 Building a production-ready programming language is outside the scope of the  thesis, so instead,
 our goal is to explain the theory and inspire authors of real-world programming languages to

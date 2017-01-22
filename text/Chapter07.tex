@@ -100,7 +100,7 @@ coeffect constraint $\cclrd{t}=\cclrd{r} \,\czip\, \cclrd{s}$ that captures the 
 from flat coeffect calculus (Figure~\ref{fig:flat-types}).
 
 In order to obtain unique type derivation for each term (using the algorithms discussed in
-Section~\ref{sec:flat-unique}), we generate additional coeffect constraints for lambda abstraction
+Section~\ref{sec:flat-unique}), we generate additional coeffect constraints for each lambda abstraction
 of each flat coeffect language, as this is where flat coeffects permit multiple possible typings.
 
 \begin{example}[Flat implicit parameters.]
@@ -233,10 +233,12 @@ are required:
 \end{enumerate}
 
 \noindent
-The list mirrors a list of steps that need to be done when supporting a new effectful computation
-in a language that supports monadic ``do'' notation. The step (3) corresponds to implementing a new
-monad and (4) corresponds to adding monad-specific effectful operations. The step (2) applies when
-using indexing to track effects more precisely \cite{effects-embedding}. The only step that does not
+The list is akin to the steps that are needed when supporting a new effectful computation in a 
+language that supports monadic ``do'' notation, with the exception that in step (4), we can also
+modify the parser and AST, as opposed to just defining primitive effectful functions.
+This could be addressed by making the host language more extensible and flexible. 
+The step (3) corresponds to implementing a new monad. The step (2) applies when using 
+indexing to track effects more precisely \cite{effects-embedding}. The only step that does not
 have a counterpart in effectful/monadic languages is (1).
 
 When adding a new context-aware programming language, much of the existing infrastructure
@@ -498,12 +500,12 @@ The interactive essay we present encourages active reading in the sense summariz
 We show the reader an example (program, typing derivation or translation), but the reader is
 encouraged to modify it and see how the explanation in the essay adapts.
 
-The idea of active reading is older and has been encouraged in the context of art Josef Albers'
+The idea of active reading is older and has been encouraged in the context of art in Josef Albers'
 classic 1963 work on color \cite{essay-albers} (which was turned into an interactive essay
 60 years later \cite{essay-albers-app}). More recently, similar formats have been used to explain
 topics in areas such as signal processing \cite{essay-seeing} (explaining Fourier transformations)
 and sociology \cite{essay-polygons} (visualizing and explaining game theoretical model of segregation
-in the society \cite{essay-segregation}). To our best knowledge, the format has not previously
+in society \cite{essay-segregation}). To our best knowledge, the format has not previously
 been used in the area of programming language theory and so we briefly outline some of the
 interesting features that our essay provides in order to encourage active reading.
 
@@ -511,7 +513,7 @@ interesting features that our essay provides in order to encourage active readin
 
 After providing the practical motivation for coeffects (based on Chapter~\ref{ch:intro}), the
 interactive essay shows the reader the two sample context-aware programming languages. Readers can
-write code in a panel that type checks the input, generates user interface for entering the
+write code in a panel that type checks the input, generates a user interface for entering the
 required context and runs the sample code.
 
 The panels for implicit parameters and for dataflow computations are shown in Figure~\ref{fig:essay-eval}.
@@ -580,7 +582,7 @@ complex for two reasons.
 First, it merges all variables into a single (comonadic) value representing
 the context. Second, there is a flat and structural variation of the system. For these two reasons,
 understanding the translation based just on the rules is harder than for monads. The essay lets
-readers see translation for carefully chosen case studies that illustrate the key aspects of the
+readers see translations for carefully chosen case studies that illustrate the key aspects of the
 translation (some discussed in Section~\ref{sec:impl-case-transl}), but also for their own
 programs encouraging \emph{active reading}. Sample input and output are shown in
 Figure~\ref{fig:essay-transl}.
@@ -601,7 +603,7 @@ Figure~\ref{fig:essay-transl}.
 
 The core part of our implementation mostly follows standard techniques for implementing type
 checkers and interpreters for statically-typed functional programming languages. Two interesting
-aspects that are worth discussing is the JavaScript targetting (for running the language
+aspects that are worth discussing are the JavaScript targetting (for running the language
 implementation in a web browser) and integration with client-side (JavaScript) libraries for
 building the user interface. The full source code can be obtained from
 \url{https://github.com/coeffects/coeffects-playground}. It is structured as follows:
@@ -697,7 +699,7 @@ a prototype implementation. We implemented three simple context-aware programmin
 track implicit parameters and past values in dataflow computations, the latter both in flat
 (per-context) and structural (per-variable) way.
 
-The implementation discussed in this chapter provides an evidence for our claim that the
+The implementation discussed in this chapter provides evidence for our claim that the
 theory of coeffects can be used as a basis for a wide range of sound context-aware programming
 languages. Our implementation consists of a shared coeffect framework (handling type checking and
 translation). Each context-aware language then adds a domain-specific rule for choosing a unique
