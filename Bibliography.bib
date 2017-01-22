@@ -89,7 +89,6 @@ Structure of the file
  year = {2011},
  isbn = {978-1-4503-0865-6},
  location = {Tokyo, Japan},
- pages = {1--1},
 }
 
 @inproceedings{effects-producer-semantics,
@@ -149,13 +148,15 @@ Structure of the file
 @comment{  2. Monads
 @comment{------------------------------------------------------------------------------------------}
 
-@article{monad-parsing,
-  title={Monadic parser combinators},
-  author={Hutton, Graham and Meijer, Erik},
-  year={1996},
-  publisher={School of Computer Science and IT}
+@techreport{monad-parsing,
+  author = "Graham Hutton and Erik Meijer",
+  title = "{Monadic Parser Combinators}",
+  institution = "Department of Computer Science, University of Nottingham",
+  type = "Technical Report",
+  number = "NOTTCS-TR-96-4",
+  year = 1996
 }
-
+        
 @article{monad-notions,
  author = {Moggi, Eugenio},
  title = {Notions of computation and monads},
@@ -169,17 +170,17 @@ Structure of the file
  numpages = {38},
 }
 
-@article{monads-compre,
-  title={Bringing back monad comprehensions},
-  author={Giorgidze, George and Grust, Torsten and Schweinsberg, Nils and Weijers, Jeroen},
-  journal={ACM SIGPLAN Notices},
-  volume={46},
-  number={12},
-  pages={13--22},
-  year={2012},
-  publisher={ACM}
-}
-
+@inproceedings{monads-compre,
+ author = {Giorgidze, George and Grust, Torsten and Schweinsberg, Nils and Weijers, Jeroen},
+ title = {Bringing Back Monad Comprehensions},
+ booktitle = {Proceedings of Symposium on Haskell},
+ series = {Haskell '11},
+ year = {2011},
+ isbn = {978-1-4503-0860-1},
+ location = {Tokyo, Japan},
+ pages = {13--22},
+ numpages = {10},
+} 
 
 @article{monads-effects-marriage,
  author = {Wadler, Philip and Thiemann, Peter},
@@ -203,7 +204,7 @@ Structure of the file
 @article{monads-parameterised-notions,
  author = {Atkey, Robert},
  title = {Parameterised notions of computation},
- journal = {J. Funct. Program.},
+ journal = {Journal of Functional Programming},
  issue_date = {July 2009},
  volume = {19},
  issue = {3-4},
@@ -212,7 +213,7 @@ Structure of the file
 
 @inproceedings{monad-secure-flow,
  author = {Russo, Alejandro and Claessen, Koen and Hughes, John},
- title = {A library for light-weight information-flow security in haskell},
+ title = {A library for light-weight information-flow security in {H}askell},
  booktitle = {Proceedings of Haskell Symposium},
  series = {Haskell '08},
  year = {2008},
@@ -224,7 +225,7 @@ Structure of the file
 
 @inproceedings{monads-lightweight-ml,
  author = {Swamy, Nikhil and Guts, Nataliya and Leijen, Daan and Hicks, Michael},
- title = {Lightweight monadic programming in ML},
+ title = {Lightweight monadic programming in {ML}},
  booktitle = {Proceedings of International conference on functional programming},
  series = {ICFP '11},
  year = {2011},
@@ -276,7 +277,7 @@ Structure of the file
 @Unpublished{monads-outrageous,
 author = {McBride, Conor},
 title = {Kleisli arrows of outrageous fortune},
-note = {J. Funct. Program. (to appear)},
+note = {Journal of Functional Programming (to appear)},
 url = {http://personal.cis.strath.ac.uk/~conor/Kleisli.pdf},
 year = {2011}
 }
@@ -352,11 +353,11 @@ year = {2011}
 }
 
 
-@inproceedings{comonads-dom-thesis,
+@phdthesis{comonads-dom-thesis,
 author = {Dominic Orchard},
 title = {Programming contextual computations},
-booktitle = {PhD thesis, University of Cambridge},
-date = {2013},
+school = {University of Cambridge},
+year = {2013},
 }
 
 @article{comonads-notions,
@@ -391,17 +392,6 @@ date = {2013},
  pages = {15--24},
  }
 
-@article{comonads-dataflow,
-   title = {The {E}ssence of {D}ataflow {P}rogramming},
-   journal = {Lecture Notes in Computer Science},
-   publisher = {Springer Berlin / Heidelberg},
-   volume = {4164},
-   year = {Nov 2006},
-   pages = {135-167},
-   author = {Tarmo Uustalu and Varmo Vene}
-}
-
-
 @Unpublished{comonads-vs-monads,
 author = {Dominic Orchard},
 title = {Should {I} use a {M}onad or a {C}omonad?},
@@ -410,10 +400,11 @@ url = {http://www.cl.cam.ac.uk/~dao29/drafts/monad-or-comonad-orchard11-draft.pd
 year = {2012}
 }
 
-@MISC{comonads-and-codata,
+@Unpublished{comonads-and-codata,
     author = {Richard B. Kieburtz},
     title = {Codata and {C}omonads in {H}askell},
-    year = {1999}
+    year = {1999},
+    note = {Unpublished manuscript}
 }
 
 
@@ -430,12 +421,11 @@ year = {2012}
 @inproceedings{comonads-containers,
  author = {Ahman, Danel and Chapman, James and Uustalu, Tarmo},
  title = {When is a container a comonad?},
- booktitle = {Proceedings of International conference on foundations of software science and computational structures},
+ booktitle = {Proceedings of International Conference on Foundations of Software Science and Computational Structures},
  series = {FOSSACS'12},
  year = {2012},
  isbn = {978-3-642-28728-2},
  location = {Tallinn, Estonia},
- pages = {74--88},
  numpages = {15},
  url = {http://dx.doi.org/10.1007/978-3-642-28729-9_5},
  doi = {10.1007/978-3-642-28729-9_5},
@@ -567,12 +557,13 @@ author = {Tomas Petricek},
 title = {Client-side scripting using meta-programming},
 booktitle = {Bachelor thesis, Charles University in Prague},
 date = {2007},
+year = {2007},
 url = {http://www.cl.cam.ac.uk/~tp322/theses/webtools.pdf},
 urldate = {2013},
 }
 
 @article{app-ocaml-js,
-  title={From bytecode to JavasSript: the js\_of\_ocaml compiler},
+  title={From bytecode to {JavasSript}: the js\_of\_ocaml compiler},
   author={Vouillon, J{\'e}r{\^o}me and Balat, Vincent},
   journal={Software: Practice and Experience},
   year={2013},
@@ -585,11 +576,11 @@ urldate = {2013},
   booktitle={Expert F\# 3.0},
   pages={391--426},
   year={2012},
-  publisher={Springer}
+  publisher={Apress}
 }
 
 @inproceedings{app-hop-diffuse,
-  title={HOP, a fast server for the diffuse web},
+  title={{HOP}: {A} fast server for the diffuse web},
   author={Serrano, Manuel},
   booktitle={Coordination Models and Languages},
   pages={1--26},
@@ -636,7 +627,7 @@ urldate = {2013},
 }
 
 @INPROCEEDINGS{app-implicit-parameters,
-    author = {Jeffrey R. Lewis and Mark B. Shields and Erik Meijert and John Launchbury},
+    author = {Jeffrey R. Lewis and Mark B. Shields and Erik Meijer and John Launchbury},
     title = {Implicit parameters: dynamic scoping with static types},
     booktitle = {Proceedings of POPL},
     series = {POPL '00},
@@ -673,7 +664,7 @@ urldate = {2013},
 
 @INPROCEEDINGS{app-security-flowcaml,
     author = {Vincent Simonet},
-    title = {Flow Caml in a Nutshell},
+    title = {Flow {C}aml in a Nutshell},
     booktitle = {Proceedings of the first APPSEM-II workshop},
     year = {2003},
     pages = {152--165}
@@ -682,10 +673,11 @@ urldate = {2013},
 @inproceedings{app-distributed-ml5,
  author = {Murphy,VII., Tom and Crary, Karl and Harper, Robert},
  title = {Type-safe distributed programming with {ML5}},
+ booktitle={International Symposium on Trustworthy Global Computing},
+ pages={108--123},
+ year={2007},
+ organization={Springer},
  series = {TGC'07},
- year = {2008},
- location = {Sophia-Antipolis, France},
- pages = {108--123},
  numpages = {16}
 }
 
@@ -710,17 +702,25 @@ urldate = {2013},
 }
 
 @inproceedings{app-safe-locking,
- author = {Flanagan, Cormac and Abadi, Mart\'{\i}n},
- title = {Types for {S}afe {L}ocking},
- series = {ESOP '99},
- year = {1999}
-}
+author = {Abadi, Martin and Flanagan, Cormac and Freund, Stephen N.},
+title = {Types for Safe Locking: Static Race Detection for Java},
+journal = {ACM Trans. Program. Lang. Syst.},
+issue_date = {March 2006},
+volume = {28},
+number = {2},
+month = mar,
+year = {2006},
+issn = {0164-0925},
+pages = {207--255},
+numpages = {49},
+publisher = {ACM},
+} 
 
 @article{app-distributed-acute,
  author = {Sewell, Peter and Leifer, James J. and Wansbrough, Keith and Nardelli, Francesco Zappa
            and Allen-Williams, Mair and Habouzit, Pierre and Vafeiadis, Viktor},
  title = {Acute: High-level programming language design for distributed computation},
- journal = {J. Funct. Program.},
+ journal = {Journal of Functional Programming},
  issue_date = {July 2007},
  volume = {17},
  number = {4-5},
@@ -790,7 +790,8 @@ urldate = {2013},
 @inproceedings{app-provenance-future,
   title={Provenance: a future history},
   author={Cheney, James and Chong, Stephen and Foster, Nate and Seltzer, Margo and Vansummeren, Stijn},
-  booktitle={Proceedings of Conference companion on object oriented programming systems languages and applications},
+  booktitle={Proceedings of Conference on object oriented programming systems languages and applications},
+  series = {OOPSLA '09},
   pages={957--964},
   year={2009},
   organization={ACM}
@@ -881,21 +882,16 @@ urldate = {2013},
 
 @inproceedings{app-cop-mobile2,
  author = {Du, Weichang and Wang, Lei},
- title = {Context-aware application programming for mobile devices},
- booktitle = {In proceedings},
+ title = {Context-aware Application Programming for Mobile Devices},
+ booktitle = {Proceedings of the 2008 C3S2E Conference},
  series = {C3S2E '08},
  year = {2008},
  isbn = {978-1-60558-101-9},
- location = {Montreal, Quebec, Canada},
  pages = {215--227},
  numpages = {13},
- url = {http://doi.acm.org/10.1145/1370256.1370292},
- doi = {10.1145/1370256.1370292},
- acmid = {1370292},
  publisher = {ACM},
  address = {New York, NY, USA},
- keywords = {emerging computing technologies, mobile computing context aware computing, mobile device programming and applications, programming systems},
-}
+} 
 
 @inproceedings{app-cop-mobile,
   title={A framework for developing mobile, context-aware applications},
@@ -933,25 +929,32 @@ title = {{Creating multiple APKs for different API levels}},
   publisher={Elsevier}
 }
 
-@book{app-dsu,
-  title={Dynamic software updating},
-  author={Hicks, Michael and Moore, Jonathan T and Nettles, Scott},
-  volume={36},
-  number={5},
-  year={2001},
-  publisher={ACM}
-}
+@inproceedings{app-dsu,
+ author = {Hicks, Michael and Moore, Jonathan T. and Nettles, Scott},
+ title = {Dynamic Software Updating},
+ booktitle = {Proceedings of Conference on Programming Language Design and Implementation},
+ series = {PLDI '01},
+ year = {2001},
+ isbn = {1-58113-414-2},
+ pages = {13--23},
+ numpages = {11},
+ publisher = {ACM},
+} 
 
-@inproceedings{app-dsu-mutatis,
-  title={Mutatis mutandis: safe and predictable dynamic software updating},
-  author={Stoyle, Gareth and Hicks, Michael and Bierman, Gavin and Sewell, Peter and Neamtiu, Iulian},
-  booktitle={ACM SIGPLAN Notices},
-  volume={40},
-  number={1},
-  pages={183--194},
-  year={2005},
-  organization={ACM}
-}
+@article{{app-dsu-mutatis,
+ author = {Stoyle, Gareth and Hicks, Michael and Bierman, Gavin and Sewell, Peter and Neamtiu, Iulian},
+ title = {Mutatis Mutandis: Safe and Predictable Dynamic Software Updating},
+ journal = {ACM Trans. Program. Lang. Syst.},
+ issue_date = {August 2007},
+ volume = {29},
+ number = {4},
+ month = aug,
+ year = {2007},
+ issn = {0164-0925},
+ articleno = {22},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
 
 @incollection{app-fsharp-async,
   title={The {F\#} asynchronous programming model},
@@ -1063,24 +1066,19 @@ title = {{Creating multiple APKs for different API levels}},
 }
 
 @article{logic-modal-staged,
- author = {Davies, Rowan and Pfenning, Frank},
- title = {A modal analysis of staged computation},
- journal = {J. ACM},
- issue_date = {May 2001},
- volume = {48},
- number = {3},
- month = may,
- year = {2001},
- issn = {0004-5411},
- pages = {555--604},
- numpages = {50},
- url = {http://doi.acm.org/10.1145/382780.382785},
- doi = {10.1145/382780.382785},
- acmid = {382785},
- publisher = {ACM},
- address = {New York, NY, USA},
- keywords = {binding times, run-time code generation, staged computation},
-}
+  author = {Davies, Rowan and Pfenning, Frank},
+  title = {A Modal Analysis of Staged Computation},
+  journal = {Journal of the ACM},
+  issue_date = {May 2001},
+  volume = {48},
+  number = {3},
+  month = may,
+  year = {2001},
+  issn = {0004-5411},
+  pages = {555--604},
+  numpages = {50},
+  publisher = {ACM},
+} 
 
 @article{logic-modal-reconstruction,
  author = {Pfenning, Frank and Davies, Rowan},
@@ -1132,7 +1130,7 @@ title = {{Creating multiple APKs for different API levels}},
 }
 
 @ARTICLE{logic-intuitionistic-modal,
-    author = {G M Bierman and V C V de Paiva},
+    author = {Bierman, Gavin and de Paiva, Valeria},
     title = {On an Intuitionistic Modal Logic},
     journal = {Studia Logica},
     year = {2001},
@@ -1167,15 +1165,16 @@ title = {{Creating multiple APKs for different API levels}},
 }
 
 @inproceedings{types-phantom,
-  title={Domain specific embedded compilers},
-  author={Leijen, Daan and Meijer, Erik},
-  booktitle={ACM SIGPLAN Notices},
-  volume={35},
-  number={1},
-  pages={109--122},
-  year={1999},
-  organization={ACM}
-}
+  author = {Leijen, Daan and Meijer, Erik},
+  title = {Domain Specific Embedded Compilers},
+  booktitle = {Proceedings of Conference on Domain-specific Languages},
+  series = {DSL '99},
+  year = {1999},
+  isbn = {1-58113-255-7},
+  pages = {109--122},
+  numpages = {14},
+  publisher = {ACM},
+} 
 
 @article{types-containers,
   title={Containers: {C}onstructing strictly positive types},
@@ -1192,7 +1191,7 @@ title = {{Creating multiple APKs for different API levels}},
 @article{types-hoare-theory,
   author    = {Aleksandar Nanevski and Gregory Morrisett and Lars Birkedal},
   title     = {Hoare type theory, polymorphism and separation},
-  journal   = {J. Funct. Program.},
+  journal   = {Journal of Functional Programming},
   volume    = {18},
   number    = {5-6},
   year      = {2008},
@@ -1232,11 +1231,11 @@ title = {{Creating multiple APKs for different API levels}},
   bibsource = {DBLP, http://dblp.uni-trier.de}
 }
 
-@article{types-inference,
+@PhdThesis{types-inference,
   title={Type assignment in programming languages},
   author={Damas, Luis},
   year={1984},
-  publisher={The University of Edinburgh}
+  school={The University of Edinburgh}
 }
 @inproceedings{types-mlessence,
   title={The essence of {ML} type inference},
@@ -1280,7 +1279,7 @@ year = {2004},
 }
 
 @article{types-dependent-ml,
-  title={Dependent ML An approach to practical programming with dependent types},
+  title={Dependent {ML}: An approach to practical programming with dependent types},
   author={Xi, Hongwei},
   journal={Journal of Functional Programming},
   volume={17},
@@ -1340,7 +1339,7 @@ year = {2004},
 @article{substruct-bunched,
  author = {O'Hearn, Peter},
  title = {On bunched typing},
- journal = {J. Funct. Program.},
+ journal = {Journal of Functional Programming},
  issue_date = {July 2003},
  volume = {13},
  number = {4},
@@ -1369,7 +1368,7 @@ year = {2004},
 }
 
 @article{app-synchronous-lustre,
-  title={The synchronous data flow programming language LUSTRE},
+  title={The synchronous data flow programming language {L}ustre},
   author={Halbwachs, Nicholas and Caspi, Paul and Raymond, Pascal and Pilaud, Daniel},
   journal={Proceedings of the IEEE},
   volume={79},
@@ -1380,18 +1379,15 @@ year = {2004},
 }
 
 @article{app-dataflow-init,
- author = {Colaco, Jean-Louis and Pouzet, Marc},
- title = {Type-based Initialization Analysis of a Synchronous Dataflow Language},
- journal = {Int. J. Softw. Tools Technol. Transf.},
- volume = {6},
- number = {3},
- month = aug,
- year = {2004},
- issn = {1433-2779},
- pages = {245--255},
- numpages = {11}
+   title={Type-based initialization analysis of a synchronous dataflow language},
+  author={Cola{\c{c}}o, Jean-Louis and Pouzet, Marc},
+  journal={International Journal on Software Tools for Technology Transfer (STTT)},
+  volume={6},
+  number={3},
+  pages={245--255},
+  year={2004},
+  publisher={Springer}
 }
-
 
 @inproceedings{app-dataflow-essence,
  author = {Uustalu, Tarmo and Vene, Varmo},
@@ -1477,7 +1473,7 @@ year = {2004},
 @book{philosophy-lakatos,
 author = {Imre Lakatos},
 title = {Methodology of scientific research programmes: philosophical papers},
-date = {1980},
+year = {1980},
 publisher = {Cambridge University Press },
 isbn = {978-0521280310},
 }
@@ -1492,14 +1488,14 @@ date = {2010},
 
 @book{other-haskell98,
   title={Haskell 98 language and libraries: the revised report},
-  author={Jones, Simon L Peyton},
+  author={Peyton Jones, Simon},
   year={2003},
   publisher={Cambridge University Press}
 }
 
 
 @incollection{other-agda,
-  title={A brief overview of Agda--a functional language with dependent types},
+  title={A brief overview of {A}gda--a functional language with dependent types},
   author={Bove, Ana and Dybjer, Peter and Norell, Ulf},
   booktitle={Theorem Proving in Higher Order Logics},
   pages={73--78},
@@ -1522,24 +1518,22 @@ date = {2010},
   title={Giving {Haskell} a promotion},
   author={Yorgey, Brent A and Weirich, Stephanie and Cretin, Julien and Peyton Jones, Simon and Vytiniotis, Dimitrios and Magalh{\~a}es, Jos{\'e} Pedro},
   booktitle={Proceedings of Workshop on types in language design and implementation},
-  pages={53--66},
   year={2012},
   organization={ACM}
 }
 
 @inproceedings{haskell-families,
-  title={Associated type synonyms},
-  author={Chakravarty, Manuel MT and Keller, Gabriele and Jones, Simon Peyton},
-  booktitle={ACM SIGPLAN Notices},
-  volume={40},
-  number={9},
-  pages={241--253},
-  year={2005},
-  organization={ACM}
-}
+ author = {Chakravarty, Manuel M. T. and Keller, Gabriele and Jones, Simon Peyton},
+ title = {Associated Type Synonyms},
+ booktitle = {Proceedings of International Conference on Functional Programming},
+ series = {ICFP '05},
+ year = {2005},
+ pages = {241--253},
+ numpages = {13}
+} 
 
 @article{haskell-faking,
-  title={Faking it Simulating dependent types in Haskell},
+  title={Faking it: {S}imulating dependent types in {H}askell},
   author={McBride, Conor},
   journal={Journal of functional programming},
   volume={12},
@@ -1564,7 +1558,7 @@ date = {2010},
 }
 
 @misc{essay-polygons,
-  title={Prable of the polygons: A playable post on the shape of society},
+  title={Parable of the polygons: A playable post on the shape of society},
   author={Hart, Vi and Case, Nicky},
   year={2014},
   howpublished = {Available at \url{http://ncase.me/polygons/}},
