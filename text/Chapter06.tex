@@ -1,4 +1,4 @@
-\chapter{The structural coeffect calculus}
+\chapter{Structural coeffect calculus}
 \label{ch:structural}
 
 In Chapter~\ref{ch:applications}, we discussed two notions of context. Context-aware programming
@@ -1198,50 +1198,6 @@ of structural dataflow language in Section~\ref{sec:struct-transl-safety}.
 
 % --------------------------------------------------------------------------------------------------
 
-\subsection{Semantics of vectors}
-
-Recall that in the flat coeffect calculus, the context is interpreted as a product and so a typing
-judgement $\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{\cclrd{r}} \vdash e : \tau$ is interpreted as a
-morphism $\ctyp{\cclrd{r}}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau$. In this model,
-we can freely transform the value contained in the context modelled using an indexed comonad
-$\ctyp{\cclrd{r}}$.
-
-Previously, we defined the $\ident{map}$ function (in terms of $\ident{cobind}$ and $\ident{counit}$),
-which transforms the value inside the context without affecting the coeffect annotation. Thus,
-we can use $\ident{map}_{\cclrd{r}}~\pi_i$ to transform a context containing product of variables
-$\ctyp{\cclrd{r}}{(\tau_1 \times \ldots \times \tau_n)}$ into a context containing a single value
-$\ctyp{\cclrd{r}}{\tau_i}$. This changes the carried value without affecting the coeffect $\cclrd{r}$.
-
-The ability to freely transform the variable structure is not desirable in the model of
-structural coeffect systems. Our aim is to guarantee (by construction) that the structure of
-the coeffect annotations matches the structure of variables. To achieve this, we model vectors
-using a structure distinct from ordinary products which we denote $-\xtimes-$.
-For example, the judgement $\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}} \vdash e : \tau$
-is modelled as a morphism $\ctyp{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}}{(\tau_1 \xtimes \ldots \xtimes \tau_n)} \rightarrow \tau$.
-We assume that the operator is equipped with necessary associativity transformations allowing us
-to use it freely on more than two values.
-
-The operator is a bifunctor, but it is \emph{not} a product in the categorical sense. In particular,
-there is no way to turn $\tau_1 \xtimes \ldots \xtimes \tau_n$ into $\tau_i$ (the structure does
-not have projections) and so there is also no way of turning
-$\ctyp{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}}{(\tau_1 \xtimes \ldots \xtimes \tau_n)}$ into
-$\ctyp{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}}{\tau_i}$, which would break the correspondence
-between coeffect annotations and variable structure.
-
-The structure created using $-\xtimes-$ can be manipulated only using operations provided by
-the \emph{structural indexed comonad}, which operate over variable contexts contained in an
-indexed comonad $\ctyp{\aclrd{\textbf{r}}}$ and are designed to preserve the correspondence
-between vectors and annotations.
-
-In what follows, we model (finite) vectors of length $n$ as $\tau_1 \xtimes \ldots \xtimes \tau_n$.
-As mentioned, we assume that the use of the operator can be freely re-associated. For example, when
-calling an operation that requires input of the form
-$(\tau_1 \xtimes \ldots \xtimes \tau_i) \xtimes (\tau_{i+1} \xtimes \ldots \xtimes \tau_n)$,
-we use an argument $(\tau_1 \xtimes \ldots \xtimes \tau_n)$ and assume that the
-appropriate transformation is inserted.
-
-% --------------------------------------------------------------------------------------------------
-
 \subsection{Indexed comonads, revisited}
 
 The semantics of structural coeffect calculus reuses the definition of \emph{indexed comonad} with
@@ -1256,7 +1212,7 @@ and two mappings that involve context-dependent morphisms of the form $\ctyp{\cc
 
 In the structural coeffect calculus, we work with morphisms of the form $\ctyp{\cclrd{r}} \tau_1 \rightarrow \tau_2$
 representing function values (appearing in the language), but also of the form
-$\ctyp{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}}{(\tau_1 \xtimes \ldots \xtimes \tau_n)} \rightarrow \tau$,
+$\ctyp{\alift{\cclrd{r_1},\ldots,\cclrd{r_n}}}{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau$,
 modelling expressions in a context. To capture this, we need to revisit the definition and use
 \emph{coeffect vectors} in some of the operations.
 
@@ -1272,21 +1228,39 @@ $(\ctyp{\cclrd{r}{}}, \ident{counit}_{\cunit}, \ident{cobind}_{\cclrd{s}, \aclrd
 \item $\ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}$ is a mapping $(\ctyp{\aclrd{\textbf{r}}}{\alpha} \rightarrow \beta)
   \rightarrow (\ctyp{\cclrd{s}\aseq\aclrd{\textbf{r}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{s}}}{\beta})$
 \end{compactitem}
+such that, for all $f:\ctyp{\aclrd{\textbf{t}}}{\alpha} \rightarrow \beta$ and $g:\ctyp{\alift{\cclrd{r}}}{\beta} \rightarrow \gamma$:
+\begin{align}
+\tag{\emph{left identity}}
+  \ident{cobind}_{\alift{\cclrd{s},\cunit}}~\ident{counit}_{\cunit} &= \idf{}
+  \\
+\tag{\emph{right identity}}
+  \ident{counit}_{\cunit} \circ \ident{cobind}_{\cunit, \aclrd{\textbf{t}}}~f &= f
+  \\
+\tag{\emph{associativity}}
+\hspace{-10em}
+  \ident{cobind}_{\cclrd{s},\cclrd{r}\aseq\aclrd{\textbf{t}}}~(g \circ \ident{cobind}_{\cclrd{r}, \aclrd{\textbf{t}}}~f) &=
+    (\ident{cobind}_{\cclrd{s}, \alift{\cclrd{r}}}~g) \circ (\ident{cobind}_{\cclrd{s}\cseq\cclrd{r},\aclrd{\textbf{t}}}~f)
+\end{align}
 \end{definition}
 
 \noindent
 The object mapping $\ctyp{\aclrd{\textbf{r}}}$ is now indexed by a vector rather than by a scalar
 $\ctyp{\cclrd{r}}$ as in the previous chapter. This new definition supersedes the old one, because a
-flat coeffect annotation can be seen as singleton vectors.
+flat coeffect annotation can be seen as singleton vectors. The comonad laws are adjusted accordingly.
 
 The operation $\ident{counit}_{\cunit}$ operates on a vector of length one. This means that it will always
-return a single value rather than a vector created using $-\xtimes-$. The $\ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}$
+return a single value rather than a vector. The $\ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}$
 operation is, perhaps surprisingly, indexed by a coeffect vector and a coeffect scalar. This asymmetry
 is explained by the fact that the input function ($\ctyp{\aclrd{\textbf{r}}}{\alpha} \rightarrow \beta$)
 takes a vector of variables, but always produces just a single value. Thus the resulting function
 also takes a vector of variables, but always returns a context with a vector containing just one value.
-In other words, $\alpha$ may contain $\xtimes$, but $\beta$ may not, because the coeffect calculus has
-no way of constructing values containing $\xtimes$.
+
+In the definition of \emph{indexed comonad} given in this section, we use a vectors of scalar 
+coeffect annotations to match with the type system given in Section~\ref{sec:struct-calculus}. 
+A more general definition could be given in terms of modules over coeffect algebra, which
+provides a more general definition using standard structures of category theory. However,
+for the purpose of defining the translation in Section~\ref{sec:struct-transl}, the concrete
+definition using vectors of coeffect annotations suffices.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1298,10 +1272,10 @@ $\ident{merge}_{\cclrd{r},\cclrd{s}}$ and $\ident{split}_{\cclrd{r},\cclrd{s}}$ 
 split the additional (flat) context and are annotated with the flat coeffect operations $\czip$
 and $\cpar$, respectively.
 
-In the structural version, the corresponding operations operate convert between a (wrapped) vector
-of values represented using $\xtimes$ and ordinary pairs of contexts containing parts of the vector.
+In the structural version, the corresponding operations convert between a vector
+of values and pairs of contexts containing parts of a vector.
 The vectors of coeffect annotations are split or merged using $\atimes$ of the structural coeffect
-algebra, in a way that mirrors the wrapped vectors (variable structure).
+algebra, in a way that mirrors the variable structure.
 
 The following definition includes $\ident{dup}_{\cclrd{r}, \cclrd{s}}$ which models
 duplication of a variable in a context needed for the semantics of contraction:
@@ -1314,11 +1288,11 @@ $\ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$ and $\ident{dup}_{\cclrd
 %
 \begin{compactitem}
 \item $\ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$ is a family of mappings
-  $\ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta} \rightarrow \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)}$
+  $\ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta} \rightarrow \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\alpha \times \beta)}$
 \item $\ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}$ is a family of mappings
-  $\ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\alpha \xtimes \beta)} \rightarrow \ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta}$
+  $\ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\alpha \times \beta)} \rightarrow \ctyp{\aclrd{\textbf{r}}}{\alpha} \times \ctyp{\aclrd{\textbf{s}}}{\beta}$
 \item $\ident{dup}_{\cclrd{r}, \cclrd{s}}$ is a family of mappings
-  $\ctyp{\alift{\cclrd{r} \cpar \cclrd{s}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{r}, \cclrd{s}}}{(\alpha \xtimes \alpha)}$
+  $\ctyp{\alift{\cclrd{r} \cpar \cclrd{s}}}{\alpha} \rightarrow \ctyp{\alift{\cclrd{r}, \cclrd{s}}}{(\alpha \times \alpha)}$
 \end{compactitem}
 %
 Here, the following equalities must hold:
@@ -1333,16 +1307,12 @@ Here, the following equalities must hold:
 These operations differ from those of the flat indexed comonad in that the \ident{merge} and
 \ident{split} operations are required to be inverse functions and to preserve the additional
 information about the context. This was not required for the flat system where the operations
-could under-approximate or over-approximate. Note that the operations use $\xtimes$ to combine
-or split the contained values. This means that they operate on free-variable vectors rather than
-on ordinary products.
+could under-approximate or over-approximate. 
 
 The \ident{dup} mapping is a new operation that was not required for a flat calculus. It
 takes a variable context with a single variable annotated with $\cclrd{r}\,\cpar\,\cclrd{s}$,
 duplicates the value of the variable $\alpha$ and splits the additional context between the two
-new variables. In a flat calculus, this operation was expressed using ordinary tuple
-construction, which is not possible here -- the returned context needs to contain a
-two-element vector $\alpha \xtimes \alpha$.
+new variables.
 
 % --------------------------------------------------------------------------------------------------
 
@@ -1458,7 +1428,7 @@ at a unified categorical semantics defined in terms of \emph{structural indexed 
 
 \paragraph{Contexts and functions.}
 In the structural coeffect calculus, expressions in context are interpreted as functions taking
-a vector (represented using $-\xtimes-$) wrapped in a structure indexed with a vector of annotations
+a vector wrapped in a structure indexed with a vector of annotations
 such as $\ctyp{\aclrd{\textbf{r}}}$. Functions take only a single variable as an input and so the
 structure is annotated with a scalar, such as $\ctyp{\cclrd{r}}$, which we treat as being equivalent
 to a singleton vector annotation $\ctyp{\alift{\cclrd{r}}}$:
@@ -1466,7 +1436,7 @@ to a singleton vector annotation $\ctyp{\alift{\cclrd{r}}}$:
 \begin{equation*}
 \begin{array}{rcl}
 \sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} } \vdash e : \tau}
-  &:& \ctyp{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} }{(\tau_1 \xtimes \ldots \xtimes \tau_n)} \rightarrow \tau\\
+  &:& \ctyp{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} }{(\tau_1 \times \ldots \times \tau_n)} \rightarrow \tau\\
 \sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} &=& \ctyp{\alift{\cclrd{r}}}{\tau_1} \rightarrow \tau_2
 \end{array}
 \end{equation*}
@@ -1474,9 +1444,8 @@ to a singleton vector annotation $\ctyp{\alift{\cclrd{r}}}$:
 Note that the instances of flat indexed comonad ignored the fact that the variable
 context wrapped in the data structure is a product. This is not generally the case for the
 structural indexed comonads -- the definitions shown in Section~\ref{sec:struct-semantics-examples}
-are given specifically for $\ctyp{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} }{(\tau_1 \xtimes \ldots \xtimes \tau_n)}$
-rather than more generally for $\ctyp{\aclrd{\textbf{r}}}{\alpha}$. The need to examine the structure
-of the variable context is another reason for using $-\xtimes-$ when interpreting expressions in contexts.
+are given specifically for $\ctyp{ \alift{\cclrd{r_1}, \ldots, \cclrd{r_n}} }{(\tau_1 \times \ldots \times \tau_n)}$
+rather than more generally for $\ctyp{\aclrd{\textbf{r}}}{\alpha}$. 
 
 \paragraph{Expressions.}
 A semantics of structural coeffect calculi is shown in Figure~\ref{fig:struct-semantics}. The
@@ -1500,7 +1469,7 @@ from the flat version:
 
   A value $\ctyp{\alift{\cclrd{t}}}{\tau_1}$ required in order to call the function is obtained by
   applying $\ident{cobind}_{\cclrd{t}, \aclrd{\textbf{s}}}$ to the semantics of $e_2$. The result
-  $\ctyp{\cclrd{t}\aseq\aclrd{\textbf{s}}}{(\ldots \xtimes \ldots \xtimes \ldots)} \rightarrow \ctyp{\alift{\cclrd{t}}}{\tau_1}$
+  $\ctyp{\cclrd{t}\aseq\aclrd{\textbf{s}}}{(\ldots \times \ldots \times \ldots)} \rightarrow \ctyp{\alift{\cclrd{t}}}{\tau_1}$
   is then called with the latter part of the split input context.
 
 \item The semantics of function abstraction (\emph{abs}) is syntactically the same as in the
@@ -1580,11 +1549,11 @@ as $a_1$) is used for individual values.
 The indexed list model of dataflow computations is defined over a structural coeffect
 algebra $(\mathbb{N}, +, \mathit{max}, 0, 0, \leq)$. The data type $\ctyp{\langle n_1, \ldots, n_k\rangle}$
 is indexed by required number of past variables for each individual variable. It is defined
-over a vector of variables $\alpha_1 \xtimes \ldots \xtimes \alpha_k$ and it keeps a product
+over a vector of variables $\alpha_1 \times \ldots \times \alpha_k$ and it keeps a product
 containing a current value followed by $n_i$ past values:
 %
 \begin{equation*}
-\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \xtimes \ldots \xtimes \alpha_k)} =
+\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \times \ldots \times \alpha_k)} =
 \underbrace{(\alpha_1 \times \ldots \times \alpha_1)}_{(n_1+1)-\textnormal{times}} \times \ldots \times
   \underbrace{(\alpha_k \times \ldots \times \alpha_k)}_{(n_k+1)-\textnormal{times}}
 \end{equation*}
@@ -1624,7 +1593,7 @@ essence of dataflow computations are defined as:
 
 \noindent
 The definition of the indexed list data structure relies on the fact that the number of annotations
-corresponds to the number of variables combined using $-\xtimes-$. It then creates a vector of lists
+corresponds to the number of variables combined using $-\times-$. It then creates a vector of lists
 containing $n_i+1$ values for the $i$-\textit{th} variable (the annotation represents the number of
 required \emph{past} values so one more value is required).
 
@@ -1656,7 +1625,7 @@ algebra $(\mathbb{N}, \ast, +, 1, 0, \leq)$. The data type $\ctyp{\langle n_1, \
 is a vector containing $n_i$ values of $i$-\textit{th} variable:
 %
 \begin{equation*}
-\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \xtimes \ldots \xtimes \alpha_k)} =
+\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \times \ldots \times \alpha_k)} =
 \underbrace{(\alpha_1 \times \ldots \times \alpha_1)}_{n_1-\textnormal{times}} \times \ldots \times
   \underbrace{(\alpha_k \times \ldots \times \alpha_k)}_{n_k-\textnormal{times}}
 \end{equation*}
@@ -1706,7 +1675,7 @@ and the indexed option data type $D^l$, such that $D^{\ident{D}}\alpha = 1$ and 
 the data type for structural indexed option comonad is:
 %
 \begin{equation*}
-\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \xtimes \ldots \xtimes \alpha_k)} =
+\ctyp{\langle n_1, \ldots, n_k\rangle}{(\alpha_1 \times \ldots \times \alpha_k)} =
   D^{n_1} \alpha_1 \times \ldots \times D^{n_k} \alpha_k
 \end{equation*}
 %
@@ -1815,7 +1784,7 @@ constructs:
 \begin{array}{rcl}
   e &  =  &\ldots \sep\ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~e_1~e_2 \sep \ident{counit}_{\cunit}~e \sep \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e
          \sep \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e \sep \ident{dup}_{\cclrd{r},\cclrd{s}}~e \\
-  \tau &  = &\ldots \sep \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} \\
+  \tau &  = &\ldots \sep \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \times \ldots \times \tau_k)} \\
   K  & = &\ldots \sep \ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~\_~e \sep \ident{cobind}_{\cclrd{s},\aclrd{\textbf{r}}}~v~\_ \sep \ident{counit}_{\cunit}~\_ \\
     && \hspace{1.4em} \sep \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~\_
            \sep \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~\_ \sep \ident{dup}_{\cclrd{r},\cclrd{s}}~\_ \\
@@ -1836,20 +1805,20 @@ Given a structural coeffect algebra, add the typing rules:
   {\Gamma \vdash \ident{counit}_{\cunit}~e : \tau} \\
 \\
 \tyrule{cobind}
-  {\Gamma \vdash e_1 : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} \rightarrow \tau & \Gamma \vdash e_2 : \ctyp{\cclrd{s}\aseq\aclrd{\textbf{r}}}{\tau_1(\tau_1 \xtimes \ldots \xtimes \tau_k)} }
+  {\Gamma \vdash e_1 : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \times \ldots \times \tau_k)} \rightarrow \tau & \Gamma \vdash e_2 : \ctyp{\cclrd{s}\aseq\aclrd{\textbf{r}}}{\tau_1(\tau_1 \times \ldots \times \tau_k)} }
   {\Gamma \vdash \ident{cobind}_{\cclrd{s}, \aclrd{\textbf{r}}}~e_1~e_2 : \ctyp{\alift{\cclrd{s}}}{\tau}} \\
   \\
 \tyrule{merge}
-  {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \xtimes \ldots \xtimes \tau_k)} }
-  {\Gamma \vdash  \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e : \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} }\\
+  {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \times \ldots \times \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \times \ldots \times \tau_k)} }
+  {\Gamma \vdash  \ident{merge}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e : \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\tau_1 \times \ldots \times \tau_k)} }\\
 \\
 \tyrule{split}
-  {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\tau_1 \xtimes \ldots \xtimes \tau_k)} }
-  {\Gamma \vdash  \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \xtimes \ldots \xtimes \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \xtimes \ldots \xtimes \tau_k)}} \\
+  {\Gamma \vdash  e : \ctyp{\aclrd{\textbf{r}}\atimes\aclrd{\textbf{s}}}{(\tau_1 \times \ldots \times \tau_k)} }
+  {\Gamma \vdash  \ident{split}_{\aclrd{\textbf{r}},\aclrd{\textbf{s}}}~e : \ctyp{\aclrd{\textbf{r}}}{(\tau_1 \times \ldots \times \tau_l)} \times \ctyp{\aclrd{\textbf{s}}}{(\tau_{l+1} \times \ldots \times \tau_k)}} \\
 \\
 \tyrule{dup}
   {\Gamma \vdash  e : \ctyp{\alift{\cclrd{r}\cpar\cclrd{s}}}{\tau} }
-  {\Gamma \vdash  \ident{dup}_{\cclrd{r},\cclrd{s}}~e : \ctyp{\alift{\cclrd{r},\cclrd{s}}}{(\tau \xtimes \tau)} } \\
+  {\Gamma \vdash  \ident{dup}_{\cclrd{r},\cclrd{s}}~e : \ctyp{\alift{\cclrd{r},\cclrd{s}}}{(\tau \times \tau)} } \\
 \end{array}
 \end{equation*}
 
@@ -1875,13 +1844,12 @@ The syntax extensions add comonadically-inspired operations that mirror those de
 Section~\ref{sec:struct-semantics-idxc}. The typing for the operations corresponds to their
 categorical counterparts.
 
-We also include an uninterpreted type $\ctyp{\aclrd{\textbf{r}}}{\tau_1\xtimes\ldots\xtimes\tau_k}$,
+We also include an uninterpreted type $\ctyp{\aclrd{\textbf{r}}}{\tau_1\times\ldots\times\tau_k}$,
 which models a contextual (comonadic) value indexed by a vector of annotations. As in the
 categorical model for structural coeffects, context consisting of multiple variables is not modelled
 as ordinary tuple -- it can only be manipulated by the comonadically-inspired operations.
 In the target language, this is done by defining the $\ctyp{\aclrd{\textbf{r}}}{}$ type over
-zero or more underlying types. Here, our syntactic treatment differs slightly from the categorical
-model where objects created by $\xtimes$ were first-class values. In Figure~\ref{fig:struct-semantics-ext},
+zero or more underlying types. In Figure~\ref{fig:struct-semantics-ext},
 we need to explicitly specify the types of individual components in typing rules for
 (\emph{merge}), (\emph{split}) and (\emph{cobind}).
 
@@ -1990,17 +1958,13 @@ Function inputs become comonadically-inspired values containing exactly one vari
 \begin{equation*}
 \begin{array}{rcl}
 \sem{\coctx{x_1\!:\!\tau_1, \ldots, x_n\!:\!\tau_n}{\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}}} &=&
-  \ctyp{\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}}{(\sem{\tau_1} \xtimes \ldots \xtimes \sem{\tau_n})} \\[0.5em]
+  \ctyp{\alift{\cclrd{r_1}, \ldots, \cclrd{r_n}}}{(\sem{\tau_1} \times \ldots \times \sem{\tau_n})} \\[0.5em]
 \sem{\tau_1 \xrightarrow{\cclrd{r}} \tau_2} & = & \ctyp{\alift{\cclrd{r}}}{\sem{\tau_1}} \rightarrow \sem{\tau_2} \\[-0.2em]
 \sem{\ident{num}} & = & \ident{num} \\
 \end{array}
 \end{equation*}
 
 \noindent
-The definition differs from the one for flat coeffects (Section~\ref{sec:semantics-translation-transl})
-in that the comonadically-inspired data type takes multiple type parameters (separated using $\xtimes$),
-rather than wrapping a regular tuple in the target language.
-
 The translation rules are defined in Figure~\ref{fig:struct-translation}. As in the case of the flat
 coeffect calculus, the definition directly follows the categorical semantics shown in
 Figure~\ref{fig:struct-translation}. We expand the definitions so that the result is a valid
@@ -2034,7 +1998,7 @@ Then $f$ is well-typed, \ie~in the target language: $\vdash f : \sem{\coctx{()}{
 By rule induction over the derivation of the translation. Given a judgement
 $\coctx{x_1\!:\!\tau_1 \ldots x_n\!:\!\tau_n}{\aclrd{\textbf{c}}} \vdash e : \tau$ where
 $\aclrd{\textbf{c}} = \alift{\cclrd{c_1},\ldots,\cclrd{c_n}}$, the translation
-constructs a function of type $\ctyp{\aclrd{\textbf{c}}}(\sem{\tau_1}\xtimes\ldots\xtimes\sem{\tau_n}}) \rightarrow \sem{\tau}$.
+constructs a function of type $\ctyp{\aclrd{\textbf{c}}}(\sem{\tau_1}\times\ldots\times\sem{\tau_n}}) \rightarrow \sem{\tau}$.
 
 \vspace{0.5em}\noindent\hangindent=0.6cm
 Case (\emph{var}): $\aclrd{\textbf{c}}=\alift{\cunit}$ and so ${\ident{counit}_\cunit}~\ctx$ is well-typed.
@@ -2045,7 +2009,7 @@ Case (\emph{num}): $\tau = \ident{num}$ and so the body $n$ is well-typed.
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{abs}): The type of $\ctx$ is $\ctyp{\aclrd{\textbf{r}}}(\ldots)$ and the type of $v$ is $\ctyp{\alift{\cclrd{s}}}\tau_1$,
   calling $\ident{merge}_{\aclrd{\textbf{r}},\alift{\cclrd{s}}}$ produces a context of type
-  $\ctyp{\aclrd{\textbf{r}}\atimes\alift{\cclrd{s}}}(\ldots\xtimes\tau_1)$ as expected by $f$.
+  $\ctyp{\aclrd{\textbf{r}}\atimes\alift{\cclrd{s}}}(\ldots\times\tau_1)$ as expected by $f$.
 
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{app}): After applying $\ident{split}_{\aclrd{\textbf{r}}, \cclrd{t}\aseq\aclrd{\textbf{s}}}$ the types of
@@ -2060,9 +2024,9 @@ Case (\emph{weak}): After applying $\ident{split}_{\aclrd{\textbf{r}}, \alift{\c
 \vspace{0.25em}\noindent\hangindent=0.6cm
 Case (\emph{exch}), (\emph{contr}): The auxiliary definition $\ident{nest}_{\aclrd{\textbf{r}}, \aclrd{\textbf{s}}, \aclrd{\textbf{s'}}, \aclrd{\textbf{t}}}$
   keeps parts of the context corresponding to coeffect annotations $\aclrd{\textbf{r}}, \aclrd{\textbf{q}}$ unchanged and transforms
-  the nested part. In (\emph{exch}), the provided lambda function is of type $\ctyp{\alift{\cclrd{s},\cclrd{t}}}{(\tau_1\xtimes\tau_2)}
-  \rightarrow \ctyp{\alift{\cclrd{t},\cclrd{s}}}{(\tau_2\xtimes\tau_1)}$. In (\emph{contr}), the type of
-  $\ident{dup}_{\cclrd{s},\cclrd{t}}$ is $\ctyp{\alift{\cclrd{s}\cpar\cclrd{t}}}{\tau} \rightarrow \ctyp{\alift{\cclrd{s},\cclrd{t}}}{(\tau\xtimes\tau)}$
+  the nested part. In (\emph{exch}), the provided lambda function is of type $\ctyp{\alift{\cclrd{s},\cclrd{t}}}{(\tau_1\times\tau_2)}
+  \rightarrow \ctyp{\alift{\cclrd{t},\cclrd{s}}}{(\tau_2\times\tau_1)}$. In (\emph{contr}), the type of
+  $\ident{dup}_{\cclrd{s},\cclrd{t}}$ is $\ctyp{\alift{\cclrd{s}\cpar\cclrd{t}}}{\tau} \rightarrow \ctyp{\alift{\cclrd{s},\cclrd{t}}}{(\tau\times\tau)}$
   (assuming \ident{nest} is expanded, rather than treated as a value within the language).
 \end{proof}
 
@@ -2113,12 +2077,12 @@ K &=& \ldots \sep \ident{Df}\langle \textbf{v}_0, \ldots, \langle v_{j,0}, \ldot
 \begin{equation*}
 \tyrule{df}
   { \forall i\in\{0\ldots k\}. ~ \Gamma \vdash_{\ident{vec}} \textbf{e}_i : \tau_i, \cclrd{n_i}}
-  { \Gamma \vdash \ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_k \rangle : \ctyp{\alift{\cclrd{n_0}, \ldots, \cclrd{n_k}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)} }
+  { \Gamma \vdash \ident{Df}\langle \textbf{e}_0, \ldots, \textbf{e}_k \rangle : \ctyp{\alift{\cclrd{n_0}, \ldots, \cclrd{n_k}}}{(\tau_0\times\ldots\times\tau_k)} }
 \end{equation*}
 \begin{equation*}
 \tyrule{prev}
-  { \Gamma \vdash e : \ctyp{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)} }
-  { \Gamma \vdash \ident{prev}_{\cclrd{n_0},\ldots,\cclrd{n_k}}~e : \ctyp{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)} }
+  { \Gamma \vdash e : \ctyp{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}}{(\tau_0\times\ldots\times\tau_k)} }
+  { \Gamma \vdash \ident{prev}_{\cclrd{n_0},\ldots,\cclrd{n_k}}~e : \ctyp{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}}{(\tau_0\times\ldots\times\tau_k)} }
 \end{equation*}
 
 \vspace{1em}
@@ -2182,7 +2146,7 @@ K &=& \ldots \sep \ident{Df}\langle \textbf{v}_0, \ldots, \langle v_{j,0}, \ldot
 
 The Figure~\ref{fig:structural-ext-df} extends the target functional language with constructs,
 typing rules, translation rules and reduction rules needed for modelling structural dataflow.
-In the structural model, the type $\ctyp{\alift{\cclrd{r_0}, \ldots, \cclrd{r_n}}}{(\tau_0\xtimes\ldots\xtimes\tau_n)}$
+In the structural model, the type $\ctyp{\alift{\cclrd{r_0}, \ldots, \cclrd{r_n}}}{(\tau_0\times\ldots\times\tau_n)}$
 represents a structure that provides values and additional contexts for variables of types
 $\tau_0,\ldots,\tau_n$ with contextual capabilities as specified by corresponding coeffect annotations
 $\cclrd{r_0}, \ldots, \cclrd{r_n}$.
@@ -2232,8 +2196,8 @@ By rule induction over the derivation of the translation.
 Case (\emph{var, num, abs, app}): As before.
 
 \vspace{0.5em}\noindent\hangindent=0.6cm
-Case (\emph{prev}): Type of $\ctx$ is $\ctyp{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)}$
-  and so we can apply the (\emph{prev}) rule to obtain $\ctyp{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}}{(\tau_0\xtimes\ldots\xtimes\tau_k)}$
+Case (\emph{prev}): Type of $\ctx$ is $\ctyp{\alift{\cclrd{n_0+1},\ldots,\cclrd{n_k+1}}}{(\tau_0\times\ldots\times\tau_k)}$
+  and so we can apply the (\emph{prev}) rule to obtain $\ctyp{\alift{\cclrd{n_0},\ldots,\cclrd{n_k}}}{(\tau_0\times\ldots\times\tau_k)}$
   as required by $f$.
 \end{proof}
 
@@ -2244,7 +2208,7 @@ For all $e, \tau$, if $\vdash e : \tau$ and $e$ is a value then:
   \item If $\tau=\ident{num}$ then $e = n$ for some $n \in \mathbb{Z}$
   \item If $\tau=\tau_1 \rightarrow \tau_2$ then $e = \lambda x.e'$ for some $x, e'$
   \item If $\tau=\tau_1\times\ldots\times\tau_n$ then $e = (v_1, \ldots, v_n)$ for some $v_i$
-  \item If $\tau=\ctyp{\alift{\cclrd{n_1}, \ldots, \cclrd{n_k}}}{(\tau_1\xtimes\ldots\xtimes\tau_k)}$
+  \item If $\tau=\ctyp{\alift{\cclrd{n_1}, \ldots, \cclrd{n_k}}}{(\tau_1\times\ldots\times\tau_k)}$
     then $e = \ident{Df}\langle \textbf{v}_0, \ldots \textbf{v}_n\rangle$ for some $\textbf{v}_i$
     such that $\textbf{v}_i = \langle v_0, \ldots, v_{n_i}\rangle$.
 \end{enumerate}
@@ -2283,8 +2247,8 @@ Case (\emph{cobind}): $e = \ident{cobind}_{\cclrd{m}, \alift{\cclrd{n_1},\ldots,
   such that $\forall i\in\{1\ldots k\}$ $\textbf{v}_i = \langle v_0, \ldots, v_{n_i}\rangle$. The last rule in the type derivation of $e$ must have been
   (\emph{cobind}) with a type $\tau = \ctyp{\alift{\cclrd{m}}}\tau'$ and assumptions:
 \begin{itemize}[noitemsep,leftmargin=1.5cm,topsep=0pt]
-  \item[--] $\Gamma \vdash f : \ctyp{\alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}{(\tau_1\xtimes\ldots\xtimes\tau_k)} \rightarrow \tau_2$ and
-  \item[--] $\Gamma \vdash \ident{Df}\langle \textbf{v}_0, \ldots \textbf{v}_{k} \rangle : \ctyp{\alift{\cclrd{m}+\cclrd{n_1},\ldots,\cclrd{m}+\cclrd{n_k}}}{(\tau_1\xtimes\ldots\xtimes\tau_k)}$
+  \item[--] $\Gamma \vdash f : \ctyp{\alift{\cclrd{n_1},\ldots,\cclrd{n_k}}}{(\tau_1\times\ldots\times\tau_k)} \rightarrow \tau_2$ and
+  \item[--] $\Gamma \vdash \ident{Df}\langle \textbf{v}_0, \ldots \textbf{v}_{k} \rangle : \ctyp{\alift{\cclrd{m}+\cclrd{n_1},\ldots,\cclrd{m}+\cclrd{n_k}}}{(\tau_1\times\ldots\times\tau_k)}$
 \end{itemize}
 %
 \hspace{0.5cm} Using the (\emph{df}) rule, the reduced expression has a type $\ctyp{\alift{\cclrd{m}}}\tau'$.
@@ -2357,8 +2321,6 @@ Case (\emph{split}, \emph{prev}): Similar. Either sub-expression is not a value,
 %     #####   ####  #    #  ####  ######  ####   ####  #  ####  #    #
 %
 % ==================================================================================================
-
-~
 
 \section{Summary}
 
