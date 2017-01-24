@@ -133,24 +133,24 @@ scalars. The annotations in the unified coeffect calculus are similar, but the n
 is replaced with a more general \emph{container}. The primitive coeffect annotations in the unified
 calculus are formed by coeffect scalars, which have the same structure as in the structural
 coeffect calculus (Definition~\ref{def:structural-scalar}). In this section, we refer to it as
-\emph{\cclrd{unified coeffect scalar}} (we repeat the definition below for clarity).
+\emph{\cclrd{unified coeffect algebra}} (we repeat the definition below for clarity).
 Then we define \emph{\sclrd{unified coeffect containers}} which determines how coeffect
 scalar values are attached to the free-variable context. Finally, we define the
-\emph{\aclrd{unified coeffect algebra}} which consists of shape-indexed coeffect scalar values.
+\emph{\aclrd{unified coeffect label}} which consists of shape-indexed coeffect algebra values.
 
 As in the structural coeffect calculus, the contexts in the unified calculus are annotated with
 shape-indexed coeffects, written as $\coctx{\Gamma}{\aclrd{\textbf{r}}} \vdash e : \tau$;
 functions take just a single input parameter and so are annotated with scalar coeffect values
 $\sigma \xrightarrow{\cclrd{r}} \tau$.
 
-\paragraph{Coeffect scalars.}
-The following definition of the coeffect scalar structure repeats
+\paragraph{Coeffect algebra.}
+The following definition of the coeffect algebra structure repeats
 Definition~\ref{def:structural-scalar} from the Chapter~\ref{ch:structural}, with the only change
-that we now refer to it as \emph{\cclrd{unified coeffect scalar}}.
+that we now refer to it as \emph{\cclrd{unified coeffect algebra}}.
 
 \begin{definition}
 \label{def:unified-scal}
-A \emph{\cclrd{unified coeffect scalar}} $(\C, \,\cseq, \,\cpar, \,\cunit, \,\czero, \,\cleq)$ is a set
+A \emph{\cclrd{unified coeffect algebra}} $(\C, \,\cseq, \,\cpar, \,\cunit, \,\czero, \,\cleq)$ is a set
 $\C$ together with elements $\cunit, \czero \in \C$, binary operations $\cseq, \cpar$ such that
 $(\C, \cseq, \cunit)$ and $(\C, \cpar, \czero)$ are monoids and a binary relation $\cleq$ such
 that $(\C, \cleq)$ is a pre-order. That is, for all $r,s,t\in \C$:
@@ -260,9 +260,9 @@ $\SP(\sflat)=\emptyset$ and so coeffect annotations would be from the empty set 
 \end{example}
 
 
-\paragraph{Unified coeffect algebra.}
+\paragraph{Unified coeffect label.}
 The unified coeffect calculus annotates typing judgments with shape-indexed coeffect annotations.
-The \emph{\aclrd{unified coeffect algebra}} combines a coeffect scalar and a coeffect container
+The \emph{\aclrd{unified coeffect label}} combines a coeffect algebra and a coeffect container
 to define shape-indexed coeffects and operations for manipulating these.
 
 The definition here reconciles the third point discussed in Section~\ref{sec:further-unified} --
@@ -272,9 +272,9 @@ that can, however, coincide.
 
 \begin{definition}
 \label{def:unified-alg}
-Given a \cclrd{unified coeffect scalar} $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and a
+Given a \cclrd{unified coeffect algebra} $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and a
 \sclrd{coeffect container} $(\SHP, \slen{-}, \stimes, \sempty, \sunit)$ a \aclrd{unified
-coeffect algebra} extends the two structures with $(\azip, \apar, \azero)$ where $\azero \in \C^{\SP(\sempty)}$
+coeffect label} extends the two structures with $(\azip, \apar, \azero)$ where $\azero \in \C^{\SP(\sempty)}$
 is a coeffect annotation for the empty context and $\azip, \apar$ are families of operations that
 combine coeffect annotations indexed by shapes. That is $\forall \sclrd{n},\sclrd{m} \in \SH$:
 %
@@ -287,7 +287,7 @@ combine coeffect annotations indexed by shapes. That is $\forall \sclrd{n},\sclr
 \end{definition}
 
 \noindent
-A coeffect algebra induces the following three additional operations:
+A coeffect label induces the following three additional operations:
 %
 \begin{equation*}
 \begin{array}{rclcrcl}
@@ -423,9 +423,9 @@ We define the unified coeffect system in Figure~\ref{fig:unif-types}. It resembl
 type system shown in Figure~\ref{fig:struct-types}. Rather than explaining the rules one-by-one, we
 focus on how the unified system differs from the structural system.
 
-The type system for the unified coeffect calculus is parameterized by a coeffect scalar
+The type system for the unified coeffect calculus is parameterized by a coeffect algebra
 $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ (Definition~\ref{def:unified-scal}) together with a
-coeffect algebra $(\azip, \apar, \azero)$ (Definition~\ref{def:unified-alg})
+coeffect label $(\azip, \apar, \azero)$ (Definition~\ref{def:unified-alg})
 and the derived constructs $\alift{-}$, $\alen{-}$ and $\aseq$.
 As in the structural system, free-variable contexts $\Gamma$ are treated as vectors of distinct
 variables with associativity built-in. The order of variables matters, but can be changed
@@ -445,10 +445,8 @@ variables with a scalar $\cunit$ and constants with a scalar $\czero$.
 
 In the (\emph{app}), (\emph{abs}) and (\emph{let}) rules, the only change from the structural
 system is that the vector concatenation $\atimes$ is now replaced with context splitting/merging
-of the unified coeffect algebra. As already mentioned, we use splitting of context demands $\azip$
+of the unified coeffect label. As already mentioned, we use splitting of context demands $\azip$
 in rule \emph{assumptions} and merging of context demands $\apar$ in rule \emph{conclusions}.
-
-~
 
 Note that we use the terms \emph{merging} and \emph{splitting} in the syntactic (top-down) sense. As
 discussed in Section~\ref{sec:flat-calculus-understanding}, we can also read
@@ -467,7 +465,7 @@ In structural systems, the two notations mean the same thing -- we are simply co
 singleton vectors. However, this generalization allows us to capture flat coeffect systems as well.
 The lifting operation in flat systems simply returns the lifted scalar; operators $\azip$ and
 $\apar$ correspond to operations on coeffect scalars. As discussed in Section~\ref{sec:further-flat},
-thanks to the properties of coeffect scalars, the operations of contraction, weakening and exchange
+thanks to the properties of the coeffect algebra, the operations of contraction, weakening and exchange
 that do not affect the coeffect annotation are admissible for all flat systems embedded in the
 unified coeffect calculus.
 
@@ -481,20 +479,20 @@ structural and flat systems in mind. In this and the next section, we show how i
 the two coeffect systems from Chapter~\ref{ch:flat} and Chapter~\ref{ch:structural}.
 
 The unified calculus closely resembles the structural system and so using it to model structural
-systems is easy -- given a (structural) coeffect scalar, we use the coeffect container that describes
+systems is easy -- given a (structural) coeffect algebra, we use the coeffect container that describes
 a \emph{vector} of annotations (Example~\ref{ex:further-struct-shape}) and define a coeffect
-algebra formed by a vector (free monoid) of scalars.
+label formed by a vector (free monoid) of scalars.
 
 \begin{definition}
 \label{def:further-struct}
-Given a coeffect scalar $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ a \emph{structural coeffect system}
+Given a coeffect algebra $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ a \emph{structural coeffect system}
 is defined by:
 
 \begin{itemize}
 \item A coeffect container $\sclrd{(\SHP, {|}\textnormal{--}{|}, +, 0, 1)}$ where $\SH=\mathbb{N}$ and
   $\SP(\sclrd{n})=\{ 1 \ldots n \}$ and  ${|}x_1\!:\!\tau_1,\ldots,x_n\!:\!\tau_n{|}=n$.
 
-\item A coeffect algebra $\aclrd{(\times, \times, \epsilon)}$ where $\times$ and $\epsilon$ are
+\item A coeffect label $\aclrd{(\times, \times, \epsilon)}$ where $\times$ and $\epsilon$ are
   shape-indexed versions of the binary operation and the unit of a free monoid over $\C$.
   That is $\epsilon : \C^{\SP(\sclrd{0})}$ is an empty vector and
   $\times : \C^{\SP(\sclrd{n})} \times \C^{\SP(\sclrd{m})} \rightarrow \C^{\SP(\sclrd{n + m})}$
@@ -513,7 +511,7 @@ An important property of the unified system is that, when used in a structural w
 above, it gives calculi with the same properties as the structural system described in
 Chapter~\ref{ch:structural}. This can be easily seen by comparing the Figure~\ref{fig:unif-types}
 with the Figure~\ref{fig:struct-types} and using the free monoid interpretation of the unified
-coeffect algebra.
+coeffect label.
 
 \begin{remark}
 The system described in Definition~\ref{def:further-struct} is equivalent to the structural coeffect
@@ -540,22 +538,22 @@ different from the standard flat coeffect system), but we show that they are equ
 Flat coeffect systems are characterised by a singleton set of shapes (Example~\ref{ex:further-flat-shape}).
 In this setting, the context annotations $\C^{ \SP(\sflat) }$ are defined as function values
 $\{0\} \rightarrow \C$. The domain of the function is a singleton set and so the values are equivalent
-to coeffect scalars $\C$. In addition to the coeffect scalar structure, we need to define $\apar$
+to coeffect scalars $\C$. In addition to the coeffect algebra structure, we need to define $\apar$
 and $\azip$. Our examples of flat coeffects use $\cpar$ (merging of scalar coeffects) for $\apar$
 (merging of coeffect annotations). The $\azip$ operation (corresponding to $\czip$
 in flat coeffect calculus) is provided explicitly.
 
 \begin{definition}
 \label{def:further-flat}
-Given a coeffect scalar $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and a binary operation
+Given a coeffect algebra $(\C, \cseq, \cpar, \cunit, \czero, \cleq)$ and a binary operation
 $\cclrd{\wedge} : \C \times \C \rightarrow \C$ such that $(\cclrd{r \wedge s}) \,\cleq\, (\cclrd{r}\,\cpar\,\cclrd{s})$,
-the unified coeffect algebra modelling a flat coeffect systems consists of:
+the unified coeffect label modelling a flat coeffect systems consists of:
 %
 \begin{itemize}{}
 \item A flat coeffect container $\sclrd{(\SHP, {|}-{|}, \diamond, \sflat, \sflat)}$ as defined in
   Example~\ref{ex:further-flat-shape}.
 
-\item A flat coeffect algebra $(\czip, \cpar, \czero)$, \ie~$\apar = \cpar$
+\item A flat coeffect label $(\czip, \cpar, \czero)$, \ie~$\apar = \cpar$
   and $\azero = \czero$ with an\\ additional binary operation $\azip = \czip$.
 \end{itemize}
 \end{definition}
