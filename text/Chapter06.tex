@@ -1157,7 +1157,7 @@ arising from the monoid $(\C, \cseq, \cunit)$ of the coeffect algebra.
 \noindent
 The $\eta$-expansion property discussed in this section highlights another difference
 between coeffects and effects. The $\eta$-equality property does not hold for many notions
-of effect. For example, in a language with output effects, $e = (\textsf{print \texttt{"hi"}}; (\lambda x . x))$
+of effect. For example, in a language with output effects, $e = (\texttt{print "hi"}; (\lambda x . x))$
 has different effects to its $\eta$-converted form $\lambda x . e\,x$ because the immediate
 effects of $e$ are hidden by the purity of $\lambda$-abstraction. In the coeffect calculus,
 the (\emph{abs}) rule allows immediate contextual demands of $e$ to ``float outside''
